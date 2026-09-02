@@ -1,53 +1,90 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
-import { router } from 'expo-router';
 import { supabase } from '../lib/supabase';
 
+const copy = {
+  en: {
+    tagline: 'Find someone. Grab a drink. CHEERS!',
+    title: 'Welcome back',
+    subtitle: "Log in and see who's ready for a drink nearby.",
+    email: 'EMAIL',
+    password: 'PASSWORD',
+    passwordPlaceholder: 'Enter your password',
+    loggingIn: 'LOGGING IN...',
+    login: 'LOG IN',
+    newHere: 'NEW HERE?',
+    createAccount: 'CREATE ACCOUNT',
+    footer: 'Ready for a drink? SipMate helps you find people nearby who are too.',
+  },
+  de: {
+    tagline: 'Finde jemanden. Trink etwas. CHEERS!',
+    title: 'Willkommen zurück',
+    subtitle: 'Melde dich an und sieh, wer in deiner Nähe bereit für einen Drink ist.',
+    email: 'E-MAIL',
+    password: 'PASSWORT',
+    passwordPlaceholder: 'Passwort eingeben',
+    loggingIn: 'ANMELDUNG...',
+    login: 'ANMELDEN',
+    newHere: 'NEU HIER?',
+    createAccount: 'KONTO ERSTELLEN',
+    footer: 'Bereit für einen Drink? SipMate hilft dir, Leute in deiner Nähe zu finden, die es auch sind.',
+  },
+  hr: {
+    tagline: 'Pronađi nekoga. Popij nešto. CHEERS!',
+    title: 'Dobrodošao natrag',
+    subtitle: 'Prijavi se i vidi tko je u blizini spreman za piće.',
+    email: 'E-MAIL',
+    password: 'LOZINKA',
+    passwordPlaceholder: 'Unesi lozinku',
+    loggingIn: 'PRIJAVA...',
+    login: 'PRIJAVI SE',
+    newHere: 'NOVI OVDJE?',
+    createAccount: 'KREIRAJ RAČUN',
+    footer: 'Spreman za piće? SipMate ti pomaže pronaći ljude u blizini koji su također spremni.',
+  },
+} as const;
+
 export default function LoginScreen() {
+  const { i18n } = useTranslation();
+  const language = i18n.language?.split('-')[0] as keyof typeof copy;
+  const text = copy[language] ?? copy.en;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-async function handleLogin() {
-  try {
-    setLoading(true);
+  async function handleLogin() {
+    try {
+      setLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password,
-    });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-    if (error) {
-      console.log('LOGIN ERROR:', error.message);
-
-      if (typeof window !== 'undefined') {
-        window.alert(error.message);
+      if (error) {
+        console.log('LOGIN ERROR:', error.message);
+        if (typeof window !== 'undefined') window.alert(error.message);
+        return;
       }
 
-      return;
+      if (data.session) router.replace('/');
+    } catch (error) {
+      console.log('LOGIN CRASH:', error);
+    } finally {
+      setLoading(false);
     }
-
-    console.log('LOGIN SUCCESS');
-    console.log('LOGGED USER:', data.user?.email);
-    console.log('SESSION EXISTS:', !!data.session);
-
-    if (data.session) {
-      router.replace('/');
-    }
-  } catch (error) {
-    console.log('LOGIN CRASH:', error);
-  } finally {
-    setLoading(false);
   }
-}
 
   return (
     <View style={styles.screen}>
@@ -57,27 +94,16 @@ async function handleLogin() {
       >
         <View style={styles.card}>
           <Text style={styles.logo}>SipMate 🍻</Text>
-
-          <Text style={styles.tagline}>
-            Find someone. Grab a drink. CHEERS!
-          </Text>
+          <Text style={styles.tagline}>{text.tagline}</Text>
 
           <View style={styles.heroIcon}>
             <Text style={styles.heroEmoji}>🍻</Text>
           </View>
 
-          <Text style={styles.title}>
-            Welcome back
-          </Text>
+          <Text style={styles.title}>{text.title}</Text>
+          <Text style={styles.subtitle}>{text.subtitle}</Text>
 
-          <Text style={styles.subtitle}>
-            Log in and see who's ready for a drink nearby.
-          </Text>
-
-          <Text style={styles.label}>
-            EMAIL
-          </Text>
-
+          <Text style={styles.label}>{text.email}</Text>
           <TextInput
             value={email}
             onChangeText={setEmail}
@@ -89,14 +115,11 @@ async function handleLogin() {
             style={styles.input}
           />
 
-          <Text style={styles.label}>
-            PASSWORD
-          </Text>
-
+          <Text style={styles.label}>{text.password}</Text>
           <TextInput
             value={password}
             onChangeText={setPassword}
-            placeholder="Enter your password"
+            placeholder={text.passwordPlaceholder}
             placeholderTextColor="#52525B"
             secureTextEntry
             autoCapitalize="none"
@@ -104,55 +127,34 @@ async function handleLogin() {
           />
 
           <Pressable
-            style={[
-              styles.button,
-              loading && styles.buttonDisabled,
-            ]}
+            style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
           >
             <Text style={styles.buttonText}>
-              {loading
-                ? 'LOGGING IN...'
-                : '🍻 LOG IN'}
+              {loading ? text.loggingIn : `🍻 ${text.login}`}
             </Text>
           </Pressable>
 
           <View style={styles.dividerRow}>
             <View style={styles.divider} />
-            <Text style={styles.dividerText}>
-              NEW HERE?
-            </Text>
+            <Text style={styles.dividerText}>{text.newHere}</Text>
             <View style={styles.divider} />
           </View>
 
-          <Pressable
-            style={styles.registerButton}
-            onPress={() =>
-              router.push('/register')
-            }
-          >
-            <Text style={styles.registerButtonText}>
-              CREATE ACCOUNT
-            </Text>
+          <Pressable style={styles.registerButton} onPress={() => router.push('/register')}>
+            <Text style={styles.registerButtonText}>{text.createAccount}</Text>
           </Pressable>
 
-          <Text style={styles.footer}>
-            Ready for a drink? SipMate helps you find
-            people nearby who are too.
-          </Text>
+          <Text style={styles.footer}>{text.footer}</Text>
         </View>
       </ScrollView>
     </View>
   );
 }
 
-  const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#09090B',
-  },
-
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#09090B' },
   container: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -160,7 +162,6 @@ async function handleLogin() {
     paddingHorizontal: 20,
     paddingVertical: 60,
   },
-
   card: {
     width: '100%',
     maxWidth: 470,
@@ -171,7 +172,6 @@ async function handleLogin() {
     borderWidth: 1,
     borderColor: '#27272A',
   },
-
   logo: {
     color: '#FFFFFF',
     fontSize: 34,
@@ -179,7 +179,6 @@ async function handleLogin() {
     textAlign: 'center',
     letterSpacing: -0.6,
   },
-
   tagline: {
     color: '#71717A',
     fontSize: 12,
@@ -187,7 +186,6 @@ async function handleLogin() {
     textAlign: 'center',
     marginTop: 6,
   },
-
   heroIcon: {
     width: 78,
     height: 78,
@@ -200,11 +198,7 @@ async function handleLogin() {
     alignSelf: 'center',
     marginTop: 30,
   },
-
-  heroEmoji: {
-    fontSize: 38,
-  },
-
+  heroEmoji: { fontSize: 38 },
   title: {
     color: '#FFFFFF',
     fontSize: 30,
@@ -212,7 +206,6 @@ async function handleLogin() {
     textAlign: 'center',
     marginTop: 22,
   },
-
   subtitle: {
     color: '#A1A1AA',
     fontSize: 14,
@@ -221,7 +214,6 @@ async function handleLogin() {
     marginTop: 8,
     marginBottom: 28,
   },
-
   label: {
     color: '#71717A',
     fontSize: 10,
@@ -229,7 +221,6 @@ async function handleLogin() {
     letterSpacing: 1.2,
     marginBottom: 8,
   },
-
   input: {
     backgroundColor: '#09090B',
     color: '#FFFFFF',
@@ -241,48 +232,27 @@ async function handleLogin() {
     borderWidth: 1,
     borderColor: '#27272A',
   },
-
   button: {
     backgroundColor: '#DC2626',
     paddingVertical: 17,
     borderRadius: 20,
     alignItems: 'center',
     marginTop: 4,
-
-    shadowColor: '#DC2626',
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    elevation: 5,
   },
-
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-
+  buttonDisabled: { opacity: 0.5 },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
-
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 28,
     marginBottom: 18,
   },
-
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#27272A',
-  },
-
+  divider: { flex: 1, height: 1, backgroundColor: '#27272A' },
   dividerText: {
     color: '#52525B',
     fontSize: 9,
@@ -290,7 +260,6 @@ async function handleLogin() {
     letterSpacing: 1.2,
     marginHorizontal: 12,
   },
-
   registerButton: {
     borderWidth: 1,
     borderColor: '#DC2626',
@@ -298,14 +267,12 @@ async function handleLogin() {
     paddingVertical: 15,
     alignItems: 'center',
   },
-
   registerButtonText: {
     color: '#EF4444',
     fontSize: 14,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
-
   footer: {
     color: '#52525B',
     fontSize: 11,
