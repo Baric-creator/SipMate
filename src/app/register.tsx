@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabase';
 const copy = {
   en: {
     fillAll: 'Please fill in all fields.',
+    ageRequirement: 'SipMate is for adults only. You must be at least 18 years old.',
     welcome: 'Welcome to SipMate 🍻 Your account and profile have been created!',
     failed: 'Registration failed.',
     tagline: 'Find someone. Grab a drink. CHEERS!',
@@ -23,20 +24,21 @@ const copy = {
     subtitle: 'Join SipMate and find people nearby who are ready for a drink.',
     name: 'NAME',
     namePlaceholder: 'Your name',
-    age: 'AGE',
+    age: 'AGE (18+)',
     agePlaceholder: 'Your age',
     email: 'EMAIL',
     password: 'PASSWORD',
     passwordPlaceholder: 'Create a password',
     creating: 'CREATING ACCOUNT...',
     create: 'CREATE ACCOUNT',
-    note: 'By creating an account, you agree to the SipMate terms and community rules.',
+    note: 'By creating an account, you confirm that you are 18+ and agree to the SipMate terms and community rules.',
     member: 'ALREADY A MEMBER?',
     login: 'LOG IN',
     footer: 'Ready for a drink? Your next Cheers could be nearby.',
   },
   de: {
     fillAll: 'Bitte fülle alle Felder aus.',
+    ageRequirement: 'SipMate ist nur für Erwachsene. Du musst mindestens 18 Jahre alt sein.',
     welcome: 'Willkommen bei SipMate 🍻 Dein Konto und Profil wurden erstellt!',
     failed: 'Registrierung fehlgeschlagen.',
     tagline: 'Finde jemanden. Trink etwas. CHEERS!',
@@ -44,20 +46,21 @@ const copy = {
     subtitle: 'Komm zu SipMate und finde Leute in deiner Nähe, die bereit für einen Drink sind.',
     name: 'NAME',
     namePlaceholder: 'Dein Name',
-    age: 'ALTER',
+    age: 'ALTER (18+)',
     agePlaceholder: 'Dein Alter',
     email: 'E-MAIL',
     password: 'PASSWORT',
     passwordPlaceholder: 'Passwort erstellen',
     creating: 'KONTO WIRD ERSTELLT...',
     create: 'KONTO ERSTELLEN',
-    note: 'Mit der Kontoerstellung stimmst du den SipMate-Bedingungen und Community-Regeln zu.',
+    note: 'Mit der Kontoerstellung bestätigst du, dass du 18+ bist, und stimmst den SipMate-Bedingungen und Community-Regeln zu.',
     member: 'SCHON DABEI?',
     login: 'ANMELDEN',
     footer: 'Bereit für einen Drink? Dein nächstes Cheers könnte ganz in der Nähe sein.',
   },
   hr: {
     fillAll: 'Molimo ispuni sva polja.',
+    ageRequirement: 'SipMate je samo za punoljetne osobe. Moraš imati najmanje 18 godina.',
     welcome: 'Dobrodošao u SipMate 🍻 Tvoj račun i profil su kreirani!',
     failed: 'Registracija nije uspjela.',
     tagline: 'Pronađi nekoga. Popij nešto. CHEERS!',
@@ -65,14 +68,14 @@ const copy = {
     subtitle: 'Pridruži se SipMateu i pronađi ljude u blizini koji su spremni za piće.',
     name: 'IME',
     namePlaceholder: 'Tvoje ime',
-    age: 'DOB',
+    age: 'DOB (18+)',
     agePlaceholder: 'Tvoja dob',
     email: 'E-MAIL',
     password: 'LOZINKA',
     passwordPlaceholder: 'Kreiraj lozinku',
     creating: 'KREIRANJE RAČUNA...',
     create: 'KREIRAJ RAČUN',
-    note: 'Kreiranjem računa prihvaćaš SipMate uvjete i pravila zajednice.',
+    note: 'Kreiranjem računa potvrđuješ da imaš 18+ godina i prihvaćaš SipMate uvjete i pravila zajednice.',
     member: 'VEĆ IMAŠ RAČUN?',
     login: 'PRIJAVI SE',
     footer: 'Spreman za piće? Tvoj sljedeći Cheers možda je baš u blizini.',
@@ -96,6 +99,13 @@ export default function RegisterScreen() {
       return;
     }
 
+    const numericAge = Number(age);
+
+    if (!Number.isFinite(numericAge) || numericAge < 18 || numericAge > 120) {
+      showAlert(text.ageRequirement);
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -105,7 +115,7 @@ export default function RegisterScreen() {
         options: {
           data: {
             name: name.trim(),
-            age: Number(age),
+            age: numericAge,
           },
         },
       });
