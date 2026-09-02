@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { showAlert } from '../lib/notify';
 import { supabase } from '../lib/supabase';
 
 const copy = {
@@ -25,6 +26,7 @@ const copy = {
     newHere: 'NEW HERE?',
     createAccount: 'CREATE ACCOUNT',
     footer: 'Ready for a drink? SipMate helps you find people nearby who are too.',
+    unexpectedError: 'Something went wrong while logging in. Please try again.',
   },
   de: {
     tagline: 'Finde jemanden. Trink etwas. CHEERS!',
@@ -38,6 +40,7 @@ const copy = {
     newHere: 'NEU HIER?',
     createAccount: 'KONTO ERSTELLEN',
     footer: 'Bereit für einen Drink? SipMate hilft dir, Leute in deiner Nähe zu finden, die es auch sind.',
+    unexpectedError: 'Beim Anmelden ist etwas schiefgelaufen. Bitte versuche es erneut.',
   },
   hr: {
     tagline: 'Pronađi nekoga. Popij nešto. CHEERS!',
@@ -51,6 +54,7 @@ const copy = {
     newHere: 'NOVI OVDJE?',
     createAccount: 'KREIRAJ RAČUN',
     footer: 'Spreman za piće? SipMate ti pomaže pronaći ljude u blizini koji su također spremni.',
+    unexpectedError: 'Dogodila se greška pri prijavi. Pokušaj ponovno.',
   },
 } as const;
 
@@ -74,13 +78,14 @@ export default function LoginScreen() {
 
       if (error) {
         console.log('LOGIN ERROR:', error.message);
-        if (typeof window !== 'undefined') window.alert(error.message);
+        showAlert(error.message);
         return;
       }
 
       if (data.session) router.replace('/');
     } catch (error) {
       console.log('LOGIN CRASH:', error);
+      showAlert(text.unexpectedError);
     } finally {
       setLoading(false);
     }
