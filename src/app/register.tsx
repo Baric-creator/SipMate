@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { showAlert } from '../lib/notify';
 import { supabase } from '../lib/supabase';
 
 const copy = {
@@ -91,7 +92,7 @@ export default function RegisterScreen() {
 
   async function handleRegister() {
     if (!name.trim() || !age.trim() || !email.trim() || !password.trim()) {
-      if (typeof window !== 'undefined') window.alert(text.fillAll);
+      showAlert(text.fillAll);
       return;
     }
 
@@ -110,15 +111,15 @@ export default function RegisterScreen() {
       });
 
       if (error) {
-        if (typeof window !== 'undefined') window.alert(error.message);
+        showAlert(error.message);
         return;
       }
 
-      if (typeof window !== 'undefined') window.alert(text.welcome);
+      showAlert(text.welcome);
       router.replace('/login');
     } catch (error) {
       console.log('REGISTER CATCH ERROR:', error);
-      if (typeof window !== 'undefined') window.alert(text.failed);
+      showAlert(text.failed);
     } finally {
       setLoading(false);
     }
