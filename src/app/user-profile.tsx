@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Image,
@@ -9,10 +10,12 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions
+  useWindowDimensions,
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
+
+type CheersStatus = 'none' | 'sent' | 'mutual';
 
 type UserProfile = {
   avatar_url: string | null;
@@ -25,40 +28,192 @@ type UserProfile = {
   is_active: boolean | null;
 };
 
+type ProfilePhoto = {
+  id: string;
+  photo_url: string;
+  sort_order: number | null;
+};
+
+const copy = {
+  en: {
+    loginFirst: 'Please log in first',
+    cantCheersSelf: "You can't Cheers yourself 😄",
+    cheersError: 'Cheers error',
+    cheersSentTo: 'Cheers sent to',
+    reportError: 'Report error',
+    reportThanks: 'Report submitted. Thank you for helping keep SipMate safe.',
+    block: 'Block',
+    thisUser: 'this user',
+    blockDescription: 'They will no longer appear in your Nearby results.',
+    alreadyBlocked: 'This user is already blocked.',
+    blockError: 'Block error',
+    blocked: 'has been blocked.',
+    user: 'User',
+    loading: 'Loading profile...',
+    notFound: 'Profile not found.',
+    photos: 'PHOTOS',
+    userFallback: 'SipMate User',
+    locationNotSet: 'Location not set',
+    active: '● ACTIVE — Ready for a drink',
+    inactive: '● INACTIVE',
+    currentlyUpFor: 'CURRENTLY UP FOR',
+    readyForDrink: '🍻 Ready for a drink',
+    about: 'ABOUT',
+    noBio: 'No bio yet.',
+    openChat: 'OPEN CHAT',
+    cheersSent: 'CHEERS SENT',
+    sendCheers: 'SEND CHEERS',
+    message: 'MESSAGE',
+    reportUser: 'Report user',
+    blockUser: 'Block user',
+    cancel: 'Cancel',
+    report: 'Report',
+    reportWhy: 'Why are you reporting this profile?',
+    inappropriate: 'Inappropriate behavior',
+    harassment: 'Harassment',
+    fakeProfile: 'Fake profile',
+    spam: 'Spam',
+    other: 'Other',
+    submitReport: 'SUBMIT REPORT',
+    mutualSubtitleStart: 'You and',
+    mutualSubtitleEnd: 'are ready for a drink!',
+    startChat: 'START CHAT',
+    keepBrowsing: 'KEEP BROWSING',
+    beer: 'Beer',
+    cocktail: 'Cocktail',
+    wine: 'Wine',
+    whisky: 'Whisky',
+    coffee: 'Coffee',
+    drinks: 'Drinks',
+    hangout: 'Hangout',
+  },
+  de: {
+    loginFirst: 'Bitte melde dich zuerst an',
+    cantCheersSelf: 'Du kannst dir nicht selbst Cheers senden 😄',
+    cheersError: 'Cheers-Fehler',
+    cheersSentTo: 'Cheers gesendet an',
+    reportError: 'Melde-Fehler',
+    reportThanks: 'Meldung gesendet. Danke, dass du hilfst, SipMate sicher zu halten.',
+    block: 'Blockieren',
+    thisUser: 'diesen Nutzer',
+    blockDescription: 'Die Person erscheint nicht mehr in deinen Nearby-Ergebnissen.',
+    alreadyBlocked: 'Dieser Nutzer ist bereits blockiert.',
+    blockError: 'Blockierungsfehler',
+    blocked: 'wurde blockiert.',
+    user: 'Nutzer',
+    loading: 'Profil wird geladen...',
+    notFound: 'Profil nicht gefunden.',
+    photos: 'FOTOS',
+    userFallback: 'SipMate-Nutzer',
+    locationNotSet: 'Standort nicht festgelegt',
+    active: '● AKTIV — Bereit für einen Drink',
+    inactive: '● INAKTIV',
+    currentlyUpFor: 'DERZEIT LUST AUF',
+    readyForDrink: '🍻 Bereit für einen Drink',
+    about: 'ÜBER MICH',
+    noBio: 'Noch keine Beschreibung.',
+    openChat: 'CHAT ÖFFNEN',
+    cheersSent: 'CHEERS GESENDET',
+    sendCheers: 'CHEERS SENDEN',
+    message: 'NACHRICHT',
+    reportUser: 'Nutzer melden',
+    blockUser: 'Nutzer blockieren',
+    cancel: 'Abbrechen',
+    report: 'Melden',
+    reportWhy: 'Warum möchtest du dieses Profil melden?',
+    inappropriate: 'Unangemessenes Verhalten',
+    harassment: 'Belästigung',
+    fakeProfile: 'Fake-Profil',
+    spam: 'Spam',
+    other: 'Sonstiges',
+    submitReport: 'MELDUNG SENDEN',
+    mutualSubtitleStart: 'Du und',
+    mutualSubtitleEnd: 'seid bereit für einen Drink!',
+    startChat: 'CHAT STARTEN',
+    keepBrowsing: 'WEITER SUCHEN',
+    beer: 'Bier',
+    cocktail: 'Cocktail',
+    wine: 'Wein',
+    whisky: 'Whisky',
+    coffee: 'Kaffee',
+    drinks: 'Drinks',
+    hangout: 'Treffen',
+  },
+  hr: {
+    loginFirst: 'Prvo se prijavi',
+    cantCheersSelf: 'Ne možeš poslati Cheers sam sebi 😄',
+    cheersError: 'Cheers greška',
+    cheersSentTo: 'Cheers poslan korisniku',
+    reportError: 'Greška prijave',
+    reportThanks: 'Prijava je poslana. Hvala što pomažeš da SipMate bude siguran.',
+    block: 'Blokirati',
+    thisUser: 'ovog korisnika',
+    blockDescription: 'Više se neće pojavljivati u tvojim Nearby rezultatima.',
+    alreadyBlocked: 'Ovaj korisnik je već blokiran.',
+    blockError: 'Greška blokiranja',
+    blocked: 'je blokiran.',
+    user: 'Korisnik',
+    loading: 'Učitavanje profila...',
+    notFound: 'Profil nije pronađen.',
+    photos: 'FOTOGRAFIJE',
+    userFallback: 'SipMate korisnik',
+    locationNotSet: 'Lokacija nije postavljena',
+    active: '● AKTIVAN — Spreman za piće',
+    inactive: '● NEAKTIVAN',
+    currentlyUpFor: 'TRENUTNO ZA',
+    readyForDrink: '🍻 Spreman za piće',
+    about: 'O MENI',
+    noBio: 'Još nema opisa.',
+    openChat: 'OTVORI CHAT',
+    cheersSent: 'CHEERS POSLAN',
+    sendCheers: 'POŠALJI CHEERS',
+    message: 'PORUKA',
+    reportUser: 'Prijavi korisnika',
+    blockUser: 'Blokiraj korisnika',
+    cancel: 'Odustani',
+    report: 'Prijavi',
+    reportWhy: 'Zašto prijavljuješ ovaj profil?',
+    inappropriate: 'Neprimjereno ponašanje',
+    harassment: 'Uznemiravanje',
+    fakeProfile: 'Lažni profil',
+    spam: 'Spam',
+    other: 'Ostalo',
+    submitReport: 'POŠALJI PRIJAVU',
+    mutualSubtitleStart: 'Ti i',
+    mutualSubtitleEnd: 'spremni ste za piće!',
+    startChat: 'POKRENI CHAT',
+    keepBrowsing: 'NASTAVI TRAŽITI',
+    beer: 'Pivo',
+    cocktail: 'Koktel',
+    wine: 'Vino',
+    whisky: 'Viski',
+    coffee: 'Kava',
+    drinks: 'Piće',
+    hangout: 'Druženje',
+  },
+} as const;
+
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams();
-const [profilePhotos, setProfilePhotos] = useState<any[]>([]);
-const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-const [profile, setProfile] = useState<any>(null);
-const [loading, setLoading] = useState(true);
-const [isPremium, setIsPremium] = useState(false);
+  const { i18n } = useTranslation();
+  const language = i18n.language?.split('-')[0] as keyof typeof copy;
+  const text = copy[language] ?? copy.en;
+
+  const [profilePhotos, setProfilePhotos] = useState<ProfilePhoto[]>([]);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
   const [showMutualCheers, setShowMutualCheers] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-const [reportReason, setReportReason] = useState<string | null>(null);
-
-  const [cheersStatus, setCheersStatus] = useState<
-  'none' | 'sent' | 'mutual'
->('none');
+  const [reportReason, setReportReason] = useState<string | null>(null);
+  const [cheersStatus, setCheersStatus] = useState<CheersStatus>('none');
 
   const cheersScale = useRef(new Animated.Value(0)).current;
-
   const { width, height } = useWindowDimensions();
 
-  // =========================
-  // FALLING DRINK EMOJIS
-  // =========================
-
-  const drinkEmojis = [
-    '🍷',
-    '🍸',
-    '🍹',
-    '🍺',
-    '🍻',
-    '🥂',
-    '🥃',
-    '🫗',
-  ];
+  const drinkEmojis = ['🍷', '🍸', '🍹', '🍺', '🍻', '🥂', '🥃', '🫗'];
 
   const confetti = useMemo(
     () =>
@@ -78,153 +233,132 @@ const [reportReason, setReportReason] = useState<string | null>(null);
     confetti.map(() => new Animated.Value(-120))
   ).current;
 
-  // =========================
-  // LOAD PROFILE
-  // =========================
-
   useEffect(() => {
     loadUserProfile();
   }, [id]);
-async function checkCheersStatus(targetUserId: string) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
-  if (!session?.user) return;
+  function localizeCurrentUpFor(value: string | null) {
+    if (!value) return text.readyForDrink;
 
-  const myId = session.user.id;
+    const normalized = value.toLowerCase();
+    if (normalized.includes('beer') || normalized.includes('pivo') || normalized.includes('bier')) {
+      return value.replace(/beer|pivo|bier/i, text.beer);
+    }
+    if (normalized.includes('cocktail') || normalized.includes('koktel')) {
+      return value.replace(/cocktail|koktel/i, text.cocktail);
+    }
+    if (normalized.includes('wine') || normalized.includes('vino') || normalized.includes('wein')) {
+      return value.replace(/wine|vino|wein/i, text.wine);
+    }
+    if (normalized.includes('whisky') || normalized.includes('whiskey') || normalized.includes('viski')) {
+      return value.replace(/whisky|whiskey|viski/i, text.whisky);
+    }
+    if (normalized.includes('coffee') || normalized.includes('kava') || normalized.includes('kaffee')) {
+      return value.replace(/coffee|kava|kaffee/i, text.coffee);
+    }
+    if (normalized.includes('hangout') || normalized.includes('družen') || normalized.includes('treffen')) {
+      return value.replace(/hangout|druženje|treffen/i, text.hangout);
+    }
+    if (normalized.includes('drinks') || normalized.includes('piće')) {
+      return value.replace(/drinks|piće/i, text.drinks);
+    }
 
-  if (myId === targetUserId) {
-    setCheersStatus('none');
-    return;
+    return value;
   }
 
-  const { data: sentCheers } = await supabase
-    .from('cheers')
-    .select('id')
-    .eq('sender_id', myId)
-    .eq('receiver_id', targetUserId)
-    .maybeSingle();
-
-  const { data: receivedCheers } = await supabase
-    .from('cheers')
-    .select('id')
-    .eq('sender_id', targetUserId)
-    .eq('receiver_id', myId)
-    .maybeSingle();
-
-  if (sentCheers && receivedCheers) {
-    setCheersStatus('mutual');
-  } else if (sentCheers) {
-    setCheersStatus('sent');
-  } else {
-    setCheersStatus('none');
-  }
-}
-
-async function loadUserProfile() {
-  try {
-    setLoading(true);
-
+  async function checkCheersStatus(targetUserId: string) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
-    if (!session?.user) {
-      console.log('PROFILE LOAD: no logged user');
-      setProfile(null);
+    if (!session?.user) return;
+
+    const myId = session.user.id;
+    if (myId === targetUserId) {
+      setCheersStatus('none');
       return;
     }
 
-    const targetId =
-      typeof id === 'string' && id
-        ? id
-        : session.user.id;
-
-    console.log('LOADING PROFILE ID:', targetId);
-
-
-if (session?.user) {
-  const { data: myProfile, error: premiumError } =
-    await supabase
-      .from('profiles')
-      .select('is_premium, premium_until')
-      .eq('id', session.user.id)
+    const { data: sentCheers } = await supabase
+      .from('cheers')
+      .select('id')
+      .eq('sender_id', myId)
+      .eq('receiver_id', targetUserId)
       .maybeSingle();
 
-  if (premiumError) {
-    console.log(
-      'PREMIUM STATUS ERROR:',
-      premiumError.message
-    );
-  }
-
-  const premiumActive =
-    myProfile?.is_premium === true &&
-    (!myProfile.premium_until ||
-      new Date(myProfile.premium_until) > new Date());
-
-  setIsPremium(premiumActive);
-
-  console.log(
-    'USER PROFILE PREMIUM:',
-    premiumActive
-  );
-}
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', targetId)
+    const { data: receivedCheers } = await supabase
+      .from('cheers')
+      .select('id')
+      .eq('sender_id', targetUserId)
+      .eq('receiver_id', myId)
       .maybeSingle();
 
-    console.log('PROFILE DATA:', data);
-    console.log(
-      'PROFILE ERROR:',
-      error?.message ?? 'none'
-    );
-const { data: photosData, error: photosError } =
-  await supabase
-    .from('profile_photos')
-    .select('id, photo_url, sort_order')
-    .eq('user_id', targetId)
-    .order('sort_order', { ascending: true });
-
-if (photosError) {
-  console.log(
-    'USER PROFILE PHOTOS ERROR:',
-    photosError.message
-  );
-} else {
-  setProfilePhotos(photosData ?? []);
-
-  console.log(
-    'USER PROFILE PHOTOS:',
-    photosData ?? []
-  );
-}
-    if (error) {
-      setProfile(null);
-      return;
-    }
-
-    setProfile(data);
-
-    if (data?.id) {
-      await checkCheersStatus(data.id);
-    }
-
-  } finally {
-    setLoading(false);
+    if (sentCheers && receivedCheers) setCheersStatus('mutual');
+    else if (sentCheers) setCheersStatus('sent');
+    else setCheersStatus('none');
   }
-}
 
-// =========================
-// CHEERS ANIMATION
-// =========================
+  async function loadUserProfile() {
+    try {
+      setLoading(true);
 
-  // =========================
-  // CHEERS ANIMATION
-  // =========================
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        setProfile(null);
+        return;
+      }
+
+      const targetId = typeof id === 'string' && id ? id : session.user.id;
+
+      const { data: myProfile, error: premiumError } = await supabase
+        .from('profiles')
+        .select('is_premium, premium_until')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (premiumError) {
+        console.log('PREMIUM STATUS ERROR:', premiumError.message);
+      }
+
+      const premiumActive =
+        myProfile?.is_premium === true &&
+        (!myProfile.premium_until ||
+          new Date(myProfile.premium_until) > new Date());
+      setIsPremium(premiumActive);
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', targetId)
+        .maybeSingle();
+
+      const { data: photosData, error: photosError } = await supabase
+        .from('profile_photos')
+        .select('id, photo_url, sort_order')
+        .eq('user_id', targetId)
+        .order('sort_order', { ascending: true });
+
+      if (photosError) {
+        console.log('USER PROFILE PHOTOS ERROR:', photosError.message);
+      } else {
+        setProfilePhotos((photosData ?? []) as ProfilePhoto[]);
+      }
+
+      if (error) {
+        console.log('PROFILE LOAD ERROR:', error.message);
+        setProfile(null);
+        return;
+      }
+
+      setProfile(data as UserProfile | null);
+      if (data?.id) await checkCheersStatus(data.id);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function playCheersAnimation() {
     cheersScale.setValue(0);
@@ -238,10 +372,8 @@ if (photosError) {
 
     fallingValues.forEach((value, index) => {
       value.setValue(-120);
-
       Animated.sequence([
         Animated.delay(confetti[index].delay),
-
         Animated.timing(value, {
           toValue: height + 150,
           duration: confetti[index].duration,
@@ -251,10 +383,6 @@ if (photosError) {
     });
   }
 
-  // =========================
-  // HANDLE CHEERS
-  // =========================
-
   async function handleCheers() {
     if (!profile) return;
 
@@ -263,10 +391,7 @@ if (photosError) {
     } = await supabase.auth.getSession();
 
     if (!session?.user) {
-      if (typeof window !== 'undefined') {
-        window.alert('Please log in first');
-      }
-
+      if (typeof window !== 'undefined') window.alert(text.loginFirst);
       router.replace('/login');
       return;
     }
@@ -275,57 +400,27 @@ if (photosError) {
     const receiverId = profile.id;
 
     if (senderId === receiverId) {
-      if (typeof window !== 'undefined') {
-        window.alert("You can't Cheers yourself 😄");
-      }
-
+      if (typeof window !== 'undefined') window.alert(text.cantCheersSelf);
       return;
     }
-setCheersStatus('sent');
-    console.log('CHEERS SENDER:', senderId);
-    console.log('CHEERS RECEIVER:', receiverId);
 
-    // =========================
-    // SAVE CHEERS
-    // =========================
+    setCheersStatus('sent');
 
-    const { error: sendError } = await supabase
-      .from('cheers')
-      .insert({
-        sender_id: senderId,
-        receiver_id: receiverId,
-      });
+    const { error: sendError } = await supabase.from('cheers').insert({
+      sender_id: senderId,
+      receiver_id: receiverId,
+    });
 
-    if (sendError) {
-      // 23505 = već postoji isti Cheers
-      if (sendError.code === '23505') {
-        console.log('CHEERS ALREADY SENT');
-      } else {
-        console.log(
-          'CHEERS SEND ERROR:',
-          sendError.message
-        );
-
-        if (typeof window !== 'undefined') {
-          window.alert(
-            `Cheers error: ${sendError.message}`
-          );
-        }
-
-        return;
+    if (sendError && sendError.code !== '23505') {
+      console.log('CHEERS SEND ERROR:', sendError.message);
+      if (typeof window !== 'undefined') {
+        window.alert(`${text.cheersError}: ${sendError.message}`);
       }
-    } else {
-      console.log('CHEERS SAVED');
+      setCheersStatus('none');
+      return;
     }
 
-    // =========================
-    // CHECK MUTUAL CHEERS
-    // =========================
-
-    const {
-      data: mutualCheers,
-      error: mutualError,
-    } = await supabase
+    const { data: mutualCheers, error: mutualError } = await supabase
       .from('cheers')
       .select('id')
       .eq('sender_id', receiverId)
@@ -333,163 +428,104 @@ setCheersStatus('sent');
       .maybeSingle();
 
     if (mutualError) {
-      console.log(
-        'MUTUAL CHEERS ERROR:',
-        mutualError.message
-      );
-
+      console.log('MUTUAL CHEERS ERROR:', mutualError.message);
       return;
     }
-
-    // =========================
-    // MUTUAL!
-    // =========================
 
     if (mutualCheers) {
-      console.log('MUTUAL CHEERS!');
       setCheersStatus('mutual');
-
       setShowMutualCheers(true);
       playCheersAnimation();
-
       return;
     }
 
-    // =========================
-    // WAITING FOR OTHER USER
-    // =========================
-
-    console.log(
-      'CHEERS SENT - WAITING FOR OTHER USER'
-    );
-
     if (typeof window !== 'undefined') {
-      window.alert(
-        `🍻 Cheers sent to ${
-          profile.name ?? 'SipMate User'
-        }!`
-      );
+      window.alert(`🍻 ${text.cheersSentTo} ${profile.name ?? text.userFallback}!`);
     }
   }
+
   async function handleSubmitReport() {
-  if (!profile || !reportReason) return;
+    if (!profile || !reportReason) return;
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  if (!session?.user) {
-    router.replace('/login');
-    return;
-  }
+    if (!session?.user) {
+      router.replace('/login');
+      return;
+    }
 
-  const reporterId = session.user.id;
-  const reportedId = profile.id;
+    if (session.user.id === profile.id) return;
 
-  if (reporterId === reportedId) {
-    return;
-  }
-
-  const { error } = await supabase
-    .from('reports')
-    .insert({
-      reporter_id: reporterId,
-      reported_id: reportedId,
+    const { error } = await supabase.from('reports').insert({
+      reporter_id: session.user.id,
+      reported_id: profile.id,
       reason: reportReason,
     });
 
-  if (error) {
-    console.log('REPORT ERROR:', error.message);
-
-    if (typeof window !== 'undefined') {
-      window.alert(
-        `Report error: ${error.message}`
-      );
+    if (error) {
+      console.log('REPORT ERROR:', error.message);
+      if (typeof window !== 'undefined') {
+        window.alert(`${text.reportError}: ${error.message}`);
+      }
+      return;
     }
 
-    return;
+    setShowReportModal(false);
+    setReportReason(null);
+    if (typeof window !== 'undefined') window.alert(text.reportThanks);
   }
 
-  setShowReportModal(false);
-  setReportReason(null);
+  async function handleBlockUser() {
+    if (!profile) return;
 
-  if (typeof window !== 'undefined') {
-    window.alert(
-      'Report submitted. Thank you for helping keep SipMate safe.'
-    );
-  }
-}
-async function handleBlockUser() {
-  if (!profile) return;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    if (!session?.user) {
+      router.replace('/login');
+      return;
+    }
 
-  if (!session?.user) {
-    router.replace('/login');
-    return;
-  }
+    if (session.user.id === profile.id) return;
 
-  const myId = session.user.id;
-  const blockedId = profile.id;
+    const confirmed =
+      typeof window !== 'undefined'
+        ? window.confirm(
+            `${text.block} ${profile.name ?? text.thisUser}?\n\n${text.blockDescription}`
+          )
+        : true;
 
-  if (myId === blockedId) {
-    return;
-  }
+    if (!confirmed) return;
 
-  const confirmed =
-    typeof window !== 'undefined'
-      ? window.confirm(
-          `Block ${profile.name ?? 'this user'}?\n\nThey will no longer appear in your Nearby results.`
-        )
-      : true;
-
-  if (!confirmed) return;
-
-  const { error } = await supabase
-    .from('blocks')
-    .insert({
-      blocker_id: myId,
-      blocked_id: blockedId,
+    const { error } = await supabase.from('blocks').insert({
+      blocker_id: session.user.id,
+      blocked_id: profile.id,
     });
 
-  if (error) {
-    if (error.code === '23505') {
-      if (typeof window !== 'undefined') {
-        window.alert('This user is already blocked.');
+    if (error) {
+      if (error.code === '23505') {
+        if (typeof window !== 'undefined') window.alert(text.alreadyBlocked);
+      } else {
+        console.log('BLOCK ERROR:', error.message);
+        if (typeof window !== 'undefined') {
+          window.alert(`${text.blockError}: ${error.message}`);
+        }
       }
-    } else {
-      console.log('BLOCK ERROR:', error.message);
-
-      if (typeof window !== 'undefined') {
-        window.alert(
-          `Block error: ${error.message}`
-        );
-      }
+      return;
     }
 
-    return;
+    setShowUserMenu(false);
+    if (typeof window !== 'undefined') {
+      window.alert(`${profile.name ?? text.user} ${text.blocked}`);
+    }
+    router.replace('/nearby');
   }
-
-  setShowUserMenu(false);
-
-  if (typeof window !== 'undefined') {
-    window.alert(
-      `${profile.name ?? 'User'} has been blocked.`
-    );
-  }
-
-  router.replace('/nearby');
-}
-  // =========================
-  // START CHAT
-  // =========================
 
   async function startChat() {
     if (!profile) return;
-
-    console.log('START CHAT PRESSED');
 
     const {
       data: { session },
@@ -502,29 +538,12 @@ async function handleBlockUser() {
 
     const myId = session.user.id;
     const otherId = profile.id;
+    if (myId === otherId) return;
 
-    if (myId === otherId) {
-      return;
-    }
+    const userOne = myId < otherId ? myId : otherId;
+    const userTwo = myId < otherId ? otherId : myId;
 
-    // Uvijek isti poredak usera
-    const userOne =
-      myId < otherId ? myId : otherId;
-
-    const userTwo =
-      myId < otherId ? otherId : myId;
-
-    console.log('CHAT USER ONE:', userOne);
-    console.log('CHAT USER TWO:', userTwo);
-
-    // =========================
-    // FIND EXISTING CONVERSATION
-    // =========================
-
-    const {
-      data: existingConversation,
-      error: findError,
-    } = await supabase
+    const { data: existingConversation, error: findError } = await supabase
       .from('conversations')
       .select('id')
       .eq('user_one', userOne)
@@ -532,421 +551,279 @@ async function handleBlockUser() {
       .maybeSingle();
 
     if (findError) {
-      console.log(
-        'CONVERSATION FIND ERROR:',
-        findError.message
-      );
-
+      console.log('CONVERSATION FIND ERROR:', findError.message);
       return;
     }
 
-    let conversationId =
-      existingConversation?.id;
-
-    // =========================
-    // CREATE IF NOT EXISTS
-    // =========================
+    let conversationId = existingConversation?.id;
 
     if (!conversationId) {
-      const {
-        data: newConversation,
-        error: createError,
-      } = await supabase
+      const { data: newConversation, error: createError } = await supabase
         .from('conversations')
-        .insert({
-          user_one: userOne,
-          user_two: userTwo,
-        })
+        .insert({ user_one: userOne, user_two: userTwo })
         .select('id')
         .single();
 
       if (createError) {
-        console.log(
-          'CONVERSATION CREATE ERROR:',
-          createError.message
-        );
-
+        console.log('CONVERSATION CREATE ERROR:', createError.message);
         return;
       }
 
       conversationId = newConversation.id;
     }
 
-    console.log(
-      'GOING TO CHAT:',
-      conversationId
-    );
-
     setShowMutualCheers(false);
-
     router.push({
       pathname: '/chat',
       params: {
         conversationId,
         id: profile.id,
-        name:
-          profile.name ??
-          'SipMate User',
+        name: profile.name ?? text.userFallback,
       },
     });
   }
 
-  // =========================
-  // LOADING
-  // =========================
-
   if (loading) {
     return (
       <View style={styles.screen}>
-        <Text style={styles.loading}>
-          Loading profile...
-        </Text>
+        <Text style={styles.loading}>{text.loading}</Text>
       </View>
     );
   }
-
-  // =========================
-  // PROFILE NOT FOUND
-  // =========================
 
   if (!profile) {
     return (
       <View style={styles.screen}>
-        <Text style={styles.loading}>
-          Profile not found.
-        </Text>
+        <Text style={styles.loading}>{text.notFound}</Text>
       </View>
     );
   }
 
-  // =========================
-  // PROFILE SCREEN
-  // =========================
+  const reportReasons = [
+    ['inappropriate_behavior', text.inappropriate],
+    ['harassment', text.harassment],
+    ['fake_profile', text.fakeProfile],
+    ['spam', text.spam],
+    ['other', text.other],
+  ];
 
   return (
     <View style={styles.screen}>
-      {/* PROFILE CARD */}
-<View style={styles.card}>
-  <Pressable
-  style={styles.menuButton}
-  onPress={() => setShowUserMenu(true)}
->
-  <Text style={styles.menuButtonText}>
-    •••
-  </Text>
-</Pressable>
-  {profile.avatar_url ? (
-    <Image
-      source={{
-        uri: `${profile.avatar_url}${
-          profile.avatar_url.includes('?') ? '&' : '?'
-        }refresh=${Date.now()}`,
-      }}
-      style={styles.profileAvatar}
-      resizeMode="cover"
-    />
-  ) : (
-    <View style={styles.profileAvatarFallback}>
-      <Text style={styles.profileAvatarFallbackText}>
-        {profile.name?.charAt(0).toUpperCase() || '?'}
-      </Text>
-    </View>
-  )}
-  {profilePhotos.length > 0 && (
-  <View style={styles.profileGallerySection}>
-    <Text style={styles.profileGalleryTitle}>
-      📸 PHOTOS
-    </Text>
+      <View style={styles.card}>
+        <Pressable style={styles.menuButton} onPress={() => setShowUserMenu(true)}>
+          <Text style={styles.menuButtonText}>•••</Text>
+        </Pressable>
 
-<View style={styles.profileGalleryRow}>
-  {profilePhotos.map((photo) => (
-<Pressable
-  key={photo.id}
-  onPress={() => {
-    setSelectedPhoto(photo.photo_url);
-  }}
-  style={{
-    width: 150,
-    height: 190,
-    marginRight: 10,
-    zIndex: 20,
-  }}
->
-<Image
-  source={{ uri: photo.photo_url }}
-  style={styles.profileGalleryImage}
-  resizeMode="cover"
+        {profile.avatar_url ? (
+          <Image
+            source={{
+              uri: `${profile.avatar_url}${
+                profile.avatar_url.includes('?') ? '&' : '?'
+              }refresh=${Date.now()}`,
+            }}
+            style={styles.profileAvatar}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.profileAvatarFallback}>
+            <Text style={styles.profileAvatarFallbackText}>
+              {profile.name?.charAt(0).toUpperCase() || '?'}
+            </Text>
+          </View>
+        )}
 
-/>
-    </Pressable>
-  ))}
-</View>
-  </View>
-)}
-  <Text style={styles.name}>
-    {profile.name ?? 'SipMate User'}
-    {profile.age ? `, ${profile.age}` : ''}
-  </Text>
+        {profilePhotos.length > 0 && (
+          <View style={styles.profileGallerySection}>
+            <Text style={styles.profileGalleryTitle}>📸 {text.photos}</Text>
+            <View style={styles.profileGalleryRow}>
+              {profilePhotos.map((photo) => (
+                <Pressable
+                  key={photo.id}
+                  onPress={() => setSelectedPhoto(photo.photo_url)}
+                  style={styles.photoPressable}
+                >
+                  <Image
+                    source={{ uri: photo.photo_url }}
+                    style={styles.profileGalleryImage}
+                    resizeMode="cover"
+                  />
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
-  <Text style={styles.city}>
-    📍 {profile.city ?? 'Location not set'}
-  </Text>
-
-  <View
-    style={[
-      styles.statusBadge,
-      profile.is_active
-        ? styles.statusBadgeActive
-        : styles.statusBadgeInactive,
-    ]}
-  >
-    <Text
-      style={[
-        styles.statusBadgeText,
-        profile.is_active
-          ? styles.statusTextActive
-          : styles.statusTextInactive,
-      ]}
-    >
-      {profile.is_active
-        ? '● ACTIVE — Ready for a drink'
-        : '● INACTIVE'}
-    </Text>
-  </View>
-
-  <View style={styles.section}>
-    <Text style={styles.label}>
-      CURRENTLY UP FOR
-    </Text>
-
-    <View style={styles.drinkChip}>
-      <Text style={styles.drink}>
-        {profile.currently_up_for ??
-          '🍻 Ready for a drink'}
-      </Text>
-    </View>
-  </View>
-
-  <View style={styles.section}>
-    <Text style={styles.label}>
-      ABOUT
-    </Text>
-
-    <Text style={styles.bio}>
-      {profile.bio || 'No bio yet.'}
-    </Text>
-  </View>
-
-  {cheersStatus === 'mutual' ? (
-    <Pressable
-      style={styles.primaryButton}
-      onPress={startChat}
-    >
-      <Text style={styles.primaryButtonText}>
-        💬 OPEN CHAT
-      </Text>
-    </Pressable>
-  ) : cheersStatus === 'sent' ? (
-    <Pressable
-      style={[
-        styles.primaryButton,
-        styles.sentButton,
-      ]}
-      disabled
-    >
-      <Text style={styles.primaryButtonText}>
-        🍻 CHEERS SENT
-      </Text>
-    </Pressable>
-  ) : (
-    <Pressable
-      style={styles.primaryButton}
-      onPress={handleCheers}
-    >
-      <Text style={styles.primaryButtonText}>
-        🍻 SEND CHEERS
-      </Text>
-    </Pressable>
-  )}
-</View>  
-<TouchableOpacity
-  style={[
-    styles.messageButton,
-    !isPremium && styles.messageButtonLocked,
-  ]}
-  onPress={() => {
-    if (!isPremium) {
-      router.push('/premium');
-      return;
-    }
-
-    startChat();
-  }}
->
-  <Text style={styles.messageButtonText}>
-    {isPremium ? '💎 MESSAGE' : '🔒 MESSAGE'}
-  </Text>
-</TouchableOpacity>
-<Modal
-  visible={showUserMenu}
-  transparent
-  animationType="fade"
-  onRequestClose={() => setShowUserMenu(false)}
->
-  <Pressable
-    style={styles.menuOverlay}
-    onPress={() => setShowUserMenu(false)}
-  >
-    <View style={styles.menuCard}>
-      <Text style={styles.menuTitle}>
-        {profile.name ?? 'SipMate User'}
-      </Text>
-
-<Pressable
-  style={styles.menuOption}
-  onPress={() => {
-    setShowUserMenu(false);
-    setReportReason(null);
-    setShowReportModal(true);
-  }}
->
-  <Text style={styles.reportOptionText}>
-    ⚠️ Report user
-  </Text>
-</Pressable>
-
-      <View style={styles.menuDivider} />
-
-<Pressable
-  style={styles.menuOption}
-  onPress={handleBlockUser}
->
-  <Text style={styles.blockOptionText}>
-    🚫 Block user
-  </Text>
-</Pressable>
-
-      <Pressable
-        style={styles.cancelMenuButton}
-        onPress={() => setShowUserMenu(false)}
-      >
-        <Text style={styles.cancelMenuText}>
-          Cancel
+        <Text style={styles.name}>
+          {profile.name ?? text.userFallback}
+          {profile.age ? `, ${profile.age}` : ''}
         </Text>
-      </Pressable>
-    </View>
-  </Pressable>
-</Modal>
-<Modal
-  visible={showReportModal}
-  transparent
-  animationType="fade"
-  onRequestClose={() => setShowReportModal(false)}
->
-  <View style={styles.menuOverlay}>
-    <View style={styles.reportCard}>
-      <Text style={styles.reportTitle}>
-        ⚠️ Report {profile.name ?? 'user'}
-      </Text>
 
-      <Text style={styles.reportSubtitle}>
-        Why are you reporting this profile?
-      </Text>
+        <Text style={styles.city}>📍 {profile.city ?? text.locationNotSet}</Text>
 
-      {[
-        ['inappropriate_behavior', 'Inappropriate behavior'],
-        ['harassment', 'Harassment'],
-        ['fake_profile', 'Fake profile'],
-        ['spam', 'Spam'],
-        ['other', 'Other'],
-      ].map(([value, label]) => (
-        <Pressable
-          key={value}
+        <View
           style={[
-            styles.reportReasonButton,
-            reportReason === value &&
-              styles.reportReasonButtonActive,
+            styles.statusBadge,
+            profile.is_active ? styles.statusBadgeActive : styles.statusBadgeInactive,
           ]}
-          onPress={() => setReportReason(value)}
         >
           <Text
             style={[
-              styles.reportReasonText,
-              reportReason === value &&
-                styles.reportReasonTextActive,
+              styles.statusBadgeText,
+              profile.is_active ? styles.statusTextActive : styles.statusTextInactive,
             ]}
           >
-            {label}
+            {profile.is_active ? text.active : text.inactive}
           </Text>
-        </Pressable>
-      ))}
+        </View>
 
-<Pressable
-  style={[
-    styles.submitReportButton,
-    !reportReason && styles.reportButtonDisabled,
-  ]}
-  disabled={!reportReason}
-  onPress={handleSubmitReport}
->
-  <Text style={styles.submitReportButtonText}>
-    SUBMIT REPORT
-  </Text>
-</Pressable>
+        <View style={styles.section}>
+          <Text style={styles.label}>{text.currentlyUpFor}</Text>
+          <View style={styles.drinkChip}>
+            <Text style={styles.drink}>{localizeCurrentUpFor(profile.currently_up_for)}</Text>
+          </View>
+        </View>
 
-      <Pressable
-        style={styles.cancelMenuButton}
-        onPress={() => setShowReportModal(false)}
+        <View style={styles.section}>
+          <Text style={styles.label}>{text.about}</Text>
+          <Text style={styles.bio}>{profile.bio || text.noBio}</Text>
+        </View>
+
+        {cheersStatus === 'mutual' ? (
+          <Pressable style={styles.primaryButton} onPress={startChat}>
+            <Text style={styles.primaryButtonText}>💬 {text.openChat}</Text>
+          </Pressable>
+        ) : cheersStatus === 'sent' ? (
+          <Pressable style={[styles.primaryButton, styles.sentButton]} disabled>
+            <Text style={styles.primaryButtonText}>🍻 {text.cheersSent}</Text>
+          </Pressable>
+        ) : (
+          <Pressable style={styles.primaryButton} onPress={handleCheers}>
+            <Text style={styles.primaryButtonText}>🍻 {text.sendCheers}</Text>
+          </Pressable>
+        )}
+      </View>
+
+      <TouchableOpacity
+        style={[styles.messageButton, !isPremium && styles.messageButtonLocked]}
+        onPress={() => {
+          if (!isPremium) {
+            router.push('/premium');
+            return;
+          }
+          startChat();
+        }}
       >
-        <Text style={styles.cancelMenuText}>
-          Cancel
+        <Text style={styles.messageButtonText}>
+          {isPremium ? `💎 ${text.message}` : `🔒 ${text.message}`}
         </Text>
-      </Pressable>
-    </View>
-    </View>
-</Modal>
-      {/* ========================= */}
-      {/* MUTUAL CHEERS MODAL */}
-      {/* ========================= */}
+      </TouchableOpacity>
+
+      <Modal
+        visible={showUserMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowUserMenu(false)}
+      >
+        <Pressable style={styles.menuOverlay} onPress={() => setShowUserMenu(false)}>
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle}>{profile.name ?? text.userFallback}</Text>
+
+            <Pressable
+              style={styles.menuOption}
+              onPress={() => {
+                setShowUserMenu(false);
+                setReportReason(null);
+                setShowReportModal(true);
+              }}
+            >
+              <Text style={styles.reportOptionText}>⚠️ {text.reportUser}</Text>
+            </Pressable>
+
+            <View style={styles.menuDivider} />
+
+            <Pressable style={styles.menuOption} onPress={handleBlockUser}>
+              <Text style={styles.blockOptionText}>🚫 {text.blockUser}</Text>
+            </Pressable>
+
+            <Pressable style={styles.cancelMenuButton} onPress={() => setShowUserMenu(false)}>
+              <Text style={styles.cancelMenuText}>{text.cancel}</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showReportModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <View style={styles.menuOverlay}>
+          <View style={styles.reportCard}>
+            <Text style={styles.reportTitle}>
+              ⚠️ {text.report} {profile.name ?? text.user}
+            </Text>
+            <Text style={styles.reportSubtitle}>{text.reportWhy}</Text>
+
+            {reportReasons.map(([value, label]) => (
+              <Pressable
+                key={value}
+                style={[
+                  styles.reportReasonButton,
+                  reportReason === value && styles.reportReasonButtonActive,
+                ]}
+                onPress={() => setReportReason(value)}
+              >
+                <Text
+                  style={[
+                    styles.reportReasonText,
+                    reportReason === value && styles.reportReasonTextActive,
+                  ]}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
+
+            <Pressable
+              style={[
+                styles.submitReportButton,
+                !reportReason && styles.reportButtonDisabled,
+              ]}
+              disabled={!reportReason}
+              onPress={handleSubmitReport}
+            >
+              <Text style={styles.submitReportButtonText}>{text.submitReport}</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.cancelMenuButton}
+              onPress={() => setShowReportModal(false)}
+            >
+              <Text style={styles.cancelMenuText}>{text.cancel}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         visible={showMutualCheers}
         transparent
         animationType="fade"
-        onRequestClose={() =>
-          setShowMutualCheers(false)
-        }
+        onRequestClose={() => setShowMutualCheers(false)}
       >
         <View style={styles.cheersOverlay}>
-          {/* FALLING EMOJIS */}
-
           {confetti.map((item, index) => (
             <Animated.Text
               key={item.id}
               style={[
                 styles.fallingEmoji,
                 {
-                  left:
-                    item.x *
-                    Math.max(
-                      width -
-                        item.size -
-                        20,
-                      1
-                    ),
-
+                  left: item.x * Math.max(width - item.size - 20, 1),
                   fontSize: item.size,
-
                   transform: [
-                    {
-                      translateY:
-                        fallingValues[index],
-                    },
-
-                    {
-                      rotate:
-                        `${item.rotate}deg`,
-                    },
+                    { translateY: fallingValues[index] },
+                    { rotate: `${item.rotate}deg` },
                   ],
                 },
               ]}
@@ -955,80 +832,39 @@ async function handleBlockUser() {
             </Animated.Text>
           ))}
 
-          {/* CHEERS CARD */}
-
           <Animated.View
             style={[
               styles.cheersPopup,
-              {
-                transform: [
-                  {
-                    scale: cheersScale,
-                  },
-                ],
-              },
+              { transform: [{ scale: cheersScale }] },
             ]}
           >
-            <Text style={styles.bigCheers}>
-              🍻
+            <Text style={styles.bigCheers}>🍻</Text>
+            <Text style={styles.cheersTitle}>CHEERS!</Text>
+            <Text style={styles.cheersSubtitle}>
+              {text.mutualSubtitleStart} {profile.name ?? text.userFallback}{' '}
+              {text.mutualSubtitleEnd}
             </Text>
 
-            <Text style={styles.cheersTitle}>
-              CHEERS!
-            </Text>
-
-            <Text
-              style={styles.cheersSubtitle}
-            >
-              You and{' '}
-              {profile.name ??
-                'SipMate User'}{' '}
-              are ready for a drink!
-            </Text>
-
-            {/* ACTIONS */}
-
-            <View
-              style={styles.cheersActions}
-            >
-              <Pressable
-                style={styles.chatButton}
-                onPress={startChat}
-              >
-                <Text
-                  style={
-                    styles.chatButtonText
-                  }
-                >
-                  💬 START CHAT
-                </Text>
+            <View style={styles.cheersActions}>
+              <Pressable style={styles.chatButton} onPress={startChat}>
+                <Text style={styles.chatButtonText}>💬 {text.startChat}</Text>
               </Pressable>
 
               <Pressable
                 style={styles.browseButton}
                 onPress={() => {
-                  setShowMutualCheers(
-                    false
-                  );
-
-                  router.push(
-                    '/nearby'
-                  );
+                  setShowMutualCheers(false);
+                  router.push('/nearby');
                 }}
               >
-                <Text
-                  style={
-                    styles.browseButtonText
-                  }
-                >
-                  🍻 KEEP BROWSING
-                </Text>
+                <Text style={styles.browseButtonText}>🍻 {text.keepBrowsing}</Text>
               </Pressable>
             </View>
           </Animated.View>
         </View>
-   </Modal>
-         <Modal
+      </Modal>
+
+      <Modal
         visible={selectedPhoto !== null}
         transparent
         animationType="fade"
@@ -1051,165 +887,104 @@ async function handleBlockUser() {
           )}
         </View>
       </Modal>
-
     </View>
   );
 }
 
-// =========================
-// STYLES
-// =========================
-
 const styles = StyleSheet.create({
-screen: {
-  flex: 1,
-  backgroundColor: '#09090B',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 20,
-},
-
-  loading: {
-    color: '#FFFFFF',
-    fontSize: 16,
-  },
-
-card: {
-  width: '100%',
-  maxWidth: 520,
-  backgroundColor: '#18181B',
-  borderRadius: 32,
-  paddingHorizontal: 24,
-  paddingVertical: 28,
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: '#27272A',
-},
-
-  avatar: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: '#A855F7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 44,
-    fontWeight: '900',
-  },
-
-name: {
-  color: '#FFFFFF',
-  fontSize: 28,
-  fontWeight: '900',
-  marginTop: 4,
-  textAlign: 'center',
-},
-
-city: {
-  color: '#A1A1AA',
-  marginTop: 7,
-  fontSize: 13,
-},
-
-  status: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    marginTop: 14,
-  },
-
-section: {
-  width: '100%',
-  backgroundColor: '#202023',
-  padding: 16,
-  borderRadius: 20,
-  marginTop: 18,
-  borderWidth: 1,
-  borderColor: '#2F2F35',
-},
-
-label: {
-  color: '#71717A',
-  fontSize: 10,
-  fontWeight: '900',
-  letterSpacing: 1.4,
-},
-
-  drink: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '900',
-    marginTop: 7,
-  },
-
-bio: {
-  color: '#E4E4E7',
-  fontSize: 14,
-  lineHeight: 22,
-  marginTop: 8,
-},
-
-  cheersButton: {
-    width: '100%',
-    marginTop: 24,
-    backgroundColor: '#A855F7',
-    paddingVertical: 17,
-    borderRadius: 24,
-    alignItems: 'center',
-  },
-
-  cheersText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900',
-  },
-
-  // =========================
-  // CHEERS OVERLAY
-  // =========================
-
-  cheersOverlay: {
+  screen: {
     flex: 1,
-    backgroundColor:
-      'rgba(0,0,0,0.86)',
+    backgroundColor: '#09090B',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
-
+  loading: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 520,
+    backgroundColor: '#18181B',
+    borderRadius: 32,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#27272A',
+  },
+  name: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '900',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  city: {
+    color: '#A1A1AA',
+    marginTop: 7,
+    fontSize: 13,
+  },
+  section: {
+    width: '100%',
+    backgroundColor: '#202023',
+    padding: 16,
+    borderRadius: 20,
+    marginTop: 18,
+    borderWidth: 1,
+    borderColor: '#2F2F35',
+  },
+  label: {
+    color: '#71717A',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1.4,
+  },
+  drink: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  bio: {
+    color: '#E4E4E7',
+    fontSize: 14,
+    lineHeight: 22,
+    marginTop: 8,
+  },
+  cheersOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.86)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
   fallingEmoji: {
     position: 'absolute',
     top: -120,
     zIndex: 5,
   },
-
   cheersPopup: {
     width: '100%',
     maxWidth: 430,
     backgroundColor: '#18181B',
     borderWidth: 2,
-    borderColor: '#A855F7',
+    borderColor: '#DC2626',
     borderRadius: 30,
     paddingHorizontal: 30,
     paddingVertical: 34,
     alignItems: 'center',
     zIndex: 20,
   },
-
   bigCheers: {
     fontSize: 78,
   },
-
   cheersTitle: {
-    color: '#A855F7',
+    color: '#EF4444',
     fontSize: 44,
     fontWeight: '900',
     marginTop: 14,
   },
-
   cheersSubtitle: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -1217,26 +992,22 @@ bio: {
     marginTop: 12,
     lineHeight: 23,
   },
-
   cheersActions: {
     width: '100%',
     marginTop: 28,
   },
-
   chatButton: {
     width: '100%',
-    backgroundColor: '#A855F7',
+    backgroundColor: '#DC2626',
     paddingVertical: 16,
     borderRadius: 22,
     alignItems: 'center',
   },
-
   chatButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '900',
   },
-
   browseButton: {
     width: '100%',
     backgroundColor: '#27272A',
@@ -1245,335 +1016,295 @@ bio: {
     alignItems: 'center',
     marginTop: 12,
   },
-
   browseButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
   },
-profileAvatar: {
-  width: 140,
-  height: 140,
-  borderRadius: 70,
-  alignSelf: 'center',
-  marginBottom: 18,
-  backgroundColor: '#27272A',
-  borderWidth: 3,
-  borderColor: '#DC2626',
-},
-
-profileAvatarFallback: {
-  width: 140,
-  height: 140,
-  borderRadius: 70,
-  alignSelf: 'center',
-  marginBottom: 18,
-  backgroundColor: '#450A0A',
-  borderWidth: 3,
-  borderColor: '#DC2626',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-profileAvatarFallbackText: {
-  color: '#FFFFFF',
-  fontSize: 48,
-  fontWeight: '900',
-},
-statusBadge: {
-  marginTop: 14,
-  paddingHorizontal: 14,
-  paddingVertical: 8,
-  borderRadius: 999,
-  borderWidth: 1,
-},
-
-statusBadgeActive: {
-  backgroundColor: '#052E16',
-  borderColor: '#22C55E',
-},
-
-statusBadgeInactive: {
-  backgroundColor: '#27272A',
-  borderColor: '#52525B',
-},
-
-statusBadgeText: {
-  fontSize: 11,
-  fontWeight: '900',
-},
-
-statusTextActive: {
-  color: '#4ADE80',
-},
-
-statusTextInactive: {
-  color: '#A1A1AA',
-},
-
-drinkChip: {
-  marginTop: 10,
-  backgroundColor: '#09090B',
-  borderWidth: 1,
-  borderColor: '#DC2626',
-  borderRadius: 16,
-  paddingHorizontal: 14,
-  paddingVertical: 12,
-},
-
-primaryButton: {
-  width: '100%',
-  marginTop: 24,
-  backgroundColor: '#DC2626',
-  paddingVertical: 17,
-  borderRadius: 22,
-  alignItems: 'center',
-  shadowColor: '#DC2626',
-shadowOpacity: 0.25,
-shadowRadius: 10,
-shadowOffset: {
-  width: 0,
-  height: 4,
-},
-elevation: 4,
-},
-
-primaryButtonText: {
-  color: '#FFFFFF',
-  fontSize: 16,
-  fontWeight: '900',
-  letterSpacing: 0.4,
-},
-
-sentButton: {
-  opacity: 0.55,
-},
-menuButton: {
-  position: 'absolute',
-  top: 18,
-  right: 18,
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  backgroundColor: '#27272A',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 10,
-},
-
-menuButtonText: {
-  color: '#FFFFFF',
-  fontSize: 18,
-  fontWeight: '900',
-  letterSpacing: 2,
-  marginTop: -5,
-},
-
-menuOverlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.78)',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 20,
-},
-
-menuCard: {
-  width: '100%',
-  maxWidth: 390,
-  backgroundColor: '#18181B',
-  borderWidth: 1,
-  borderColor: '#27272A',
-  borderRadius: 26,
-  padding: 20,
-},
-
-menuTitle: {
-  color: '#FFFFFF',
-  fontSize: 18,
-  fontWeight: '900',
-  textAlign: 'center',
-  marginBottom: 18,
-},
-
-menuOption: {
-  width: '100%',
-  paddingVertical: 16,
-  paddingHorizontal: 14,
-  borderRadius: 14,
-},
-
-reportOptionText: {
-  color: '#FBBF24',
-  fontSize: 15,
-  fontWeight: '800',
-},
-
-blockOptionText: {
-  color: '#EF4444',
-  fontSize: 15,
-  fontWeight: '900',
-},
-
-menuDivider: {
-  height: 1,
-  backgroundColor: '#27272A',
-},
-
-cancelMenuButton: {
-  width: '100%',
-  backgroundColor: '#27272A',
-  paddingVertical: 14,
-  borderRadius: 16,
-  alignItems: 'center',
-  marginTop: 16,
-},
-
-cancelMenuText: {
-  color: '#A1A1AA',
-  fontSize: 14,
-  fontWeight: '800',
-},
-reportCard: {
-  width: '100%',
-  maxWidth: 420,
-  backgroundColor: '#18181B',
-  borderRadius: 26,
-  borderWidth: 1,
-  borderColor: '#27272A',
-  padding: 22,
-},
-
-reportTitle: {
-  color: '#FFFFFF',
-  fontSize: 20,
-  fontWeight: '900',
-  textAlign: 'center',
-},
-
-reportSubtitle: {
-  color: '#A1A1AA',
-  fontSize: 13,
-  textAlign: 'center',
-  marginTop: 8,
-  marginBottom: 18,
-},
-
-reportReasonButton: {
-  width: '100%',
-  backgroundColor: '#27272A',
-  borderWidth: 1,
-  borderColor: '#3F3F46',
-  borderRadius: 15,
-  paddingVertical: 14,
-  paddingHorizontal: 15,
-  marginBottom: 9,
-},
-
-reportReasonButtonActive: {
-  backgroundColor: '#450A0A',
-  borderColor: '#DC2626',
-},
-
-reportReasonText: {
-  color: '#D4D4D8',
-  fontSize: 14,
-  fontWeight: '700',
-},
-
-reportReasonTextActive: {
-  color: '#FFFFFF',
-  fontWeight: '900',
-},
-
-submitReportButton: {
-  width: '100%',
-  backgroundColor: '#DC2626',
-  paddingVertical: 15,
-  borderRadius: 16,
-  alignItems: 'center',
-  marginTop: 12,
-},
-
-reportButtonDisabled: {
-  opacity: 0.4,
-},
-
-submitReportButtonText: {
-  color: '#FFFFFF',
-  fontSize: 14,
-  fontWeight: '900',
-},
-messageButton: {
-  width: '100%',
-  backgroundColor: '#F59E0B',
-  borderRadius: 16,
-  paddingVertical: 14,
-  alignItems: 'center',
-  marginTop: 10,
-},
-
-messageButtonLocked: {
-  backgroundColor: '#27272A',
-  borderWidth: 1,
-  borderColor: '#F59E0B',
-},
-
-messageButtonText: {
-  color: '#09090B',
-  fontSize: 13,
-  fontWeight: '900',
-},
-profileGallerySection: {
-  width: '100%',
-  marginTop: 18,
-},
-
-profileGalleryTitle: {
-  color: '#FFFFFF',
-  fontSize: 12,
-  fontWeight: '900',
-  marginBottom: 10,
-},
-
-profileGalleryRow: {
-  width: '100%',
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: 10,
-  paddingRight: 12,
-},
-profileGalleryImage: {
-  width: 150,
-  height: 190,
-  borderRadius: 18,
-  marginRight: 10,
-  backgroundColor: '#27272A',
-},
-photoModal: {
-  flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.95)',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-fullscreenPhoto: {
-  width: '95%',
-  height: '85%',
-},
-
-photoModalClose: {
-  position: 'absolute',
-  top: 30,
-  right: 25,
-  width: 42,
-  height: 42,
-  borderRadius: 21,
-  backgroundColor: '#DC2626',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 10,
-},
-
+  profileAvatar: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    alignSelf: 'center',
+    marginBottom: 18,
+    backgroundColor: '#27272A',
+    borderWidth: 3,
+    borderColor: '#DC2626',
+  },
+  profileAvatarFallback: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    alignSelf: 'center',
+    marginBottom: 18,
+    backgroundColor: '#450A0A',
+    borderWidth: 3,
+    borderColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileAvatarFallbackText: {
+    color: '#FFFFFF',
+    fontSize: 48,
+    fontWeight: '900',
+  },
+  statusBadge: {
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  statusBadgeActive: {
+    backgroundColor: '#052E16',
+    borderColor: '#22C55E',
+  },
+  statusBadgeInactive: {
+    backgroundColor: '#27272A',
+    borderColor: '#52525B',
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  statusTextActive: {
+    color: '#4ADE80',
+  },
+  statusTextInactive: {
+    color: '#A1A1AA',
+  },
+  drinkChip: {
+    marginTop: 10,
+    backgroundColor: '#09090B',
+    borderWidth: 1,
+    borderColor: '#DC2626',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  primaryButton: {
+    width: '100%',
+    marginTop: 24,
+    backgroundColor: '#DC2626',
+    paddingVertical: 17,
+    borderRadius: 22,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 0.4,
+  },
+  sentButton: {
+    opacity: 0.55,
+  },
+  menuButton: {
+    position: 'absolute',
+    top: 18,
+    right: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#27272A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  menuButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 2,
+    marginTop: -5,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.78)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  menuCard: {
+    width: '100%',
+    maxWidth: 390,
+    backgroundColor: '#18181B',
+    borderWidth: 1,
+    borderColor: '#27272A',
+    borderRadius: 26,
+    padding: 20,
+  },
+  menuTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 18,
+  },
+  menuOption: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+  },
+  reportOptionText: {
+    color: '#FBBF24',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  blockOptionText: {
+    color: '#EF4444',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#27272A',
+  },
+  cancelMenuButton: {
+    width: '100%',
+    backgroundColor: '#27272A',
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  cancelMenuText: {
+    color: '#A1A1AA',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  reportCard: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#18181B',
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: '#27272A',
+    padding: 22,
+  },
+  reportTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  reportSubtitle: {
+    color: '#A1A1AA',
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 18,
+  },
+  reportReasonButton: {
+    width: '100%',
+    backgroundColor: '#27272A',
+    borderWidth: 1,
+    borderColor: '#3F3F46',
+    borderRadius: 15,
+    paddingVertical: 14,
+    paddingHorizontal: 15,
+    marginBottom: 9,
+  },
+  reportReasonButtonActive: {
+    backgroundColor: '#450A0A',
+    borderColor: '#DC2626',
+  },
+  reportReasonText: {
+    color: '#D4D4D8',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  reportReasonTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+  },
+  submitReportButton: {
+    width: '100%',
+    backgroundColor: '#DC2626',
+    paddingVertical: 15,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  reportButtonDisabled: {
+    opacity: 0.4,
+  },
+  submitReportButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  messageButton: {
+    width: '100%',
+    maxWidth: 520,
+    backgroundColor: '#F59E0B',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  messageButtonLocked: {
+    backgroundColor: '#27272A',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  messageButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  profileGallerySection: {
+    width: '100%',
+    marginTop: 18,
+  },
+  profileGalleryTitle: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
+    marginBottom: 10,
+  },
+  profileGalleryRow: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingRight: 12,
+  },
+  photoPressable: {
+    width: 150,
+    height: 190,
+    marginRight: 10,
+    zIndex: 20,
+  },
+  profileGalleryImage: {
+    width: 150,
+    height: 190,
+    borderRadius: 18,
+    backgroundColor: '#27272A',
+  },
+  photoModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullscreenPhoto: {
+    width: '95%',
+    height: '85%',
+  },
+  photoModalClose: {
+    position: 'absolute',
+    top: 30,
+    right: 25,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
   photoModalCloseText: {
     color: '#FFFFFF',
     fontSize: 20,
