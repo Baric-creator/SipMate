@@ -38,6 +38,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "26d27edf-6283-457e-9fe7-bcf52f40b371"
+      }
+    },
+    "owner": "sipmate.app"
   }
 }
