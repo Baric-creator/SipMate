@@ -15,7 +15,7 @@ Use this as a preparation worksheet for the Google Play Console Data safety form
 - Approximate location — nearby discovery and distance features.
 - Precise location — used when the user grants location permission so SipMate can calculate nearby results and distance.
 
-Location is requested while using the app. SipMate does not currently require background location permission.
+Location is requested while using the app. SipMate does not currently require background location permission. The Android app config explicitly uses foreground coarse/fine location only; do not add background or foreground-service location permissions unless the product actually gains a feature that requires them and the Play declaration is updated accordingly.
 
 ### Photos
 - Profile avatar and additional profile photos — user profile and discovery features.
@@ -28,7 +28,7 @@ Location is requested while using the app. SipMate does not currently require ba
 - Profile activity/status and currently-up-for preference.
 
 ### Purchase information
-Premium subscription state and Stripe identifiers needed to provide and manage Premium access are stored. Full payment-card details are processed by Stripe and are not stored by SipMate.
+Premium subscription state and provider identifiers needed to provide and manage Premium access are stored. The current web flow uses Stripe; the Android release has a Premium purchase gate until a Play-compliant Android billing implementation is completed and tested. Full payment-card details are processed by the payment provider and are not stored by SipMate.
 
 ## Main purposes
 Data is used for:
@@ -42,10 +42,20 @@ Data is used for:
 ## Service providers
 Production currently uses or is designed to use:
 - Supabase for authentication, database, storage, realtime and Edge Functions.
-- Stripe for Premium payment and subscription processing.
+- Stripe for the current web Premium payment/subscription flow.
+- A Google Play-compliant billing provider/integration for Android Premium after the Android billing release gate is completed.
 - Nominatim/OpenStreetMap-based reverse geocoding in the current location flow.
 
-Check whether Google Play considers any production transfer to these providers "sharing" under the Data safety definitions before submitting the form.
+Check whether Google Play considers any production transfer to these providers "sharing" under the Data safety definitions before submitting the form. Re-check this list after the final Android billing provider is selected and integrated.
+
+## Android permission inventory
+Current release intent:
+- `ACCESS_COARSE_LOCATION` — Nearby/location features.
+- `ACCESS_FINE_LOCATION` — precise distance/location when the user grants it.
+- No background location.
+- `RECORD_AUDIO` is explicitly blocked in app configuration because SipMate has no microphone feature.
+
+Before Play submission, inspect the generated production Android manifest rather than relying only on `app.json`, because dependencies/config plugins can affect the final native manifest. Any unexpected sensitive permission is a release blocker until explained or removed.
 
 ## Security
 - Authentication is handled through Supabase Auth.
@@ -59,7 +69,9 @@ SipMate includes an in-app Delete Account flow backed by a server-side Edge Func
 ## Required final checks before Play Console submission
 - Confirm production RLS and storage policies.
 - Confirm all foreign keys/user-owned rows that should disappear on account deletion actually cascade or are explicitly deleted.
-- Deploy and test the `delete-account` Edge Function with a disposable test user.
+- Deploy and test the `delete-account` Edge Function with a disposable test user only after deletion behavior is verified.
+- Inspect the generated Android manifest and reconcile every permission with this worksheet and the Play Console declarations.
+- Confirm the final Android billing implementation/provider and update purchase-data/provider declarations.
 - Add the final public privacy-policy URL.
 - Add the final external account-deletion request URL.
 - Add the final public support/privacy email.
