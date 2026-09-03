@@ -75,9 +75,25 @@ The Supabase URL and anon/publishable client key are intended for client use whe
 
 Before each first build for an environment, confirm that both required client variables are present. A successful TypeScript check does not prove that remote EAS environment variables are configured.
 
+## Stripe web origin release gate
+
+The web-only Stripe checkout and customer portal Edge Functions now require a safe return origin. Browser requests may use their HTTPS request origin; non-browser or missing-origin requests require the server-side `APP_WEB_URL` Supabase Edge Function secret/config value.
+
+Before relying on web Premium in production:
+
+- set `APP_WEB_URL` to the canonical HTTPS SipMate web origin, with no `/premium` suffix
+- do not put `APP_WEB_URL` in `EXPO_PUBLIC_*`; it is server configuration for the Edge Functions
+- verify checkout success returns to `/premium?checkout=success`
+- verify checkout cancellation returns to `/premium?checkout=cancelled`
+- verify Stripe Customer Portal returns to `/premium`
+- verify malformed/missing origins do not fall back to localhost in production
+- tighten `Access-Control-Allow-Origin` from `*` to the final canonical web origin once that public origin is fixed and native callers are confirmed not to depend on browser CORS
+
+Do not invent a production domain in source code. Until the final public web origin exists, the functions should fail closed rather than silently redirecting a production customer to a localhost URL.
+
 ## Account deletion release gate
 
-The `delete-account` Edge Function now refuses destructive account deletion unless the server-side environment variable `ACCOUNT_DELETION_ENABLED` is exactly `true`. This is deliberate. Deleting only the Supabase Auth identity before database rows, storage objects and paid subscriptions are verified could leave orphaned data or an active subscription attached to a deleted account.
+The `delete-account` Edge Function refuses destructive account deletion unless the server-side environment variable `ACCOUNT_DELETION_ENABLED` is exactly `true`. This is deliberate. Deleting only the Supabase Auth identity before database rows, storage objects and paid subscriptions are verified could leave orphaned data or an active subscription attached to a deleted account.
 
 Do not enable this flag in production until all of the following are proven with a disposable paid and unpaid test account:
 
@@ -166,7 +182,13 @@ Do not run a Play submission command until all of these prerequisites are comple
 For the first controlled upload, use the repository command that explicitly selects the latest Android build:
 
 ```bash
-npm run submit:android:internal:latest
+npm run submit:android:latest
+```
+
+For later CI automation only after credentials are configured and the interactive flow has already succeeded:
+
+```bash
+npm run submit:android:latest:ci
 ```
 
 The `production` submit profile intentionally targets Google Play `internal`, uses `releaseStatus: draft`, and sets `changesNotSentForReview: true`. This keeps the upload away from the public production track and leaves review/promotion as a deliberate Play Console action.
