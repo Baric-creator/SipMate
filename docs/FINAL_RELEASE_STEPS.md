@@ -9,10 +9,13 @@ This is the short path from the current repository to a testable Google Play bui
 - EAS development, preview and production profiles
 - Development APK profile with `developmentClient: true`
 - Production Android App Bundle profile
+- Production submit profile restricted to Google Play internal track, draft status, and changes held for manual review
+- EAS CLI requires a clean committed Git state before builds
 - Android Premium release gate prevents shipping the existing web Stripe purchase flow as the Android purchase UI
 - Billing implementation plan documented for Google Play / RevenueCat
 - Privacy, community guidelines, account deletion UI, block/report and 18+ registration are present
 - Automated TypeScript checks run on pushes to `master`
+- Local environment files, Android signing files and common Google Play service-account JSON filenames are ignored by Git
 
 ## Owner/account steps that cannot be completed from repository code
 
@@ -23,6 +26,7 @@ This is the short path from the current repository to a testable Google Play bui
 5. Add the RevenueCat Android public SDK key through a production-safe environment configuration. Do not commit private/service credentials.
 6. Provide a real public support/privacy contact address.
 7. Publish a public privacy-policy URL and public account-deletion request URL.
+8. Upload the Google Play service-account key to EAS credentials when EAS Submit is ready. Keep the JSON outside the repository.
 
 ## Billing implementation sequence
 
@@ -46,24 +50,51 @@ After pulling the current `master` branch locally:
 
 ```bash
 npm install
+npm run setup:dev-client
+npm run doctor
+git status
+git diff -- package.json package-lock.json
+```
+
+Commit and push the generated `expo-dev-client` dependency changes before starting an EAS build. Then link/authenticate EAS, verify the development environment variables, and build:
+
+```bash
 npx eas-cli@latest login
+npx eas-cli@latest whoami
 npx eas-cli@latest build:configure
+npx eas-cli@latest env:list --environment development
 npm run build:android:development
 ```
 
-Use the development build for native billing integration/testing.
+Use the development APK for real-device native integration/testing. Do not move on merely because the cloud build succeeded.
 
-Then create a general preview APK:
+Then verify the preview environment and create the release-like preview APK:
 
 ```bash
+npx eas-cli@latest env:list --environment preview
 npm run build:android:preview
 ```
 
-After the release checklist is green, create the Play Store bundle:
+After the release checklist, billing gate and native smoke tests are green, verify production variables and create the Play Store bundle:
 
 ```bash
+npx eas-cli@latest env:list --environment production
 npm run build:android:production
 ```
+
+For the first safe Play upload, keep the existing production submit profile unchanged and submit the latest production build to the internal draft release:
+
+```bash
+npm run submit:android:latest
+```
+
+For a non-interactive CI environment with the required Expo authentication already configured:
+
+```bash
+npm run submit:android:latest:ci
+```
+
+Do not switch the submit track to production or remove the draft/manual-review gates until the Play Console release checklist is complete.
 
 ## Do not call the app production-ready until all are true
 
