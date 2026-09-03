@@ -40,6 +40,8 @@ const repoFiles = walk(root);
 const textFiles = repoFiles.filter((file) => /\.(?:ts|tsx|js|mjs|json|md|toml|yml|yaml|env|txt)$/i.test(file));
 
 // High-confidence credential signatures. These should never exist in committed source.
+// The audit script itself contains signature regex literals, so exclude only this file
+// from the secret-content scan to avoid detecting its own test patterns.
 const secretPatterns = [
   { name: 'Stripe live secret key', regex: /sk_live_[A-Za-z0-9]{16,}/g },
   { name: 'Stripe webhook signing secret', regex: /whsec_[A-Za-z0-9]{16,}/g },
@@ -49,6 +51,7 @@ const secretPatterns = [
 
 for (const file of textFiles) {
   const relative = path.relative(root, file).replaceAll('\\', '/');
+  if (relative === 'scripts/security-audit.mjs') continue;
   const content = fs.readFileSync(file, 'utf8');
   for (const pattern of secretPatterns) {
     if (pattern.regex.test(content)) fail(`${pattern.name} found in ${relative}`);
