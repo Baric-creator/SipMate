@@ -9,8 +9,10 @@ Status snapshot: 3 September 2026
 - Expo SDK 57 (targets Android API 36)
 - Dark SipMate splash / adaptive icon background
 - Location permissions configured
+- EAS development APK profile (`developmentClient: true`, internal distribution)
 - EAS preview APK profile
 - EAS production Android App Bundle (`.aab`) profile
+- Package scripts for Expo Doctor and Android development/preview/production builds
 - English / German / Croatian UI coverage across the main MVP
 - 18+ registration enforcement
 - Block and report tools
@@ -19,6 +21,7 @@ Status snapshot: 3 September 2026
 - Initial Play Store listing copy
 - Google Play Data safety draft
 - Community safety guidelines
+- Android-specific Premium release gate that does not expose Stripe checkout
 - Safe `.env.example`
 - Working MVP backup branch
 - Automated TypeScript CI check on `master`
@@ -26,36 +29,70 @@ Status snapshot: 3 September 2026
 ## Must be completed before production submission
 
 1. Create/login to an Expo account and link this project to EAS.
-2. Configure production environment variables in EAS/Supabase; never commit secrets.
-3. Run a preview Android build and test it on a real phone.
-4. Run the production `.aab` build.
-5. Add a public privacy-policy URL. Google Play requires the privacy policy to be publicly accessible and linked inside the app.
-6. Finish account deletion safely: verify database/storage deletion behavior, cancel any paid subscription before deletion, and add the required external web resource for deletion requests.
-7. Add a real public support/privacy contact address to the privacy policy and Play listing.
-8. Complete the Play Console Data safety form accurately, including location, profile data, photos, authentication, chat/user-generated content and payment-related processing.
-9. Complete the content-rating questionnaire. SipMate should be configured for adults because it is centered around social drinking meetups.
-10. Upload required store assets: 512x512 icon, 1024x500 feature graphic and phone screenshots.
-11. **PAYMENTS RELEASE GATE:** do not ship the current Stripe Checkout purchase flow as the default Android in-app purchase flow. SipMate Premium unlocks digital app functionality, so Google Play Billing is required unless SipMate is enrolled in and correctly implements an eligible alternative-billing / billing-choice program for the user's market. See `docs/PLAY_BILLING_PLAN.md`.
-12. Test Premium purchase, renewal, cancellation and restore behavior with the final Android billing implementation before promoting from testing to production.
-13. Review Supabase RLS policies and production CORS settings one final time.
-14. Remove temporary diagnostics/debug logging that is not needed in production.
+2. Install `expo-dev-client` with the repository script `npm run setup:dev-client`. This intentionally uses Expo's installer so `package.json` and `package-lock.json` are updated together with the SDK-compatible version.
+3. Run `npm run doctor` and resolve any release-relevant dependency/configuration warnings.
+4. Configure production environment variables in EAS/Supabase; never commit secrets.
+5. Run `npm run build:android:development`, install the APK on a real Android phone, and test the native app before adding/testing the final billing implementation.
+6. After native smoke testing, run a preview Android build and test the release-like APK on a real phone.
+7. Run the production `.aab` build only after the release gates below are complete.
+8. Add a public privacy-policy URL. Google Play requires the privacy policy to be publicly accessible and linked inside the app.
+9. Finish account deletion safely: verify database/storage deletion behavior, cancel any paid subscription before deletion, and add the required external web resource for deletion requests.
+10. Add a real public support/privacy contact address to the privacy policy and Play listing.
+11. Complete the Play Console Data safety form accurately, including location, profile data, photos, authentication, chat/user-generated content and payment-related processing.
+12. Complete the content-rating questionnaire. SipMate should be configured for adults because it is centered around social drinking meetups.
+13. Upload required store assets: 512x512 icon, 1024x500 feature graphic and phone screenshots.
+14. **PAYMENTS RELEASE GATE:** do not ship the current Stripe Checkout purchase flow as the default Android in-app purchase flow. SipMate Premium unlocks digital app functionality, so Google Play Billing is required unless SipMate is enrolled in and correctly implements an eligible alternative-billing / billing-choice program for the user's market. See `docs/PLAY_BILLING_PLAN.md`.
+15. Test Premium purchase, renewal, cancellation and restore behavior with the final Android billing implementation before promoting from testing to production.
+16. Review Supabase RLS policies and production CORS settings one final time.
+17. Remove temporary diagnostics/debug logging that is not needed in production.
 
-## Build commands after pulling the latest repository
+## First native Android development-build pass
+
+After pulling the latest repository, run these commands from the SipMate project root in this order:
 
 ```bash
 npm install
-npx eas-cli login
-npx eas-cli build:configure
-npx eas-cli build --platform android --profile preview
+npm run setup:dev-client
+npm run doctor
+npx eas-cli@latest login
+npx eas-cli@latest build:configure
+npm run build:android:development
 ```
 
-After the preview build has been tested successfully:
+Why development first: the development build is the correct place to validate native behavior and native libraries on a real device before producing release artifacts. `expo-dev-client` is deliberately installed through `npx expo install`, not by manually pinning package metadata in GitHub.
+
+## Preview and production build pass
+
+After the development APK is installed and the native smoke test passes:
 
 ```bash
-npx eas-cli build --platform android --profile production
+npm run build:android:preview
 ```
 
-The production profile generates an Android App Bundle suitable for Google Play upload.
+After the preview APK passes the complete release checklist and the Android billing gate is implemented and tested:
+
+```bash
+npm run build:android:production
+```
+
+The production profile generates an Android App Bundle suitable for Google Play upload. A successful TypeScript CI run is necessary but does not replace testing the native APK/AAB behavior.
+
+## Native smoke-test minimum
+
+Before treating an Android build as a release candidate, verify on a physical device:
+
+- registration and login
+- location permission and Nearby distance/location behavior
+- profile editing and avatar/gallery upload
+- ACTIVE / INACTIVE visibility
+- Cheers one-way and mutual CHEERS flow
+- chat send/receive, realtime update and unread/read state
+- block, report and unblock
+- language switching and persistence
+- privacy/community/delete-account navigation
+- Android Premium screen does not expose Stripe checkout
+- existing Premium entitlement is displayed correctly
+- final Google Play Billing purchase/restore/cancel behavior once billing is integrated
 
 ## Google Play API requirement
 
