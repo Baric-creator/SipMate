@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
@@ -22,33 +23,75 @@ type ChatItem = {
   lastMessageTime: string | null;
   unreadCount: number;
 };
+
+const copy = {
+  en: {
+    title: 'Chats',
+    subtitle: 'Your SipMate conversations',
+    loading: 'Loading chats...',
+    emptyTitle: 'No chats yet',
+    emptyText: 'Get a mutual CHEERS to start chatting.',
+    noMessages: 'No messages yet 🍻',
+    active: 'ACTIVE',
+    refresh: 'Refresh',
+    userFallback: 'SipMate User',
+  },
+  de: {
+    title: 'Chats',
+    subtitle: 'Deine SipMate-Unterhaltungen',
+    loading: 'Chats werden geladen...',
+    emptyTitle: 'Noch keine Chats',
+    emptyText: 'Hol dir ein gegenseitiges CHEERS, um zu chatten.',
+    noMessages: 'Noch keine Nachrichten 🍻',
+    active: 'AKTIV',
+    refresh: 'Aktualisieren',
+    userFallback: 'SipMate-Nutzer',
+  },
+  hr: {
+    title: 'Chatovi',
+    subtitle: 'Tvoji SipMate razgovori',
+    loading: 'Učitavanje chatova...',
+    emptyTitle: 'Još nema chatova',
+    emptyText: 'Ostvari uzajamni CHEERS za početak razgovora.',
+    noMessages: 'Još nema poruka 🍻',
+    active: 'AKTIVAN',
+    refresh: 'Osvježi',
+    userFallback: 'SipMate korisnik',
+  },
+} as const;
+
 export default function ChatsScreen() {
+  const { i18n } = useTranslation();
+  const language = i18n.language?.split('-')[0] as keyof typeof copy;
+  const text = copy[language] ?? copy.en;
+
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadChats();
   }, []);
-  useEffect(() => {
-  const channel = supabase
-    .channel('chat-list-updates')
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-      },
-      () => {
-        loadChats();
-      }
-    )
-    .subscribe();
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, []);
+  useEffect(() => {
+    const channel = supabase
+      .channel('chat-list-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        () => {
+          loadChats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   async function loadChats() {
     try {
@@ -65,7 +108,6 @@ export default function ChatsScreen() {
 
       const myId = session.user.id;
 
-      // Sve moje conversations
       const { data: conversations, error: conversationError } =
         await supabase
           .from('conversations')
@@ -92,17 +134,13 @@ export default function ChatsScreen() {
           : conversation.user_one
       );
 
-      // Profili drugih ljudi
-const { data: profiles, error: profileError } = await supabase
-  .from('profiles')
-  .select('id, name, age, is_active, avatar_url')
-  .in('id', otherUserIds);
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name, age, is_active, avatar_url')
+        .in('id', otherUserIds);
 
       if (profileError) {
-        console.log(
-          'CHATS PROFILES ERROR:',
-          profileError.message
-        );
+        console.log('CHATS PROFILES ERROR:', profileError.message);
         return;
       }
 
@@ -115,10 +153,9 @@ const { data: profiles, error: profileError } = await supabase
             : conversation.user_one;
 
         const otherProfile = profiles?.find(
-          (profile) => profile.id === otherUserId,         
+          (profile) => profile.id === otherUserId
         );
 
-        // Zadnja poruka
         const { data: lastMessage } = await supabase
           .from('messages')
           .select('content, created_at')
@@ -126,42 +163,38 @@ const { data: profiles, error: profileError } = await supabase
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
-          const { count: unreadCount, error: unreadError } = await supabase
-  .from('messages')
-  .select('*', { count: 'exact', head: true })
-  .eq('conversation_id', conversation.id)
-  .neq('sender_id', myId)
-  .is('read_at', null);
 
-if (unreadError) {
-  console.log('UNREAD COUNT ERROR:', unreadError.message);
-}
+        const { count: unreadCount, error: unreadError } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', conversation.id)
+          .neq('sender_id', myId)
+          .is('read_at', null);
 
-items.push({
-    unreadCount: unreadCount ?? 0,
-  conversationId: conversation.id,
-  userId: otherUserId,
-  name: otherProfile?.name ?? 'SipMate User',
-  age: otherProfile?.age ?? null,
-  isActive: otherProfile?.is_active ?? false,
-  lastMessage:
-    lastMessage?.content ?? 'No messages yet 🍻',
-  lastMessageTime:
-    lastMessage?.created_at ?? null,
-    avatar_url: otherProfile?.avatar_url ?? null,
-});
+        if (unreadError) {
+          console.log('UNREAD COUNT ERROR:', unreadError.message);
+        }
+
+        items.push({
+          unreadCount: unreadCount ?? 0,
+          conversationId: conversation.id,
+          userId: otherUserId,
+          name: otherProfile?.name ?? text.userFallback,
+          age: otherProfile?.age ?? null,
+          isActive: otherProfile?.is_active ?? false,
+          lastMessage: lastMessage?.content ?? text.noMessages,
+          lastMessageTime: lastMessage?.created_at ?? null,
+          avatar_url: otherProfile?.avatar_url ?? null,
+        });
       }
 
-      // Najnoviji razgovor gore
       items.sort((a, b) => {
         const aTime = a.lastMessageTime
           ? new Date(a.lastMessageTime).getTime()
           : 0;
-
         const bTime = b.lastMessageTime
           ? new Date(b.lastMessageTime).getTime()
           : 0;
-
         return bTime - aTime;
       });
 
@@ -171,18 +204,14 @@ items.push({
     }
   }
 
-function openChat(item: ChatItem) {
-  console.log('OPEN CHAT PRESSED:', item);
+  function openChat(item: ChatItem) {
+    const url =
+      `/chat?conversationId=${encodeURIComponent(item.conversationId)}` +
+      `&id=${encodeURIComponent(item.userId)}` +
+      `&name=${encodeURIComponent(item.name)}`;
 
-  const url =
-    `/chat?conversationId=${encodeURIComponent(item.conversationId)}` +
-    `&id=${encodeURIComponent(item.userId)}` +
-    `&name=${encodeURIComponent(item.name)}`;
-
-  console.log('GOING TO:', url);
-
-  router.push(url as any);
-}
+    router.push(url as any);
+  }
 
   function formatTime(value: string | null) {
     if (!value) return '';
@@ -196,115 +225,96 @@ function openChat(item: ChatItem) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>💬 Chats</Text>
-
-        <Text style={styles.subtitle}>
-          Your SipMate conversations
-        </Text>
+        <Text style={styles.title}>💬 {text.title}</Text>
+        <Text style={styles.subtitle}>{text.subtitle}</Text>
 
         {loading ? (
-          <Text style={styles.emptyText}>
-            Loading chats...
-          </Text>
+          <Text style={styles.emptyText}>{text.loading}</Text>
         ) : chats.length === 0 ? (
           <View style={styles.emptyBox}>
             <Text style={styles.emptyEmoji}>🍻</Text>
-
-            <Text style={styles.emptyTitle}>
-              No chats yet
-            </Text>
-
-            <Text style={styles.emptyText}>
-              Get a mutual CHEERS to start chatting.
-            </Text>
+            <Text style={styles.emptyTitle}>{text.emptyTitle}</Text>
+            <Text style={styles.emptyText}>{text.emptyText}</Text>
           </View>
         ) : (
-chats.map((item) => (
-<Pressable
-  key={item.conversationId}
-  style={[
-    styles.chatCard,
-    item.unreadCount > 0 && styles.chatCardUnread,
-  ]}
-  onPress={() => openChat(item)}
->
-    {item.avatar_url ? (
-      <Image
-        source={{
-          uri: `${item.avatar_url}${
-            item.avatar_url.includes('?') ? '&' : '?'
-          }refresh=${Date.now()}`,
-        }}
-        style={styles.chatAvatar}
-        resizeMode="cover"
-      />
-    ) : (
-      <View style={styles.chatAvatarFallback}>
-        <Text style={styles.chatAvatarFallbackText}>
-          {item.name?.charAt(0).toUpperCase() || '?'}
-        </Text>
-      </View>
-    )}
+          chats.map((item) => (
+            <Pressable
+              key={item.conversationId}
+              style={[
+                styles.chatCard,
+                item.unreadCount > 0 && styles.chatCardUnread,
+              ]}
+              onPress={() => openChat(item)}
+            >
+              {item.avatar_url ? (
+                <Image
+                  source={{
+                    uri: `${item.avatar_url}${
+                      item.avatar_url.includes('?') ? '&' : '?'
+                    }refresh=${Date.now()}`,
+                  }}
+                  style={styles.chatAvatar}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.chatAvatarFallback}>
+                  <Text style={styles.chatAvatarFallbackText}>
+                    {item.name?.charAt(0).toUpperCase() || '?'}
+                  </Text>
+                </View>
+              )}
 
-    <View style={styles.chatContent}>
-      <View style={styles.topRow}>
-<Text
-  style={[
-    styles.name,
-    item.unreadCount > 0 && styles.nameUnread,
-  ]}
->
-        </Text>
+              <View style={styles.chatContent}>
+                <View style={styles.topRow}>
+                  <Text
+                    style={[
+                      styles.name,
+                      item.unreadCount > 0 && styles.nameUnread,
+                    ]}
+                  >
+                    {item.name}
+                    {item.age ? `, ${item.age}` : ''}
+                  </Text>
 
-        <Text style={styles.timeText}>
-          {formatTime(item.lastMessageTime)}
-        </Text>
-      </View>
+                  <Text style={styles.timeText}>
+                    {formatTime(item.lastMessageTime)}
+                  </Text>
+                </View>
 
-      <View style={styles.bottomRow}>
-<Text
-  style={[
-    styles.lastMessage,
-    item.unreadCount > 0 && styles.lastMessageUnread,
-  ]}
-  numberOfLines={1}
->
-          {item.lastMessage}
-        </Text>
+                <View style={styles.bottomRow}>
+                  <Text
+                    style={[
+                      styles.lastMessage,
+                      item.unreadCount > 0 && styles.lastMessageUnread,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {item.lastMessage}
+                  </Text>
 
-        {item.unreadCount > 0 && (
-          <View style={styles.unreadBadge}>
-            <Text style={styles.unreadBadgeText}>
-              {item.unreadCount > 99
-                ? '99+'
-                : item.unreadCount}
-            </Text>
-          </View>
+                  {item.unreadCount > 0 && (
+                    <View style={styles.unreadBadge}>
+                      <Text style={styles.unreadBadgeText}>
+                        {item.unreadCount > 99 ? '99+' : item.unreadCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {item.isActive && (
+                  <Text style={styles.activeText}>● {text.active}</Text>
+                )}
+              </View>
+            </Pressable>
+          ))
         )}
-      </View>
 
-      {item.isActive && (
-        <Text style={styles.activeText}>
-          ● ACTIVE
-        </Text>
-      )}
+        <Pressable style={styles.refreshButton} onPress={loadChats}>
+          <Text style={styles.refreshText}>↻ {text.refresh}</Text>
+        </Pressable>
+      </ScrollView>
     </View>
-  </Pressable>
-))
-)}
-
-<Pressable
-  style={styles.refreshButton}
-  onPress={loadChats}
->
-  <Text style={styles.refreshText}>
-    ↻ Refresh
-  </Text>
-</Pressable>
-
-</ScrollView>
-</View>
-);
+  );
 }
 
 const styles = StyleSheet.create({
@@ -312,7 +322,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#09090B',
   },
-
   container: {
     width: '100%',
     maxWidth: 900,
@@ -321,20 +330,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 120,
   },
-
   title: {
     color: '#FFFFFF',
     fontSize: 32,
     fontWeight: '900',
   },
-
   subtitle: {
     color: '#A1A1AA',
     marginTop: 8,
     marginBottom: 28,
     fontSize: 15,
   },
-
   chatCard: {
     width: '100%',
     flexDirection: 'row',
@@ -344,69 +350,39 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     marginBottom: 12,
   },
-
-  avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: '#3B0764',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '900',
-  },
-
   chatContent: {
     flex: 1,
     minWidth: 0,
   },
-
   name: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '900',
   },
-
   lastMessage: {
+    flex: 1,
     color: '#A1A1AA',
     fontSize: 14,
-    marginTop: 6,
   },
-
-  time: {
-    color: '#71717A',
-    fontSize: 12,
-    marginLeft: 14,
-  },
-
   emptyBox: {
     alignItems: 'center',
     paddingVertical: 80,
   },
-
   emptyEmoji: {
     fontSize: 58,
   },
-
   emptyTitle: {
     color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '900',
     marginTop: 18,
   },
-
   emptyText: {
     color: '#71717A',
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
   },
-
   refreshButton: {
     alignSelf: 'center',
     marginTop: 20,
@@ -415,102 +391,76 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#27272A',
   },
-
   refreshText: {
     color: '#FFFFFF',
     fontWeight: '700',
   },
-  nameRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-
-onlineDot: {
-  width: 9,
-  height: 9,
-  borderRadius: 5,
-  backgroundColor: '#22C55E',
-  marginLeft: 8,
-},
-rightSide: {
-  alignItems: 'flex-end',
-  justifyContent: 'center',
-  marginLeft: 14,
-},
-
-chatAvatar: {
-  width: 52,
-  height: 52,
-  borderRadius: 26,
-  marginRight: 12,
-},
-
-chatAvatarFallback: {
-  width: 52,
-  height: 52,
-  borderRadius: 26,
-  marginRight: 12,
-  backgroundColor: '#5B21B6',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-chatAvatarFallbackText: {
-  color: '#FFFFFF',
-  fontSize: 20,
-  fontWeight: '900',
-},
-topRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-},
-
-bottomRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginTop: 5,
-},
-
-timeText: {
-  color: '#71717A',
-  fontSize: 11,
-  marginLeft: 10,
-},
-unreadBadge: {
-  minWidth: 22,
-  height: 22,
-  borderRadius: 11,
-  paddingHorizontal: 6,
-  backgroundColor: '#DC2626',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-unreadBadgeText: {
-  color: '#FFFFFF',
-  fontSize: 11,
-  fontWeight: '900',
-},
-
-activeText: {
-  color: '#22C55E',
-  fontSize: 10,
-  fontWeight: '800',
-  marginTop: 5,
-},
-chatCardUnread: {
-  borderWidth: 1,
-  borderColor: '#DC2626',
-},
-
-nameUnread: {
-  color: '#FFFFFF',
-  fontWeight: '900',
-},
-
-lastMessageUnread: {
-  color: '#FFFFFF',
-  fontWeight: '800',
-},
+  chatAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: 12,
+  },
+  chatAvatarFallback: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: 12,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatAvatarFallbackText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+    gap: 8,
+  },
+  timeText: {
+    color: '#71717A',
+    fontSize: 11,
+    marginLeft: 10,
+  },
+  unreadBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    paddingHorizontal: 6,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unreadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  activeText: {
+    color: '#22C55E',
+    fontSize: 10,
+    fontWeight: '800',
+    marginTop: 5,
+  },
+  chatCardUnread: {
+    borderWidth: 1,
+    borderColor: '#DC2626',
+  },
+  nameUnread: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+  },
+  lastMessageUnread: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
 });

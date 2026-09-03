@@ -1,56 +1,144 @@
-# Welcome to your Expo app 👋
+# SipMate 🍻
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+SipMate is a social app for finding people nearby who are ready for a drink, coffee, or a quick hangout right now.
 
-## Get started
+It is not built around traditional dating-app matches. The core interaction is **Cheers**: one user sends 🍻, and when both users send Cheers to each other the app shows **CHEERS!** and unlocks the connection/chat flow.
 
-1. Install dependencies
+## Current MVP
 
-   ```bash
-   npm install
-   ```
+The repository currently includes:
 
-2. Start the app
+- Supabase authentication and profile creation
+- Nearby discovery with location and distance
+- ACTIVE / INACTIVE availability
+- "Currently up for" activity/drink status
+- One-way and mutual Cheers
+- CHEERS animation
+- Realtime chat
+- Unread message badges
+- Read status (✓ / ✓✓)
+- Typing indicator
+- Profile photos and fullscreen gallery
+- Block and report safety tools
+- Blocked users management
+- English, German, and Croatian UI
+- Premium feature gating
+- Stripe Checkout subscriptions
+- Stripe customer portal
+- Monthly and yearly Premium plans
+- Founders / Early Access yearly offers
 
-   ```bash
-   npx expo start
-   ```
+## Tech stack
 
-In the output, you'll find options to open the app in a
+- Expo SDK 57
+- React Native
+- Expo Router
+- TypeScript
+- Supabase Auth / Database / Realtime / Storage / Edge Functions
+- Stripe subscriptions
+- i18next / react-i18next
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Local setup
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1. Install dependencies
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Configure Supabase
 
-### Other setup steps
+Copy `.env.example` to `.env` and add your own public Supabase values:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+```
 
-## Learn more
+Never commit service-role keys, Stripe secret keys, webhook secrets, or other private credentials.
 
-To learn more about developing your project with Expo, look at the following resources:
+### 3. Start Expo
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx expo start
+```
 
-## Join the community
+For a clean development start on a custom port:
 
-Join our community of developers creating universal apps.
+```bash
+npx expo start --clear --port 8082
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Available package scripts:
+
+```bash
+npm run start
+npm run android
+npm run ios
+npm run web
+npm run lint
+```
+
+## Main app routes
+
+- `/` — Discover
+- `/nearby` — Nearby people
+- `/cheers` — Sent, received, and mutual Cheers
+- `/chats` — Conversation list
+- `/chat` — Realtime conversation
+- `/profile` — Own profile
+- `/edit-profile` — Profile editing
+- `/user-profile` — Another user's profile
+- `/blocked-users` — Blocked users
+- `/language` — Language selection
+- `/premium` — Premium plans and subscription state
+- `/login` — Login
+- `/register` — Registration
+
+## Premium
+
+SipMate Premium currently supports monthly and yearly Stripe subscriptions. Premium capabilities include features such as direct messaging, seeing who sent Cheers, advanced discovery options, location-related Premium controls, and additional profile photos.
+
+The pricing logic currently includes Founders and Early Access yearly stages before the standard yearly offer.
+
+## Supabase Edge Functions
+
+The project contains Stripe-related Supabase Edge Functions for:
+
+- creating Checkout sessions
+- Stripe webhook processing
+- opening the Stripe customer portal
+
+Private Stripe and Supabase service credentials belong in Supabase function secrets, never in the client app or repository.
+
+## Internationalization
+
+The interface currently supports:
+
+- English
+- German
+- Croatian
+
+The app detects a device language where supported and also allows a manual language choice that is persisted locally.
+
+User-generated content such as names, bios, and chat messages is intentionally not automatically translated.
+
+## Brand / UI
+
+The main visual direction is a dark SipMate interface using black and charcoal surfaces, red primary actions, green ACTIVE status indicators, and gold Premium accents.
+
+Expo splash and adaptive-icon backgrounds are configured to match the dark theme.
+
+## Security notes
+
+- `.env` files are ignored by Git.
+- `.env.example` contains placeholders only.
+- Client code uses the public Supabase anon key.
+- Service-role and Stripe secret credentials must remain server-side.
+- Block and report flows are backed by database rules/functions rather than UI-only hiding.
+
+## Repository
+
+Main development branch: `master`
+
+SipMate is actively under development.
