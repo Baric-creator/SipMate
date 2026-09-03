@@ -19,9 +19,9 @@ type UserProfile = {
 };
 
 const copy = {
-  en: { loading: 'Loading profile...', notFound: 'Profile not found.', user: 'SipMate User', location: 'Location not set', deleteAccount: 'DELETE ACCOUNT' },
-  de: { loading: 'Profil wird geladen...', notFound: 'Profil nicht gefunden.', user: 'SipMate-Nutzer', location: 'Standort nicht festgelegt', deleteAccount: 'KONTO LÖSCHEN' },
-  hr: { loading: 'Učitavanje profila...', notFound: 'Profil nije pronađen.', user: 'SipMate korisnik', location: 'Lokacija nije postavljena', deleteAccount: 'IZBRIŠI RAČUN' },
+  en: { loading: 'Loading profile...', notFound: 'Profile not found.', user: 'SipMate User', location: 'Location not set', privacyPolicy: 'PRIVACY POLICY', deleteAccount: 'DELETE ACCOUNT' },
+  de: { loading: 'Profil wird geladen...', notFound: 'Profil nicht gefunden.', user: 'SipMate-Nutzer', location: 'Standort nicht festgelegt', privacyPolicy: 'DATENSCHUTZERKLÄRUNG', deleteAccount: 'KONTO LÖSCHEN' },
+  hr: { loading: 'Učitavanje profila...', notFound: 'Profil nije pronađen.', user: 'SipMate korisnik', location: 'Lokacija nije postavljena', privacyPolicy: 'PRAVILA PRIVATNOSTI', deleteAccount: 'IZBRIŠI RAČUN' },
 } as const;
 
 export default function UserProfileScreen() {
@@ -135,6 +135,9 @@ export default function UserProfileScreen() {
           <Pressable style={styles.languageButton} onPress={() => router.push('/language')}>
             <Text style={styles.languageButtonText}>🌍 {t('profileScreen.language')}</Text>
           </Pressable>
+          <Pressable style={styles.privacyButton} onPress={() => router.push('/privacy-policy')}>
+            <Text style={styles.privacyButtonText}>🔒 {text.privacyPolicy}</Text>
+          </Pressable>
           <Pressable style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.dangerText}>🚪 {t('profileScreen.logout')}</Text>
           </Pressable>
@@ -178,6 +181,8 @@ const styles = StyleSheet.create({
   secondaryButton: { width: '100%', marginTop: 14, backgroundColor: '#27272A', borderWidth: 1, borderColor: '#DC2626', borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   languageButton: { width: '100%', marginTop: 14, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#3F3F46', borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   languageButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900', letterSpacing: 0.6 },
+  privacyButton: { width: '100%', marginTop: 14, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#3F3F46', borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  privacyButtonText: { color: '#D4D4D8', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 },
   logoutButton: { width: '100%', marginTop: 24, backgroundColor: '#27272A', borderWidth: 1, borderColor: '#DC2626', paddingVertical: 16, borderRadius: 22, alignItems: 'center' },
   dangerText: { color: '#EF4444', fontSize: 14, fontWeight: '900', letterSpacing: 0.5 },
   deleteButton: { width: '100%', marginTop: 14, backgroundColor: '#450A0A', borderWidth: 1, borderColor: '#EF4444', paddingVertical: 16, borderRadius: 22, alignItems: 'center' },
