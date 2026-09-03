@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import Stripe from 'npm:stripe@18.5.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
     if (!supabaseUrl || !anonKey || !serviceRoleKey) {
       console.error('DELETE ACCOUNT FUNCTION CONFIGURATION ERROR')
       return new Response('Account deletion is temporarily unavailable.', { status: 503, headers: corsHeaders })
@@ -29,7 +31,6 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await userClient.auth.getUser()
     if (userError || !user) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
 
-    // Keep deletion fail-closed until the production secret is explicitly enabled.
     if (Deno.env.get('ACCOUNT_DELETION_ENABLED') !== 'true') {
       return new Response('Account deletion is temporarily unavailable while deletion cleanup is being finalized.', { status: 503, headers: corsHeaders })
     }
@@ -37,7 +38,34 @@ Deno.serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } })
     const uid = user.id
 
-    // Remove storage first because deleting the auth identity would make user-owned paths harder to identify.
+    // Paid access must be stopped before any local subscription record is removed.
+    const { data: subscriptions, error: subscriptionError } = await admin
+      .from('premium_subscriptions')
+      .select('stripe_subscription_id,status')
+      .eq('user_id', uid)
+    if (subscriptionError) throw subscriptionError
+
+    const stripeIds = (subscriptions ?? [])
+      .map((row) => row.stripe_subscription_id as string | null)
+      .filter((id): id is string => Boolean(id))
+
+    if (stripeIds.length) {
+      if (!stripeSecretKey) {
+        console.error('DELETE ACCOUNT STRIPE CONFIGURATION ERROR')
+        return new Response('Account deletion is temporarily unavailable.', { status: 503, headers: corsHeaders })
+      }
+      const stripe = new Stripe(stripeSecretKey)
+      for (const subscriptionId of stripeIds) {
+        try {
+          await stripe.subscriptions.cancel(subscriptionId)
+        } catch (error) {
+          const code = (error as { code?: string })?.code
+          if (code !== 'resource_missing') throw error
+          console.warn('Stripe subscription already missing during account deletion:', subscriptionId)
+        }
+      }
+    }
+
     const { data: objects, error: listError } = await admin.storage.from('avatars').list(uid, { limit: 1000 })
     if (listError) throw listError
     const paths = (objects ?? []).map((object) => `${uid}/${object.name}`)
@@ -46,7 +74,6 @@ Deno.serve(async (req) => {
       if (storageError) throw storageError
     }
 
-    // Delete relational data in dependency-safe order. Messages cascade when conversations are removed.
     const operations = [
       admin.from('premium_subscriptions').delete().eq('user_id', uid),
       admin.from('reports').delete().or(`reporter_id.eq.${uid},reported_id.eq.${uid}`),
