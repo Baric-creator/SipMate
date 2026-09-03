@@ -135,7 +135,7 @@ export default function UserProfileScreen() {
           <Pressable style={styles.languageButton} onPress={() => router.push('/language')}>
             <Text style={styles.languageButtonText}>🌍 {t('profileScreen.language')}</Text>
           </Pressable>
-          <Pressable style={styles.privacyButton} onPress={() => router.push('/privacy-policy')}>
+          <Pressable style={styles.privacyButton} onPress={() => router.push('/privacy')}>
             <Text style={styles.privacyButtonText}>🔒 {text.privacyPolicy}</Text>
           </Pressable>
           <Pressable style={styles.logoutButton} onPress={handleLogout}>
