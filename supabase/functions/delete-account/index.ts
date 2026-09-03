@@ -22,9 +22,17 @@ Deno.serve(async (req) => {
       return new Response('Unauthorized', { status: 401, headers: corsHeaders })
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+      console.error('DELETE ACCOUNT FUNCTION CONFIGURATION ERROR')
+      return new Response('Account deletion is temporarily unavailable.', {
+        status: 503,
+        headers: corsHeaders,
+      })
+    }
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -60,9 +68,9 @@ Deno.serve(async (req) => {
     return Response.json({ deleted: true }, { headers: corsHeaders })
   } catch (error) {
     console.error('DELETE ACCOUNT FUNCTION ERROR:', error)
-    return new Response(
-      error instanceof Error ? error.message : 'Account deletion failed',
-      { status: 500, headers: corsHeaders }
-    )
+    return new Response('Account deletion failed. Please try again later.', {
+      status: 500,
+      headers: corsHeaders,
+    })
   }
 })
