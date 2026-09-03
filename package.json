@@ -50,6 +50,8 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck",
+    "setup:dev-client": "npx expo install expo-dev-client",
+    "doctor": "npx expo-doctor@latest",
     "build:android:development": "npx eas-cli@latest build --platform android --profile development",
     "build:android:preview": "npx eas-cli@latest build --platform android --profile preview",
     "build:android:production": "npx eas-cli@latest build --platform android --profile production"
