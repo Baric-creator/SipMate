@@ -50,8 +50,9 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck",
-    "build:android:preview": "eas build --platform android --profile preview",
-    "build:android:production": "eas build --platform android --profile production"
+    "build:android:development": "npx eas-cli@latest build --platform android --profile development",
+    "build:android:preview": "npx eas-cli@latest build --platform android --profile preview",
+    "build:android:production": "npx eas-cli@latest build --platform android --profile production"
   },
   "private": true
 }
