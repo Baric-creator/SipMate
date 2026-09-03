@@ -14,8 +14,9 @@ Status snapshot: 3 September 2026
 - EAS production Android App Bundle (`.aab`) profile
 - EAS build profiles explicitly mapped to `development`, `preview` and `production` environments
 - EAS CLI requires a clean committed Git state before builds
-- Google Play submission profile is restricted to the internal track with draft release status
+- Google Play submission profile is restricted to the internal track with draft release status and changes held for manual review submission
 - Package scripts for Expo Doctor and Android development/preview/production builds
+- Explicit package scripts for safe internal Google Play submission, including latest-production-build selection
 - English / German / Croatian UI coverage across the main MVP
 - 18+ registration enforcement
 - Block and report tools
@@ -151,6 +152,28 @@ npm run build:android:production
 ```
 
 The production profile generates an Android App Bundle suitable for Google Play upload. A successful TypeScript CI run is necessary but does not replace testing the native APK/AAB behavior.
+
+## First Google Play internal submission gate
+
+Do not run a Play submission command until all of these prerequisites are complete:
+
+- the SipMate app exists in the correct Google Play Console developer account
+- the package name in Play Console is exactly `com.bariccreator.sipmate`
+- the latest production EAS build completed successfully and is the intended `.aab`
+- a Google Service Account key has been configured in EAS credentials for this Android app; never commit the JSON key to Git
+- the production build passed the release checklist that applies before internal testing
+
+For the first controlled upload, use the repository command that explicitly selects the latest Android build:
+
+```bash
+npm run submit:android:internal:latest
+```
+
+The `production` submit profile intentionally targets Google Play `internal`, uses `releaseStatus: draft`, and sets `changesNotSentForReview: true`. This keeps the upload away from the public production track and leaves review/promotion as a deliberate Play Console action.
+
+After EAS Submit finishes, verify the exact versionCode, package name and release status in Google Play Console before doing anything else. Do not promote to production from the command line as part of the first release pass.
+
+If EAS Submit credentials are not ready, the production `.aab` can instead be uploaded manually to Play Console's Internal testing track. Do not add `serviceAccountKeyPath` to the repository just to make submission work; keep the Google service-account JSON outside Git and configure it through EAS credentials.
 
 ## Native smoke-test minimum
 
