@@ -13,6 +13,7 @@ const copy = {
     button: 'DELETE MY ACCOUNT', deleting: 'DELETING...', cancel: 'CANCEL',
     confirmTitle: 'Delete SipMate account?',
     confirmMessage: 'This action is permanent. Your account cannot be restored after deletion.',
+    confirmCancel: 'Cancel', confirmDelete: 'Delete',
     failed: 'Account deletion failed. Please try again.',
   },
   de: {
@@ -21,6 +22,7 @@ const copy = {
     button: 'MEIN KONTO LÖSCHEN', deleting: 'WIRD GELÖSCHT...', cancel: 'ABBRECHEN',
     confirmTitle: 'SipMate-Konto löschen?',
     confirmMessage: 'Diese Aktion ist endgültig. Dein Konto kann nach dem Löschen nicht wiederhergestellt werden.',
+    confirmCancel: 'Abbrechen', confirmDelete: 'Löschen',
     failed: 'Das Konto konnte nicht gelöscht werden. Bitte versuche es erneut.',
   },
   hr: {
@@ -29,6 +31,7 @@ const copy = {
     button: 'IZBRIŠI MOJ RAČUN', deleting: 'BRISANJE...', cancel: 'ODUSTANI',
     confirmTitle: 'Izbrisati SipMate račun?',
     confirmMessage: 'Ova radnja je trajna. Nakon brisanja račun nije moguće vratiti.',
+    confirmCancel: 'Odustani', confirmDelete: 'Izbriši',
     failed: 'Brisanje računa nije uspjelo. Pokušaj ponovno.',
   },
 } as const;
@@ -42,7 +45,12 @@ export default function DeleteAccountScreen() {
   async function deleteAccount() {
     if (loading) return;
 
-    const confirmed = await askConfirmation(text.confirmTitle, text.confirmMessage);
+    const confirmed = await askConfirmation(
+      text.confirmTitle,
+      text.confirmMessage,
+      text.confirmCancel,
+      text.confirmDelete
+    );
     if (!confirmed) return;
 
     try {
