@@ -40,19 +40,26 @@ Deno.serve(async (req) => {
       return new Response('Unauthorized', { status: 401, headers: corsHeaders })
     }
 
+    // Release safety gate: do not delete the auth identity until database rows,
+    // storage objects and paid-subscription cleanup have been verified end to end.
+    if (Deno.env.get('ACCOUNT_DELETION_ENABLED') !== 'true') {
+      return new Response(
+        'Account deletion is temporarily unavailable while deletion cleanup is being finalized.',
+        { status: 503, headers: corsHeaders }
+      )
+    }
+
     const admin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false },
     })
 
-    // Deleting the auth user should cascade through user-owned rows where
-    // foreign keys are configured with ON DELETE CASCADE.
     const { error: deleteError } = await admin.auth.admin.deleteUser(user.id)
 
     if (deleteError) throw deleteError
 
     return Response.json({ deleted: true }, { headers: corsHeaders })
   } catch (error) {
-    console.log('DELETE ACCOUNT FUNCTION ERROR:', error)
+    console.error('DELETE ACCOUNT FUNCTION ERROR:', error)
     return new Response(
       error instanceof Error ? error.message : 'Account deletion failed',
       { status: 500, headers: corsHeaders }
