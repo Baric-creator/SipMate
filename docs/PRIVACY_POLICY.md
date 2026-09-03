@@ -1,8 +1,8 @@
 # SipMate Privacy Policy
 
-Last updated: 2 September 2026
+Last updated: 3 September 2026
 
-SipMate is a social app that helps people discover nearby users who are currently interested in a drink, coffee, or casual meetup.
+SipMate is a social app that helps adults discover nearby users who are currently interested in a drink, coffee, or casual meetup.
 
 ## Information we collect
 
@@ -34,11 +34,13 @@ Users can block and report other users. Reports may be reviewed to investigate m
 
 ## Data retention and deletion
 
-Data is retained while it is needed to operate your account and provide the service, subject to legal and operational requirements. A production release should provide users with a clear account-deletion method and a public deletion-request contact or page before Play Store launch.
+Account data is retained while it is needed to operate the account and provide the service, subject to legal and operational requirements. SipMate includes an in-app account deletion option. Deleting an account is intended to permanently remove the authentication account and user-owned data that is configured to be deleted with it.
+
+Before public Play Store publication, SipMate will also provide a public web page or contact method for account-deletion requests outside the app.
 
 ## Children
 
-SipMate is intended for adults. The production release should enforce an 18+ minimum age and the Play Store listing should be configured accordingly.
+SipMate is intended only for adults aged 18 or older. Registration enforces a minimum age of 18. The Play Store audience settings should also be configured for adults.
 
 ## Changes
 
