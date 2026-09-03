@@ -19,18 +19,30 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function getPortalOrigin(req: Request) {
-  const requestOrigin = req.headers.get('origin')
   const configuredOrigin = Deno.env.get('APP_WEB_URL')
 
-  for (const candidate of [requestOrigin, configuredOrigin]) {
-    if (!candidate) continue
+  if (configuredOrigin) {
     try {
-      const parsed = new URL(candidate)
+      const parsed = new URL(configuredOrigin)
       if (parsed.protocol === 'https:' || parsed.hostname === 'localhost') {
         return parsed.origin
       }
     } catch {
-      // Try the next candidate.
+      // Configuration error is handled below.
+    }
+  }
+
+  // Development-only fallback. Never trust an arbitrary remote Origin for
+  // billing-portal return URLs.
+  const requestOrigin = req.headers.get('origin')
+  if (requestOrigin) {
+    try {
+      const parsed = new URL(requestOrigin)
+      if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+        return parsed.origin
+      }
+    } catch {
+      // Fall through to the configuration error below.
     }
   }
 
