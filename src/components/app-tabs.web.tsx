@@ -47,6 +47,7 @@ export default function AppTabs() {
           <TabTrigger name="blocked-users" href="/blocked-users" />
           <TabTrigger name="language" href="/language" />
           <TabTrigger name="premium" href="/premium" />
+          <TabTrigger name="privacy" href="/privacy" />
           <TabTrigger name="delete-account" href="/delete-account" />
           <TabTrigger name="register" href="/register" />
           <TabTrigger name="login" href="/login" />
