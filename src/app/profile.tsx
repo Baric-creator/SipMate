@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { supabase } from '../lib/supabase';
 
@@ -73,76 +73,85 @@ export default function UserProfileScreen() {
   }
 
   if (loading) {
-    return <View style={styles.screen}><Text style={styles.loading}>{text.loading}</Text></View>;
+    return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.loading}</Text></SafeAreaView>;
   }
 
   if (!profile) {
-    return <View style={styles.screen}><Text style={styles.loading}>{text.notFound}</Text></View>;
+    return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.notFound}</Text></SafeAreaView>;
   }
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.card}>
-        {profile.avatar_url ? (
-          <Image source={{ uri: profile.avatar_url }} style={styles.profileAvatar} resizeMode="cover" />
-        ) : (
-          <View style={styles.profileAvatarFallback}>
-            <Text style={styles.profileAvatarFallbackText}>{profile.name?.charAt(0).toUpperCase() || '?'}</Text>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.card}>
+          {profile.avatar_url ? (
+            <Image source={{ uri: profile.avatar_url }} style={styles.profileAvatar} resizeMode="cover" />
+          ) : (
+            <View style={styles.profileAvatarFallback}>
+              <Text style={styles.profileAvatarFallbackText}>{profile.name?.charAt(0).toUpperCase() || '?'}</Text>
+            </View>
+          )}
+
+          <Text style={styles.name}>{profile.name ?? text.user}{profile.age ? `, ${profile.age}` : ''}</Text>
+
+          {profile.is_premium && (
+            <View style={styles.premiumBadge}><Text style={styles.premiumBadgeText}>💎 PREMIUM</Text></View>
+          )}
+
+          <Text style={styles.city}>📍 {profile.city ?? text.location}</Text>
+
+          <View style={[styles.statusBadge, profile.is_active ? styles.statusBadgeActive : styles.statusBadgeInactive]}>
+            <Text style={[styles.statusBadgeText, profile.is_active ? styles.statusTextActive : styles.statusTextInactive]}>
+              {profile.is_active ? `● ${t('profileScreen.active')}` : `● ${t('profileScreen.inactive')}`}
+            </Text>
           </View>
-        )}
 
-        <Text style={styles.name}>{profile.name ?? text.user}{profile.age ? `, ${profile.age}` : ''}</Text>
-
-        {profile.is_premium && (
-          <View style={styles.premiumBadge}><Text style={styles.premiumBadgeText}>💎 PREMIUM</Text></View>
-        )}
-
-        <Text style={styles.city}>📍 {profile.city ?? text.location}</Text>
-
-        <View style={[styles.statusBadge, profile.is_active ? styles.statusBadgeActive : styles.statusBadgeInactive]}>
-          <Text style={[styles.statusBadgeText, profile.is_active ? styles.statusTextActive : styles.statusTextInactive]}>
-            {profile.is_active ? `● ${t('profileScreen.active')}` : `● ${t('profileScreen.inactive')}`}
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>{t('profileScreen.currentlyUpFor')}</Text>
-          <View style={styles.drinkChip}>
-            <Text style={styles.drink}>{profile.currently_up_for ?? t('profileScreen.readyForDrink')}</Text>
+          <View style={styles.section}>
+            <Text style={styles.label}>{t('profileScreen.currentlyUpFor')}</Text>
+            <View style={styles.drinkChip}>
+              <Text style={styles.drink}>{profile.currently_up_for ?? t('profileScreen.readyForDrink')}</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>{t('profileScreen.about')}</Text>
-          <Text style={styles.bio}>{profile.bio?.trim() ? profile.bio : t('profileScreen.noBioYet')}</Text>
-        </View>
+          <View style={styles.section}>
+            <Text style={styles.label}>{t('profileScreen.about')}</Text>
+            <Text style={styles.bio}>{profile.bio?.trim() ? profile.bio : t('profileScreen.noBioYet')}</Text>
+          </View>
 
-        <Pressable style={styles.premiumButton} onPress={() => router.push('/premium')}>
-          <Text style={styles.premiumButtonText}>💎 {t('profileScreen.premium')}</Text>
-        </Pressable>
-        <Pressable style={styles.editButton} onPress={() => router.push('/edit-profile')}>
-          <Text style={styles.editButtonText}>✏️ {t('profileScreen.editProfile')}</Text>
-        </Pressable>
-        <Pressable style={styles.secondaryButton} onPress={() => router.push('/blocked-users')}>
-          <Text style={styles.dangerText}>🚫 {t('profileScreen.blockedUsers')}</Text>
-        </Pressable>
-        <Pressable style={styles.languageButton} onPress={() => router.push('/language')}>
-          <Text style={styles.languageButtonText}>🌍 {t('profileScreen.language')}</Text>
-        </Pressable>
-        <Pressable style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.dangerText}>🚪 {t('profileScreen.logout')}</Text>
-        </Pressable>
-        <Pressable style={styles.deleteButton} onPress={() => router.push('/delete-account')}>
-          <Text style={styles.deleteText}>⚠️ {text.deleteAccount}</Text>
-        </Pressable>
-      </View>
-    </View>
+          <Pressable style={styles.premiumButton} onPress={() => router.push('/premium')}>
+            <Text style={styles.premiumButtonText}>💎 {t('profileScreen.premium')}</Text>
+          </Pressable>
+          <Pressable style={styles.editButton} onPress={() => router.push('/edit-profile')}>
+            <Text style={styles.editButtonText}>✏️ {t('profileScreen.editProfile')}</Text>
+          </Pressable>
+          <Pressable style={styles.secondaryButton} onPress={() => router.push('/blocked-users')}>
+            <Text style={styles.dangerText}>🚫 {t('profileScreen.blockedUsers')}</Text>
+          </Pressable>
+          <Pressable style={styles.languageButton} onPress={() => router.push('/language')}>
+            <Text style={styles.languageButtonText}>🌍 {t('profileScreen.language')}</Text>
+          </Pressable>
+          <Pressable style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.dangerText}>🚪 {t('profileScreen.logout')}</Text>
+          </Pressable>
+          <Pressable style={styles.deleteButton} onPress={() => router.push('/delete-account')}>
+            <Text style={styles.deleteText}>⚠️ {text.deleteAccount}</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#09090B', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  loading: { color: '#FFFFFF', fontSize: 16 },
+  screen: { flex: 1, backgroundColor: '#09090B' },
+  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 },
+  loading: { color: '#FFFFFF', fontSize: 16, textAlign: 'center', marginTop: 40 },
   card: { width: '100%', maxWidth: 520, backgroundColor: '#18181B', borderRadius: 28, padding: 28, alignItems: 'center' },
   profileAvatar: { width: 140, height: 140, borderRadius: 70, marginBottom: 18, backgroundColor: '#27272A', borderWidth: 3, borderColor: '#DC2626' },
   profileAvatarFallback: { width: 140, height: 140, borderRadius: 70, marginBottom: 18, backgroundColor: '#450A0A', borderWidth: 3, borderColor: '#DC2626', alignItems: 'center', justifyContent: 'center' },
