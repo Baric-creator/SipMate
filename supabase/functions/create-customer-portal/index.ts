@@ -1,139 +1,109 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import Stripe from 'npm:stripe@^22'
 
-const stripe = new Stripe(
-  Deno.env.get('STRIPE_SECRET_KEY')!
-)
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'application/json',
+    },
+  })
+}
+
+function getPortalOrigin(req: Request) {
+  const requestOrigin = req.headers.get('origin')
+  const configuredOrigin = Deno.env.get('APP_WEB_URL')
+
+  for (const candidate of [requestOrigin, configuredOrigin]) {
+    if (!candidate) continue
+    try {
+      const parsed = new URL(candidate)
+      if (parsed.protocol === 'https:' || parsed.hostname === 'localhost') {
+        return parsed.origin
+      }
+    } catch {
+      // Try the next candidate.
+    }
+  }
+
+  throw new Error('Portal return URL is not configured')
 }
 
 Deno.serve(async (req) => {
-  // Browser CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: corsHeaders,
-    })
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  if (req.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405)
   }
 
   try {
-    const { accessToken } =
-      await req.json()
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) return jsonResponse({ error: 'Not authenticated' }, 401)
 
-    if (!accessToken) {
-      throw new Error(
-        'Missing access token'
-      )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
+
+    if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey || !stripeSecretKey) {
+      console.error('CUSTOMER PORTAL FUNCTION CONFIGURATION ERROR')
+      return jsonResponse({ error: 'Subscription management is temporarily unavailable.' }, 503)
     }
 
-    const supabaseUrl =
-      Deno.env.get('SUPABASE_URL')!
-
-    const supabaseAnonKey =
-      Deno.env.get('SUPABASE_ANON_KEY')!
-
-    const supabaseAdmin =
-      createClient(
-        supabaseUrl,
-        Deno.env.get(
-          'SUPABASE_SERVICE_ROLE_KEY'
-        )!
-      )
-
-    const supabaseUserClient =
-      createClient(
-        supabaseUrl,
-        supabaseAnonKey
-      )
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    })
 
     const {
       data: { user },
       error: userError,
-    } =
-      await supabaseUserClient
-        .auth
-        .getUser(accessToken)
+    } = await userClient.auth.getUser()
 
     if (userError || !user) {
-      throw new Error(
-        'User not authenticated'
-      )
+      return jsonResponse({ error: 'Invalid user session' }, 401)
     }
 
-    const {
-      data: subscription,
-      error: subscriptionError,
-    } =
-      await supabaseAdmin
-        .from('premium_subscriptions')
-        .select(
-          'stripe_customer_id, stripe_subscription_id, status'
-        )
-        .eq('user_id', user.id)
-        .not(
-          'stripe_customer_id',
-          'is',
-          null
-        )
-        .order('created_at', {
-          ascending: false,
-        })
-        .limit(1)
-        .maybeSingle()
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false },
+    })
 
-    if (subscriptionError) {
-      throw subscriptionError
+    const { data: subscription, error: subscriptionError } = await supabaseAdmin
+      .from('premium_subscriptions')
+      .select('stripe_customer_id, stripe_subscription_id, status')
+      .eq('user_id', user.id)
+      .not('stripe_customer_id', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (subscriptionError) throw subscriptionError
+    if (!subscription?.stripe_customer_id) {
+      return jsonResponse({ error: 'Stripe customer not found' }, 404)
     }
 
-    if (
-      !subscription?.stripe_customer_id
-    ) {
-      throw new Error(
-        'Stripe customer not found'
-      )
-    }
+    const stripe = new Stripe(stripeSecretKey)
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: subscription.stripe_customer_id,
+      return_url: `${getPortalOrigin(req)}/premium`,
+    })
 
-    const origin =
-      req.headers.get('origin') ||
-      'http://localhost:8082'
-
-    const portalSession =
-      await stripe.billingPortal
-        .sessions
-        .create({
-          customer:
-            subscription
-              .stripe_customer_id,
-
-          return_url:
-            `${origin}/premium`,
-        })
-
-    return Response.json(
-      {
-        url: portalSession.url,
-      },
-      {
-        headers: corsHeaders,
-      }
-    )
+    return jsonResponse({ url: portalSession.url })
   } catch (error) {
-    console.log(
-      'CUSTOMER PORTAL ERROR:',
-      error
-    )
-
-    return new Response(
-      error instanceof Error
-        ? error.message
-        : 'Unknown error',
-      {
-        status: 400,
-        headers: corsHeaders,
-      }
+    console.error('CUSTOMER PORTAL ERROR:', error)
+    return jsonResponse(
+      { error: 'Subscription management failed. Please try again later.' },
+      500
     )
   }
 })
