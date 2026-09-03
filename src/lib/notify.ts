@@ -16,16 +16,16 @@ export function showAlert(
 }
 
 export function askConfirmation(
+  title: string,
   message: string,
-  title = 'SipMate'
+  cancelLabel = 'Cancel',
+  confirmLabel = 'OK'
 ): Promise<boolean> {
   if (
     Platform.OS === 'web' &&
     typeof window !== 'undefined'
   ) {
-    return Promise.resolve(
-      window.confirm(message)
-    );
+    return Promise.resolve(window.confirm(`${title}\n\n${message}`));
   }
 
   return new Promise((resolve) => {
@@ -34,12 +34,13 @@ export function askConfirmation(
       message,
       [
         {
-          text: 'Cancel',
+          text: cancelLabel,
           style: 'cancel',
           onPress: () => resolve(false),
         },
         {
-          text: 'OK',
+          text: confirmLabel,
+          style: 'destructive',
           onPress: () => resolve(true),
         },
       ],
