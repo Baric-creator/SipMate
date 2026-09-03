@@ -12,6 +12,9 @@ Status snapshot: 3 September 2026
 - EAS development APK profile (`developmentClient: true`, internal distribution)
 - EAS preview APK profile
 - EAS production Android App Bundle (`.aab`) profile
+- EAS build profiles explicitly mapped to `development`, `preview` and `production` environments
+- EAS CLI requires a clean committed Git state before builds
+- Google Play submission profile is restricted to the internal track with draft release status
 - Package scripts for Expo Doctor and Android development/preview/production builds
 - English / German / Croatian UI coverage across the main MVP
 - 18+ registration enforcement
@@ -33,7 +36,7 @@ Status snapshot: 3 September 2026
 2. Install `expo-dev-client` with the repository script `npm run setup:dev-client`. This intentionally uses Expo's installer so `package.json` and `package-lock.json` are updated together with the SDK-compatible version.
 3. Run `npm run doctor` and resolve any release-relevant dependency/configuration warnings.
 4. Commit the `expo-dev-client` package and lockfile changes, push them, and confirm CI is green before building.
-5. Configure production environment variables in EAS/Supabase; never commit secrets.
+5. Configure the required client environment variables in all EAS environments (`development`, `preview`, `production`) and verify them with `eas env:list`. Never commit real environment files or server secrets.
 6. Run `npm run build:android:development`, install the APK on a real Android phone, and test the native app before adding/testing the final billing implementation.
 7. After native smoke testing, run a preview Android build and test the release-like APK on a real phone.
 8. Run the production `.aab` build only after the release gates below are complete.
@@ -47,6 +50,29 @@ Status snapshot: 3 September 2026
 16. Test Premium purchase, renewal, cancellation and restore behavior with the final Android billing implementation before promoting from testing to production.
 17. Review Supabase RLS policies and production CORS settings one final time.
 18. Remove temporary diagnostics/debug logging that is not needed in production.
+
+## EAS environment release gate
+
+The app currently needs these client-side variables from `.env.example`:
+
+```text
+EXPO_PUBLIC_SUPABASE_URL
+EXPO_PUBLIC_SUPABASE_ANON_KEY
+```
+
+They must exist in the EAS environment used by each remote build. Configure and verify them only after the project is linked to the correct Expo/EAS project:
+
+```bash
+npx eas-cli@latest env:list --environment development
+npx eas-cli@latest env:list --environment preview
+npx eas-cli@latest env:list --environment production
+```
+
+If a value needs to be created or changed, use the EAS dashboard or `eas env:set`; do not paste real values into repository files, documentation, commit messages, screenshots or chat logs. `EXPO_PUBLIC_*` values are compiled into the client bundle and therefore must never contain service-role keys, Stripe secrets, webhook secrets or any other server-only credential.
+
+The Supabase URL and anon/publishable client key are intended for client use when the database is protected by correct RLS policies. Server-only Supabase service-role keys and Stripe secrets belong in their server environment (for example Supabase Edge Function secrets), not in EAS client variables.
+
+Before each first build for an environment, confirm that both required client variables are present. A successful TypeScript check does not prove that remote EAS environment variables are configured.
 
 ## Account deletion release gate
 
@@ -84,10 +110,13 @@ Then continue with EAS:
 npx eas-cli@latest login
 npx eas-cli@latest whoami
 npx eas-cli@latest build:configure
+npx eas-cli@latest env:list --environment development
 npm run build:android:development
 ```
 
 Why development first: the development build is the correct place to validate native behavior and native libraries on a real device before producing release artifacts. `expo-dev-client` is deliberately installed through `npx expo install`, not by manually pinning package metadata in GitHub.
+
+Do not start the development build until the required development EAS variables have been verified. Remote EAS builders do not automatically receive a developer's gitignored local `.env` file.
 
 ## Development APK acceptance gate
 
@@ -110,12 +139,14 @@ Record any native-only failure before touching the production profile. Fix and r
 After the development APK is installed and the native smoke test passes:
 
 ```bash
+npx eas-cli@latest env:list --environment preview
 npm run build:android:preview
 ```
 
 After the preview APK passes the complete release checklist and the Android billing gate is implemented and tested:
 
 ```bash
+npx eas-cli@latest env:list --environment production
 npm run build:android:production
 ```
 
