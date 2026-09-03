@@ -23,19 +23,7 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function getCheckoutOrigin(req: Request) {
-  const requestOrigin = req.headers.get('origin')
   const configuredOrigin = Deno.env.get('APP_WEB_URL')
-
-  if (requestOrigin) {
-    try {
-      const parsed = new URL(requestOrigin)
-      if (parsed.protocol === 'https:' || parsed.hostname === 'localhost') {
-        return parsed.origin
-      }
-    } catch {
-      // Fall through to the configured production URL.
-    }
-  }
 
   if (configuredOrigin) {
     try {
@@ -45,6 +33,21 @@ function getCheckoutOrigin(req: Request) {
       }
     } catch {
       // Configuration error is handled below.
+    }
+  }
+
+  // Development-only fallback. Never trust an arbitrary remote Origin for
+  // payment return URLs because that could redirect a completed checkout to
+  // an attacker-controlled site.
+  const requestOrigin = req.headers.get('origin')
+  if (requestOrigin) {
+    try {
+      const parsed = new URL(requestOrigin)
+      if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+        return parsed.origin
+      }
+    } catch {
+      // Fall through to the configuration error below.
     }
   }
 
