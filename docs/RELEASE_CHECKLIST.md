@@ -1,6 +1,6 @@
 # SipMate — Google Play release checklist
 
-Status snapshot: 2 September 2026
+Status snapshot: 3 September 2026
 
 ## Already prepared in the repository
 
@@ -14,10 +14,14 @@ Status snapshot: 2 September 2026
 - English / German / Croatian UI coverage across the main MVP
 - 18+ registration enforcement
 - Block and report tools
+- In-app account deletion entry and Edge Function scaffold
 - Initial privacy policy draft
 - Initial Play Store listing copy
+- Google Play Data safety draft
+- Community safety guidelines
 - Safe `.env.example`
 - Working MVP backup branch
+- Automated TypeScript CI check on `master`
 
 ## Must be completed before production submission
 
@@ -26,13 +30,15 @@ Status snapshot: 2 September 2026
 3. Run a preview Android build and test it on a real phone.
 4. Run the production `.aab` build.
 5. Add a public privacy-policy URL. Google Play requires the privacy policy to be publicly accessible and linked inside the app.
-6. Add an in-app account deletion flow and an external web resource for account deletion. Google Play requires both for apps that allow account creation.
+6. Finish account deletion safely: verify database/storage deletion behavior, cancel any paid subscription before deletion, and add the required external web resource for deletion requests.
 7. Add a real public support/privacy contact address to the privacy policy and Play listing.
 8. Complete the Play Console Data safety form accurately, including location, profile data, photos, authentication, chat/user-generated content and payment-related processing.
 9. Complete the content-rating questionnaire. SipMate should be configured for adults because it is centered around social drinking meetups.
 10. Upload required store assets: 512x512 icon, 1024x500 feature graphic and phone screenshots.
-11. Test Premium purchase/cancellation with the production deployment configuration before promoting from testing to production.
-12. Review Supabase RLS policies and production CORS settings one final time.
+11. **PAYMENTS RELEASE GATE:** do not ship the current Stripe Checkout purchase flow as the default Android in-app purchase flow. SipMate Premium unlocks digital app functionality, so Google Play Billing is required unless SipMate is enrolled in and correctly implements an eligible alternative-billing / billing-choice program for the user's market. See `docs/PLAY_BILLING_PLAN.md`.
+12. Test Premium purchase, renewal, cancellation and restore behavior with the final Android billing implementation before promoting from testing to production.
+13. Review Supabase RLS policies and production CORS settings one final time.
+14. Remove temporary diagnostics/debug logging that is not needed in production.
 
 ## Build commands after pulling the latest repository
 
