@@ -38,9 +38,13 @@ export default function UserProfileScreen() {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) { setProfile(null); return; }
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, age, city, bio, currently_up_for, is_active, avatar_url, is_premium, premium_until')
+        .eq('id', session.user.id)
+        .maybeSingle();
       if (error) { console.log('PROFILE LOAD ERROR:', error.message); setProfile(null); return; }
-      setProfile(data);
+      setProfile(data as UserProfile | null);
     } finally { setLoading(false); }
   }
 
@@ -53,13 +57,16 @@ export default function UserProfileScreen() {
   if (loading) return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.loading}</Text></SafeAreaView>;
   if (!profile) return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.notFound}</Text></SafeAreaView>;
 
+  const premiumActive = profile.is_premium === true &&
+    (!profile.premium_until || new Date(profile.premium_until) > new Date());
+
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           {profile.avatar_url ? <Image source={{ uri: profile.avatar_url }} style={styles.profileAvatar} resizeMode="cover" /> : <View style={styles.profileAvatarFallback}><Text style={styles.profileAvatarFallbackText}>{profile.name?.charAt(0).toUpperCase() || '?'}</Text></View>}
           <Text style={styles.name}>{profile.name ?? text.user}{profile.age ? `, ${profile.age}` : ''}</Text>
-          {profile.is_premium && <View style={styles.premiumBadge}><Text style={styles.premiumBadgeText}>💎 PREMIUM</Text></View>}
+          {premiumActive && <View style={styles.premiumBadge}><Text style={styles.premiumBadgeText}>💎 PREMIUM</Text></View>}
           <Text style={styles.city}>📍 {profile.city ?? text.location}</Text>
           <View style={[styles.statusBadge, profile.is_active ? styles.statusBadgeActive : styles.statusBadgeInactive]}><Text style={[styles.statusBadgeText, profile.is_active ? styles.statusTextActive : styles.statusTextInactive]}>{profile.is_active ? `● ${t('profileScreen.active')}` : `● ${t('profileScreen.inactive')}`}</Text></View>
           <View style={styles.section}><Text style={styles.label}>{t('profileScreen.currentlyUpFor')}</Text><View style={styles.drinkChip}><Text style={styles.drink}>{profile.currently_up_for ?? t('profileScreen.readyForDrink')}</Text></View></View>
