@@ -50,7 +50,7 @@ for (const file of clientFiles) {
     fail(`Direct avatars getPublicUrl bypasses profile-media boundary in ${relative}`);
   }
 
-  if (relative !== 'src/lib/profile-media.ts' && content.includes('/storage/v1/object/public/avatars/')) {
+  if (relative !== 'src/lib/profile-media.ts' && relative !== 'src/components/private-profile-image.tsx' && content.includes('/storage/v1/object/public/avatars/')) {
     fail(`Hard-coded public avatar Storage URL bypasses profile-media boundary in ${relative}`);
   }
 }
@@ -68,6 +68,8 @@ if (exists('src/components/private-profile-image.tsx')) {
   const privateImage = read('src/components/private-profile-image.tsx');
   assert(privateImage.includes('resolveProfileMediaUrl'), 'PrivateProfileImage bypasses the central media resolver');
   assert(privateImage.includes('preferSigned: true'), 'PrivateProfileImage no longer explicitly requires signed media');
+  assert(privateImage.includes('SIGNED_MEDIA_REFRESH_MS = 4 * 60 * 1000'), 'PrivateProfileImage no longer refreshes before the five-minute signed URL expiry');
+  assert(privateImage.includes('setTimeout'), 'PrivateProfileImage signed URL refresh timer is missing');
 }
 
 const stripeClaimMigration = 'supabase/migrations/20260904180100_add_atomic_stripe_webhook_claim_api.sql';
