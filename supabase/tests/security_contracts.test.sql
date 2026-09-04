@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(35);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass), 'profiles RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.cheers'::regclass), 'cheers RLS enabled');
@@ -47,6 +47,34 @@ select ok(position('auth.role()' in lower(pg_get_functiondef('public.fail_stripe
 
 select ok(position('bool_or(expires_at is null)' in lower(pg_get_functiondef('public.sync_profile_premium_status(uuid)'::regprocedure))) > 0,'Premium sync preserves active subscriptions without an expiry');
 select ok(not has_function_privilege('authenticated','public.sync_profile_premium_status(uuid)','EXECUTE'),'authenticated cannot invoke Premium status synchronization directly');
+
+select ok(
+  (select p.prosecdef from pg_proc p where p.oid = 'private.can_read_avatar_object(text)'::regprocedure),
+  'avatar read helper is SECURITY DEFINER so profile owner-only RLS cannot break authorized media reads'
+);
+select ok(
+  position('search_path=pg_catalog, public' in coalesce(array_to_string((select p.proconfig from pg_proc p where p.oid='private.can_read_avatar_object(text)'::regprocedure), ','), '')) > 0,
+  'avatar read helper pins search_path'
+);
+select ok(
+  not has_function_privilege('anon','private.can_read_avatar_object(text)','EXECUTE'),
+  'anonymous callers cannot execute avatar read helper'
+);
+select ok(
+  has_function_privilege('authenticated','private.can_read_avatar_object(text)','EXECUTE'),
+  'authenticated storage policy can execute avatar read helper'
+);
+select ok(
+  exists (
+    select 1 from pg_policies
+    where schemaname='storage'
+      and tablename='objects'
+      and policyname='Authenticated avatar read'
+      and cmd='SELECT'
+      and qual like '%can_read_avatar_object%'
+  ),
+  'authenticated avatar storage read policy delegates authorization to hardened helper'
+);
 
 select * from finish();
 rollback;
