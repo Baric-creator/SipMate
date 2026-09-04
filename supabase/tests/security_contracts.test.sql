@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(35);
+select plan(39);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass), 'profiles RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.cheers'::regclass), 'cheers RLS enabled');
@@ -74,6 +74,22 @@ select ok(
       and qual like '%can_read_avatar_object%'
   ),
   'authenticated avatar storage read policy delegates authorization to hardened helper'
+);
+select ok(
+  position('object_name not like ''%/%''' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,
+  'avatar read helper rejects root objects without an owner path'
+);
+select ok(
+  position('object_name like ''%/../%''' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,
+  'avatar read helper rejects traversal-like object paths'
+);
+select ok(
+  position('object_name like ''%//%''' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,
+  'avatar read helper rejects empty path segments'
+);
+select ok(
+  position('owner_text <> owner_id::text' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,
+  'avatar read helper requires canonical UUID owner prefixes'
 );
 
 select * from finish();
