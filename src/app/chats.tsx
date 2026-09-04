@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PrivateProfileImage } from '../components/private-profile-image';
 import { getChatList } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
 
@@ -88,7 +89,11 @@ export default function ChatsScreen() {
           <View style={styles.emptyBox}><Text style={styles.emptyEmoji}>🍻</Text><Text style={styles.emptyTitle}>{text.emptyTitle}</Text><Text style={styles.emptyText}>{text.emptyText}</Text></View>
         ) : chats.map((item) => (
           <Pressable key={item.conversationId} style={[styles.chatCard, item.unreadCount > 0 && styles.chatCardUnread]} onPress={() => openChat(item)}>
-            {item.avatar_url ? <Image source={{ uri: `${item.avatar_url}${item.avatar_url.includes('?') ? '&' : '?'}refresh=${Date.now()}` }} style={styles.chatAvatar} resizeMode="cover" /> : <View style={styles.chatAvatarFallback}><Text style={styles.chatAvatarFallbackText}>{item.name?.charAt(0).toUpperCase() || '?'}</Text></View>}
+            {(item.avatar_path || item.avatar_url) ? (
+              <PrivateProfileImage storagePath={item.avatar_path} legacyUrl={item.avatar_url} style={styles.chatAvatar} resizeMode="cover" />
+            ) : (
+              <View style={styles.chatAvatarFallback}><Text style={styles.chatAvatarFallbackText}>{item.name?.charAt(0).toUpperCase() || '?'}</Text></View>
+            )}
             <View style={styles.chatContent}>
               <View style={styles.topRow}><Text style={[styles.name, item.unreadCount > 0 && styles.nameUnread]}>{item.name}{item.age ? `, ${item.age}` : ''}</Text><Text style={styles.timeText}>{formatTime(item.lastMessageTime)}</Text></View>
               <View style={styles.bottomRow}><Text style={[styles.lastMessage, item.unreadCount > 0 && styles.lastMessageUnread]} numberOfLines={1}>{item.lastMessage}</Text>{item.unreadCount > 0 && <View style={styles.unreadBadge}><Text style={styles.unreadBadgeText}>{item.unreadCount > 99 ? '99+' : item.unreadCount}</Text></View>}</View>
