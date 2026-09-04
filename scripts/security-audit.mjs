@@ -61,6 +61,8 @@ if (exists('src/lib/profile-media.ts')) {
   assert(media.includes('createSignedUrl'), 'Profile media helper no longer creates signed URLs');
   assert(media.includes('options?.preferSigned ?? true'), 'Signed profile media is no longer the default');
   assert(media.includes('5 * 60'), 'Signed profile media TTL changed from the privacy-hardened five-minute default');
+  assert(media.includes("SIGNED_AVATAR_MARKER = '/storage/v1/object/sign/avatars/'"), 'Signed avatar URLs can no longer be normalized for renewal');
+  assert(media.includes('[PUBLIC_AVATAR_MARKER, SIGNED_AVATAR_MARKER]'), 'Profile media path parsing no longer accepts both legacy public and signed SipMate avatar URLs');
 }
 
 assert(exists('src/components/private-profile-image.tsx'), 'PrivateProfileImage component is missing');
