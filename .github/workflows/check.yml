@@ -27,3 +27,21 @@ jobs:
 
       - name: TypeScript and security checks
         run: npm run check
+
+  database-security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase database
+        run: supabase db start
+
+      - name: Run database security contracts
+        run: supabase test db supabase/tests/security_contracts.test.sql
