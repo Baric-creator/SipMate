@@ -10,7 +10,7 @@ alter table public.profile_photos
 -- Backfill paths only from SipMate's avatars public-object URL shape. External URLs stay untouched.
 update public.profiles
 set avatar_path = split_part(
-  split_part(avatar_url, '/storage/v1/object/public/avatars/')[2],
+  split_part(avatar_url, '/storage/v1/object/public/avatars/', 2),
   '?', 1
 )
 where avatar_path is null
@@ -18,7 +18,7 @@ where avatar_path is null
 
 update public.profile_photos
 set storage_path = split_part(
-  split_part(photo_url, '/storage/v1/object/public/avatars/')[2],
+  split_part(photo_url, '/storage/v1/object/public/avatars/', 2),
   '?', 1
 )
 where storage_path is null
