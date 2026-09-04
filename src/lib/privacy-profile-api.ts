@@ -44,6 +44,8 @@ export type ChatListItem = {
   unread_count: number | string | null;
 };
 
+export type CheersRelationship = 'none' | 'sent' | 'mutual';
+
 export type CheersOverviewItem = {
   cheers_id: string;
   user_id: string | null;
@@ -104,6 +106,14 @@ export async function getChatList() {
   const { data, error } = await supabase.rpc('get_chat_list');
   throwIfError(error);
   return (data ?? []) as ChatListItem[];
+}
+
+export async function getCheersRelationship(targetUserId: string) {
+  const { data, error } = await supabase.rpc('get_cheers_relationship', {
+    target_user_id: targetUserId,
+  });
+  throwIfError(error);
+  return (data ?? 'none') as CheersRelationship;
 }
 
 export async function getCheersOverview() {
