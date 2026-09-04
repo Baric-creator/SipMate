@@ -1,0 +1,49 @@
+name: Private Chat Channel Once
+
+on:
+  push:
+    branches:
+      - security-500m
+    paths:
+      - scripts/apply-private-chat-channel.mjs
+      - .github/workflows/private-chat-channel-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: security-500m
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Apply private chat channel patch
+        run: node scripts/apply-private-chat-channel.mjs
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run checks
+        run: npm run check
+
+      - name: Commit patched chat screen
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/app/chat.tsx
+          git commit -m "Use private Realtime chat channel"
+          git push origin HEAD:security-500m
