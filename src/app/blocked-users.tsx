@@ -9,20 +9,13 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBlockedUsers, type BlockedUserSummary } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
-
-type BlockedUser = {
-  id: string;
-  name: string | null;
-  age: number | null;
-  city: string | null;
-  avatar_url: string | null;
-};
 
 export default function BlockedUsersScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUserSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,13 +31,7 @@ export default function BlockedUsersScreen() {
         return;
       }
 
-      const { data, error } = await supabase.rpc('get_blocked_users');
-      if (error) {
-        console.log('BLOCKED USERS RPC ERROR:', error.message);
-        setBlockedUsers([]);
-        return;
-      }
-      setBlockedUsers((data ?? []) as BlockedUser[]);
+      setBlockedUsers(await getBlockedUsers());
     } catch (error) {
       console.log('LOAD BLOCKED USERS ERROR:', error);
       setBlockedUsers([]);
