@@ -1,0 +1,62 @@
+import { supabase } from './supabase';
+
+export type PublicProfile = {
+  id: string;
+  name: string | null;
+  age: number | null;
+  city: string | null;
+  bio: string | null;
+  currently_up_for: string | null;
+  is_active: boolean | null;
+  avatar_url: string | null;
+  gender: string | null;
+};
+
+export type NearbyProfile = PublicProfile & {
+  distance_km: number;
+};
+
+export type CheersOverviewItem = {
+  cheers_id: string;
+  user_id: string | null;
+  name: string | null;
+  age: number | null;
+  status: 'Mutual Cheers' | 'Sent' | 'Received';
+  identity_revealed: boolean;
+  created_at: string;
+};
+
+function throwIfError(error: { message: string } | null) {
+  if (error) throw new Error(error.message);
+}
+
+export async function getPublicProfile(targetUserId: string) {
+  const { data, error } = await supabase.rpc('get_public_profile', {
+    target_user_id: targetUserId,
+  });
+
+  throwIfError(error);
+  return ((data ?? [])[0] ?? null) as PublicProfile | null;
+}
+
+export async function getNearbyProfiles(options?: {
+  maxDistanceKm?: number;
+  customOriginLatitude?: number | null;
+  customOriginLongitude?: number | null;
+}) {
+  const { data, error } = await supabase.rpc('get_nearby_profiles', {
+    max_distance_km: options?.maxDistanceKm ?? 10,
+    custom_origin_latitude: options?.customOriginLatitude ?? null,
+    custom_origin_longitude: options?.customOriginLongitude ?? null,
+  });
+
+  throwIfError(error);
+  return (data ?? []) as NearbyProfile[];
+}
+
+export async function getCheersOverview() {
+  const { data, error } = await supabase.rpc('get_cheers_overview');
+
+  throwIfError(error);
+  return (data ?? []) as CheersOverviewItem[];
+}
