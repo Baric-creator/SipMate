@@ -150,6 +150,30 @@ Deno.serve(async (req) => {
         )!
       )
 
+    async function claimWebhookEvent(event: Stripe.Event) {
+      const { data, error } = await supabaseAdmin.rpc('claim_stripe_webhook_event', {
+        p_event_id: event.id,
+        p_event_type: event.type,
+        p_stale_after_seconds: 300,
+      })
+      if (error) throw error
+      return data === true
+    }
+
+    async function completeWebhookEvent(eventId: string) {
+      const { error } = await supabaseAdmin.rpc('complete_stripe_webhook_event', { p_event_id: eventId })
+      if (error) throw error
+    }
+
+    async function failWebhookEvent(eventId: string, error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      const { error: ledgerError } = await supabaseAdmin.rpc('fail_stripe_webhook_event', {
+        p_event_id: eventId,
+        p_error: message,
+      })
+      if (ledgerError) console.log('WEBHOOK LEDGER ERROR:', ledgerError)
+    }
+
     async function syncSubscription(
       subscription:
         Stripe.Subscription,
@@ -437,6 +461,12 @@ const cancelAtPeriodEnd =
       )
     }
 
+    const claimed = await claimWebhookEvent(event)
+    if (!claimed) {
+      return Response.json({ received: true, duplicate: true })
+    }
+
+    try {
     // =========================
     // NEW CHECKOUT
     // =========================
@@ -544,6 +574,12 @@ const cancelAtPeriodEnd =
           subscription
         )
       }
+    }
+
+      await completeWebhookEvent(event.id)
+    } catch (processingError) {
+      await failWebhookEvent(event.id, processingError)
+      throw processingError
     }
 
     return Response.json({
