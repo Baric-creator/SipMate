@@ -9,7 +9,7 @@ export type PublicProfile = {
   currently_up_for: string | null;
   is_active: boolean | null;
   avatar_url: string | null;
-  avatar_path: string | null;
+  avatar_path?: string | null;
   gender: string | null;
 };
 
