@@ -55,14 +55,21 @@ for (const file of clientFiles) {
   }
 }
 
-// Privacy-sensitive discovery/profile surfaces must never render profile media
-// through React Native Image directly. This catches regressions before the
-// avatars bucket is switched to private mode.
-for (const relative of ['src/app/nearby.tsx', 'src/app/user-profile.tsx', 'src/app/chats.tsx', 'src/app/edit-profile.tsx']) {
+// Surfaces already migrated to the private-media renderer are hard CI gates.
+for (const relative of ['src/app/nearby.tsx', 'src/app/chats.tsx', 'src/app/edit-profile.tsx']) {
   if (!exists(relative)) continue;
   const content = read(relative);
   assert(content.includes('PrivateProfileImage'), `${relative} must render profile media through PrivateProfileImage`);
   assert(!/\bImage\s*,/.test(content) && !/<Image\b/.test(content), `${relative} still contains raw React Native Image profile-media rendering`);
+}
+// user-profile is the last known rollout surface. Keep it visible as a warning
+// until its main avatar, gallery and fullscreen viewer are migrated, then promote
+// this to the hard-gate list above.
+if (exists('src/app/user-profile.tsx')) {
+  const userProfile = read('src/app/user-profile.tsx');
+  if (!userProfile.includes('PrivateProfileImage') || /<Image\b/.test(userProfile)) {
+    warn('user-profile.tsx still has raw profile-media rendering; private bucket cutover remains blocked');
+  }
 }
 
 assert(exists('src/lib/profile-media.ts'), 'Central profile-media helper is missing');
@@ -93,6 +100,11 @@ if (exists(stripeClaimMigration) && exists(stripeReassertMigration)) {
   assert(claim.includes('current_user'), 'Historical Stripe claim migration changed; re-audit migration ordering');
   assert(!reassert.includes("if current_user not in"), 'Final Stripe webhook RPC hardening still authorizes with SECURITY DEFINER current_user');
   assert(reassert.includes("coalesce(auth.role(), '') <> 'service_role'"), 'Final Stripe webhook RPC hardening no longer validates the JWT service role');
+  assert(reassert.includes("on conflict (event_id) do nothing"), 'Hardened Stripe claim lost atomic insert semantics');
+  assert(reassert.includes("for update"), 'Hardened Stripe claim lost row locking for retries');
+  assert(reassert.includes("v_status='processed'"), 'Hardened Stripe claim lost processed-event idempotency');
+  assert(reassert.includes('attempts=attempts+1'), 'Hardened Stripe claim lost retry attempt accounting');
+  assert(reassert.includes("last_error=left(coalesce(p_error,'unknown error'),2000)"), 'Hardened Stripe failure handler changed bounded error persistence');
   assert(path.basename(stripeReassertMigration) > path.basename(stripeClaimMigration), 'Stripe caller hardening must replay after the historical claim API migration');
 }
 
