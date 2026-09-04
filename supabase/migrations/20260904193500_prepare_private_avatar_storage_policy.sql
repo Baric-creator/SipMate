@@ -17,18 +17,43 @@ declare
   caller_id uuid := auth.uid();
   owner_text text;
   owner_id uuid;
+  object_leaf text;
 begin
   if caller_id is null or object_name is null or btrim(object_name) = '' then
     return false;
   end if;
 
+  -- SipMate media objects must live under exactly one user-owned UUID prefix.
+  -- Reject root objects, empty leaves, absolute paths, traversal-like segments,
+  -- and malformed owner prefixes before any authorization decision is made.
+  if object_name like '/%'
+     or object_name not like '%/%'
+     or object_name like '%/../%'
+     or object_name like '../%'
+     or object_name like '%/..'
+     or object_name like '%//%' then
+    return false;
+  end if;
+
   owner_text := split_part(object_name, '/', 1);
+  object_leaf := substring(object_name from length(owner_text) + 2);
+
+  if owner_text = '' or object_leaf is null or btrim(object_leaf) = '' then
+    return false;
+  end if;
+
   begin
     owner_id := owner_text::uuid;
   exception
     when invalid_text_representation then
       return false;
   end;
+
+  -- Canonicalize the UUID text so alternate textual forms cannot create a
+  -- second namespace for the same owner.
+  if owner_text <> owner_id::text then
+    return false;
+  end if;
 
   if owner_id = caller_id then
     return true;
