@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(30);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass), 'profiles RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.cheers'::regclass), 'cheers RLS enabled');
@@ -44,6 +44,9 @@ select ok(position('current_user' in lower(pg_get_functiondef('public.complete_s
 select ok(position('auth.role()' in lower(pg_get_functiondef('public.complete_stripe_webhook_event(text)'::regprocedure))) > 0,'webhook complete RPC validates JWT service role');
 select ok(position('current_user' in lower(pg_get_functiondef('public.fail_stripe_webhook_event(text,text)'::regprocedure))) = 0,'webhook fail RPC does not trust SECURITY DEFINER current_user');
 select ok(position('auth.role()' in lower(pg_get_functiondef('public.fail_stripe_webhook_event(text,text)'::regprocedure))) > 0,'webhook fail RPC validates JWT service role');
+
+select ok(position('bool_or(expires_at is null)' in lower(pg_get_functiondef('public.sync_profile_premium_status(uuid)'::regprocedure))) > 0,'Premium sync preserves active subscriptions without an expiry');
+select ok(not has_function_privilege('authenticated','public.sync_profile_premium_status(uuid)','EXECUTE'),'authenticated cannot invoke Premium status synchronization directly');
 
 select * from finish();
 rollback;
