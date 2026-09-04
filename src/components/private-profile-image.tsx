@@ -3,6 +3,8 @@ import { Image, ImageProps } from 'react-native';
 
 import { resolveProfileMediaUrl } from '../lib/profile-media';
 
+const SIGNED_MEDIA_REFRESH_MS = 4 * 60 * 1000;
+
 type PrivateProfileImageProps = Omit<ImageProps, 'source'> & {
   storagePath?: string | null;
   legacyUrl?: string | null;
@@ -13,7 +15,8 @@ type PrivateProfileImageProps = Omit<ImageProps, 'source'> & {
  * Transitional image component for the public -> private avatars rollout.
  * Any SipMate Storage reference is resolved through an authenticated signed URL.
  * External legacy URLs remain displayable, but SipMate public-object URLs are no
- * longer preferred by the client.
+ * longer preferred by the client. Signed SipMate URLs are refreshed before the
+ * central five-minute expiry so long-lived screens do not lose their images.
  */
 export function PrivateProfileImage({
   storagePath,
@@ -30,9 +33,11 @@ export function PrivateProfileImage({
 
   useEffect(() => {
     let cancelled = false;
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const reference = storagePath || legacyUrl;
 
     async function resolve() {
-      const reference = storagePath || legacyUrl;
       if (!reference) {
         setUri(null);
         onUnavailableRef.current?.();
@@ -43,9 +48,22 @@ export function PrivateProfileImage({
         const resolved = await resolveProfileMediaUrl(reference, {
           preferSigned: true,
         });
-        if (!cancelled) {
-          setUri(resolved);
-          if (!resolved) onUnavailableRef.current?.();
+        if (cancelled) return;
+
+        setUri(resolved);
+        if (!resolved) {
+          onUnavailableRef.current?.();
+          return;
+        }
+
+        // External legacy URLs do not expire. SipMate Storage paths do.
+        const isExternalLegacyUrl =
+          !storagePath && /^https?:\/\//i.test(reference) && !reference.includes('/storage/v1/object/public/avatars/');
+
+        if (!isExternalLegacyUrl) {
+          refreshTimer = setTimeout(() => {
+            void resolve();
+          }, SIGNED_MEDIA_REFRESH_MS);
         }
       } catch (error) {
         if (__DEV__) console.warn('PROFILE MEDIA RESOLVE ERROR', error);
@@ -59,6 +77,7 @@ export function PrivateProfileImage({
     void resolve();
     return () => {
       cancelled = true;
+      if (refreshTimer) clearTimeout(refreshTimer);
     };
   }, [storagePath, legacyUrl]);
 
