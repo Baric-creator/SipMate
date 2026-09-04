@@ -16,6 +16,34 @@ export type NearbyProfile = PublicProfile & {
   distance_km: number;
 };
 
+export type ProfilePhotoSummary = {
+  id: string;
+  photo_url: string;
+  sort_order: number | null;
+};
+
+export type BlockedUserSummary = Pick<
+  PublicProfile,
+  'id' | 'name' | 'age' | 'city' | 'avatar_url'
+>;
+
+export type SkippedProfileSummary = Pick<
+  PublicProfile,
+  'id' | 'name' | 'age' | 'avatar_url' | 'currently_up_for' | 'gender'
+>;
+
+export type ChatListItem = {
+  conversation_id: string;
+  user_id: string;
+  name: string | null;
+  age: number | null;
+  is_active: boolean | null;
+  avatar_url: string | null;
+  last_message: string | null;
+  last_message_time: string | null;
+  unread_count: number | string | null;
+};
+
 export type CheersOverviewItem = {
   cheers_id: string;
   user_id: string | null;
@@ -34,9 +62,16 @@ export async function getPublicProfile(targetUserId: string) {
   const { data, error } = await supabase.rpc('get_public_profile', {
     target_user_id: targetUserId,
   });
-
   throwIfError(error);
   return ((data ?? [])[0] ?? null) as PublicProfile | null;
+}
+
+export async function getProfilePhotos(targetUserId: string) {
+  const { data, error } = await supabase.rpc('get_profile_photos', {
+    target_user_id: targetUserId,
+  });
+  throwIfError(error);
+  return (data ?? []) as ProfilePhotoSummary[];
 }
 
 export async function getNearbyProfiles(options?: {
@@ -49,14 +84,30 @@ export async function getNearbyProfiles(options?: {
     custom_origin_latitude: options?.customOriginLatitude ?? null,
     custom_origin_longitude: options?.customOriginLongitude ?? null,
   });
-
   throwIfError(error);
   return (data ?? []) as NearbyProfile[];
 }
 
+export async function getBlockedUsers() {
+  const { data, error } = await supabase.rpc('get_blocked_users');
+  throwIfError(error);
+  return (data ?? []) as BlockedUserSummary[];
+}
+
+export async function getSkippedProfileSummaries() {
+  const { data, error } = await supabase.rpc('get_skipped_profile_summaries');
+  throwIfError(error);
+  return (data ?? []) as SkippedProfileSummary[];
+}
+
+export async function getChatList() {
+  const { data, error } = await supabase.rpc('get_chat_list');
+  throwIfError(error);
+  return (data ?? []) as ChatListItem[];
+}
+
 export async function getCheersOverview() {
   const { data, error } = await supabase.rpc('get_cheers_overview');
-
   throwIfError(error);
   return (data ?? []) as CheersOverviewItem[];
 }
