@@ -45,6 +45,29 @@ for (const file of clientFiles) {
   for (const forbidden of ['SUPABASE_SERVICE_ROLE_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_SUBSCRIPTION_WEBHOOK_SECRET']) {
     if (content.includes(forbidden)) fail(`Server-only env name ${forbidden} referenced by client source ${relative}`);
   }
+
+  if (relative !== 'src/lib/profile-media.ts' && /\.storage\s*\.from\(\s*['"]avatars['"]\s*\)\s*\.getPublicUrl\s*\(/s.test(content)) {
+    fail(`Direct avatars getPublicUrl bypasses profile-media boundary in ${relative}`);
+  }
+
+  if (relative !== 'src/lib/profile-media.ts' && content.includes('/storage/v1/object/public/avatars/')) {
+    fail(`Hard-coded public avatar Storage URL bypasses profile-media boundary in ${relative}`);
+  }
+}
+
+assert(exists('src/lib/profile-media.ts'), 'Central profile-media helper is missing');
+if (exists('src/lib/profile-media.ts')) {
+  const media = read('src/lib/profile-media.ts');
+  assert(media.includes('createSignedUrl'), 'Profile media helper no longer creates signed URLs');
+  assert(media.includes('options?.preferSigned ?? true'), 'Signed profile media is no longer the default');
+  assert(media.includes('5 * 60'), 'Signed profile media TTL changed from the privacy-hardened five-minute default');
+}
+
+assert(exists('src/components/private-profile-image.tsx'), 'PrivateProfileImage component is missing');
+if (exists('src/components/private-profile-image.tsx')) {
+  const privateImage = read('src/components/private-profile-image.tsx');
+  assert(privateImage.includes('resolveProfileMediaUrl'), 'PrivateProfileImage bypasses the central media resolver');
+  assert(privateImage.includes('preferSigned: true'), 'PrivateProfileImage no longer explicitly requires signed media');
 }
 
 assert(exists('.env.example'), '.env.example is missing');
