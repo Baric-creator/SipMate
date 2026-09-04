@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Image, ImageProps } from 'react-native';
 
-import { resolveProfileMediaUrl } from '../lib/profile-media';
+import { getProfileMediaStoragePath, resolveProfileMediaUrl } from '../lib/profile-media';
 
 const SIGNED_MEDIA_REFRESH_MS = 4 * 60 * 1000;
 
@@ -36,6 +36,7 @@ export function PrivateProfileImage({
     let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
     const reference = storagePath || legacyUrl;
+    const managedStoragePath = getProfileMediaStoragePath(reference);
 
     async function resolve() {
       if (!reference) {
@@ -56,11 +57,8 @@ export function PrivateProfileImage({
           return;
         }
 
-        // External legacy URLs do not expire. SipMate Storage paths do.
-        const isExternalLegacyUrl =
-          !storagePath && /^https?:\/\//i.test(reference) && !reference.includes('/storage/v1/object/public/avatars/');
-
-        if (!isExternalLegacyUrl) {
+        // Only SipMate-managed Storage objects need signature renewal.
+        if (managedStoragePath) {
           refreshTimer = setTimeout(() => {
             void resolve();
           }, SIGNED_MEDIA_REFRESH_MS);
