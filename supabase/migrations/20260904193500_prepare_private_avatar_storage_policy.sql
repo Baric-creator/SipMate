@@ -42,6 +42,15 @@ begin
     return false;
   end if;
 
+  -- Reads are intentionally limited to the same canonical media namespace that
+  -- upload/update policies accept. This prevents a future unrelated object in
+  -- the avatars bucket from becoming readable merely because it shares a user's
+  -- UUID folder.
+  if lower(object_leaf) not in ('avatar.jpg', 'avatar.jpeg', 'avatar.png', 'avatar.webp')
+     and lower(object_leaf) !~ '^gallery-[0-9]+\.(jpg|jpeg|png|webp)$' then
+    return false;
+  end if;
+
   begin
     owner_id := owner_text::uuid;
   exception
