@@ -2,22 +2,12 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { getChatList } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
-
-type ChatRpcRow = {
-  conversation_id: string;
-  user_id: string;
-  name: string | null;
-  age: number | null;
-  is_active: boolean | null;
-  avatar_url: string | null;
-  last_message: string | null;
-  last_message_time: string | null;
-  unread_count: number | string | null;
-};
 
 type ChatItem = {
   avatar_url: string | null;
+  avatar_path: string | null;
   conversationId: string;
   userId: string;
   name: string;
@@ -57,20 +47,15 @@ export default function ChatsScreen() {
         return;
       }
 
-      const { data, error } = await supabase.rpc('get_chat_list');
-      if (error) {
-        console.log('CHAT LIST RPC ERROR:', error.message);
-        setChats([]);
-        return;
-      }
-
-      const items = ((data ?? []) as ChatRpcRow[]).map((row): ChatItem => ({
+      const rows = await getChatList();
+      const items = rows.map((row): ChatItem => ({
         conversationId: row.conversation_id,
         userId: row.user_id,
         name: row.name ?? text.userFallback,
         age: row.age,
         isActive: row.is_active ?? false,
         avatar_url: row.avatar_url,
+        avatar_path: row.avatar_path ?? null,
         lastMessage: row.last_message ?? text.noMessages,
         lastMessageTime: row.last_message_time,
         unreadCount: Number(row.unread_count ?? 0),
