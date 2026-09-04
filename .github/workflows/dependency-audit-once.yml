@@ -1,0 +1,36 @@
+name: Dependency Audit Once
+
+on:
+  push:
+    branches:
+      - security-500m
+
+jobs:
+  audit:
+    if: contains(github.event.head_commit.message, 'Run one-off dependency vulnerability audit')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Capture dependency audit
+        run: |
+          npm audit --json > dependency-audit.json || true
+          npm audit --omit=dev --json > dependency-audit-production.json || true
+          npm audit fix --dry-run --json > dependency-audit-fix-dry-run.json || true
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Upload audit reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-reports
+          path: |
+            dependency-audit.json
+            dependency-audit-production.json
+            dependency-audit-fix-dry-run.json
