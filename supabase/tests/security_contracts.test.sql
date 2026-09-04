@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(28);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass), 'profiles RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.cheers'::regclass), 'cheers RLS enabled');
@@ -37,6 +37,13 @@ select is(
   1::bigint,
   'direct profile photo SELECT is restricted to the authenticated owner'
 );
+
+select ok(position('current_user' in lower(pg_get_functiondef('public.claim_stripe_webhook_event(text,text,integer)'::regprocedure))) = 0,'webhook claim RPC does not trust SECURITY DEFINER current_user');
+select ok(position('auth.role()' in lower(pg_get_functiondef('public.claim_stripe_webhook_event(text,text,integer)'::regprocedure))) > 0,'webhook claim RPC validates JWT service role');
+select ok(position('current_user' in lower(pg_get_functiondef('public.complete_stripe_webhook_event(text)'::regprocedure))) = 0,'webhook complete RPC does not trust SECURITY DEFINER current_user');
+select ok(position('auth.role()' in lower(pg_get_functiondef('public.complete_stripe_webhook_event(text)'::regprocedure))) > 0,'webhook complete RPC validates JWT service role');
+select ok(position('current_user' in lower(pg_get_functiondef('public.fail_stripe_webhook_event(text,text)'::regprocedure))) = 0,'webhook fail RPC does not trust SECURITY DEFINER current_user');
+select ok(position('auth.role()' in lower(pg_get_functiondef('public.fail_stripe_webhook_event(text,text)'::regprocedure))) > 0,'webhook fail RPC validates JWT service role');
 
 select * from finish();
 rollback;
