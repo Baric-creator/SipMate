@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+const path='supabase/functions/stripe-webhook/index.ts';
+let s=fs.readFileSync(path,'utf8');
+const anchor=`    async function syncSubscription(`;
+if(!s.includes(anchor)) throw new Error('syncSubscription anchor missing');
+const helper=`    async function claimWebhookEvent(event: Stripe.Event) {\n      const { data, error } = await supabaseAdmin.rpc('claim_stripe_webhook_event', {\n        p_event_id: event.id,\n        p_event_type: event.type,\n        p_stale_after_seconds: 300,\n      })\n      if (error) throw error\n      return data === true\n    }\n\n    async function completeWebhookEvent(eventId: string) {\n      const { error } = await supabaseAdmin.rpc('complete_stripe_webhook_event', { p_event_id: eventId })\n      if (error) throw error\n    }\n\n    async function failWebhookEvent(eventId: string, error: unknown) {\n      const message = error instanceof Error ? error.message : String(error)\n      const { error: ledgerError } = await supabaseAdmin.rpc('fail_stripe_webhook_event', {\n        p_event_id: eventId,\n        p_error: message,\n      })\n      if (ledgerError) console.log('WEBHOOK LEDGER ERROR:', ledgerError)\n    }\n\n`;
+s=s.replace(anchor,helper+anchor);
+const before=`    // =========================\n    // NEW CHECKOUT`;
+if(!s.includes(before)) throw new Error('event dispatch anchor missing');
+s=s.replace(before,`    const claimed = await claimWebhookEvent(event)\n    if (!claimed) {\n      return Response.json({ received: true, duplicate: true })\n    }\n\n    try {\n${before}`);
+const end=`    return Response.json({\n      received: true,\n    })`;
+if(!s.includes(end)) throw new Error('success response anchor missing');
+s=s.replace(end,`      await completeWebhookEvent(event.id)\n    } catch (processingError) {\n      await failWebhookEvent(event.id, processingError)\n      throw processingError\n    }\n\n${end}`);
+fs.writeFileSync(path,s);
