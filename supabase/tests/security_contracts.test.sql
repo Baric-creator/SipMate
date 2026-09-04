@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(20);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass), 'profiles RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.cheers'::regclass), 'cheers RLS enabled');
@@ -63,6 +63,16 @@ select ok(
       and coalesce(array_to_string(p.proconfig, ','), '') !~ 'search_path='
   ),
   'all public/private SECURITY DEFINER functions pin search_path'
+);
+
+select ok(
+  position('current_user' in lower(pg_get_functiondef('private.enforce_social_action_quota()'::regprocedure))) = 0,
+  'social action quota trigger derives caller from auth.uid(), not SECURITY DEFINER current_user'
+);
+
+select ok(
+  position('current_user' in lower(pg_get_functiondef('private.set_reporter_id()'::regprocedure))) = 0,
+  'report identity trigger derives caller from auth.uid(), not SECURITY DEFINER current_user'
 );
 
 select * from finish();
