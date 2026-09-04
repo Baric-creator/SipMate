@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,58 +14,37 @@ import {
   View,
 } from 'react-native';
 
+import { PrivateProfileImage } from '../components/private-profile-image';
+import { getProfileMediaStoragePath, getPublicProfileMediaUrl } from '../lib/profile-media';
 import { showAlert } from '../lib/notify';
 import { isPremiumActive } from '../lib/premium-status';
 import { supabase } from '../lib/supabase';
 
 type Profile = {
-  id: string;
-  name: string | null;
-  age: number | null;
-  bio: string | null;
-  city: string | null;
-  currently_up_for: string | null;
-  gender: string | null;
-  is_premium: boolean | null;
-  premium_until: string | null;
-  is_active: boolean | null;
-  avatar_url: string | null;
+  id: string; name: string | null; age: number | null; bio: string | null; city: string | null;
+  currently_up_for: string | null; gender: string | null; is_premium: boolean | null;
+  premium_until: string | null; is_active: boolean | null; avatar_url: string | null; avatar_path?: string | null;
 };
 
-type GalleryPhoto = {
-  id: string;
-  photo_url: string;
-  sort_order: number | null;
-};
+type GalleryPhoto = { id: string; photo_url: string; storage_path?: string | null; sort_order: number | null };
 
 export default function EditProfileScreen() {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [name, setName] = useState('');
-  const [age, setAge] = useState('');
-  const [city, setCity] = useState('');
-  const [bio, setBio] = useState('');
-  const [gender, setGender] = useState('');
-  const [drink, setDrink] = useState('🍺 Beer');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [isActive, setIsActive] = useState(true);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [profilePhotos, setProfilePhotos] = useState<GalleryPhoto[]>([]);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [name, setName] = useState(''); const [age, setAge] = useState(''); const [city, setCity] = useState('');
+  const [bio, setBio] = useState(''); const [gender, setGender] = useState(''); const [drink, setDrink] = useState('🍺 Beer');
+  const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [isActive, setIsActive] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null); const [avatarPath, setAvatarPath] = useState<string | null>(null);
+  const [profilePhotos, setProfilePhotos] = useState<GalleryPhoto[]>([]); const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const premiumActive = isPremiumActive(profile?.is_premium, profile?.premium_until);
 
   const drinks = [
-    { value: '🍺 Beer', label: `🍺 ${t('editProfileScreen.beer')}` },
-    { value: '🍹 Cocktail', label: `🍹 ${t('editProfileScreen.cocktail')}` },
-    { value: '🍷 Wine', label: `🍷 ${t('editProfileScreen.wine')}` },
-    { value: '🥃 Whisky', label: `🥃 ${t('editProfileScreen.whisky')}` },
+    { value: '🍺 Beer', label: `🍺 ${t('editProfileScreen.beer')}` }, { value: '🍹 Cocktail', label: `🍹 ${t('editProfileScreen.cocktail')}` },
+    { value: '🍷 Wine', label: `🍷 ${t('editProfileScreen.wine')}` }, { value: '🥃 Whisky', label: `🥃 ${t('editProfileScreen.whisky')}` },
     { value: '☕ Coffee', label: `☕ ${t('editProfileScreen.coffee')}` },
   ];
-
   const genders = [
-    { value: 'male', label: `👨 ${t('editProfileScreen.male')}` },
-    { value: 'female', label: `👩 ${t('editProfileScreen.female')}` },
+    { value: 'male', label: `👨 ${t('editProfileScreen.male')}` }, { value: 'female', label: `👩 ${t('editProfileScreen.female')}` },
     { value: 'other', label: `⚪ ${t('editProfileScreen.other')}` },
   ];
 
@@ -80,103 +58,64 @@ export default function EditProfileScreen() {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       if (error) { console.log('EDIT PROFILE LOAD ERROR:', error.message); return; }
       const loadedProfile = data as Profile;
-      setProfile(loadedProfile);
-      setName(loadedProfile.name ?? '');
-      setAge(loadedProfile.age ? String(loadedProfile.age) : '');
-      setCity(loadedProfile.city ?? '');
-      setBio(loadedProfile.bio ?? '');
-      setGender(loadedProfile.gender ?? '');
-      setDrink(loadedProfile.currently_up_for ?? '🍺 Beer');
-      setIsActive(loadedProfile.is_active ?? true);
-      setAvatarUrl(loadedProfile.avatar_url ?? null);
-      const { data: photosData, error: photosError } = await supabase.from('profile_photos').select('id, photo_url, sort_order').eq('user_id', loadedProfile.id).order('sort_order', { ascending: true });
-      if (photosError) console.log('PROFILE PHOTOS ERROR:', photosError.message);
-      else setProfilePhotos((photosData ?? []) as GalleryPhoto[]);
+      setProfile(loadedProfile); setName(loadedProfile.name ?? ''); setAge(loadedProfile.age ? String(loadedProfile.age) : '');
+      setCity(loadedProfile.city ?? ''); setBio(loadedProfile.bio ?? ''); setGender(loadedProfile.gender ?? '');
+      setDrink(loadedProfile.currently_up_for ?? '🍺 Beer'); setIsActive(loadedProfile.is_active ?? true);
+      setAvatarUrl(loadedProfile.avatar_url ?? null); setAvatarPath(loadedProfile.avatar_path ?? getProfileMediaStoragePath(loadedProfile.avatar_url));
+      const { data: photosData, error: photosError } = await supabase.from('profile_photos').select('id, photo_url, storage_path, sort_order').eq('user_id', loadedProfile.id).order('sort_order', { ascending: true });
+      if (photosError) console.log('PROFILE PHOTOS ERROR:', photosError.message); else setProfilePhotos((photosData ?? []) as GalleryPhoto[]);
     } finally { setLoading(false); }
   }
 
   async function saveProfile() {
-    if (!profile) return;
-    if (!name.trim()) { showAlert(t('editProfileScreen.nameRequired')); return; }
+    if (!profile) return; if (!name.trim()) { showAlert(t('editProfileScreen.nameRequired')); return; }
     try {
-      setSaving(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { showAlert(t('editProfileScreen.locationPermissionRequired')); return; }
+      setSaving(true); const { data: { session } } = await supabase.auth.getSession(); if (!session?.user) return;
+      const { status } = await Location.requestForegroundPermissionsAsync(); if (status !== 'granted') { showAlert(t('editProfileScreen.locationPermissionRequired')); return; }
       const currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const latitude = currentLocation.coords.latitude;
-      const longitude = currentLocation.coords.longitude;
-      let detectedCity = city.trim() || null;
+      const latitude = currentLocation.coords.latitude; const longitude = currentLocation.coords.longitude; let detectedCity = city.trim() || null;
       try {
         const reverseResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`);
-        if (reverseResponse.ok) {
-          const reverseData = await reverseResponse.json();
-          detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ?? reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity;
-        }
+        if (reverseResponse.ok) { const reverseData = await reverseResponse.json(); detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ?? reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity; }
       } catch (reverseError) { console.log('REVERSE GEOCODE ERROR:', reverseError); }
       const numericAge = age.trim() ? Number(age) : null;
       if (numericAge != null && (!Number.isFinite(numericAge) || numericAge < 18 || numericAge > 120)) { showAlert('Age must be between 18 and 120.'); return; }
       const { error } = await supabase.from('profiles').update({ is_active: isActive, name: name.trim(), age: numericAge, city: detectedCity, bio: bio.trim(), gender: gender || null, currently_up_for: drink, latitude, longitude }).eq('id', session.user.id);
-      if (error) throw error;
-      router.back();
-    } catch (error: any) {
-      console.log('PROFILE SAVE ERROR:', error?.message ?? error);
-      showAlert(error?.message ?? 'Could not save profile.');
-    } finally { setSaving(false); }
+      if (error) throw error; router.back();
+    } catch (error: any) { console.log('PROFILE SAVE ERROR:', error?.message ?? error); showAlert(error?.message ?? 'Could not save profile.'); } finally { setSaving(false); }
   }
 
   async function toggleActiveStatus() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-    const newValue = !isActive;
-    setIsActive(newValue);
+    const { data: { session } } = await supabase.auth.getSession(); if (!session?.user) return; const newValue = !isActive; setIsActive(newValue);
     const { error } = await supabase.from('profiles').update({ is_active: newValue }).eq('id', session.user.id);
     if (error) { console.log('ACTIVE STATUS ERROR:', error.message); setIsActive(!newValue); showAlert(error.message); }
   }
 
   async function pickAndUploadAvatar() {
     try {
-      setUploadingAvatar(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
-      if (result.canceled) return;
-      const image = result.assets[0];
-      const response = await fetch(image.uri);
-      if (!response.ok) { showAlert(t('editProfileScreen.imageReadError')); return; }
-      const arrayBuffer = await response.arrayBuffer();
-      const fileExt = image.fileName?.split('.').pop()?.toLowerCase() || 'jpg';
-      const filePath = `${session.user.id}/avatar.${fileExt}`;
+      setUploadingAvatar(true); const { data: { session } } = await supabase.auth.getSession(); if (!session?.user) return;
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 }); if (result.canceled) return;
+      const image = result.assets[0]; const response = await fetch(image.uri); if (!response.ok) { showAlert(t('editProfileScreen.imageReadError')); return; }
+      const arrayBuffer = await response.arrayBuffer(); const fileExt = image.fileName?.split('.').pop()?.toLowerCase() || 'jpg'; const filePath = `${session.user.id}/avatar.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arrayBuffer, { contentType: image.mimeType || 'image/jpeg', upsert: true });
       if (uploadError) { console.log('AVATAR UPLOAD ERROR:', uploadError); showAlert(`${t('editProfileScreen.uploadError')}: ${uploadError.message}`); return; }
-      const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      const publicUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
-      const { error: profileError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', session.user.id);
+      const publicUrl = getPublicProfileMediaUrl(filePath, Date.now());
+      const { error: profileError } = await supabase.from('profiles').update({ avatar_url: publicUrl, avatar_path: filePath }).eq('id', session.user.id);
       if (profileError) { showAlert(`${t('editProfileScreen.profileError')}: ${profileError.message}`); return; }
-      setAvatarUrl(publicUrl);
-    } catch (error: any) {
-      console.log('AVATAR ERROR:', error);
-      showAlert(error?.message ?? t('editProfileScreen.uploadError'));
-    } finally { setUploadingAvatar(false); }
+      setAvatarUrl(publicUrl); setAvatarPath(filePath);
+    } catch (error: any) { console.log('AVATAR ERROR:', error); showAlert(error?.message ?? t('editProfileScreen.uploadError')); } finally { setUploadingAvatar(false); }
   }
 
   async function handleAddGalleryPhoto() {
-    if (!profile?.id) return;
-    if (!premiumActive) { router.push('/premium'); return; }
-    if (profilePhotos.length >= 6) { showAlert(t('editProfileScreen.galleryLimit')); return; }
+    if (!profile?.id) return; if (!premiumActive) { router.push('/premium'); return; } if (profilePhotos.length >= 6) { showAlert(t('editProfileScreen.galleryLimit')); return; }
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 });
-      if (result.canceled) return;
-      const asset = result.assets[0];
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
-      const extension = asset.fileName?.split('.').pop() || 'jpg';
-      const filePath = `${profile.id}/gallery-${Date.now()}.${extension}`;
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 }); if (result.canceled) return;
+      const asset = result.assets[0]; const response = await fetch(asset.uri); if (!response.ok) { showAlert(t('editProfileScreen.galleryUploadError')); return; }
+      const blob = await response.blob(); const extension = asset.fileName?.split('.').pop()?.toLowerCase() || 'jpg'; const filePath = `${profile.id}/gallery-${Date.now()}.${extension}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, blob, { contentType: asset.mimeType || 'image/jpeg', upsert: false });
       if (uploadError) { showAlert(t('editProfileScreen.galleryUploadError')); return; }
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      const { data: insertedPhoto, error: insertError } = await supabase.from('profile_photos').insert({ user_id: profile.id, photo_url: publicUrl, sort_order: profilePhotos.length }).select('id, photo_url, sort_order').single();
+      const publicUrl = getPublicProfileMediaUrl(filePath);
+      const { data: insertedPhoto, error: insertError } = await supabase.from('profile_photos').insert({ user_id: profile.id, photo_url: publicUrl, storage_path: filePath, sort_order: profilePhotos.length }).select('id, photo_url, storage_path, sort_order').single();
       if (insertError) { await supabase.storage.from('avatars').remove([filePath]); showAlert(t('editProfileScreen.gallerySaveError')); return; }
       setProfilePhotos((current) => [...current, insertedPhoto as GalleryPhoto]);
     } catch (error) { console.log('ADD GALLERY PHOTO ERROR:', error); showAlert(t('editProfileScreen.galleryAddError')); }
@@ -185,49 +124,30 @@ export default function EditProfileScreen() {
   async function handleDeleteGalleryPhoto(photo: GalleryPhoto) {
     if (!profile?.id) return;
     try {
-      const marker = '/storage/v1/object/public/avatars/';
-      const markerIndex = photo.photo_url.indexOf(marker);
-      const storagePath = markerIndex !== -1 ? decodeURIComponent(photo.photo_url.substring(markerIndex + marker.length).split('?')[0]) : null;
-      const { error: dbError } = await supabase.from('profile_photos').delete().eq('id', photo.id).eq('user_id', profile.id);
-      if (dbError) throw dbError;
-      if (storagePath) {
-        const { error: storageError } = await supabase.storage.from('avatars').remove([storagePath]);
-        if (storageError) console.log('GALLERY DELETE STORAGE ERROR:', storageError.message);
-      }
+      const storagePath = photo.storage_path ?? getProfileMediaStoragePath(photo.photo_url);
+      const { error: dbError } = await supabase.from('profile_photos').delete().eq('id', photo.id).eq('user_id', profile.id); if (dbError) throw dbError;
+      if (storagePath) { const { error: storageError } = await supabase.storage.from('avatars').remove([storagePath]); if (storageError) console.log('GALLERY DELETE STORAGE ERROR:', storageError.message); }
       setProfilePhotos((current) => current.filter((item) => item.id !== photo.id));
     } catch (error: any) { console.log('DELETE GALLERY PHOTO ERROR:', error); showAlert(error?.message ?? 'Could not delete photo.'); }
   }
 
   if (loading) return <View style={styles.loadingScreen}><Text style={styles.loadingText}>{t('editProfileScreen.loadingProfile')}</Text></View>;
 
-  return (
-    <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}><Text style={styles.logo}>SipMate 🍻</Text><Text style={styles.title}>{t('editProfileScreen.title')}</Text><Text style={styles.subtitle}>{t('editProfileScreen.subtitle')}</Text></View>
-        <View style={styles.avatarSection}>
-          <View style={styles.avatarWrapper}>{avatarUrl ? <Image source={{ uri: avatarUrl }} style={styles.avatarImage} resizeMode="cover" /> : <View style={styles.avatarPlaceholder}><Text style={styles.avatarPlaceholderText}>{name?.charAt(0).toUpperCase() || '?'}</Text></View>}</View>
-          <View style={styles.gallerySection}>
-            <Text style={styles.galleryTitle}>📸 {t('editProfileScreen.profileGallery')}</Text>
-            {profilePhotos.length > 0 && <View style={styles.galleryGrid}>{profilePhotos.map((photo) => <View key={photo.id} style={styles.galleryImageWrapper}><Image source={{ uri: photo.photo_url }} style={styles.galleryImage} resizeMode="cover" /><TouchableOpacity style={styles.deletePhotoButton} onPress={() => handleDeleteGalleryPhoto(photo)}><Text style={styles.deletePhotoText}>✕</Text></TouchableOpacity></View>)}</View>}
-            <TouchableOpacity style={[styles.addPhotoButton, !premiumActive && styles.addPhotoButtonLocked]} onPress={handleAddGalleryPhoto}><Text style={styles.addPhotoButtonText}>{premiumActive ? `＋ ${t('editProfileScreen.addPhoto')}` : `🔒 ${t('editProfileScreen.addMorePhotos')}`}</Text></TouchableOpacity>
-          </View>
-          <Pressable style={styles.avatarButton} onPress={pickAndUploadAvatar} disabled={uploadingAvatar}><Text style={styles.avatarButtonText}>{uploadingAvatar ? t('editProfileScreen.uploading') : `📷 ${t('editProfileScreen.changeProfilePhoto')}`}</Text></Pressable>
-        </View>
-        <View style={styles.formCard}>
-          <Text style={styles.sectionTitle}>{t('editProfileScreen.profileDetails')}</Text>
-          <Text style={styles.label}>{t('editProfileScreen.name')}</Text><TextInput value={name} onChangeText={setName} placeholder={t('editProfileScreen.namePlaceholder')} placeholderTextColor="#52525B" style={styles.input} />
-          <Text style={styles.label}>{t('editProfileScreen.age')}</Text><TextInput value={age} onChangeText={setAge} placeholder={t('editProfileScreen.agePlaceholder')} placeholderTextColor="#52525B" keyboardType="numeric" style={styles.input} />
-          <Text style={styles.label}>{t('editProfileScreen.gender')}</Text><View style={styles.genderRow}>{genders.map((item) => <Pressable key={item.value} style={[styles.genderButton, gender === item.value && styles.genderButtonSelected]} onPress={() => setGender(item.value)}><Text style={[styles.genderText, gender === item.value && styles.genderTextSelected]}>{item.label}</Text></Pressable>)}</View>
-          <Text style={styles.label}>{t('editProfileScreen.city')}</Text><TextInput value={city} onChangeText={setCity} placeholder={t('editProfileScreen.cityPlaceholder')} placeholderTextColor="#52525B" style={styles.input} />
-          <Text style={styles.label}>{t('editProfileScreen.aboutMe')}</Text><TextInput value={bio} onChangeText={setBio} placeholder={t('editProfileScreen.bioPlaceholder')} placeholderTextColor="#52525B" multiline style={[styles.input, styles.bioInput]} />
-        </View>
-        <View style={styles.formCard}><Text style={styles.sectionTitle}>{t('editProfileScreen.currentlyUpFor')}</Text><Text style={styles.sectionDescription}>{t('editProfileScreen.currentlyUpForDescription')}</Text><View style={styles.drinks}>{drinks.map((item) => <Pressable key={item.value} style={[styles.drinkButton, drink === item.value && styles.drinkButtonSelected]} onPress={() => setDrink(item.value)}><Text style={[styles.drinkText, drink === item.value && styles.drinkTextSelected]}>{item.label}</Text></Pressable>)}</View></View>
-        <View style={styles.formCard}><Text style={styles.sectionTitle}>{t('editProfileScreen.discoverStatus')}</Text><Text style={styles.sectionDescription}>{t('editProfileScreen.discoverStatusDescription')}</Text><Pressable style={[styles.activeButton, isActive ? styles.activeButtonOn : styles.activeButtonOff]} onPress={toggleActiveStatus}><Text style={[styles.activeButtonText, isActive ? styles.activeButtonTextOn : styles.activeButtonTextOff]}>{isActive ? `● ${t('editProfileScreen.active')}` : `● ${t('editProfileScreen.inactive')}`}</Text></Pressable></View>
-        <Pressable style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={saveProfile} disabled={saving}><Text style={styles.saveText}>{saving ? t('editProfileScreen.saving') : t('editProfileScreen.saveProfile')}</Text></Pressable>
-        <Pressable style={styles.cancelButton} onPress={() => router.back()}><Text style={styles.cancelText}>{t('editProfileScreen.cancel')}</Text></Pressable><Text style={styles.footer}>{t('editProfileScreen.footer')}</Text>
-      </ScrollView>
+  return <View style={styles.screen}><ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <View style={styles.header}><Text style={styles.logo}>SipMate 🍻</Text><Text style={styles.title}>{t('editProfileScreen.title')}</Text><Text style={styles.subtitle}>{t('editProfileScreen.subtitle')}</Text></View>
+    <View style={styles.avatarSection}>
+      <View style={styles.avatarWrapper}>{(avatarPath || avatarUrl) ? <PrivateProfileImage storagePath={avatarPath} legacyUrl={avatarUrl} style={styles.avatarImage} resizeMode="cover" /> : <View style={styles.avatarPlaceholder}><Text style={styles.avatarPlaceholderText}>{name?.charAt(0).toUpperCase() || '?'}</Text></View>}</View>
+      <View style={styles.gallerySection}><Text style={styles.galleryTitle}>📸 {t('editProfileScreen.profileGallery')}</Text>
+        {profilePhotos.length > 0 && <View style={styles.galleryGrid}>{profilePhotos.map((photo) => <View key={photo.id} style={styles.galleryImageWrapper}><PrivateProfileImage storagePath={photo.storage_path} legacyUrl={photo.photo_url} style={styles.galleryImage} resizeMode="cover" /><TouchableOpacity style={styles.deletePhotoButton} onPress={() => handleDeleteGalleryPhoto(photo)}><Text style={styles.deletePhotoText}>✕</Text></TouchableOpacity></View>)}</View>}
+        <TouchableOpacity style={[styles.addPhotoButton, !premiumActive && styles.addPhotoButtonLocked]} onPress={handleAddGalleryPhoto}><Text style={styles.addPhotoButtonText}>{premiumActive ? `＋ ${t('editProfileScreen.addPhoto')}` : `🔒 ${t('editProfileScreen.addMorePhotos')}`}</Text></TouchableOpacity>
+      </View>
+      <Pressable style={styles.avatarButton} onPress={pickAndUploadAvatar} disabled={uploadingAvatar}><Text style={styles.avatarButtonText}>{uploadingAvatar ? t('editProfileScreen.uploading') : `📷 ${t('editProfileScreen.changeProfilePhoto')}`}</Text></Pressable>
     </View>
-  );
+    <View style={styles.formCard}><Text style={styles.sectionTitle}>{t('editProfileScreen.profileDetails')}</Text><Text style={styles.label}>{t('editProfileScreen.name')}</Text><TextInput value={name} onChangeText={setName} placeholder={t('editProfileScreen.namePlaceholder')} placeholderTextColor="#52525B" style={styles.input} /><Text style={styles.label}>{t('editProfileScreen.age')}</Text><TextInput value={age} onChangeText={setAge} placeholder={t('editProfileScreen.agePlaceholder')} placeholderTextColor="#52525B" keyboardType="numeric" style={styles.input} /><Text style={styles.label}>{t('editProfileScreen.gender')}</Text><View style={styles.genderRow}>{genders.map((item) => <Pressable key={item.value} style={[styles.genderButton, gender === item.value && styles.genderButtonSelected]} onPress={() => setGender(item.value)}><Text style={[styles.genderText, gender === item.value && styles.genderTextSelected]}>{item.label}</Text></Pressable>)}</View><Text style={styles.label}>{t('editProfileScreen.city')}</Text><TextInput value={city} onChangeText={setCity} placeholder={t('editProfileScreen.cityPlaceholder')} placeholderTextColor="#52525B" style={styles.input} /><Text style={styles.label}>{t('editProfileScreen.aboutMe')}</Text><TextInput value={bio} onChangeText={setBio} placeholder={t('editProfileScreen.bioPlaceholder')} placeholderTextColor="#52525B" multiline style={[styles.input, styles.bioInput]} /></View>
+    <View style={styles.formCard}><Text style={styles.sectionTitle}>{t('editProfileScreen.currentlyUpFor')}</Text><Text style={styles.sectionDescription}>{t('editProfileScreen.currentlyUpForDescription')}</Text><View style={styles.drinks}>{drinks.map((item) => <Pressable key={item.value} style={[styles.drinkButton, drink === item.value && styles.drinkButtonSelected]} onPress={() => setDrink(item.value)}><Text style={[styles.drinkText, drink === item.value && styles.drinkTextSelected]}>{item.label}</Text></Pressable>)}</View></View>
+    <View style={styles.formCard}><Text style={styles.sectionTitle}>{t('editProfileScreen.discoverStatus')}</Text><Text style={styles.sectionDescription}>{t('editProfileScreen.discoverStatusDescription')}</Text><Pressable style={[styles.activeButton, isActive ? styles.activeButtonOn : styles.activeButtonOff]} onPress={toggleActiveStatus}><Text style={[styles.activeButtonText, isActive ? styles.activeButtonTextOn : styles.activeButtonTextOff]}>{isActive ? `● ${t('editProfileScreen.active')}` : `● ${t('editProfileScreen.inactive')}`}</Text></Pressable></View>
+    <Pressable style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={saveProfile} disabled={saving}><Text style={styles.saveText}>{saving ? t('editProfileScreen.saving') : t('editProfileScreen.saveProfile')}</Text></Pressable><Pressable style={styles.cancelButton} onPress={() => router.back()}><Text style={styles.cancelText}>{t('editProfileScreen.cancel')}</Text></Pressable><Text style={styles.footer}>{t('editProfileScreen.footer')}</Text>
+  </ScrollView></View>;
 }
 
 const styles = StyleSheet.create({
