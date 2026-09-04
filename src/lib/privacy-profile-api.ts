@@ -9,6 +9,7 @@ export type PublicProfile = {
   currently_up_for: string | null;
   is_active: boolean | null;
   avatar_url: string | null;
+  avatar_path: string | null;
   gender: string | null;
 };
 
@@ -19,17 +20,18 @@ export type NearbyProfile = PublicProfile & {
 export type ProfilePhotoSummary = {
   id: string;
   photo_url: string;
+  storage_path?: string | null;
   sort_order: number | null;
 };
 
 export type BlockedUserSummary = Pick<
   PublicProfile,
-  'id' | 'name' | 'age' | 'city' | 'avatar_url'
+  'id' | 'name' | 'age' | 'city' | 'avatar_url' | 'avatar_path'
 >;
 
 export type SkippedProfileSummary = Pick<
   PublicProfile,
-  'id' | 'name' | 'age' | 'avatar_url' | 'currently_up_for' | 'gender'
+  'id' | 'name' | 'age' | 'avatar_url' | 'avatar_path' | 'currently_up_for' | 'gender'
 >;
 
 export type ChatListItem = {
@@ -39,6 +41,7 @@ export type ChatListItem = {
   age: number | null;
   is_active: boolean | null;
   avatar_url: string | null;
+  avatar_path?: string | null;
   last_message: string | null;
   last_message_time: string | null;
   unread_count: number | string | null;
