@@ -1,3 +1,4 @@
+import { resolveProfileMediaUrl } from './profile-media';
 import { supabase } from './supabase';
 
 export type PublicProfile = {
@@ -59,8 +60,43 @@ export type CheersOverviewItem = {
   created_at: string;
 };
 
+type AvatarBearing = {
+  avatar_url: string | null;
+  avatar_path?: string | null;
+};
+
 function throwIfError(error: { message: string } | null) {
   if (error) throw new Error(error.message);
+}
+
+async function resolveAvatar<T extends AvatarBearing>(row: T): Promise<T> {
+  const reference = row.avatar_path ?? row.avatar_url;
+  if (!reference) return row;
+
+  try {
+    const signedUrl = await resolveProfileMediaUrl(reference);
+    return { ...row, avatar_url: signedUrl };
+  } catch (error) {
+    console.warn('PROFILE MEDIA RESOLUTION FAILED');
+    return { ...row, avatar_url: null };
+  }
+}
+
+async function resolveAvatars<T extends AvatarBearing>(rows: T[]): Promise<T[]> {
+  return Promise.all(rows.map(resolveAvatar));
+}
+
+async function resolvePhoto(photo: ProfilePhotoSummary): Promise<ProfilePhotoSummary> {
+  const reference = photo.storage_path ?? photo.photo_url;
+  if (!reference) return photo;
+
+  try {
+    const signedUrl = await resolveProfileMediaUrl(reference);
+    return { ...photo, photo_url: signedUrl ?? '' };
+  } catch (error) {
+    console.warn('PROFILE PHOTO RESOLUTION FAILED');
+    return { ...photo, photo_url: '' };
+  }
 }
 
 export async function getPublicProfile(targetUserId: string) {
@@ -68,7 +104,8 @@ export async function getPublicProfile(targetUserId: string) {
     target_user_id: targetUserId,
   });
   throwIfError(error);
-  return ((data ?? [])[0] ?? null) as PublicProfile | null;
+  const profile = ((data ?? [])[0] ?? null) as PublicProfile | null;
+  return profile ? resolveAvatar(profile) : null;
 }
 
 export async function getProfilePhotos(targetUserId: string) {
@@ -76,7 +113,7 @@ export async function getProfilePhotos(targetUserId: string) {
     target_user_id: targetUserId,
   });
   throwIfError(error);
-  return (data ?? []) as ProfilePhotoSummary[];
+  return Promise.all(((data ?? []) as ProfilePhotoSummary[]).map(resolvePhoto));
 }
 
 export async function getNearbyProfiles(options?: {
@@ -90,25 +127,25 @@ export async function getNearbyProfiles(options?: {
     custom_origin_longitude: options?.customOriginLongitude ?? null,
   });
   throwIfError(error);
-  return (data ?? []) as NearbyProfile[];
+  return resolveAvatars((data ?? []) as NearbyProfile[]);
 }
 
 export async function getBlockedUsers() {
   const { data, error } = await supabase.rpc('get_blocked_users');
   throwIfError(error);
-  return (data ?? []) as BlockedUserSummary[];
+  return resolveAvatars((data ?? []) as BlockedUserSummary[]);
 }
 
 export async function getSkippedProfileSummaries() {
   const { data, error } = await supabase.rpc('get_skipped_profile_summaries');
   throwIfError(error);
-  return (data ?? []) as SkippedProfileSummary[];
+  return resolveAvatars((data ?? []) as SkippedProfileSummary[]);
 }
 
 export async function getChatList() {
   const { data, error } = await supabase.rpc('get_chat_list');
   throwIfError(error);
-  return (data ?? []) as ChatListItem[];
+  return resolveAvatars((data ?? []) as ChatListItem[]);
 }
 
 export async function getCheersRelationship(targetUserId: string) {
