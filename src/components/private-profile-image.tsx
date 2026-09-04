@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, ImageProps } from 'react-native';
 
 import { resolveProfileMediaUrl } from '../lib/profile-media';
@@ -22,6 +22,11 @@ export function PrivateProfileImage({
   ...imageProps
 }: PrivateProfileImageProps) {
   const [uri, setUri] = useState<string | null>(null);
+  const onUnavailableRef = useRef(onUnavailable);
+
+  useEffect(() => {
+    onUnavailableRef.current = onUnavailable;
+  }, [onUnavailable]);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +35,7 @@ export function PrivateProfileImage({
       const reference = storagePath || legacyUrl;
       if (!reference) {
         setUri(null);
-        onUnavailable?.();
+        onUnavailableRef.current?.();
         return;
       }
 
@@ -40,13 +45,13 @@ export function PrivateProfileImage({
         });
         if (!cancelled) {
           setUri(resolved);
-          if (!resolved) onUnavailable?.();
+          if (!resolved) onUnavailableRef.current?.();
         }
       } catch (error) {
         if (__DEV__) console.warn('PROFILE MEDIA RESOLVE ERROR', error);
         if (!cancelled) {
           setUri(null);
-          onUnavailable?.();
+          onUnavailableRef.current?.();
         }
       }
     }
@@ -55,7 +60,7 @@ export function PrivateProfileImage({
     return () => {
       cancelled = true;
     };
-  }, [storagePath, legacyUrl, onUnavailable]);
+  }, [storagePath, legacyUrl]);
 
   if (!uri) return null;
   return <Image {...imageProps} source={{ uri }} />;
