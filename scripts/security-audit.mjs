@@ -70,6 +70,18 @@ if (exists('src/components/private-profile-image.tsx')) {
   assert(privateImage.includes('preferSigned: true'), 'PrivateProfileImage no longer explicitly requires signed media');
 }
 
+const stripeClaimMigration = 'supabase/migrations/20260904180100_add_atomic_stripe_webhook_claim_api.sql';
+const stripeReassertMigration = 'supabase/migrations/20260904195000_reassert_stripe_webhook_rpc_caller_identity.sql';
+assert(exists(stripeReassertMigration), 'Post-claim Stripe caller hardening migration is missing');
+if (exists(stripeClaimMigration) && exists(stripeReassertMigration)) {
+  const claim = read(stripeClaimMigration).toLowerCase();
+  const reassert = read(stripeReassertMigration).toLowerCase();
+  assert(claim.includes('current_user'), 'Historical Stripe claim migration changed; re-audit migration ordering');
+  assert(!reassert.includes("if current_user not in"), 'Final Stripe webhook RPC hardening still authorizes with SECURITY DEFINER current_user');
+  assert(reassert.includes("coalesce(auth.role(), '') <> 'service_role'"), 'Final Stripe webhook RPC hardening no longer validates the JWT service role');
+  assert(path.basename(stripeReassertMigration) > path.basename(stripeClaimMigration), 'Stripe caller hardening must replay after the historical claim API migration');
+}
+
 assert(exists('.env.example'), '.env.example is missing');
 if (exists('.env.example')) {
   const envExample = read('.env.example');
