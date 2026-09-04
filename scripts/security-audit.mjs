@@ -55,6 +55,16 @@ for (const file of clientFiles) {
   }
 }
 
+// Privacy-sensitive discovery/profile surfaces must never render profile media
+// through React Native Image directly. This catches regressions before the
+// avatars bucket is switched to private mode.
+for (const relative of ['src/app/nearby.tsx', 'src/app/user-profile.tsx', 'src/app/chats.tsx', 'src/app/edit-profile.tsx']) {
+  if (!exists(relative)) continue;
+  const content = read(relative);
+  assert(content.includes('PrivateProfileImage'), `${relative} must render profile media through PrivateProfileImage`);
+  assert(!/\bImage\s*,/.test(content) && !/<Image\b/.test(content), `${relative} still contains raw React Native Image profile-media rendering`);
+}
+
 assert(exists('src/lib/profile-media.ts'), 'Central profile-media helper is missing');
 if (exists('src/lib/profile-media.ts')) {
   const media = read('src/lib/profile-media.ts');
