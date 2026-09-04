@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(45);
+select plan(47);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass), 'profiles RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.cheers'::regclass), 'cheers RLS enabled');
@@ -49,6 +49,8 @@ select ok(position('object_name not like ''%/%''' in lower(pg_get_functiondef('p
 select ok(position('object_name like ''%/../%''' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,'avatar read helper rejects traversal-like object paths');
 select ok(position('object_name like ''%//%''' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,'avatar read helper rejects empty path segments');
 select ok(position('owner_text <> owner_id::text' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,'avatar read helper requires canonical UUID owner prefixes');
+select ok(position('avatar.webp' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,'avatar read helper allowlists canonical avatar filenames');
+select ok(position('gallery-[0-9]+' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,'avatar read helper allowlists numbered gallery filenames');
 
 select ok(exists (select 1 from pg_constraint where conrelid='public.profiles'::regclass and conname='profiles_avatar_path_approved_check' and pg_get_constraintdef(oid) like '%avatar\\.%'),'profile avatar_path is constrained to canonical avatar filenames');
 select ok(exists (select 1 from pg_constraint where conrelid='public.profile_photos'::regclass and conname='profile_photos_storage_path_approved_check' and pg_get_constraintdef(oid) like '%gallery-%'),'gallery storage_path is constrained to numbered gallery filenames');
