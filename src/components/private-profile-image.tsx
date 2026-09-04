@@ -11,8 +11,9 @@ type PrivateProfileImageProps = Omit<ImageProps, 'source'> & {
 
 /**
  * Transitional image component for the public -> private avatars rollout.
- * Prefer a database storage path and resolve it through an authenticated signed
- * URL. Legacy URLs remain a fallback until every supported client is migrated.
+ * Any SipMate Storage reference is resolved through an authenticated signed URL.
+ * External legacy URLs remain displayable, but SipMate public-object URLs are no
+ * longer preferred by the client.
  */
 export function PrivateProfileImage({
   storagePath,
@@ -35,7 +36,7 @@ export function PrivateProfileImage({
 
       try {
         const resolved = await resolveProfileMediaUrl(reference, {
-          preferSigned: Boolean(storagePath),
+          preferSigned: true,
         });
         if (!cancelled) {
           setUri(resolved);
@@ -44,10 +45,8 @@ export function PrivateProfileImage({
       } catch (error) {
         if (__DEV__) console.warn('PROFILE MEDIA RESOLVE ERROR', error);
         if (!cancelled) {
-          // During rollout a legacy public URL is safe as a compatibility
-          // fallback. Remove this fallback before the bucket-private cutover.
-          setUri(legacyUrl ?? null);
-          if (!legacyUrl) onUnavailable?.();
+          setUri(null);
+          onUnavailable?.();
         }
       }
     }
