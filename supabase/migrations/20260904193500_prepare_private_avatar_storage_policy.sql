@@ -76,7 +76,15 @@ begin
     return false;
   end if;
 
-  return not public.is_blocked_between(caller_id, owner_id);
+  -- Keep this decision self-contained inside the SECURITY DEFINER helper rather
+  -- than delegating to an invoker-security function. That makes the Storage
+  -- policy independent of the caller's direct visibility into public.blocks.
+  return not exists (
+    select 1
+    from public.blocks b
+    where (b.blocker_id = caller_id and b.blocked_id = owner_id)
+       or (b.blocker_id = owner_id and b.blocked_id = caller_id)
+  );
 end;
 $$;
 
