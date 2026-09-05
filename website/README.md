@@ -1,6 +1,6 @@
 # SipMate Website
 
-Pre-launch marketing website for `officialsipmate.de`.
+Pre-launch marketing website for `officialsipmate.com`.
 
 ## Current contents
 
@@ -21,7 +21,7 @@ One-time repository setup is still required before the first successful Pages de
 
 1. GitHub repository Settings → Pages.
 2. Under Build and deployment, set Source to **GitHub Actions**.
-3. Set the custom domain to `officialsipmate.de`.
+3. Set the custom domain to `officialsipmate.com`.
 4. Point the IONOS apex DNS records to GitHub Pages and add `www` as a CNAME to `Baric-creator.github.io`.
 5. Enable HTTPS after GitHub finishes DNS/certificate validation.
 
