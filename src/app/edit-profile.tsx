@@ -55,7 +55,7 @@ export default function EditProfileScreen() {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) { router.replace('/login'); return; }
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      const { data, error } = await supabase.from('profiles').select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, avatar_path').eq('id', session.user.id).single();
       if (error) { console.log('EDIT PROFILE LOAD ERROR:', error.message); return; }
       const loadedProfile = data as Profile;
       setProfile(loadedProfile); setName(loadedProfile.name ?? ''); setAge(loadedProfile.age ? String(loadedProfile.age) : '');
