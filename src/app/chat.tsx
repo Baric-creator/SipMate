@@ -2,7 +2,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { ChatHeaderAvatar } from '../components/chat-header-avatar';
 import { showAlert } from '../lib/notify';
 import { getPublicProfile } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
@@ -62,6 +62,7 @@ export default function ChatScreen() {
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [otherUserActive, setOtherUserActive] = useState(false);
   const [otherAvatar, setOtherAvatar] = useState<string | null>(null);
+  const [otherAvatarPath, setOtherAvatarPath] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -79,6 +80,7 @@ export default function ChatScreen() {
         const data = await getPublicProfile(String(id));
         setOtherUserActive(data?.is_active ?? false);
         setOtherAvatar(data?.avatar_url ?? null);
+        setOtherAvatarPath(data?.avatar_path ?? null);
       } catch (error) {
         console.log('OTHER USER PROFILE ERROR:', error);
       }
@@ -187,11 +189,11 @@ export default function ChatScreen() {
         <TouchableOpacity style={styles.chatHeaderUser} activeOpacity={0.8} onPress={() => {
           if (id) router.push({ pathname: '/user-profile', params: { id: String(id) } });
         }}>
-          {otherAvatar ? (
-            <Image source={{ uri: `${otherAvatar}${otherAvatar.includes('?') ? '&' : '?'}refresh=${Date.now()}` }} style={styles.headerAvatar} resizeMode="cover" />
-          ) : (
-            <View style={styles.headerAvatarFallback}><Text style={styles.headerAvatarFallbackText}>{String(name || '?').charAt(0).toUpperCase()}</Text></View>
-          )}
+          <ChatHeaderAvatar
+            name={String(name || 'SipMate')}
+            avatarPath={otherAvatarPath}
+            avatarUrl={otherAvatar}
+          />
           <View style={styles.headerInfo}>
             <Text style={styles.headerName}>{String(name || 'SipMate')}</Text>
             <Text style={[styles.status, { color: otherUserActive ? '#22C55E' : '#71717A' }]}>● {otherUserActive ? text.active : text.inactive}</Text>
