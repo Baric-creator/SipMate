@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
-  Image,
   Modal,
   Pressable,
   StyleSheet,
@@ -13,6 +12,8 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
+import { PrivateProfileImage } from '../components/private-profile-image';
+import { UserProfileAvatar } from '../components/user-profile-avatar';
 import { getCheersRelationship, getProfilePhotos, getPublicProfile } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
 
@@ -20,6 +21,7 @@ type CheersStatus = 'none' | 'sent' | 'mutual';
 
 type UserProfile = {
   avatar_url: string | null;
+  avatar_path?: string | null;
   id: string;
   name: string | null;
   age: number | null;
@@ -32,6 +34,7 @@ type UserProfile = {
 type ProfilePhoto = {
   id: string;
   photo_url: string;
+  storage_path?: string | null;
   sort_order: number | null;
 };
 
@@ -201,7 +204,7 @@ export default function UserProfileScreen() {
   const text = copy[language] ?? copy.en;
 
   const [profilePhotos, setProfilePhotos] = useState<ProfilePhoto[]>([]);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<ProfilePhoto | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
@@ -586,23 +589,11 @@ export default function UserProfileScreen() {
           <Text style={styles.menuButtonText}>•••</Text>
         </Pressable>
 
-        {profile.avatar_url ? (
-          <Image
-            source={{
-              uri: `${profile.avatar_url}${
-                profile.avatar_url.includes('?') ? '&' : '?'
-              }refresh=${Date.now()}`,
-            }}
-            style={styles.profileAvatar}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.profileAvatarFallback}>
-            <Text style={styles.profileAvatarFallbackText}>
-              {profile.name?.charAt(0).toUpperCase() || '?'}
-            </Text>
-          </View>
-        )}
+        <UserProfileAvatar
+          name={profile.name}
+          avatarPath={profile.avatar_path}
+          avatarUrl={profile.avatar_url}
+        />
 
         {profilePhotos.length > 0 && (
           <View style={styles.profileGallerySection}>
@@ -611,11 +602,12 @@ export default function UserProfileScreen() {
               {profilePhotos.map((photo) => (
                 <Pressable
                   key={photo.id}
-                  onPress={() => setSelectedPhoto(photo.photo_url)}
+                  onPress={() => setSelectedPhoto(photo)}
                   style={styles.photoPressable}
                 >
-                  <Image
-                    source={{ uri: photo.photo_url }}
+                  <PrivateProfileImage
+                    storagePath={photo.storage_path}
+                    legacyUrl={photo.photo_url}
                     style={styles.profileGalleryImage}
                     resizeMode="cover"
                   />
@@ -851,8 +843,9 @@ export default function UserProfileScreen() {
           </TouchableOpacity>
 
           {selectedPhoto && (
-            <Image
-              source={{ uri: selectedPhoto }}
+            <PrivateProfileImage
+              storagePath={selectedPhoto.storage_path}
+              legacyUrl={selectedPhoto.photo_url}
               style={styles.fullscreenPhoto}
               resizeMode="contain"
             />
