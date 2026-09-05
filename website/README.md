@@ -1,6 +1,6 @@
 # SipMate Website
 
-Pre-launch marketing website for `officialsipmate.com`.
+Pre-launch marketing website for `officialsipmate.de`.
 
 ## Current contents
 
@@ -9,15 +9,25 @@ Pre-launch marketing website for `officialsipmate.com`.
 - How it works section
 - Activity/vibe section
 - Premium teaser
-- Waitlist UI
+- Waitlist connected to the live Supabase `join-waitlist` endpoint
+- Instagram and TikTok links
 - Privacy, Terms, Imprint and account-deletion placeholders
 
-## Important before public launch
+## Deployment
 
-1. Connect the waitlist form to a real backend (planned: Supabase).
-2. Replace legal placeholders with reviewed final text and operator/contact details.
-3. Add final social links and store links when available.
-4. Deploy this directory to the chosen static host and point `officialsipmate.com` DNS to it.
-5. Redirect `officialsipmate.de` to the main `.com` site or `/de` once localization is ready.
+This directory is deployed by `.github/workflows/deploy-website.yml` using GitHub Pages.
+
+One-time repository setup is still required before the first successful Pages deployment:
+
+1. GitHub repository Settings → Pages.
+2. Under Build and deployment, set Source to **GitHub Actions**.
+3. Set the custom domain to `officialsipmate.de`.
+4. Point the IONOS apex DNS records to GitHub Pages and add `www` as a CNAME to `Baric-creator.github.io`.
+5. Enable HTTPS after GitHub finishes DNS/certificate validation.
+
+## Important before full public launch
+
+- Replace legal placeholders with reviewed final text and operator/contact details.
+- Add store links when the app listings are available.
 
 This directory is intentionally independent from the Expo mobile app so website work does not affect the application build.
