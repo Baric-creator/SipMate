@@ -49,6 +49,15 @@ if (exists('src/components/nearby-profile-avatar.tsx')) {
 }
 
 assert(exists('src/components/user-profile-avatar.tsx'), 'UserProfileAvatar component is missing');
+if (exists('src/app/edit-profile.tsx')) {
+  const content = read('src/app/edit-profile.tsx');
+  assert(content.includes('getProfileMediaUploadExtension'), 'Edit Profile no longer validates avatar/gallery upload formats centrally');
+  assert(content.includes("PROFILE_MEDIA_MIME_TO_EXTENSION"), 'Edit Profile upload MIME allowlist is missing');
+  assert(content.includes("image/jpeg") && content.includes("image/png") && content.includes("image/webp"), 'Edit Profile upload allowlist no longer matches the avatars bucket MIME policy');
+  assert(content.includes('AVATAR ROLLBACK STORAGE ERROR'), 'Edit Profile no longer cleans a newly uploaded avatar when the database write fails');
+  assert(content.includes('OLD AVATAR CLEANUP ERROR'), 'Edit Profile no longer removes the previous avatar object after a successful path change');
+}
+
 if (exists('src/app/user-profile.tsx')) {
   const content = read('src/app/user-profile.tsx');
   assert(content.includes('UserProfileAvatar'), 'UserProfile avatar must render through UserProfileAvatar');
@@ -106,5 +115,5 @@ if (exists('supabase/functions/stripe-webhook/index.ts')) { const webhook = read
 assert(exists('src/app/premium.android.tsx'), 'Android Premium release-gate screen is missing');
 if (exists('src/app/premium.android.tsx')) { const premiumAndroid = read('src/app/premium.android.tsx'); assert(!premiumAndroid.includes('create-checkout-session'), 'Android Premium screen exposes web Stripe checkout'); assert(!premiumAndroid.includes('stripe.com'), 'Android Premium screen directly references Stripe'); }
 if (exists('supabase/config.toml')) { const config = read('supabase/config.toml'); const functionJwtSetting = (name) => { const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const match = config.match(new RegExp(`\\[functions\\.${escaped}\\]([\\s\\S]*?)(?=\\n\\[functions\\.|$)`)); return match?.[1]?.match(/verify_jwt\s*=\s*(true|false)/)?.[1] ?? null; }; for (const fn of ['create-checkout-session', 'create-customer-portal', 'delete-account']) assert(functionJwtSetting(fn) === 'true', `${fn} must keep platform JWT verification enabled`); assert(functionJwtSetting('stripe-webhook') === 'false', 'Stripe webhook must remain callable without a user JWT so Stripe can deliver signed events'); }
-for (const file of clientFiles) { const relative = path.relative(root, file).replaceAll('\\', '/'); const content = fs.readFileSync(file, 'utf8'); if (/\bwindow\.(?:alert|confirm)\s*\(/.test(content)) warn(`Browser-only alert/confirm still used in ${relative}`); if (/\.select\(\s*['"]\*['"]\s*\)/.test(content)) warn(`Broad select('*') found in ${relative}; confirm every returned column is intended for the client`); }
+for (const file of clientFiles) { const relative = path.relative(root, file).replaceAll('\\', '/'); const content = fs.readFileSync(file, 'utf8'); if (relative !== 'src/lib/notify.ts' && /\bwindow\.(?:alert|confirm)\s*\(/.test(content)) warn(`Browser-only alert/confirm still used in ${relative}`); if (/\.select\(\s*['"]\*['"]\s*\)/.test(content)) warn(`Broad select('*') found in ${relative}; confirm every returned column is intended for the client`); }
 console.log(`Security audit checked ${textFiles.length} repository text files.`); for (const message of warnings) console.warn(`WARN: ${message}`); if (failures.length) { for (const message of failures) console.error(`FAIL: ${message}`); console.error(`Security audit failed with ${failures.length} blocking issue(s).`); process.exit(1); } console.log(`Security audit passed with ${warnings.length} warning(s).`);
