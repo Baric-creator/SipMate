@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import { NearbyProfileAvatar } from '../components/nearby-profile-avatar';
 import { getNearbyProfiles, getSkippedProfileSummaries } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
 
@@ -1127,40 +1127,11 @@ export default function NearbyScreen() {
                   styles.profileInfo
                 }
               >
-                {person.avatar_url ? (
-                  <Image
-                    source={{
-                      uri: `${person.avatar_url}${
-                        person.avatar_url.includes(
-                          '?'
-                        )
-                          ? '&'
-                          : '?'
-                      }refresh=${Date.now()}`,
-                    }}
-                    style={
-                      styles.avatarImage
-                    }
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={
-                      styles.avatar
-                    }
-                  >
-                    <Text
-                      style={
-                        styles.avatarText
-                      }
-                    >
-                      {person.name
-                        ?.charAt(0)
-                        .toUpperCase() ||
-                        '?'}
-                    </Text>
-                  </View>
-                )}
+                <NearbyProfileAvatar
+                  name={person.name}
+                  avatarPath={person.avatar_path}
+                  avatarUrl={person.avatar_url}
+                />
 
                 <View
                   style={
