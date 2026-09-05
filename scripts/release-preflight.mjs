@@ -34,7 +34,7 @@ for (const [relative, boundary] of privateMediaSurfaces) {
   assert(!content.includes('refresh=${Date.now()}'), `${relative} still cache-busts profile media with Date.now`);
 }
 
-const cutover = read('supabase/migrations/20260904194000_cutover_avatars_bucket_private.sql');
+const cutover = read('supabase/migrations/20260905142100_cutover_avatars_bucket_private.sql');
 for (const marker of [
   'private-media cutover blocked: avatars bucket is missing',
   'private.can_read_avatar_object(text)',
@@ -48,7 +48,7 @@ for (const marker of [
   assert(cutover.includes(marker), `Private-media cutover lost fail-closed marker: ${marker}`);
 }
 
-const ownerOnly = read('supabase/migrations/20260904181000_lock_direct_profile_reads_to_owner.sql');
+const ownerOnly = read('supabase/migrations/20260905142000_lock_direct_profile_reads_to_owner.sql');
 assert(ownerOnly.includes('Users can view own profile'), 'Owner-only profile SELECT cutover is missing');
 assert(ownerOnly.includes('Users can view own profile photos'), 'Owner-only profile photo SELECT cutover is missing');
 
