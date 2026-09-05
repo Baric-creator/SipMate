@@ -13,6 +13,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
+import { getCheersRelationship, getProfilePhotos, getPublicProfile } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
 
 type CheersStatus = 'none' | 'sent' | 'mutual';
@@ -273,29 +274,17 @@ export default function UserProfileScreen() {
 
     if (!session?.user) return;
 
-    const myId = session.user.id;
-    if (myId === targetUserId) {
+    if (session.user.id === targetUserId) {
       setCheersStatus('none');
       return;
     }
 
-    const { data: sentCheers } = await supabase
-      .from('cheers')
-      .select('id')
-      .eq('sender_id', myId)
-      .eq('receiver_id', targetUserId)
-      .maybeSingle();
-
-    const { data: receivedCheers } = await supabase
-      .from('cheers')
-      .select('id')
-      .eq('sender_id', targetUserId)
-      .eq('receiver_id', myId)
-      .maybeSingle();
-
-    if (sentCheers && receivedCheers) setCheersStatus('mutual');
-    else if (sentCheers) setCheersStatus('sent');
-    else setCheersStatus('none');
+    try {
+      setCheersStatus(await getCheersRelationship(targetUserId));
+    } catch (error) {
+      console.log('CHEERS STATUS ERROR:', error);
+      setCheersStatus('none');
+    }
   }
 
   async function loadUserProfile() {
@@ -329,32 +318,20 @@ export default function UserProfileScreen() {
           new Date(myProfile.premium_until) > new Date());
       setIsPremium(premiumActive);
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', targetId)
-        .maybeSingle();
+      try {
+        const [data, photosData] = await Promise.all([
+          getPublicProfile(targetId),
+          getProfilePhotos(targetId),
+        ]);
 
-      const { data: photosData, error: photosError } = await supabase
-        .from('profile_photos')
-        .select('id, photo_url, sort_order')
-        .eq('user_id', targetId)
-        .order('sort_order', { ascending: true });
-
-      if (photosError) {
-        console.log('USER PROFILE PHOTOS ERROR:', photosError.message);
-      } else {
-        setProfilePhotos((photosData ?? []) as ProfilePhoto[]);
-      }
-
-      if (error) {
-        console.log('PROFILE LOAD ERROR:', error.message);
+        setProfilePhotos(photosData as ProfilePhoto[]);
+        setProfile(data as UserProfile | null);
+        if (data?.id) await checkCheersStatus(data.id);
+      } catch (profileError) {
+        console.log('PROFILE LOAD ERROR:', profileError);
         setProfile(null);
-        return;
+        setProfilePhotos([]);
       }
-
-      setProfile(data as UserProfile | null);
-      if (data?.id) await checkCheersStatus(data.id);
     } finally {
       setLoading(false);
     }
@@ -420,22 +397,17 @@ export default function UserProfileScreen() {
       return;
     }
 
-    const { data: mutualCheers, error: mutualError } = await supabase
-      .from('cheers')
-      .select('id')
-      .eq('sender_id', receiverId)
-      .eq('receiver_id', senderId)
-      .maybeSingle();
-
-    if (mutualError) {
-      console.log('MUTUAL CHEERS ERROR:', mutualError.message);
-      return;
-    }
-
-    if (mutualCheers) {
-      setCheersStatus('mutual');
-      setShowMutualCheers(true);
-      playCheersAnimation();
+    try {
+      const relationship = await getCheersRelationship(receiverId);
+      if (relationship === 'mutual') {
+        setCheersStatus('mutual');
+        setShowMutualCheers(true);
+        playCheersAnimation();
+        return;
+      }
+      setCheersStatus('sent');
+    } catch (relationshipError) {
+      console.log('MUTUAL CHEERS ERROR:', relationshipError);
       return;
     }
 

@@ -50,6 +50,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "security:audit": "node ./scripts/security-audit.mjs",
+    "database:verify-history": "node ./scripts/verify-database-history.mjs",
     "check": "npm run typecheck && npm run security:audit",
     "setup:dev-client": "npx expo install expo-dev-client",
     "doctor": "npx expo-doctor@latest",

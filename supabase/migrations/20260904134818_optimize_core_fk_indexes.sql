@@ -1,0 +1,10 @@
+create index if not exists blocks_blocked_id_idx on public.blocks (blocked_id);
+create index if not exists cheers_receiver_id_idx on public.cheers (receiver_id);
+create index if not exists conversations_user_two_idx on public.conversations (user_two);
+create index if not exists messages_conversation_id_idx on public.messages (conversation_id);
+create index if not exists messages_sender_id_idx on public.messages (sender_id);
+create index if not exists premium_subscriptions_user_id_idx on public.premium_subscriptions (user_id);
+create index if not exists profile_photos_user_id_idx on public.profile_photos (user_id);
+create index if not exists reports_reported_id_idx on public.reports (reported_id);
+create index if not exists reports_reporter_id_idx on public.reports (reporter_id);
+create index if not exists skipped_profiles_skipped_user_id_idx on public.skipped_profiles (skipped_user_id);

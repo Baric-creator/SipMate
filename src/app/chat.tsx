@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import { getPublicProfile } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
 
 type Message = {
@@ -73,10 +74,13 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!id) return;
     async function loadOtherUser() {
-      const { data, error } = await supabase.from('profiles').select('is_active, avatar_url').eq('id', String(id)).maybeSingle();
-      if (error) return console.log('OTHER USER PROFILE ERROR:', error.message);
-      setOtherUserActive(data?.is_active ?? false);
-      setOtherAvatar(data?.avatar_url ?? null);
+      try {
+        const data = await getPublicProfile(String(id));
+        setOtherUserActive(data?.is_active ?? false);
+        setOtherAvatar(data?.avatar_url ?? null);
+      } catch (error) {
+        console.log('OTHER USER PROFILE ERROR:', error);
+      }
     }
     loadOtherUser();
   }, [id]);
@@ -92,18 +96,6 @@ export default function ChatScreen() {
   }, [id, myUserId]);
 
   useEffect(() => {
-    if (!id) return;
-    const channel = supabase.channel(`profile-status-${id}`).on('postgres_changes', {
-      event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${String(id)}`,
-    }, (payload) => {
-      const profile = payload.new as { is_active?: boolean | null; avatar_url?: string | null };
-      setOtherUserActive(profile.is_active ?? false);
-      if (typeof profile.avatar_url !== 'undefined') setOtherAvatar(profile.avatar_url ?? null);
-    }).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [id]);
-
-  useEffect(() => {
     if (!conversationId) { setLoading(false); return; }
     loadMessages();
     markMessagesAsRead();
@@ -111,7 +103,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!conversationId) return;
-    const channel = supabase.channel(`chat-${conversationId}`)
+    const channel = supabase.channel(`chat-${conversationId}`, { config: { private: true } })
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${String(conversationId)}`,
       }, (payload) => {
