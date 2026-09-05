@@ -22,6 +22,7 @@ export function PrivateProfileImage({
   storagePath,
   legacyUrl,
   onUnavailable,
+  onError,
   ...imageProps
 }: PrivateProfileImageProps) {
   const [uri, setUri] = useState<string | null>(null);
@@ -57,7 +58,6 @@ export function PrivateProfileImage({
           return;
         }
 
-        // Only SipMate-managed Storage objects need signature renewal.
         if (managedStoragePath) {
           refreshTimer = setTimeout(() => {
             void resolve();
@@ -80,5 +80,16 @@ export function PrivateProfileImage({
   }, [storagePath, legacyUrl]);
 
   if (!uri) return null;
-  return <Image {...imageProps} source={{ uri }} />;
+
+  return (
+    <Image
+      {...imageProps}
+      source={{ uri }}
+      onError={(event) => {
+        onError?.(event);
+        setUri(null);
+        onUnavailableRef.current?.();
+      }}
+    />
+  );
 }
