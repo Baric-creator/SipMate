@@ -1,10 +1,14 @@
 const year = document.getElementById('year');
 if (year) year.textContent = new Date().getFullYear();
 
+if (typeof IntersectionObserver !== 'undefined') {
 const observer = new IntersectionObserver((entries) => {
   entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
 }, { threshold: 0.12 });
 document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+} else {
+  document.querySelectorAll('.reveal').forEach((el) => el.classList.add('visible'));
+}
 
 const translations = {
   en: {
@@ -39,9 +43,13 @@ const translations = {
   }
 };
 
-let locale = localStorage.getItem('sipmate-locale') || ((navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : (navigator.language || '').toLowerCase().startsWith('hr') ? 'hr' : 'en');
+let savedLocale;
+try { savedLocale = localStorage.getItem('sipmate-locale'); } catch (_) { /* Storage may be blocked. */ }
+let locale = savedLocale || ((navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : (navigator.language || '').toLowerCase().startsWith('hr') ? 'hr' : 'en');
 function applyLocale(lang) {
-  locale = translations[lang] ? lang : 'en'; localStorage.setItem('sipmate-locale', locale); document.documentElement.lang = locale;
+  locale = Object.prototype.hasOwnProperty.call(translations, lang) ? lang : 'en';
+  try { localStorage.setItem('sipmate-locale', locale); } catch (_) { /* Keep this session usable. */ }
+  document.documentElement.lang = locale;
   document.querySelectorAll('[data-i18n]').forEach(el => { const value = translations[locale][el.dataset.i18n]; if (value) el.textContent = value; });
   document.querySelectorAll('[data-lang]').forEach(el => el.classList.toggle('active', el.dataset.lang === locale));
   const email = document.getElementById('email'); if (email) email.placeholder = translations[locale].placeholder;
@@ -52,19 +60,34 @@ applyLocale(locale);
 const form = document.getElementById('waitlist-form');
 const status = document.getElementById('form-status');
 const endpoint = 'https://poatmbsfglhrcdbosinb.supabase.co/functions/v1/join-waitlist';
+translations.en.timeout = 'The request took too long. Please try again.';
+translations.de.timeout = 'Die Anfrage dauert zu lange. Bitte versuche es erneut.';
+translations.hr.timeout = 'Zahtjev traje predugo. Pokušaj ponovno.';
+
+let submitting = false;
 if (form && status) {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (submitting || !form.reportValidity()) return;
     const email = String(new FormData(form).get('email') || '').trim();
     if (!email) return;
-    const button = form.querySelector('button'); button.disabled = true; status.textContent = '…';
+    const button = form.querySelector('button');
+    submitting = true; button.disabled = true; status.textContent = '…';
+    form.setAttribute('aria-busy', 'true');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     try {
-      const response = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, locale}) });
+      const response = await fetch(endpoint, { signal:controller.signal, method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, locale}) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'request_failed');
+      if (!response.ok || data?.ok !== true) throw new Error('request_failed');
       status.textContent = data.already ? translations[locale].already : translations[locale].success;
       form.reset();
-    } catch (_) { status.textContent = translations[locale].error; }
-    finally { button.disabled = false; }
+    } catch (error) {
+      status.textContent = error.name === 'AbortError' ? translations[locale].timeout : translations[locale].error;
+    } finally {
+      clearTimeout(timer);
+      submitting = false; button.disabled = false;
+      form.removeAttribute('aria-busy');
+    }
   });
 }
