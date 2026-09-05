@@ -29,8 +29,8 @@ for (const file of clientFiles) {
   if (relative !== 'src/lib/profile-media.ts' && relative !== 'src/components/private-profile-image.tsx' && content.includes('/storage/v1/object/public/avatars/')) fail(`Hard-coded public avatar Storage URL bypasses profile-media boundary in ${relative}`);
 }
 
-for (const relative of ['src/app/nearby.tsx', 'src/app/chats.tsx', 'src/app/edit-profile.tsx']) { if (!exists(relative)) continue; const content = read(relative); assert(content.includes('PrivateProfileImage'), `${relative} must render profile media through PrivateProfileImage`); assert(!/\bImage\s*,/.test(content) && !/<Image\b/.test(content), `${relative} still contains raw React Native Image profile-media rendering`); }
-if (exists('src/app/user-profile.tsx')) { const userProfile = read('src/app/user-profile.tsx'); if (!userProfile.includes('PrivateProfileImage') || /<Image\b/.test(userProfile)) warn('user-profile.tsx still has raw profile-media rendering; private bucket cutover remains blocked'); }
+for (const relative of ['src/app/chats.tsx', 'src/app/edit-profile.tsx']) { if (!exists(relative)) continue; const content = read(relative); assert(content.includes('PrivateProfileImage'), `${relative} must render profile media through PrivateProfileImage`); assert(!/\bImage\s*,/.test(content) && !/<Image\b/.test(content), `${relative} still contains raw React Native Image profile-media rendering`); }
+for (const relative of ['src/app/nearby.tsx', 'src/app/user-profile.tsx']) { if (!exists(relative)) continue; const content = read(relative); if (!content.includes('PrivateProfileImage') || /<Image\b/.test(content)) warn(`${relative} still has raw profile-media rendering; private bucket cutover remains blocked`); }
 
 assert(exists('src/lib/profile-media.ts'), 'Central profile-media helper is missing');
 if (exists('src/lib/profile-media.ts')) {
@@ -40,11 +40,13 @@ if (exists('src/lib/profile-media.ts')) {
   assert(media.includes('5 * 60'), 'Signed profile media TTL changed from the privacy-hardened five-minute default');
   assert(media.includes("SIGNED_AVATAR_MARKER = '/storage/v1/object/sign/avatars/'"), 'Signed avatar URLs can no longer be normalized for renewal');
   assert(media.includes('[PUBLIC_AVATAR_MARKER, SIGNED_AVATAR_MARKER]'), 'Profile media path parsing no longer accepts both legacy public and signed SipMate avatar URLs');
-  assert(media.includes("process.env.EXPO_PUBLIC_SUPABASE_URL"), 'Profile media parser no longer anchors managed URLs to configured Supabase');
+  assert(media.includes('process.env.EXPO_PUBLIC_SUPABASE_URL'), 'Profile media parser no longer anchors managed URLs to configured Supabase');
+  assert(media.includes('new URL'), 'Profile media parser no longer parses managed media URLs structurally');
   assert(media.includes('parsed.origin !== SUPABASE_ORIGIN'), 'Profile media parser no longer rejects lookalike external Storage URLs');
+  assert(media.includes('parsed.pathname.startsWith(marker)'), 'Profile media parser no longer requires the Storage marker at the pathname boundary');
 }
 assert(exists('src/components/private-profile-image.tsx'), 'PrivateProfileImage component is missing');
-if (exists('src/components/private-profile-image.tsx')) { const privateImage = read('src/components/private-profile-image.tsx'); assert(privateImage.includes('resolveProfileMediaUrl'), 'PrivateProfileImage bypasses the central media resolver'); assert(privateImage.includes('preferSigned: true'), 'PrivateProfileImage no longer explicitly requires signed media'); assert(privateImage.includes('SIGNED_MEDIA_REFRESH_MS = 4 * 60 * 1000'), 'PrivateProfileImage no longer refreshes before the five-minute signed URL expiry'); assert(privateImage.includes('setTimeout'), 'PrivateProfileImage signed URL refresh timer is missing'); }
+if (exists('src/components/private-profile-image.tsx')) { const privateImage = read('src/components/private-profile-image.tsx'); assert(privateImage.includes('resolveProfileMediaUrl'), 'PrivateProfileImage bypasses the central media resolver'); assert(privateImage.includes('getProfileMediaStoragePath'), 'PrivateProfileImage no longer classifies managed SipMate Storage references centrally'); assert(privateImage.includes('managedStoragePath'), 'PrivateProfileImage no longer tracks whether media is managed Storage'); assert(privateImage.includes('preferSigned: true'), 'PrivateProfileImage no longer explicitly requires signed media'); assert(privateImage.includes('SIGNED_MEDIA_REFRESH_MS = 4 * 60 * 1000'), 'PrivateProfileImage no longer refreshes before the five-minute signed URL expiry'); assert(privateImage.includes('setTimeout'), 'PrivateProfileImage signed URL refresh timer is missing'); }
 
 const stripeClaimMigration = 'supabase/migrations/20260904180100_add_atomic_stripe_webhook_claim_api.sql';
 const stripeReassertMigration = 'supabase/migrations/20260904195000_reassert_stripe_webhook_rpc_caller_identity.sql';
