@@ -10,6 +10,8 @@ import {
   View,
 } from 'react-native';
 
+// PrivateProfileImage is intentionally encapsulated by NearbyProfileAvatar so
+// this screen cannot construct, cache-bust, or retain signed Storage URLs itself.
 import { NearbyProfileAvatar } from '../components/nearby-profile-avatar';
 import { filterNearbyProfiles, NearbyDisplayProfile } from '../lib/nearby-profile-filters';
 import { isPremiumProfileActive } from '../lib/nearby-premium';
@@ -232,13 +234,7 @@ export default function NearbyScreen() {
           {showLocationChanger && (
             <View style={styles.innerPanel}>
               <Text style={styles.label}>{t('nearbyScreen.city')}</Text>
-              <TextInput
-                style={styles.input}
-                value={customCity}
-                onChangeText={setCustomCity}
-                placeholder={t('nearbyScreen.cityPlaceholder')}
-                placeholderTextColor="#52525B"
-              />
+              <TextInput style={styles.input} value={customCity} onChangeText={setCustomCity} placeholder={t('nearbyScreen.cityPlaceholder')} placeholderTextColor="#52525B" />
               <TouchableOpacity style={styles.applyButton} onPress={() => void applyCustomLocation()} disabled={locationLoading}>
                 <Text style={styles.applyText}>{locationLoading ? t('nearbyScreen.findingLocation') : t('nearbyScreen.useThisLocation')}</Text>
               </TouchableOpacity>
