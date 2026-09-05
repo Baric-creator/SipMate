@@ -127,7 +127,7 @@ export default function ChatScreen() {
   async function loadMessages() {
     if (!conversationId) return;
     setLoading(true);
-    const { data, error } = await supabase.from('messages').select('*').eq('conversation_id', String(conversationId)).order('created_at', { ascending: true });
+    const { data, error } = await supabase.from('messages').select('id, conversation_id, sender_id, content, created_at, read_at').eq('conversation_id', String(conversationId)).order('created_at', { ascending: true });
     if (error) console.log('MESSAGES LOAD ERROR:', error.message);
     else setMessages((data ?? []) as Message[]);
     setLoading(false);
@@ -149,7 +149,7 @@ export default function ChatScreen() {
     if (!session?.user) return;
     const { data, error } = await supabase.from('messages').insert({
       conversation_id: String(conversationId), sender_id: session.user.id, content,
-    }).select('*').single();
+    }).select('id, conversation_id, sender_id, content, created_at, read_at').single();
     if (error) {
       console.log('MESSAGE SEND ERROR:', error.message);
       if (typeof window !== 'undefined') {
