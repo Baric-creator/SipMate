@@ -83,7 +83,7 @@ export default function PremiumScreen() {
   async function loadOffers() {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from('premium_offers').select('*').eq('is_active', true).order('sort_order', { ascending: true });
+      const { data, error } = await supabase.from('premium_offers').select('id, code, name, price_cents, billing_period, max_subscribers, subscriber_count, is_active, sort_order').eq('is_active', true).order('sort_order', { ascending: true });
       if (error) { console.log('PREMIUM OFFERS ERROR:', error.message); return; }
       setOffers((data ?? []) as PremiumOffer[]);
     } finally { setLoading(false); }
