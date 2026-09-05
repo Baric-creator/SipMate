@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(49);
+select plan(51);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass), 'profiles RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.cheers'::regclass), 'cheers RLS enabled');
@@ -53,6 +53,8 @@ select ok(position('avatar.webp' in lower(pg_get_functiondef('private.can_read_a
 select ok(position('gallery-[0-9]+' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,'avatar read helper allowlists numbered gallery filenames');
 select ok(position('public.blocks' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,'avatar read helper checks the blocks table directly inside its hardened security boundary');
 select ok(position('is_blocked_between' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) = 0,'avatar read helper does not delegate block authorization to another helper');
+select ok(position('target.avatar_path = object_name' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,'cross-user avatar reads require the object to remain referenced by the owner profile');
+select ok(position('photo.storage_path = object_name' in lower(pg_get_functiondef('private.can_read_avatar_object(text)'::regprocedure))) > 0,'cross-user gallery reads require the object to remain referenced by profile_photos');
 
 select ok(exists (select 1 from pg_constraint where conrelid='public.profiles'::regclass and conname='profiles_avatar_path_approved_check' and pg_get_constraintdef(oid) like '%avatar\\.%'),'profile avatar_path is constrained to canonical avatar filenames');
 select ok(exists (select 1 from pg_constraint where conrelid='public.profile_photos'::regclass and conname='profile_photos_storage_path_approved_check' and pg_get_constraintdef(oid) like '%gallery-%'),'gallery storage_path is constrained to numbered gallery filenames');
