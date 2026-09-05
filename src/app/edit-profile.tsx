@@ -28,6 +28,25 @@ type Profile = {
 
 type GalleryPhoto = { id: string; photo_url: string; storage_path?: string | null; sort_order: number | null };
 
+
+const PROFILE_MEDIA_MIME_TO_EXTENSION: Record<string, 'jpg' | 'png' | 'webp'> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
+function getProfileMediaUploadExtension(fileName?: string | null, mimeType?: string | null) {
+  if (mimeType) return PROFILE_MEDIA_MIME_TO_EXTENSION[mimeType.toLowerCase()] ?? null;
+  const extension = fileName?.split('.').pop()?.toLowerCase();
+  return extension && ['jpg', 'jpeg', 'png', 'webp'].includes(extension) ? extension : null;
+}
+
+function getProfileMediaContentType(extension: string) {
+  if (extension === 'png') return 'image/png';
+  if (extension === 'webp') return 'image/webp';
+  return 'image/jpeg';
+}
+
 export default function EditProfileScreen() {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -95,13 +114,33 @@ export default function EditProfileScreen() {
     try {
       setUploadingAvatar(true); const { data: { session } } = await supabase.auth.getSession(); if (!session?.user) return;
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 }); if (result.canceled) return;
-      const image = result.assets[0]; const response = await fetch(image.uri); if (!response.ok) { showAlert(t('editProfileScreen.imageReadError')); return; }
-      const arrayBuffer = await response.arrayBuffer(); const fileExt = image.fileName?.split('.').pop()?.toLowerCase() || 'jpg'; const filePath = `${session.user.id}/avatar.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arrayBuffer, { contentType: image.mimeType || 'image/jpeg', upsert: true });
+      const image = result.assets[0];
+      const fileExt = getProfileMediaUploadExtension(image.fileName, image.mimeType);
+      if (!fileExt) {
+        console.log('AVATAR UPLOAD REJECTED: unsupported image format', image.mimeType, image.fileName);
+        showAlert(t('editProfileScreen.uploadError'));
+        return;
+      }
+      const response = await fetch(image.uri); if (!response.ok) { showAlert(t('editProfileScreen.imageReadError')); return; }
+      const arrayBuffer = await response.arrayBuffer();
+      const filePath = `${session.user.id}/avatar.${fileExt}`;
+      const previousAvatarPath = avatarPath ?? getProfileMediaStoragePath(avatarUrl);
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arrayBuffer, { contentType: getProfileMediaContentType(fileExt), upsert: true });
       if (uploadError) { console.log('AVATAR UPLOAD ERROR:', uploadError); showAlert(`${t('editProfileScreen.uploadError')}: ${uploadError.message}`); return; }
       const publicUrl = getPublicProfileMediaUrl(filePath, Date.now());
       const { error: profileError } = await supabase.from('profiles').update({ avatar_url: publicUrl, avatar_path: filePath }).eq('id', session.user.id);
-      if (profileError) { showAlert(`${t('editProfileScreen.profileError')}: ${profileError.message}`); return; }
+      if (profileError) {
+        if (previousAvatarPath !== filePath) {
+          const { error: cleanupError } = await supabase.storage.from('avatars').remove([filePath]);
+          if (cleanupError) console.log('AVATAR ROLLBACK STORAGE ERROR:', cleanupError.message);
+        }
+        showAlert(`${t('editProfileScreen.profileError')}: ${profileError.message}`);
+        return;
+      }
+      if (previousAvatarPath && previousAvatarPath !== filePath) {
+        const { error: cleanupError } = await supabase.storage.from('avatars').remove([previousAvatarPath]);
+        if (cleanupError) console.log('OLD AVATAR CLEANUP ERROR:', cleanupError.message);
+      }
       setAvatarUrl(publicUrl); setAvatarPath(filePath);
     } catch (error: any) { console.log('AVATAR ERROR:', error); showAlert(error?.message ?? t('editProfileScreen.uploadError')); } finally { setUploadingAvatar(false); }
   }
@@ -110,9 +149,16 @@ export default function EditProfileScreen() {
     if (!profile?.id) return; if (!premiumActive) { router.push('/premium'); return; } if (profilePhotos.length >= 6) { showAlert(t('editProfileScreen.galleryLimit')); return; }
     try {
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 }); if (result.canceled) return;
-      const asset = result.assets[0]; const response = await fetch(asset.uri); if (!response.ok) { showAlert(t('editProfileScreen.galleryUploadError')); return; }
-      const blob = await response.blob(); const extension = asset.fileName?.split('.').pop()?.toLowerCase() || 'jpg'; const filePath = `${profile.id}/gallery-${Date.now()}.${extension}`;
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, blob, { contentType: asset.mimeType || 'image/jpeg', upsert: false });
+      const asset = result.assets[0];
+      const extension = getProfileMediaUploadExtension(asset.fileName, asset.mimeType);
+      if (!extension) {
+        console.log('GALLERY UPLOAD REJECTED: unsupported image format', asset.mimeType, asset.fileName);
+        showAlert(t('editProfileScreen.galleryUploadError'));
+        return;
+      }
+      const response = await fetch(asset.uri); if (!response.ok) { showAlert(t('editProfileScreen.galleryUploadError')); return; }
+      const blob = await response.blob(); const filePath = `${profile.id}/gallery-${Date.now()}.${extension}`;
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, blob, { contentType: getProfileMediaContentType(extension), upsert: false });
       if (uploadError) { showAlert(t('editProfileScreen.galleryUploadError')); return; }
       const publicUrl = getPublicProfileMediaUrl(filePath);
       const { data: insertedPhoto, error: insertError } = await supabase.from('profile_photos').insert({ user_id: profile.id, photo_url: publicUrl, storage_path: filePath, sort_order: profilePhotos.length }).select('id, photo_url, storage_path, sort_order').single();
