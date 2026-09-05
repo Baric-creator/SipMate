@@ -76,6 +76,29 @@ begin
     return false;
   end if;
 
+  -- Cross-user reads must target media that is still referenced by the owner's
+  -- current profile state. Canonical but stale/unreferenced objects remain
+  -- readable only to their owner and cannot leak through a guessed object path.
+  if lower(object_leaf) in ('avatar.jpg', 'avatar.jpeg', 'avatar.png', 'avatar.webp') then
+    if not exists (
+      select 1
+      from public.profiles target
+      where target.id = owner_id
+        and target.avatar_path = object_name
+    ) then
+      return false;
+    end if;
+  else
+    if not exists (
+      select 1
+      from public.profile_photos photo
+      where photo.user_id = owner_id
+        and photo.storage_path = object_name
+    ) then
+      return false;
+    end if;
+  end if;
+
   -- Keep this decision self-contained inside the SECURITY DEFINER helper rather
   -- than delegating to an invoker-security function. That makes the Storage
   -- policy independent of the caller's direct visibility into public.blocks.
