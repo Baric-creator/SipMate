@@ -36,6 +36,18 @@ for (const relative of ['src/app/chats.tsx', 'src/app/edit-profile.tsx']) {
   assert(!/\\bImage\\s*,/.test(content) && !/<Image\\b/.test(content), `${relative} still contains raw React Native Image profile-media rendering`);
 }
 
+assert(exists('src/components/chat-header-avatar.tsx'), 'ChatHeaderAvatar component is missing');
+if (exists('src/app/chat.tsx')) {
+  const content = read('src/app/chat.tsx');
+  assert(content.includes('ChatHeaderAvatar'), 'Chat header must render profile media through ChatHeaderAvatar');
+  assert(!/\\bImage\\s*,/.test(content) && !/<Image\\b/.test(content), 'Chat still contains raw React Native Image profile-media rendering');
+  assert(!content.includes('refresh=\\1788618179337'), 'Chat still cache-busts profile media with Date.now');
+}
+if (exists('src/components/chat-header-avatar.tsx')) {
+  const content = read('src/components/chat-header-avatar.tsx');
+  assert(content.includes('PrivateProfileImage'), 'ChatHeaderAvatar must delegate media resolution to PrivateProfileImage');
+}
+
 assert(exists('src/components/nearby-profile-avatar.tsx'), 'NearbyProfileAvatar component is missing');
 if (exists('src/app/nearby.tsx')) {
   const content = read('src/app/nearby.tsx');
@@ -83,6 +95,14 @@ if (exists('src/lib/profile-media.ts')) {
   assert(media.includes('parsed.origin !== SUPABASE_ORIGIN'), 'Profile media parser no longer rejects lookalike external Storage URLs');
   assert(media.includes('parsed.pathname.startsWith(marker)'), 'Profile media parser no longer requires the Storage marker at the pathname boundary');
 }
+assert(exists('src/lib/notify.ts'), 'Shared notification boundary is missing');
+if (exists('src/lib/notify.ts')) {
+  const notify = read('src/lib/notify.ts');
+  assert(notify.includes('Alert.alert'), 'Shared notification boundary no longer supports native alerts');
+  assert(notify.includes("Platform.OS === 'web'"), 'Shared notification boundary no longer handles web explicitly');
+  assert(notify.includes('window.alert') && notify.includes('window.confirm'), 'Shared notification boundary no longer provides web alert/confirmation fallbacks');
+}
+
 assert(exists('src/components/private-profile-image.tsx'), 'PrivateProfileImage component is missing');
 if (exists('src/components/private-profile-image.tsx')) {
   const privateImage = read('src/components/private-profile-image.tsx');
