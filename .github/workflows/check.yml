@@ -28,6 +28,9 @@ jobs:
       - name: TypeScript and security checks
         run: npm run check
 
+      - name: Release cutover preflight
+        run: npm run release:preflight
+
   database-security:
     runs-on: ubuntu-latest
 
