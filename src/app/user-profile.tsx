@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { PrivateProfileImage } from '../components/private-profile-image';
+import { askConfirmation, showAlert } from '../lib/notify';
 import { UserProfileAvatar } from '../components/user-profile-avatar';
 import { getCheersRelationship, getProfilePhotos, getPublicProfile } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
@@ -371,7 +372,7 @@ export default function UserProfileScreen() {
     } = await supabase.auth.getSession();
 
     if (!session?.user) {
-      if (typeof window !== 'undefined') window.alert(text.loginFirst);
+      showAlert(text.loginFirst);
       router.replace('/login');
       return;
     }
@@ -380,7 +381,7 @@ export default function UserProfileScreen() {
     const receiverId = profile.id;
 
     if (senderId === receiverId) {
-      if (typeof window !== 'undefined') window.alert(text.cantCheersSelf);
+      showAlert(text.cantCheersSelf);
       return;
     }
 
@@ -393,9 +394,7 @@ export default function UserProfileScreen() {
 
     if (sendError && sendError.code !== '23505') {
       console.log('CHEERS SEND ERROR:', sendError.message);
-      if (typeof window !== 'undefined') {
-        window.alert(`${text.cheersError}: ${sendError.message}`);
-      }
+      showAlert(`${text.cheersError}: ${sendError.message}`);
       setCheersStatus('none');
       return;
     }
@@ -414,9 +413,7 @@ export default function UserProfileScreen() {
       return;
     }
 
-    if (typeof window !== 'undefined') {
-      window.alert(`🍻 ${text.cheersSentTo} ${profile.name ?? text.userFallback}!`);
-    }
+    showAlert(`🍻 ${text.cheersSentTo} ${profile.name ?? text.userFallback}!`);
   }
 
   async function handleSubmitReport() {
@@ -441,15 +438,13 @@ export default function UserProfileScreen() {
 
     if (error) {
       console.log('REPORT ERROR:', error.message);
-      if (typeof window !== 'undefined') {
-        window.alert(`${text.reportError}: ${error.message}`);
-      }
+      showAlert(`${text.reportError}: ${error.message}`);
       return;
     }
 
     setShowReportModal(false);
     setReportReason(null);
-    if (typeof window !== 'undefined') window.alert(text.reportThanks);
+    showAlert(text.reportThanks);
   }
 
   async function handleBlockUser() {
@@ -466,12 +461,12 @@ export default function UserProfileScreen() {
 
     if (session.user.id === profile.id) return;
 
-    const confirmed =
-      typeof window !== 'undefined'
-        ? window.confirm(
-            `${text.block} ${profile.name ?? text.thisUser}?\n\n${text.blockDescription}`
-          )
-        : true;
+    const confirmed = await askConfirmation(
+      `${text.block} ${profile.name ?? text.thisUser}?`,
+      text.blockDescription,
+      'Cancel',
+      text.block
+    );
 
     if (!confirmed) return;
 
@@ -482,20 +477,16 @@ export default function UserProfileScreen() {
 
     if (error) {
       if (error.code === '23505') {
-        if (typeof window !== 'undefined') window.alert(text.alreadyBlocked);
+        showAlert(text.alreadyBlocked);
       } else {
         console.log('BLOCK ERROR:', error.message);
-        if (typeof window !== 'undefined') {
-          window.alert(`${text.blockError}: ${error.message}`);
-        }
+        showAlert(`${text.blockError}: ${error.message}`);
       }
       return;
     }
 
     setShowUserMenu(false);
-    if (typeof window !== 'undefined') {
-      window.alert(`${profile.name ?? text.user} ${text.blocked}`);
-    }
+    showAlert(`${profile.name ?? text.user} ${text.blocked}`);
     router.replace('/nearby');
   }
 
