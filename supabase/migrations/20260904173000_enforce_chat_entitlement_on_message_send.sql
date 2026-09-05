@@ -26,3 +26,12 @@ with check (
       )
   )
 );
+
+-- Consolidated from 20260904173000_minimize_client_table_privileges.sql because Supabase migration versions are keyed by timestamp.
+revoke all privileges on all tables in schema public from anon;
+
+revoke truncate, trigger, references on all tables in schema public from authenticated;
+
+revoke update on table public.blocks, public.cheers, public.conversations, public.reports, public.skipped_profiles from authenticated;
+revoke delete on table public.conversations, public.messages, public.premium_offers, public.premium_subscriptions, public.profiles, public.reports from authenticated;
+revoke insert, update, delete on table public.premium_offers, public.premium_subscriptions from authenticated;
