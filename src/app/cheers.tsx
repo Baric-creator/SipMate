@@ -10,24 +10,22 @@ import {
   View,
 } from 'react-native';
 
+import { getCheersOverview } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
 
 type CheersItem = {
   id: string;
-  userId: string;
+  userId: string | null;
   name: string;
   age: number | null;
-  status:
-    | 'Mutual Cheers'
-    | 'Sent'
-    | 'Received';
+  status: 'Mutual Cheers' | 'Sent' | 'Received';
+  identityRevealed: boolean;
 };
 
 export default function CheersScreen() {
   const { t } = useTranslation();
   const [cheers, setCheers] = useState<CheersItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     loadCheers();
@@ -43,77 +41,28 @@ export default function CheersScreen() {
         return;
       }
 
-      const myId = session.user.id;
-      const { data: myProfile, error: premiumError } = await supabase
-        .from('profiles')
-        .select('is_premium, premium_until')
-        .eq('id', myId)
-        .maybeSingle();
-
-      if (premiumError) console.log('PREMIUM STATUS ERROR:', premiumError.message);
-
-      const premiumActive = myProfile?.is_premium === true &&
-        (!myProfile.premium_until || new Date(myProfile.premium_until) > new Date());
-      setIsPremium(premiumActive);
-
-      const { data: sent, error: sentError } = await supabase
-        .from('cheers')
-        .select('id, sender_id, receiver_id, created_at')
-        .eq('sender_id', myId);
-      if (sentError) {
-        console.log('CHEERS SENT LOAD ERROR:', sentError.message);
-        return;
-      }
-
-      const { data: received, error: receivedError } = await supabase
-        .from('cheers')
-        .select('id, sender_id, receiver_id, created_at')
-        .eq('receiver_id', myId);
-      if (receivedError) {
-        console.log('CHEERS RECEIVED LOAD ERROR:', receivedError.message);
-        return;
-      }
-
-      const sentToIds = new Set((sent ?? []).map((item) => item.receiver_id));
-      const receivedFromIds = new Set((received ?? []).map((item) => item.sender_id));
-      const allUserIds = Array.from(new Set([...Array.from(sentToIds), ...Array.from(receivedFromIds)]));
-
-      if (allUserIds.length === 0) {
-        setCheers([]);
-        return;
-      }
-
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, name, age')
-        .in('id', allUserIds);
-      if (profileError) {
-        console.log('CHEERS PROFILE ERROR:', profileError.message);
-        return;
-      }
-
-      const items: CheersItem[] = (profiles ?? []).map((profile) => {
-        const iSent = sentToIds.has(profile.id);
-        const iReceived = receivedFromIds.has(profile.id);
-        const status: CheersItem['status'] = iSent && iReceived ? 'Mutual Cheers' : iSent ? 'Sent' : 'Received';
-        return {
-          id: profile.id,
-          userId: profile.id,
-          name: profile.name ?? t('cheersScreen.userFallback'),
-          age: profile.age,
-          status,
-        };
-      });
-
-      const order = { 'Mutual Cheers': 0, Received: 1, Sent: 2 } as const;
-      items.sort((a, b) => order[a.status] - order[b.status]);
-      setCheers(items);
+      const overview = await getCheersOverview();
+      setCheers(
+        overview.map((item) => ({
+          id: item.cheers_id,
+          userId: item.user_id,
+          name: item.name ?? t('cheersScreen.userFallback'),
+          age: item.age,
+          status: item.status,
+          identityRevealed: item.identity_revealed,
+        }))
+      );
+    } catch (error) {
+      console.log('CHEERS LOAD ERROR:', error instanceof Error ? error.message : error);
+      setCheers([]);
     } finally {
       setLoading(false);
     }
   }
 
   async function openChat(item: CheersItem) {
+    if (!item.userId) return;
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       router.push('/login');
@@ -160,10 +109,10 @@ export default function CheersScreen() {
   function renderCheersCard(item: CheersItem) {
     const isMutual = item.status === 'Mutual Cheers';
     const isReceived = item.status === 'Received';
-    const isLockedReceived = isReceived && !isPremium;
+    const isLockedReceived = isReceived && !item.identityRevealed;
 
     function openProfile() {
-      if (isLockedReceived) {
+      if (isLockedReceived || !item.userId) {
         router.push('/premium');
         return;
       }
@@ -193,7 +142,7 @@ export default function CheersScreen() {
           </Text>
           <Text style={styles.detail}>{getDetail()}</Text>
         </View>
-        {isMutual && (
+        {isMutual && item.userId && (
           <TouchableOpacity style={styles.chatButton} onPress={() => openChat(item)}>
             <Text style={styles.chatButtonText}>💬 {t('cheersScreen.openChat')}</Text>
           </TouchableOpacity>
@@ -278,35 +227,35 @@ const styles = StyleSheet.create({
   statNumber: { color: '#FFFFFF', fontSize: 24, fontWeight: '900' },
   statLabel: { color: '#71717A', fontSize: 9, fontWeight: '900', letterSpacing: 1, marginTop: 5 },
   section: { marginBottom: 28 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center' },
-  sectionTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.7 },
-  sectionCount: { minWidth: 24, height: 24, borderRadius: 12, backgroundColor: '#27272A', color: '#FFFFFF', textAlign: 'center', lineHeight: 24, fontSize: 11, fontWeight: '900', marginLeft: 9, paddingHorizontal: 6 },
-  sectionDescription: { color: '#71717A', fontSize: 12, lineHeight: 18, marginTop: 6, marginBottom: 13 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#18181B', padding: 16, borderRadius: 22, marginBottom: 10, borderWidth: 1, borderColor: '#27272A' },
-  cardMutual: { borderColor: '#7F1D1D', backgroundColor: '#1C1111' },
-  cardLocked: { borderColor: '#92400E', backgroundColor: '#18130D' },
-  avatar: { width: 58, height: 58, borderRadius: 29, backgroundColor: '#27272A', alignItems: 'center', justifyContent: 'center', marginRight: 14, borderWidth: 1, borderColor: '#3F3F46' },
-  avatarMutual: { backgroundColor: '#450A0A', borderColor: '#DC2626' },
-  avatarLocked: { backgroundColor: '#27272A', borderColor: '#F59E0B', opacity: 0.85 },
-  avatarText: { color: '#FFFFFF', fontSize: 21, fontWeight: '900' },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  sectionTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
+  sectionCount: { color: '#A1A1AA', fontSize: 12, fontWeight: '900', backgroundColor: '#27272A', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+  sectionDescription: { color: '#71717A', fontSize: 12, lineHeight: 18, marginBottom: 12 },
+  card: { backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A', borderRadius: 22, padding: 16, marginBottom: 12, flexDirection: 'row', alignItems: 'center' },
+  cardMutual: { borderColor: '#EF4444', backgroundColor: '#1F1214' },
+  cardLocked: { borderColor: '#3F3F46' },
+  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#27272A', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  avatarMutual: { backgroundColor: '#EF4444' },
+  avatarLocked: { backgroundColor: '#27272A' },
+  avatarText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
   content: { flex: 1 },
-  name: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
-  status: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 0.7, marginTop: 5 },
-  statusMutual: { color: '#EF4444' },
-  statusReceived: { color: '#4ADE80' },
-  detail: { color: '#71717A', fontSize: 12, lineHeight: 17, marginTop: 5 },
-  chatButton: { backgroundColor: '#DC2626', paddingHorizontal: 15, paddingVertical: 12, borderRadius: 16, marginLeft: 12 },
-  chatButtonText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
-  unlockButton: { backgroundColor: '#F59E0B', paddingHorizontal: 15, paddingVertical: 12, borderRadius: 16, marginLeft: 12 },
-  unlockButtonText: { color: '#09090B', fontSize: 11, fontWeight: '900' },
+  name: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' },
+  status: { color: '#A1A1AA', fontSize: 11, fontWeight: '800', marginTop: 3 },
+  statusMutual: { color: '#F87171' },
+  statusReceived: { color: '#D4D4D8' },
+  detail: { color: '#71717A', fontSize: 11, lineHeight: 16, marginTop: 5 },
+  chatButton: { backgroundColor: '#EF4444', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, marginLeft: 10 },
+  chatButtonText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+  unlockButton: { backgroundColor: '#27272A', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, marginLeft: 10 },
+  unlockButtonText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
   emptyBox: { alignItems: 'center', paddingVertical: 70 },
-  emptyCard: { backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A', borderRadius: 26, paddingVertical: 55, paddingHorizontal: 25, alignItems: 'center' },
-  emptyEmoji: { fontSize: 58 },
-  emptyTitle: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', marginTop: 18 },
-  emptyText: { color: '#71717A', fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 8 },
-  discoverButton: { backgroundColor: '#DC2626', paddingHorizontal: 22, paddingVertical: 14, borderRadius: 18, marginTop: 24 },
+  emptyCard: { backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A', borderRadius: 24, padding: 28, alignItems: 'center' },
+  emptyEmoji: { fontSize: 42, marginBottom: 12 },
+  emptyTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '900', marginBottom: 8 },
+  emptyText: { color: '#71717A', fontSize: 13, lineHeight: 20, textAlign: 'center' },
+  discoverButton: { marginTop: 18, backgroundColor: '#EF4444', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 12 },
   discoverButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-  refreshButton: { alignSelf: 'center', marginTop: 10, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 18, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A' },
-  refreshText: { color: '#A1A1AA', fontSize: 11, fontWeight: '900' },
-  footer: { color: '#52525B', textAlign: 'center', fontSize: 11, fontWeight: '700', marginTop: 24 },
+  refreshButton: { alignSelf: 'center', marginTop: 10, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A' },
+  refreshText: { color: '#A1A1AA', fontSize: 11, fontWeight: '800' },
+  footer: { color: '#3F3F46', fontSize: 10, textAlign: 'center', marginTop: 24 },
 });

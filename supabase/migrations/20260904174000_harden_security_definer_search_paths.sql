@@ -1,0 +1,13 @@
+alter function public.activate_standard_yearly_price() set search_path = pg_catalog, public;
+alter function public.get_blocked_users() set search_path = pg_catalog, public;
+alter function public.get_chat_list() set search_path = pg_catalog, public;
+alter function public.get_cheers_relationship(uuid) set search_path = pg_catalog, public;
+alter function public.get_nearby_profiles(double precision,double precision,double precision) set search_path = pg_catalog, public;
+alter function public.get_profile_photos(uuid) set search_path = pg_catalog, public;
+alter function public.get_skipped_profile_summaries() set search_path = pg_catalog, public;
+alter function public.handle_premium_subscription_change() set search_path = pg_catalog, public;
+alter function public.refresh_premium_offer_counts() set search_path = pg_catalog, public;
+alter function public.register_yearly_premium_purchase() set search_path = pg_catalog, public;
+alter function public.sync_profile_premium_status(uuid) set search_path = pg_catalog, public;
+alter function public.trigger_refresh_premium_offer_counts() set search_path = pg_catalog, public;
+alter function public.update_premium_offer_stage() set search_path = pg_catalog, public;

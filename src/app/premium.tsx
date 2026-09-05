@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { showAlert } from '../lib/notify';
+import { isPremiumActive } from '../lib/premium-status';
 import { supabase } from '../lib/supabase';
 
 type PremiumOffer = {
@@ -82,7 +83,7 @@ export default function PremiumScreen() {
   async function loadOffers() {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from('premium_offers').select('*').eq('is_active', true).order('sort_order', { ascending: true });
+      const { data, error } = await supabase.from('premium_offers').select('id, code, name, price_cents, billing_period, max_subscribers, subscriber_count, is_active, sort_order').eq('is_active', true).order('sort_order', { ascending: true });
       if (error) { console.log('PREMIUM OFFERS ERROR:', error.message); return; }
       setOffers((data ?? []) as PremiumOffer[]);
     } finally { setLoading(false); }
@@ -104,7 +105,7 @@ export default function PremiumScreen() {
     if (!user) { setIsPremium(false); setPremiumPlan(null); setPremiumUntil(null); setPremiumPrice(null); return; }
     const { data: profile, error: profileError } = await supabase.from('profiles').select('is_premium, premium_until').eq('id', user.id).single();
     if (profileError) { console.log('PREMIUM STATUS ERROR:', profileError.message); return; }
-    const premiumActive = profile?.is_premium === true;
+    const premiumActive = isPremiumActive(profile?.is_premium, profile?.premium_until);
     setIsPremium(premiumActive);
     if (premiumActive && params.checkout === 'success') setShowPremiumSuccess(true);
     setPremiumUntil(profile?.premium_until ?? null);

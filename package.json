@@ -50,6 +50,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "security:audit": "node ./scripts/security-audit.mjs",
+    "database:verify-history": "node ./scripts/verify-database-history.mjs",
     "check": "npm run typecheck && npm run security:audit",
     "setup:dev-client": "npx expo install expo-dev-client",
     "doctor": "npx expo-doctor@latest",
@@ -60,7 +61,8 @@
     "submit:android:internal:latest": "npx eas-cli@latest submit --platform android --profile production --latest",
     "submit:android:internal:latest:ci": "npx eas-cli@latest submit --platform android --profile production --latest --non-interactive",
     "submit:android:latest": "npm run submit:android:internal:latest",
-    "submit:android:latest:ci": "npm run submit:android:internal:latest:ci"
+    "submit:android:latest:ci": "npm run submit:android:internal:latest:ci",
+    "release:preflight": "node ./scripts/release-preflight.mjs"
   },
   "private": true
 }

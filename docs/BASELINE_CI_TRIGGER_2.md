@@ -1,0 +1,1 @@
+Extended baseline validation trigger after reconstructing historical helper signatures required by the earliest committed permission-hardening migration.

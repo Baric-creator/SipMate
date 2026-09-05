@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
-  Image,
   Modal,
   Pressable,
   StyleSheet,
@@ -13,12 +12,17 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
+import { PrivateProfileImage } from '../components/private-profile-image';
+import { askConfirmation, showAlert } from '../lib/notify';
+import { UserProfileAvatar } from '../components/user-profile-avatar';
+import { getCheersRelationship, getProfilePhotos, getPublicProfile } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
 
 type CheersStatus = 'none' | 'sent' | 'mutual';
 
 type UserProfile = {
   avatar_url: string | null;
+  avatar_path?: string | null;
   id: string;
   name: string | null;
   age: number | null;
@@ -31,6 +35,7 @@ type UserProfile = {
 type ProfilePhoto = {
   id: string;
   photo_url: string;
+  storage_path?: string | null;
   sort_order: number | null;
 };
 
@@ -200,7 +205,7 @@ export default function UserProfileScreen() {
   const text = copy[language] ?? copy.en;
 
   const [profilePhotos, setProfilePhotos] = useState<ProfilePhoto[]>([]);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<ProfilePhoto | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
@@ -273,29 +278,17 @@ export default function UserProfileScreen() {
 
     if (!session?.user) return;
 
-    const myId = session.user.id;
-    if (myId === targetUserId) {
+    if (session.user.id === targetUserId) {
       setCheersStatus('none');
       return;
     }
 
-    const { data: sentCheers } = await supabase
-      .from('cheers')
-      .select('id')
-      .eq('sender_id', myId)
-      .eq('receiver_id', targetUserId)
-      .maybeSingle();
-
-    const { data: receivedCheers } = await supabase
-      .from('cheers')
-      .select('id')
-      .eq('sender_id', targetUserId)
-      .eq('receiver_id', myId)
-      .maybeSingle();
-
-    if (sentCheers && receivedCheers) setCheersStatus('mutual');
-    else if (sentCheers) setCheersStatus('sent');
-    else setCheersStatus('none');
+    try {
+      setCheersStatus(await getCheersRelationship(targetUserId));
+    } catch (error) {
+      console.log('CHEERS STATUS ERROR:', error);
+      setCheersStatus('none');
+    }
   }
 
   async function loadUserProfile() {
@@ -329,32 +322,20 @@ export default function UserProfileScreen() {
           new Date(myProfile.premium_until) > new Date());
       setIsPremium(premiumActive);
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', targetId)
-        .maybeSingle();
+      try {
+        const [data, photosData] = await Promise.all([
+          getPublicProfile(targetId),
+          getProfilePhotos(targetId),
+        ]);
 
-      const { data: photosData, error: photosError } = await supabase
-        .from('profile_photos')
-        .select('id, photo_url, sort_order')
-        .eq('user_id', targetId)
-        .order('sort_order', { ascending: true });
-
-      if (photosError) {
-        console.log('USER PROFILE PHOTOS ERROR:', photosError.message);
-      } else {
-        setProfilePhotos((photosData ?? []) as ProfilePhoto[]);
-      }
-
-      if (error) {
-        console.log('PROFILE LOAD ERROR:', error.message);
+        setProfilePhotos(photosData as ProfilePhoto[]);
+        setProfile(data as UserProfile | null);
+        if (data?.id) await checkCheersStatus(data.id);
+      } catch (profileError) {
+        console.log('PROFILE LOAD ERROR:', profileError);
         setProfile(null);
-        return;
+        setProfilePhotos([]);
       }
-
-      setProfile(data as UserProfile | null);
-      if (data?.id) await checkCheersStatus(data.id);
     } finally {
       setLoading(false);
     }
@@ -391,7 +372,7 @@ export default function UserProfileScreen() {
     } = await supabase.auth.getSession();
 
     if (!session?.user) {
-      if (typeof window !== 'undefined') window.alert(text.loginFirst);
+      showAlert(text.loginFirst);
       router.replace('/login');
       return;
     }
@@ -400,7 +381,7 @@ export default function UserProfileScreen() {
     const receiverId = profile.id;
 
     if (senderId === receiverId) {
-      if (typeof window !== 'undefined') window.alert(text.cantCheersSelf);
+      showAlert(text.cantCheersSelf);
       return;
     }
 
@@ -413,35 +394,26 @@ export default function UserProfileScreen() {
 
     if (sendError && sendError.code !== '23505') {
       console.log('CHEERS SEND ERROR:', sendError.message);
-      if (typeof window !== 'undefined') {
-        window.alert(`${text.cheersError}: ${sendError.message}`);
-      }
+      showAlert(`${text.cheersError}: ${sendError.message}`);
       setCheersStatus('none');
       return;
     }
 
-    const { data: mutualCheers, error: mutualError } = await supabase
-      .from('cheers')
-      .select('id')
-      .eq('sender_id', receiverId)
-      .eq('receiver_id', senderId)
-      .maybeSingle();
-
-    if (mutualError) {
-      console.log('MUTUAL CHEERS ERROR:', mutualError.message);
+    try {
+      const relationship = await getCheersRelationship(receiverId);
+      if (relationship === 'mutual') {
+        setCheersStatus('mutual');
+        setShowMutualCheers(true);
+        playCheersAnimation();
+        return;
+      }
+      setCheersStatus('sent');
+    } catch (relationshipError) {
+      console.log('MUTUAL CHEERS ERROR:', relationshipError);
       return;
     }
 
-    if (mutualCheers) {
-      setCheersStatus('mutual');
-      setShowMutualCheers(true);
-      playCheersAnimation();
-      return;
-    }
-
-    if (typeof window !== 'undefined') {
-      window.alert(`🍻 ${text.cheersSentTo} ${profile.name ?? text.userFallback}!`);
-    }
+    showAlert(`🍻 ${text.cheersSentTo} ${profile.name ?? text.userFallback}!`);
   }
 
   async function handleSubmitReport() {
@@ -466,15 +438,13 @@ export default function UserProfileScreen() {
 
     if (error) {
       console.log('REPORT ERROR:', error.message);
-      if (typeof window !== 'undefined') {
-        window.alert(`${text.reportError}: ${error.message}`);
-      }
+      showAlert(`${text.reportError}: ${error.message}`);
       return;
     }
 
     setShowReportModal(false);
     setReportReason(null);
-    if (typeof window !== 'undefined') window.alert(text.reportThanks);
+    showAlert(text.reportThanks);
   }
 
   async function handleBlockUser() {
@@ -491,12 +461,12 @@ export default function UserProfileScreen() {
 
     if (session.user.id === profile.id) return;
 
-    const confirmed =
-      typeof window !== 'undefined'
-        ? window.confirm(
-            `${text.block} ${profile.name ?? text.thisUser}?\n\n${text.blockDescription}`
-          )
-        : true;
+    const confirmed = await askConfirmation(
+      `${text.block} ${profile.name ?? text.thisUser}?`,
+      text.blockDescription,
+      'Cancel',
+      text.block
+    );
 
     if (!confirmed) return;
 
@@ -507,20 +477,16 @@ export default function UserProfileScreen() {
 
     if (error) {
       if (error.code === '23505') {
-        if (typeof window !== 'undefined') window.alert(text.alreadyBlocked);
+        showAlert(text.alreadyBlocked);
       } else {
         console.log('BLOCK ERROR:', error.message);
-        if (typeof window !== 'undefined') {
-          window.alert(`${text.blockError}: ${error.message}`);
-        }
+        showAlert(`${text.blockError}: ${error.message}`);
       }
       return;
     }
 
     setShowUserMenu(false);
-    if (typeof window !== 'undefined') {
-      window.alert(`${profile.name ?? text.user} ${text.blocked}`);
-    }
+    showAlert(`${profile.name ?? text.user} ${text.blocked}`);
     router.replace('/nearby');
   }
 
@@ -614,23 +580,11 @@ export default function UserProfileScreen() {
           <Text style={styles.menuButtonText}>•••</Text>
         </Pressable>
 
-        {profile.avatar_url ? (
-          <Image
-            source={{
-              uri: `${profile.avatar_url}${
-                profile.avatar_url.includes('?') ? '&' : '?'
-              }refresh=${Date.now()}`,
-            }}
-            style={styles.profileAvatar}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.profileAvatarFallback}>
-            <Text style={styles.profileAvatarFallbackText}>
-              {profile.name?.charAt(0).toUpperCase() || '?'}
-            </Text>
-          </View>
-        )}
+        <UserProfileAvatar
+          name={profile.name}
+          avatarPath={profile.avatar_path}
+          avatarUrl={profile.avatar_url}
+        />
 
         {profilePhotos.length > 0 && (
           <View style={styles.profileGallerySection}>
@@ -639,11 +593,12 @@ export default function UserProfileScreen() {
               {profilePhotos.map((photo) => (
                 <Pressable
                   key={photo.id}
-                  onPress={() => setSelectedPhoto(photo.photo_url)}
+                  onPress={() => setSelectedPhoto(photo)}
                   style={styles.photoPressable}
                 >
-                  <Image
-                    source={{ uri: photo.photo_url }}
+                  <PrivateProfileImage
+                    storagePath={photo.storage_path}
+                    legacyUrl={photo.photo_url}
                     style={styles.profileGalleryImage}
                     resizeMode="cover"
                   />
@@ -879,8 +834,9 @@ export default function UserProfileScreen() {
           </TouchableOpacity>
 
           {selectedPhoto && (
-            <Image
-              source={{ uri: selectedPhoto }}
+            <PrivateProfileImage
+              storagePath={selectedPhoto.storage_path}
+              legacyUrl={selectedPhoto.photo_url}
               style={styles.fullscreenPhoto}
               resizeMode="contain"
             />

@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,8 @@ import {
   View,
 } from 'react-native';
 
+import { NearbyProfileAvatar } from '../components/nearby-profile-avatar';
+import { getNearbyProfiles, getSkippedProfileSummaries } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
 
 export default function NearbyScreen() {
@@ -159,298 +160,66 @@ export default function NearbyScreen() {
     );
   }
 
-  function calculateDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ) {
-    const R = 6371;
-
-    const dLat =
-      ((lat2 - lat1) * Math.PI) /
-      180;
-
-    const dLon =
-      ((lon2 - lon1) * Math.PI) /
-      180;
-
-    const a =
-      Math.sin(dLat / 2) *
-        Math.sin(dLat / 2) +
-      Math.cos(
-        (lat1 * Math.PI) / 180
-      ) *
-        Math.cos(
-          (lat2 * Math.PI) / 180
-        ) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-
-    const c =
-      2 *
-      Math.atan2(
-        Math.sqrt(a),
-        Math.sqrt(1 - a)
-      );
-
-    return R * c;
-  }
-
   async function loadNearbyProfiles() {
     try {
       setLoading(true);
 
       const {
         data: { user },
-      } =
-        await supabase.auth.getUser();
+      } = await supabase.auth.getUser();
 
       if (!user) {
-        console.log(
-          'NEARBY: NO LOGGED USER'
-        );
+        console.log('NEARBY: NO LOGGED USER');
         return;
       }
 
-      const {
-        data: myProfile,
-        error: myError,
-      } = await supabase
+      const { data: myProfile, error: myError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('is_premium, premium_until')
         .eq('id', user.id)
         .single();
 
       if (myError) {
-        console.log(
-          'MY PROFILE ERROR:',
-          myError.message
-        );
+        console.log('MY PROFILE ERROR:', myError.message);
         return;
       }
 
       const premiumActive =
         myProfile.is_premium === true &&
-        (!myProfile.premium_until ||
-          new Date(
-            myProfile.premium_until
-          ) > new Date());
-
+        (!myProfile.premium_until || new Date(myProfile.premium_until) > new Date());
       setIsPremium(premiumActive);
 
-      console.log(
-        'NEARBY PREMIUM:',
-        premiumActive
-      );
+      const profiles = await getNearbyProfiles({
+        maxDistanceKm: maxDistance,
+        customOriginLatitude: premiumActive ? customLatitude : null,
+        customOriginLongitude: premiumActive ? customLongitude : null,
+      });
 
-      if (
-        myProfile.latitude == null ||
-        myProfile.longitude == null
-      ) {
-        console.log(
-          'MY LOCATION NOT SET'
-        );
-        return;
-      }
-
-      const {
-        data: profiles,
-        error,
-      } = await supabase
-        .from('profiles')
-        .select('*')
-        .neq('id', user.id);
-
-      console.log(
-        'NEARBY PROFILES:',
-        profiles
-      );
-
-      if (error) {
-        console.log(
-          'NEARBY LOAD ERROR:',
-          error.message
-        );
-        return;
-      }
-
-      const {
-        data: blocks,
-        error: blocksError,
-      } = await supabase
-        .from('blocks')
-        .select(
-          'blocker_id, blocked_id'
+      const filteredProfiles = profiles
+        .map((person) => ({ ...person, distance: Number(person.distance_km) }))
+        .filter(
+          (person) =>
+            drinkFilter === 'All' || person.currently_up_for === drinkFilter
         )
-        .or(
-          `blocker_id.eq.${user.id},blocked_id.eq.${user.id}`
-        );
+        .filter((person) => {
+          if (!premiumActive || ageFilter === 'All') return true;
+          if (person.age == null) return false;
+          if (ageFilter === '18-25') return person.age >= 18 && person.age <= 25;
+          if (ageFilter === '26-35') return person.age >= 26 && person.age <= 35;
+          if (ageFilter === '36-45') return person.age >= 36 && person.age <= 45;
+          if (ageFilter === '46+') return person.age >= 46;
+          return true;
+        })
+        .filter((person) => {
+          if (!premiumActive || genderFilter === 'All') return true;
+          return person.gender === genderFilter;
+        })
+        .sort((a, b) => a.distance - b.distance);
 
-      if (blocksError) {
-        console.log(
-          'BLOCKS LOAD ERROR:',
-          blocksError.message
-        );
-      }
-
-      const blockedUserIds =
-        new Set(
-          (blocks ?? []).map(
-            (block) =>
-              block.blocker_id ===
-              user.id
-                ? block.blocked_id
-                : block.blocker_id
-          )
-        );
-
-      const {
-        data: skippedData,
-        error: skippedError,
-      } = await supabase
-        .from('skipped_profiles')
-        .select('skipped_user_id')
-        .eq('user_id', user.id);
-
-      if (skippedError) {
-        console.log(
-          'SKIPPED PROFILES ERROR:',
-          skippedError.message
-        );
-      }
-
-      const skippedUserIds =
-        new Set(
-          (skippedData ?? []).map(
-            (item) =>
-              item.skipped_user_id
-          )
-        );
-
-      const originLatitude =
-        isPremium &&
-        customLatitude !== null
-          ? customLatitude
-          : myProfile.latitude;
-
-      const originLongitude =
-        isPremium &&
-        customLongitude !== null
-          ? customLongitude
-          : myProfile.longitude;
-
-      const profilesWithDistance =
-        (profiles ?? [])
-          .filter(
-            (p) =>
-              !blockedUserIds.has(
-                p.id
-              ) &&
-              !skippedUserIds.has(
-                p.id
-              ) &&
-              p.is_active === true &&
-              p.latitude != null &&
-              p.longitude != null
-          )
-          .map((p) => ({
-            ...p,
-            distance:
-              calculateDistance(
-                originLatitude,
-                originLongitude,
-                p.latitude,
-                p.longitude
-              ),
-          }))
-          .filter(
-            (p) =>
-              p.distance <=
-              maxDistance
-          )
-          .filter(
-            (p) =>
-              drinkFilter ===
-                'All' ||
-              p.currently_up_for ===
-                drinkFilter
-          )
-          .filter((p) => {
-            if (
-              !isPremium ||
-              ageFilter === 'All'
-            ) {
-              return true;
-            }
-
-            if (p.age == null) {
-              return false;
-            }
-
-            if (
-              ageFilter === '18-25'
-            ) {
-              return (
-                p.age >= 18 &&
-                p.age <= 25
-              );
-            }
-
-            if (
-              ageFilter === '26-35'
-            ) {
-              return (
-                p.age >= 26 &&
-                p.age <= 35
-              );
-            }
-
-            if (
-              ageFilter === '36-45'
-            ) {
-              return (
-                p.age >= 36 &&
-                p.age <= 45
-              );
-            }
-
-            if (
-              ageFilter === '46+'
-            ) {
-              return p.age >= 46;
-            }
-
-            return true;
-          })
-          .filter((p) => {
-            if (
-              !isPremium ||
-              genderFilter ===
-                'All'
-            ) {
-              return true;
-            }
-
-            return (
-              p.gender ===
-              genderFilter
-            );
-          })
-          .sort(
-            (a, b) =>
-              a.distance -
-              b.distance
-          );
-
-      setNearbyProfiles(
-        profilesWithDistance
-      );
+      setNearbyProfiles(filteredProfiles);
     } catch (error) {
-      console.log(
-        'NEARBY CRASH:',
-        error
-      );
+      console.log('NEARBY CRASH:', error);
+      setNearbyProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -466,31 +235,6 @@ export default function NearbyScreen() {
     customLatitude,
     customLongitude,
   ]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel(
-        'nearby-profile-status'
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-        },
-        () => {
-          loadNearbyProfiles();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(
-        channel
-      );
-    };
-  }, []);
 
   async function handleSkipProfile(
     skippedUserId: string
@@ -553,86 +297,18 @@ export default function NearbyScreen() {
 
       const {
         data: { user },
-      } =
-        await supabase.auth.getUser();
+      } = await supabase.auth.getUser();
 
       if (!user) {
         router.replace('/login');
         return;
       }
 
-      const {
-        data: skippedData,
-        error: skippedError,
-      } = await supabase
-        .from('skipped_profiles')
-        .select(
-          'skipped_user_id, created_at'
-        )
-        .eq('user_id', user.id)
-        .order('created_at', {
-          ascending: false,
-        });
-
-      if (skippedError) {
-        console.log(
-          'LOAD SKIPPED ERROR:',
-          skippedError.message
-        );
-        return;
-      }
-
-      const skippedIds =
-        (skippedData ?? []).map(
-          (item) =>
-            item.skipped_user_id
-        );
-
-      if (
-        skippedIds.length === 0
-      ) {
-        setSkippedProfiles([]);
-        return;
-      }
-
-      const {
-        data: profilesData,
-        error: profilesError,
-      } = await supabase
-        .from('profiles')
-        .select(
-          'id, name, age, avatar_url, currently_up_for, gender'
-        )
-        .in('id', skippedIds);
-
-      if (profilesError) {
-        console.log(
-          'SKIPPED PROFILE DATA ERROR:',
-          profilesError.message
-        );
-        return;
-      }
-
-      const orderedProfiles =
-        skippedIds
-          .map((id) =>
-            (
-              profilesData ?? []
-            ).find(
-              (profile) =>
-                profile.id === id
-            )
-          )
-          .filter(Boolean);
-
-      setSkippedProfiles(
-        orderedProfiles
-      );
+      const profiles = await getSkippedProfileSummaries();
+      setSkippedProfiles(profiles);
     } catch (error) {
-      console.log(
-        'LOAD SKIPPED ERROR:',
-        error
-      );
+      console.log('LOAD SKIPPED ERROR:', error);
+      setSkippedProfiles([]);
     } finally {
       setLoadingSkipped(false);
     }
@@ -1451,40 +1127,11 @@ export default function NearbyScreen() {
                   styles.profileInfo
                 }
               >
-                {person.avatar_url ? (
-                  <Image
-                    source={{
-                      uri: `${person.avatar_url}${
-                        person.avatar_url.includes(
-                          '?'
-                        )
-                          ? '&'
-                          : '?'
-                      }refresh=${Date.now()}`,
-                    }}
-                    style={
-                      styles.avatarImage
-                    }
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={
-                      styles.avatar
-                    }
-                  >
-                    <Text
-                      style={
-                        styles.avatarText
-                      }
-                    >
-                      {person.name
-                        ?.charAt(0)
-                        .toUpperCase() ||
-                        '?'}
-                    </Text>
-                  </View>
-                )}
+                <NearbyProfileAvatar
+                  name={person.name}
+                  avatarPath={person.avatar_path}
+                  avatarUrl={person.avatar_url}
+                />
 
                 <View
                   style={

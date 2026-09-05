@@ -2,7 +2,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,9 @@ import {
   View,
 } from 'react-native';
 
+import { ChatHeaderAvatar } from '../components/chat-header-avatar';
+import { showAlert } from '../lib/notify';
+import { getPublicProfile } from '../lib/privacy-profile-api';
 import { supabase } from '../lib/supabase';
 
 type Message = {
@@ -60,6 +62,7 @@ export default function ChatScreen() {
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [otherUserActive, setOtherUserActive] = useState(false);
   const [otherAvatar, setOtherAvatar] = useState<string | null>(null);
+  const [otherAvatarPath, setOtherAvatarPath] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -73,10 +76,14 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!id) return;
     async function loadOtherUser() {
-      const { data, error } = await supabase.from('profiles').select('is_active, avatar_url').eq('id', String(id)).maybeSingle();
-      if (error) return console.log('OTHER USER PROFILE ERROR:', error.message);
-      setOtherUserActive(data?.is_active ?? false);
-      setOtherAvatar(data?.avatar_url ?? null);
+      try {
+        const data = await getPublicProfile(String(id));
+        setOtherUserActive(data?.is_active ?? false);
+        setOtherAvatar(data?.avatar_url ?? null);
+        setOtherAvatarPath(data?.avatar_path ?? null);
+      } catch (error) {
+        console.log('OTHER USER PROFILE ERROR:', error);
+      }
     }
     loadOtherUser();
   }, [id]);
@@ -92,18 +99,6 @@ export default function ChatScreen() {
   }, [id, myUserId]);
 
   useEffect(() => {
-    if (!id) return;
-    const channel = supabase.channel(`profile-status-${id}`).on('postgres_changes', {
-      event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${String(id)}`,
-    }, (payload) => {
-      const profile = payload.new as { is_active?: boolean | null; avatar_url?: string | null };
-      setOtherUserActive(profile.is_active ?? false);
-      if (typeof profile.avatar_url !== 'undefined') setOtherAvatar(profile.avatar_url ?? null);
-    }).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [id]);
-
-  useEffect(() => {
     if (!conversationId) { setLoading(false); return; }
     loadMessages();
     markMessagesAsRead();
@@ -111,7 +106,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!conversationId) return;
-    const channel = supabase.channel(`chat-${conversationId}`)
+    const channel = supabase.channel(`chat-${conversationId}`, { config: { private: true } })
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${String(conversationId)}`,
       }, (payload) => {
@@ -135,7 +130,7 @@ export default function ChatScreen() {
   async function loadMessages() {
     if (!conversationId) return;
     setLoading(true);
-    const { data, error } = await supabase.from('messages').select('*').eq('conversation_id', String(conversationId)).order('created_at', { ascending: true });
+    const { data, error } = await supabase.from('messages').select('id, conversation_id, sender_id, content, created_at, read_at').eq('conversation_id', String(conversationId)).order('created_at', { ascending: true });
     if (error) console.log('MESSAGES LOAD ERROR:', error.message);
     else setMessages((data ?? []) as Message[]);
     setLoading(false);
@@ -157,13 +152,11 @@ export default function ChatScreen() {
     if (!session?.user) return;
     const { data, error } = await supabase.from('messages').insert({
       conversation_id: String(conversationId), sender_id: session.user.id, content,
-    }).select('*').single();
+    }).select('id, conversation_id, sender_id, content, created_at, read_at').single();
     if (error) {
       console.log('MESSAGE SEND ERROR:', error.message);
-      if (typeof window !== 'undefined') {
-        const blocked = error.code === '42501' || error.message.toLowerCase().includes('row-level security');
-        window.alert(blocked ? text.blockedSend : `${text.sendError}: ${error.message}`);
-      }
+      const blocked = error.code === '42501' || error.message.toLowerCase().includes('row-level security');
+      showAlert(blocked ? text.blockedSend : `${text.sendError}: ${error.message}`);
       return;
     }
     const sent = data as Message;
@@ -196,11 +189,11 @@ export default function ChatScreen() {
         <TouchableOpacity style={styles.chatHeaderUser} activeOpacity={0.8} onPress={() => {
           if (id) router.push({ pathname: '/user-profile', params: { id: String(id) } });
         }}>
-          {otherAvatar ? (
-            <Image source={{ uri: `${otherAvatar}${otherAvatar.includes('?') ? '&' : '?'}refresh=${Date.now()}` }} style={styles.headerAvatar} resizeMode="cover" />
-          ) : (
-            <View style={styles.headerAvatarFallback}><Text style={styles.headerAvatarFallbackText}>{String(name || '?').charAt(0).toUpperCase()}</Text></View>
-          )}
+          <ChatHeaderAvatar
+            name={String(name || 'SipMate')}
+            avatarPath={otherAvatarPath}
+            avatarUrl={otherAvatar}
+          />
           <View style={styles.headerInfo}>
             <Text style={styles.headerName}>{String(name || 'SipMate')}</Text>
             <Text style={[styles.status, { color: otherUserActive ? '#22C55E' : '#71717A' }]}>● {otherUserActive ? text.active : text.inactive}</Text>

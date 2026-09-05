@@ -1,6 +1,6 @@
 [functions.create-checkout-session]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 import_map = "./functions/create-checkout-session/deno.json"
 entrypoint = "./functions/create-checkout-session/index.ts"
 
@@ -12,11 +12,11 @@ entrypoint = "./functions/stripe-webhook/index.ts"
 
 [functions.create-customer-portal]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 import_map = "./functions/create-customer-portal/deno.json"
 entrypoint = "./functions/create-customer-portal/index.ts"
 
 [functions.delete-account]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 entrypoint = "./functions/delete-account/index.ts"

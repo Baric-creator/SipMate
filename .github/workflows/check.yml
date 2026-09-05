@@ -8,9 +8,17 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -27,3 +35,60 @@ jobs:
 
       - name: TypeScript and security checks
         run: npm run check
+
+      - name: Release cutover preflight
+        run: npm run release:preflight
+
+  database-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.116.0
+
+      - name: Verify migration history is locally reproducible
+        shell: bash
+        run: |
+          set +e
+          node scripts/verify-database-history.mjs > /tmp/database-replay.log 2>&1
+          status=$?
+          cat /tmp/database-replay.log
+
+          if [ "$status" -eq 0 ] && grep -q '^MIGRATION_REPLAY_OK=true$' /tmp/database-replay.log; then
+            echo "migration_replay_ok=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          if [ "$status" -eq 2 ] && grep -q '^KNOWN_BASELINE_GAP=true$' /tmp/database-replay.log; then
+            echo 'Known baseline gap detected by the repository verifier.'
+            echo 'Skipping pgTAP until a sanitized baseline can reconstruct the historical schema.'
+            echo "migration_replay_ok=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo 'Database replay failed for an unexpected reason.'
+          exit "${status:-1}"
+
+      - name: Run database security contracts
+        if: env.migration_replay_ok == 'true'
+        run: supabase test db
+
+      - name: Require security contract suite in repository
+        run: test -s supabase/tests/security_contracts.test.sql
+
+      - name: Guard against silent pgTAP skips
+        if: env.migration_replay_ok != 'true'
+        run: |
+          test -s docs/DATABASE_BASELINE_RECOVERY.md
+          grep -q 'Do not claim that a clean database can be reconstructed from Git' docs/DATABASE_BASELINE_RECOVERY.md
