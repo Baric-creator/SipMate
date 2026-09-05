@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { PrivateProfileImage } from './private-profile-image';
@@ -13,24 +14,24 @@ export function NearbyProfileAvatar({
   avatarPath,
   avatarUrl,
 }: NearbyProfileAvatarProps) {
+  const [mediaUnavailable, setMediaUnavailable] = useState(false);
   const initial = name?.charAt(0).toUpperCase() || '?';
-
-  if (!avatarPath && !avatarUrl) {
-    return (
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{initial}</Text>
-      </View>
-    );
-  }
+  const hasMedia = Boolean(avatarPath || avatarUrl);
 
   return (
     <View style={styles.avatar}>
-      <PrivateProfileImage
-        storagePath={avatarPath}
-        legacyUrl={avatarUrl}
-        style={styles.avatarImage}
-        resizeMode="cover"
-      />
+      {(!hasMedia || mediaUnavailable) && (
+        <Text style={styles.avatarText}>{initial}</Text>
+      )}
+      {hasMedia && !mediaUnavailable && (
+        <PrivateProfileImage
+          storagePath={avatarPath}
+          legacyUrl={avatarUrl}
+          onUnavailable={() => setMediaUnavailable(true)}
+          style={styles.avatarImage}
+          resizeMode="cover"
+        />
+      )}
     </View>
   );
 }
@@ -46,6 +47,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   avatarImage: {
+    ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
   },
