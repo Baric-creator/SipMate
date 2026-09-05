@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(51);
+select plan(53);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass), 'profiles RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.cheers'::regclass), 'cheers RLS enabled');
@@ -60,6 +60,8 @@ select ok(exists (select 1 from pg_constraint where conrelid='public.profiles'::
 select ok(exists (select 1 from pg_constraint where conrelid='public.profile_photos'::regclass and conname='profile_photos_storage_path_approved_check' and pg_get_constraintdef(oid) like '%gallery-%'),'gallery storage_path is constrained to numbered gallery filenames');
 select ok(has_column_privilege('authenticated','public.profiles','avatar_path','UPDATE'),'authenticated own-profile flow can update avatar_path');
 select ok(has_column_privilege('authenticated','public.profile_photos','storage_path','INSERT'),'authenticated gallery flow can insert storage_path');
+select ok((select public = false from storage.buckets where id='avatars'),'avatars bucket is private after the release cutover migration');
+select ok(not exists (select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='Public avatar read'),'legacy public avatar read policy is removed after private-media cutover');
 select ok(not has_column_privilege('authenticated','public.profiles','is_premium','UPDATE'),'authenticated cannot update server-managed is_premium');
 select ok(not has_column_privilege('authenticated','public.profiles','premium_until','UPDATE'),'authenticated cannot update server-managed premium_until');
 
