@@ -10,6 +10,16 @@ const assert = (condition, message) => { if (!condition) failures.push(message);
 const app = JSON.parse(read('app.json'));
 const eas = JSON.parse(read('eas.json'));
 
+const MEDIA_PREP_LAST = 'supabase/migrations/20260904195200_restrict_private_media_paths_to_approved_names.sql';
+const FINAL_PROFILE_LOCK = 'supabase/migrations/20260905142000_lock_direct_profile_reads_to_owner.sql';
+const FINAL_BUCKET_CUTOVER = 'supabase/migrations/20260905142100_cutover_avatars_bucket_private.sql';
+
+assert(exists(MEDIA_PREP_LAST), 'Last private-media preparation migration is missing');
+assert(exists(FINAL_PROFILE_LOCK), 'Final profile read cutover migration is missing');
+assert(exists(FINAL_BUCKET_CUTOVER), 'Final avatar bucket cutover migration is missing');
+assert(path.basename(FINAL_PROFILE_LOCK) > path.basename(MEDIA_PREP_LAST), 'Profile privacy cutover must sort after all private-media preparation migrations');
+assert(path.basename(FINAL_BUCKET_CUTOVER) > path.basename(FINAL_PROFILE_LOCK), 'Avatar bucket cutover must sort after the profile privacy cutover');
+
 assert(app?.expo?.android?.package === 'com.bariccreator.sipmate', 'Android package changed from com.bariccreator.sipmate');
 assert(Number.isInteger(app?.expo?.android?.versionCode) && app.expo.android.versionCode >= 1, 'Android versionCode must be a positive integer');
 assert(eas?.cli?.requireCommit === true, 'EAS builds must require a committed source state');
@@ -34,7 +44,7 @@ for (const [relative, boundary] of privateMediaSurfaces) {
   assert(!content.includes('refresh=${Date.now()}'), `${relative} still cache-busts profile media with Date.now`);
 }
 
-const cutover = read('supabase/migrations/20260905142100_cutover_avatars_bucket_private.sql');
+const cutover = read(FINAL_BUCKET_CUTOVER);
 for (const marker of [
   'private-media cutover blocked: avatars bucket is missing',
   'private.can_read_avatar_object(text)',
@@ -48,7 +58,7 @@ for (const marker of [
   assert(cutover.includes(marker), `Private-media cutover lost fail-closed marker: ${marker}`);
 }
 
-const ownerOnly = read('supabase/migrations/20260905142000_lock_direct_profile_reads_to_owner.sql');
+const ownerOnly = read(FINAL_PROFILE_LOCK);
 assert(ownerOnly.includes('Users can view own profile'), 'Owner-only profile SELECT cutover is missing');
 assert(ownerOnly.includes('Users can view own profile photos'), 'Owner-only profile photo SELECT cutover is missing');
 
