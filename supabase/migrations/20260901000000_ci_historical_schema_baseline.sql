@@ -29,15 +29,15 @@ create table if not exists public.skipped_profiles (id uuid primary key default 
 
 -- Historical function signatures referenced by the first committed permission-hardening migration.
 -- Later migrations replace/harden these definitions; these stubs exist only so clean replay can reach them.
-create or replace function public.enforce_profile_photo_limit() returns trigger language plpgsql security definer as $ begin return new; end $;
-create or replace function public.handle_new_user() returns trigger language plpgsql security definer as $ begin return new; end $;
-create or replace function public.handle_premium_subscription_change() returns trigger language plpgsql security definer as $ begin return coalesce(new,old); end $;
-create or replace function public.refresh_premium_offer_counts() returns void language plpgsql security definer as $ begin return; end $;
-create or replace function public.trigger_refresh_premium_offer_counts() returns trigger language plpgsql security definer as $ begin return coalesce(new,old); end $;
-create or replace function public.update_premium_offer_stage() returns void language plpgsql security definer as $ begin return; end $;
-create or replace function public.is_blocked_between(user_a uuid, user_b uuid) returns boolean language sql stable as $ select exists(select 1 from public.blocks where (blocker_id=user_a and blocked_id=user_b) or (blocker_id=user_b and blocked_id=user_a)) $;
-create or replace function public.activate_standard_yearly_price() returns void language plpgsql security definer as $ begin return; end $;
-create or replace function public.register_yearly_premium_purchase() returns void language plpgsql security definer as $ begin return; end $;
+create or replace function public.enforce_profile_photo_limit() returns trigger language plpgsql security definer as 'begin return new; end';
+create or replace function public.handle_new_user() returns trigger language plpgsql security definer as 'begin return new; end';
+create or replace function public.handle_premium_subscription_change() returns trigger language plpgsql security definer as 'begin return coalesce(new,old); end';
+create or replace function public.refresh_premium_offer_counts() returns void language plpgsql security definer as 'begin return; end';
+create or replace function public.trigger_refresh_premium_offer_counts() returns trigger language plpgsql security definer as 'begin return coalesce(new,old); end';
+create or replace function public.update_premium_offer_stage() returns void language plpgsql security definer as 'begin return; end';
+create or replace function public.is_blocked_between(user_a uuid, user_b uuid) returns boolean language sql stable as 'select exists(select 1 from public.blocks where (blocker_id=user_a and blocked_id=user_b) or (blocker_id=user_b and blocked_id=user_a))';
+create or replace function public.activate_standard_yearly_price() returns void language plpgsql security definer as 'begin return; end';
+create or replace function public.register_yearly_premium_purchase() returns void language plpgsql security definer as 'begin return; end';
 
 
 -- Historical RLS policies referenced by early optimization migrations.
