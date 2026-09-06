@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, Image, Linking, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -35,8 +35,13 @@ export default function UserProfileScreen() {
   const language = i18n.language?.split('-')[0] as keyof typeof copy;
   const text = copy[language] ?? copy.en;
 
+  useFocusEffect(
+    useCallback(() => {
+      loadUserProfile();
+    }, [])
+  );
+
   useEffect(() => {
-    loadUserProfile();
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') loadUserProfile();
     });
@@ -47,7 +52,11 @@ export default function UserProfileScreen() {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) { setProfile(null); return; }
+      if (!session?.user) {
+        setProfile(null);
+        router.replace('/login');
+        return;
+      }
       const { data, error } = await supabase
         .from('profiles')
         .select('id, name, age, city, bio, currently_up_for, is_active, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
