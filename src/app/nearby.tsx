@@ -15,13 +15,19 @@ import {
 import { supabase } from '../lib/supabase';
 
 export default function NearbyScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language?.split('-')[0];
+  const locationMissingText = language === 'de' ? 'Lege zuerst deinen Standort im Profil fest.' : language === 'hr' ? 'Prvo postavi svoju lokaciju u profilu.' : 'Set your location in your profile first.';
+  const locationButtonText = language === 'de' ? 'PROFIL BEARBEITEN' : language === 'hr' ? 'UREDI PROFIL' : 'EDIT PROFILE';
 
   const [nearbyProfiles, setNearbyProfiles] =
     useState<any[]>([]);
 
   const [loading, setLoading] =
     useState(true);
+
+  const [needsLocation, setNeedsLocation] =
+    useState(false);
 
   const [maxDistance, setMaxDistance] =
     useState(10);
@@ -251,8 +257,12 @@ export default function NearbyScreen() {
         console.log(
           'MY LOCATION NOT SET'
         );
+        setNeedsLocation(true);
+        setNearbyProfiles([]);
         return;
       }
+
+      setNeedsLocation(false);
 
       const {
         data: profiles,
@@ -1419,6 +1429,16 @@ export default function NearbyScreen() {
             'nearbyScreen.findingPeople'
           )}
         </Text>
+      ) : needsLocation ? (
+        <View style={styles.locationRequiredCard}>
+          <Text style={styles.locationRequiredText}>📍 {locationMissingText}</Text>
+          <TouchableOpacity
+            style={styles.locationRequiredButton}
+            onPress={() => router.push('/edit-profile')}
+          >
+            <Text style={styles.locationRequiredButtonText}>{locationButtonText}</Text>
+          </TouchableOpacity>
+        </View>
       ) : nearbyProfiles.length ===
         0 ? (
         <Text
@@ -2040,6 +2060,36 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '900',
+  },
+
+  locationRequiredCard: {
+    backgroundColor: '#18181B',
+    borderWidth: 1,
+    borderColor: '#DC2626',
+    borderRadius: 18,
+    padding: 18,
+    marginTop: 16,
+  },
+
+  locationRequiredText: {
+    color: '#E4E4E7',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+
+  locationRequiredButton: {
+    marginTop: 14,
+    backgroundColor: '#DC2626',
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+
+  locationRequiredButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.6,
   },
 
   skipButton: {
