@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -218,7 +218,7 @@ export default function NearbyScreen() {
         error: myError,
       } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, city, latitude, longitude, is_premium, premium_until')
         .eq('id', user.id)
         .single();
 
@@ -259,7 +259,7 @@ export default function NearbyScreen() {
         error,
       } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, age, city, latitude, longitude, avatar_url, currently_up_for, is_active, gender')
         .neq('id', user.id);
 
       console.log(
