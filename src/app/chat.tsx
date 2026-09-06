@@ -161,10 +161,8 @@ export default function ChatScreen() {
     }).select('id, conversation_id, sender_id, content, created_at, read_at').single();
     if (error) {
       console.log('MESSAGE SEND ERROR:', error.message);
-      if (typeof window !== 'undefined') {
-        const blocked = error.code === '42501' || error.message.toLowerCase().includes('row-level security');
-        window.alert(blocked ? text.blockedSend : `${text.sendError}: ${error.message}`);
-      }
+      const blocked = error.code === '42501' || error.message.toLowerCase().includes('row-level security');
+      showAlert(blocked ? text.blockedSend : `${text.sendError}: ${error.message}`);
       return;
     }
     const sent = data as Message;
