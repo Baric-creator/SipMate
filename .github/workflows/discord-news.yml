@@ -1,0 +1,101 @@
+name: Discord SipMate News
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      title:
+        description: "Announcement title"
+        required: true
+        default: "SipMate Update"
+      message:
+        description: "Announcement message"
+        required: true
+        default: "A new SipMate update is available. Cheers! 🍻"
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send release announcement
+        if: github.event_name == 'release'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_NEWS_WEBHOOK }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_NEWS_WEBHOOK secret is missing."
+            exit 1
+          fi
+
+          python - <<'PY'
+          import json, os, urllib.request
+
+          body = (os.getenv("RELEASE_BODY") or "").strip()
+          if len(body) > 3000:
+              body = body[:2997] + "..."
+
+          payload = {
+              "username": "SipMate News",
+              "content": None,
+              "embeds": [{
+                  "title": f"🚀 {os.getenv('RELEASE_NAME') or 'SipMate Update'}",
+                  "description": body or "A new SipMate release is live. 🍻",
+                  "url": os.getenv("RELEASE_URL"),
+                  "fields": [
+                      {"name": "Version", "value": os.getenv("RELEASE_TAG") or "Latest", "inline": True},
+                      {"name": "Status", "value": "✅ Released", "inline": True}
+                  ],
+                  "footer": {"text": "SipMate • Find someone. Grab a drink. CHEERS!"}
+              }]
+          }
+
+          req = urllib.request.Request(
+              os.environ["DISCORD_WEBHOOK_URL"],
+              data=json.dumps(payload).encode(),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          with urllib.request.urlopen(req) as response:
+              if response.status not in (200, 204):
+                  raise SystemExit(f"Discord webhook failed: {response.status}")
+          PY
+
+      - name: Send manual announcement
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_NEWS_WEBHOOK }}
+          ANNOUNCEMENT_TITLE: ${{ inputs.title }}
+          ANNOUNCEMENT_MESSAGE: ${{ inputs.message }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_NEWS_WEBHOOK secret is missing."
+            exit 1
+          fi
+
+          python - <<'PY'
+          import json, os, urllib.request
+
+          payload = {
+              "username": "SipMate News",
+              "embeds": [{
+                  "title": f"🍻 {os.environ['ANNOUNCEMENT_TITLE']}",
+                  "description": os.environ["ANNOUNCEMENT_MESSAGE"][:4000],
+                  "footer": {"text": "SipMate • Community Update"}
+              }]
+          }
+
+          req = urllib.request.Request(
+              os.environ["DISCORD_WEBHOOK_URL"],
+              data=json.dumps(payload).encode(),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          with urllib.request.urlopen(req) as response:
+              if response.status not in (200, 204):
+                  raise SystemExit(f"Discord webhook failed: {response.status}")
+          PY
