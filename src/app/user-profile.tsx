@@ -6,6 +6,7 @@ import {
   Image,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -13,6 +14,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
+import { askConfirmation, showAlert } from '../lib/notify';
 import { supabase } from '../lib/supabase';
 
 type CheersStatus = 'none' | 'sent' | 'mutual';
@@ -331,7 +333,7 @@ export default function UserProfileScreen() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, age, city, bio, currently_up_for, is_active, avatar_url')
         .eq('id', targetId)
         .maybeSingle();
 
@@ -391,7 +393,7 @@ export default function UserProfileScreen() {
     } = await supabase.auth.getSession();
 
     if (!session?.user) {
-      if (typeof window !== 'undefined') window.alert(text.loginFirst);
+      showAlert(text.loginFirst);
       router.replace('/login');
       return;
     }
@@ -400,7 +402,7 @@ export default function UserProfileScreen() {
     const receiverId = profile.id;
 
     if (senderId === receiverId) {
-      if (typeof window !== 'undefined') window.alert(text.cantCheersSelf);
+      showAlert(text.cantCheersSelf);
       return;
     }
 
@@ -413,9 +415,7 @@ export default function UserProfileScreen() {
 
     if (sendError && sendError.code !== '23505') {
       console.log('CHEERS SEND ERROR:', sendError.message);
-      if (typeof window !== 'undefined') {
-        window.alert(`${text.cheersError}: ${sendError.message}`);
-      }
+      showAlert(`${text.cheersError}: ${sendError.message}`);
       setCheersStatus('none');
       return;
     }
@@ -439,9 +439,7 @@ export default function UserProfileScreen() {
       return;
     }
 
-    if (typeof window !== 'undefined') {
-      window.alert(`🍻 ${text.cheersSentTo} ${profile.name ?? text.userFallback}!`);
-    }
+    showAlert(`🍻 ${text.cheersSentTo} ${profile.name ?? text.userFallback}!`);
   }
 
   async function handleSubmitReport() {
@@ -466,15 +464,13 @@ export default function UserProfileScreen() {
 
     if (error) {
       console.log('REPORT ERROR:', error.message);
-      if (typeof window !== 'undefined') {
-        window.alert(`${text.reportError}: ${error.message}`);
-      }
+      showAlert(`${text.reportError}: ${error.message}`);
       return;
     }
 
     setShowReportModal(false);
     setReportReason(null);
-    if (typeof window !== 'undefined') window.alert(text.reportThanks);
+    showAlert(text.reportThanks);
   }
 
   async function handleBlockUser() {
@@ -491,12 +487,12 @@ export default function UserProfileScreen() {
 
     if (session.user.id === profile.id) return;
 
-    const confirmed =
-      typeof window !== 'undefined'
-        ? window.confirm(
-            `${text.block} ${profile.name ?? text.thisUser}?\n\n${text.blockDescription}`
-          )
-        : true;
+    const confirmed = await askConfirmation(
+      `${text.block} ${profile.name ?? text.thisUser}?`,
+      text.blockDescription,
+      text.cancel,
+      text.block
+    );
 
     if (!confirmed) return;
 
@@ -507,20 +503,16 @@ export default function UserProfileScreen() {
 
     if (error) {
       if (error.code === '23505') {
-        if (typeof window !== 'undefined') window.alert(text.alreadyBlocked);
+        showAlert(text.alreadyBlocked);
       } else {
         console.log('BLOCK ERROR:', error.message);
-        if (typeof window !== 'undefined') {
-          window.alert(`${text.blockError}: ${error.message}`);
-        }
+        showAlert(`${text.blockError}: ${error.message}`);
       }
       return;
     }
 
     setShowUserMenu(false);
-    if (typeof window !== 'undefined') {
-      window.alert(`${profile.name ?? text.user} ${text.blocked}`);
-    }
+    showAlert(`${profile.name ?? text.user} ${text.blocked}`);
     router.replace('/nearby');
   }
 
@@ -609,7 +601,12 @@ export default function UserProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.card}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.card}>
         <Pressable style={styles.menuButton} onPress={() => setShowUserMenu(true)}>
           <Text style={styles.menuButtonText}>•••</Text>
         </Pressable>
@@ -703,20 +700,21 @@ export default function UserProfileScreen() {
         )}
       </View>
 
-      <TouchableOpacity
-        style={[styles.messageButton, !isPremium && styles.messageButtonLocked]}
-        onPress={() => {
-          if (!isPremium) {
-            router.push('/premium');
-            return;
-          }
-          startChat();
-        }}
-      >
-        <Text style={styles.messageButtonText}>
-          {isPremium ? `💎 ${text.message}` : `🔒 ${text.message}`}
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.messageButton, !isPremium && styles.messageButtonLocked]}
+          onPress={() => {
+            if (!isPremium) {
+              router.push('/premium');
+              return;
+            }
+            startChat();
+          }}
+        >
+          <Text style={styles.messageButtonText}>
+            {isPremium ? `💎 ${text.message}` : `🔒 ${text.message}`}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
 
       <Modal
         visible={showUserMenu}
@@ -895,9 +893,15 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#09090B',
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 120,
   },
   loading: {
     color: '#FFFFFF',

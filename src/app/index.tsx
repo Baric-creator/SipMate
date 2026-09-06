@@ -129,6 +129,33 @@ export default function HomeScreen() {
         return;
       }
 
+      if (!data) {
+        const fallbackName =
+          session.user.user_metadata?.name ??
+          session.user.user_metadata?.full_name ??
+          session.user.email?.split('@')[0] ??
+          'SipMate User';
+
+        const { data: created, error: createError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: session.user.id,
+            name: fallbackName,
+            is_active: false,
+            is_premium: false,
+          }, { onConflict: 'id' })
+          .select('id, name, city, currently_up_for, is_active')
+          .single();
+
+        if (createError) {
+          console.log('HOME PROFILE CREATE ERROR:', createError.message);
+          return;
+        }
+
+        setProfile(created);
+        return;
+      }
+
       setProfile(data);
     } finally {
       setLoading(false);
