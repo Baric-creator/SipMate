@@ -150,6 +150,115 @@ Deno.serve(async (req) => {
         )!
       )
 
+    async function syncDiscordPremiumRole(
+      subscription: Stripe.Subscription,
+      forceActive?: boolean
+    ) {
+      const userId =
+        subscription.metadata
+          ?.supabase_user_id
+
+      const botToken =
+        Deno.env.get(
+          'DISCORD_BOT_TOKEN'
+        )
+
+      const guildId =
+        Deno.env.get(
+          'DISCORD_GUILD_ID'
+        ) ||
+        '1545876541387440188'
+
+      const premiumRoleId =
+        Deno.env.get(
+          'DISCORD_PREMIUM_ROLE_ID'
+        ) ||
+        '1546177699662405786'
+
+      if (!userId || !botToken) {
+        console.log(
+          'DISCORD ROLE SYNC SKIPPED:',
+          !userId
+            ? 'missing user id'
+            : 'missing bot token'
+        )
+        return
+      }
+
+      const {
+        data: profile,
+        error: profileError,
+      } =
+        await supabaseAdmin
+          .from('profiles')
+          .select(
+            'discord_user_id'
+          )
+          .eq('id', userId)
+          .maybeSingle()
+
+      if (profileError) {
+        console.log(
+          'DISCORD PROFILE LOOKUP ERROR:',
+          profileError
+        )
+        return
+      }
+
+      const discordUserId =
+        profile?.discord_user_id
+
+      if (!discordUserId) {
+        console.log(
+          'DISCORD ROLE SYNC SKIPPED: user not linked',
+          userId
+        )
+        return
+      }
+
+      const active =
+        forceActive ??
+        (
+          subscription.status ===
+            'active' ||
+          subscription.status ===
+            'trialing'
+        )
+
+      const method =
+        active ? 'PUT' : 'DELETE'
+
+      const roleResponse =
+        await fetch(
+          `https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}/roles/${premiumRoleId}`,
+          {
+            method,
+            headers: {
+              Authorization:
+                `Bot ${botToken}`,
+            },
+          }
+        )
+
+      if (
+        roleResponse.status !== 204
+      ) {
+        console.log(
+          'DISCORD ROLE UPDATE ERROR:',
+          roleResponse.status,
+          await roleResponse.text()
+        )
+        return
+      }
+
+      console.log(
+        active
+          ? 'DISCORD PREMIUM ROLE ADDED'
+          : 'DISCORD PREMIUM ROLE REMOVED',
+        discordUserId
+      )
+    }
+
     async function syncSubscription(
       subscription:
         Stripe.Subscription,
@@ -472,6 +581,10 @@ const cancelAtPeriodEnd =
       await syncSubscription(
         subscription
       )
+
+      await syncDiscordPremiumRole(
+        subscription
+      )
     }
 
     // =========================
@@ -487,6 +600,10 @@ const cancelAtPeriodEnd =
           Stripe.Subscription
 
       await syncSubscription(
+        subscription
+      )
+
+      await syncDiscordPremiumRole(
         subscription
       )
     }
@@ -506,6 +623,11 @@ const cancelAtPeriodEnd =
       await syncSubscription(
         subscription,
         'cancelled'
+      )
+
+      await syncDiscordPremiumRole(
+        subscription,
+        false
       )
     }
 
@@ -541,6 +663,10 @@ const cancelAtPeriodEnd =
             .retrieve(id)
 
         await syncSubscription(
+          subscription
+        )
+
+        await syncDiscordPremiumRole(
           subscription
         )
       }
