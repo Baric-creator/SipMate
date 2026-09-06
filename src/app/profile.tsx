@@ -166,12 +166,12 @@ export default function UserProfileScreen() {
           <View style={[styles.statusBadge, profile.is_active ? styles.statusBadgeActive : styles.statusBadgeInactive]}><Text style={[styles.statusBadgeText, profile.is_active ? styles.statusTextActive : styles.statusTextInactive]}>{profile.is_active ? `● ${t('profileScreen.active')}` : `● ${t('profileScreen.inactive')}`}</Text></View>
           <View style={styles.section}><Text style={styles.label}>{t('profileScreen.currentlyUpFor')}</Text><View style={styles.drinkChip}><Text style={styles.drink}>{profile.currently_up_for ?? t('profileScreen.readyForDrink')}</Text></View></View>
           <View style={styles.section}><Text style={styles.label}>{t('profileScreen.about')}</Text><Text style={styles.bio}>{profile.bio?.trim() ? profile.bio : t('profileScreen.noBioYet')}</Text></View>
-          <Pressable style={styles.premiumButton} onPress={() => router.push('/premium')}><Text style={styles.premiumButtonText}>💎 {t('profileScreen.premium')}</Text></Pressable>
+          <Pressable style={styles.premiumButton} onPress={() => router.push('/premium')}><View style={styles.buttonContent}><Text style={styles.buttonEmoji}>💎</Text><Text style={styles.premiumButtonText}>{t('profileScreen.premium')}</Text></View></Pressable>
           <View style={styles.discordCard}>
             <View style={styles.discordHeader}><Text style={styles.discordLogo}>Discord</Text><Text style={styles.discordStatus}>{profile.discord_user_id ? '●' : '○'} {profile.discord_user_id ? text.discordConnected : text.connectDiscord}</Text></View>
             {profile.discord_user_id && <Text style={styles.discordUser}>@{profile.discord_username ?? profile.discord_user_id}</Text>}
             <Pressable style={[styles.discordButton, profile.discord_user_id && styles.discordDisconnectButton]} onPress={profile.discord_user_id ? handleDisconnectDiscord : handleConnectDiscord}>
-              <Text style={styles.discordButtonText}>{profile.discord_user_id ? `🔌 ${text.disconnectDiscord}` : `🎮 ${text.connectDiscord}`}</Text>
+              <View style={styles.buttonContent}><Text style={styles.buttonEmoji}>{profile.discord_user_id ? '🔌' : '🎮'}</Text><Text style={styles.discordButtonText}>{profile.discord_user_id ? text.disconnectDiscord : text.connectDiscord}</Text></View>
             </Pressable>
           </View>
           <Pressable style={styles.editButton} onPress={() => router.push('/edit-profile')}><View style={styles.buttonContent}><Text style={styles.buttonEmoji}>✏️</Text><Text style={styles.editButtonText}>{t('profileScreen.editProfile')}</Text></View></Pressable>
