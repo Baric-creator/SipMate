@@ -169,6 +169,12 @@ Deno.serve(async (req) => {
         ) ||
         '1545876541387440188'
 
+      const premiumRoleId =
+        Deno.env.get(
+          'DISCORD_PREMIUM_ROLE_ID'
+        ) ||
+        '1546177699662405786'
+
       if (!userId || !botToken) {
         console.log(
           'DISCORD ROLE SYNC SKIPPED:',
@@ -210,46 +216,6 @@ Deno.serve(async (req) => {
         return
       }
 
-      const rolesResponse =
-        await fetch(
-          `https://discord.com/api/v10/guilds/${guildId}/roles`,
-          {
-            headers: {
-              Authorization:
-                `Bot ${botToken}`,
-            },
-          }
-        )
-
-      if (!rolesResponse.ok) {
-        console.log(
-          'DISCORD ROLES FETCH ERROR:',
-          rolesResponse.status
-        )
-        return
-      }
-
-      const roles =
-        await rolesResponse.json() as
-          Array<{
-            id: string
-            name: string
-          }>
-
-      const premiumRole =
-        roles.find(
-          (role) =>
-            role.name ===
-            'Premium Member'
-        )
-
-      if (!premiumRole) {
-        console.log(
-          'DISCORD PREMIUM ROLE NOT FOUND'
-        )
-        return
-      }
-
       const active =
         forceActive ??
         (
@@ -264,7 +230,7 @@ Deno.serve(async (req) => {
 
       const roleResponse =
         await fetch(
-          `https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}/roles/${premiumRole.id}`,
+          `https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}/roles/${premiumRoleId}`,
           {
             method,
             headers: {
