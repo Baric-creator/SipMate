@@ -136,9 +136,14 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>
-              {loading ? text.loggingIn : `🍻 ${text.login}`}
-            </Text>
+            {loading ? (
+              <Text style={styles.buttonText}>{text.loggingIn}</Text>
+            ) : (
+              <View style={styles.buttonContent}>
+                <Text style={styles.buttonEmoji}>🍻</Text>
+                <Text style={styles.buttonText}>{text.login}</Text>
+              </View>
+            )}
           </Pressable>
 
           <View style={styles.dividerRow}>
@@ -245,6 +250,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   buttonDisabled: { opacity: 0.5 },
+  buttonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  buttonEmoji: { fontSize: 17 },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 15,
