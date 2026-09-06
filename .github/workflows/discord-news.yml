@@ -57,7 +57,10 @@ jobs:
           req = urllib.request.Request(
               os.environ["DISCORD_WEBHOOK_URL"],
               data=json.dumps(payload).encode(),
-              headers={"Content-Type": "application/json"},
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "SipMate-GitHub-Action/1.0 (+https://github.com/Baric-creator/SipMate)"
+              },
               method="POST",
           )
           with urllib.request.urlopen(req) as response:
@@ -92,7 +95,10 @@ jobs:
           req = urllib.request.Request(
               os.environ["DISCORD_WEBHOOK_URL"],
               data=json.dumps(payload).encode(),
-              headers={"Content-Type": "application/json"},
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "SipMate-GitHub-Action/1.0 (+https://github.com/Baric-creator/SipMate)"
+              },
               method="POST",
           )
           with urllib.request.urlopen(req) as response:
