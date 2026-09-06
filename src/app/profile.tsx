@@ -54,7 +54,36 @@ export default function UserProfileScreen() {
         .eq('id', session.user.id)
         .maybeSingle();
       if (error) { console.log('PROFILE LOAD ERROR:', error.message); setProfile(null); return; }
-      setProfile(data as UserProfile | null);
+
+      if (!data) {
+        const fallbackName =
+          session.user.user_metadata?.name ??
+          session.user.user_metadata?.full_name ??
+          session.user.email?.split('@')[0] ??
+          'SipMate User';
+
+        const { data: created, error: createError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: session.user.id,
+            name: fallbackName,
+            is_active: false,
+            is_premium: false,
+          }, { onConflict: 'id' })
+          .select('id, name, age, city, bio, currently_up_for, is_active, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
+          .single();
+
+        if (createError) {
+          console.log('PROFILE CREATE ERROR:', createError.message);
+          setProfile(null);
+          return;
+        }
+
+        setProfile(created as UserProfile);
+        return;
+      }
+
+      setProfile(data as UserProfile);
     } finally { setLoading(false); }
   }
 

@@ -11,6 +11,7 @@ import {
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -193,7 +194,12 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.screenContent}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.header}>
         <View>
           <Text style={styles.logo}>
@@ -513,7 +519,7 @@ export default function HomeScreen() {
           'discoverScreen.footer'
         )}
       </Text>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -521,9 +527,12 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#09090B',
+  },
+
+  screenContent: {
     paddingTop: 58,
     paddingHorizontal: 20,
-    paddingBottom: 110,
+    paddingBottom: 150,
   },
 
   loadingScreen: {
