@@ -16,6 +16,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Vibration,
 } from 'react-native';
 
 import { useTranslation } from 'react-i18next';
@@ -198,6 +199,8 @@ export default function HomeScreen() {
       ...profile,
       is_active: newStatus,
     });
+
+    Vibration.vibrate(35);
 
     console.log(
       'ACTIVE STATUS:',
