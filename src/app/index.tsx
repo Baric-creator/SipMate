@@ -8,8 +8,9 @@ import {
   useState,
 } from 'react';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,6 +20,7 @@ import {
 
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
+import { Skeleton } from '../components/Skeleton';
 
 type UserProfile = {
   id: string;
@@ -98,6 +100,12 @@ export default function HomeScreen() {
   async function loadProfile() {
     try {
       setLoading(true);
+
+      const onboardingDone = await AsyncStorage.getItem('sipmate:onboarding:v1');
+      if (!onboardingDone) {
+        router.replace('/onboarding');
+        return;
+      }
 
       const {
         data: { session },
@@ -201,21 +209,22 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View
-        style={styles.loadingScreen}
-      >
-        <ActivityIndicator
-          size="large"
-          color="#DC2626"
-        />
-
-        <Text
-          style={styles.loadingText}
-        >
-          {t(
-            'discoverScreen.loading'
-          )}
-        </Text>
+      <View style={styles.loadingScreen}>
+        <View style={styles.loadingShell}>
+          <View style={styles.loadingHeader}>
+            <View style={{ flex: 1 }}>
+              <Skeleton width="48%" height={24} radius={10} />
+              <Skeleton width="34%" height={10} radius={5} style={{ marginTop: 9 }} />
+            </View>
+            <Skeleton width={72} height={30} radius={15} />
+          </View>
+          <Skeleton height={220} radius={20} style={{ marginTop: 22 }} />
+          <Skeleton height={72} radius={18} style={{ marginTop: 14 }} />
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 24 }}>
+            <Skeleton height={140} radius={18} style={{ flex: 1 }} />
+            <Skeleton height={140} radius={18} style={{ flex: 1 }} />
+          </View>
+        </View>
       </View>
     );
   }
@@ -565,8 +574,18 @@ const styles = StyleSheet.create({
   loadingScreen: {
     flex: 1,
     backgroundColor: '#09090B',
+  },
+  loadingShell: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 42,
+  },
+  loadingHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 14,
   },
 
   loadingText: {
