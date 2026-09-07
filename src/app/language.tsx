@@ -129,12 +129,12 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 760,
     paddingHorizontal: 24,
-    paddingTop: 48,
+    paddingTop: 34,
   },
 
   title: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: 27,
     fontWeight: '900',
     marginBottom: 8,
   },
@@ -147,11 +147,11 @@ const styles = StyleSheet.create({
 
   languageCard: {
     width: '100%',
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     borderWidth: 1,
-    borderColor: '#27272A',
-    borderRadius: 16,
-    paddingVertical: 18,
+    borderColor: '#242428',
+    borderRadius: 18,
+    paddingVertical: 16,
     paddingHorizontal: 18,
     marginBottom: 12,
     flexDirection: 'row',
@@ -160,7 +160,8 @@ const styles = StyleSheet.create({
   },
 
   languageCardActive: {
-    borderColor: '#DC2626',
+    borderColor: '#EF4444',
+    backgroundColor: '#181316',
   },
 
   languageNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
