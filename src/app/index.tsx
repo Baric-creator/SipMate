@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   },
 
   screenContent: {
-    paddingTop: 58,
+    paddingTop: 42,
     paddingHorizontal: 20,
     paddingBottom: 150,
   },
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
 
   logo: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: '900',
     letterSpacing: -0.7,
   },
@@ -626,22 +626,22 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    marginTop: 30,
-    backgroundColor: '#18181B',
-    borderRadius: 30,
-    paddingHorizontal: 22,
-    paddingVertical: 27,
+    marginTop: 22,
+    backgroundColor: '#141417',
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: '#242428',
   },
 
   heroEmoji: {
-    fontSize: 46,
+    fontSize: 38,
   },
 
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '900',
     marginTop: 13,
     letterSpacing: -0.5,
@@ -657,8 +657,8 @@ const styles = StyleSheet.create({
 
   currentActivity: {
     marginTop: 21,
-    backgroundColor: '#202023',
-    borderRadius: 17,
+    backgroundColor: '#101012',
+    borderRadius: 14,
     padding: 14,
     borderWidth: 1,
     borderColor: '#2F2F35',
@@ -681,8 +681,8 @@ const styles = StyleSheet.create({
   nearbyButton: {
     marginTop: 22,
     backgroundColor: '#DC2626',
-    borderRadius: 20,
-    paddingVertical: 17,
+    borderRadius: 16,
+    paddingVertical: 15,
     alignItems: 'center',
 
     shadowColor: '#DC2626',
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
 
   statusCard: {
     marginTop: 15,
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
@@ -760,13 +760,13 @@ const styles = StyleSheet.create({
 
   quickCard: {
     flex: 1,
-    backgroundColor: '#18181B',
-    borderRadius: 22,
+    backgroundColor: '#141417',
+    borderRadius: 18,
     padding: 16,
     borderWidth: 1,
     borderColor: '#27272A',
     marginRight: 8,
-    minHeight: 170,
+    minHeight: 140,
   },
 
   quickIconBox: {
@@ -806,11 +806,11 @@ const styles = StyleSheet.create({
 
   cheersCard: {
     marginTop: 16,
-    backgroundColor: '#18181B',
-    borderRadius: 22,
+    backgroundColor: '#141417',
+    borderRadius: 18,
     padding: 17,
     borderWidth: 1,
-    borderColor: '#3F1D1D',
+    borderColor: '#3A2020',
     flexDirection: 'row',
     alignItems: 'center',
   },
