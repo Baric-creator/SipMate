@@ -436,6 +436,13 @@ export default function UserProfileScreen() {
       setCheersStatus('mutual');
       setShowMutualCheers(true);
       playCheersAnimation();
+
+      supabase.functions
+        .invoke('announce-cheers', { body: { other_user_id: receiverId } })
+        .then(({ error }) => {
+          if (error) console.log('DISCORD CHEERS ANNOUNCE ERROR:', error.message);
+        });
+
       return;
     }
 
