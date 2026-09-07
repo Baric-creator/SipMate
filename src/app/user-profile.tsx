@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +13,7 @@ import {
   TouchableOpacity,
   View,
   useWindowDimensions,
+  Vibration,
 } from 'react-native';
 
 import { askConfirmation, showAlert } from '../lib/notify';
@@ -87,7 +89,7 @@ const copy = {
     whisky: 'Whisky',
     coffee: 'Coffee',
     drinks: 'Drinks',
-    hangout: 'Hangout',
+    hangout: 'Hangout', cheersHint: 'Tap Cheers if you would grab a drink with this person. If they send one back, chat unlocks.' ,
   },
   de: {
     loginFirst: 'Bitte melde dich zuerst an',
@@ -139,7 +141,7 @@ const copy = {
     whisky: 'Whisky',
     coffee: 'Kaffee',
     drinks: 'Drinks',
-    hangout: 'Treffen',
+    hangout: 'Treffen', cheersHint: 'Tippe auf Cheers, wenn du mit dieser Person etwas trinken würdest. Kommt ein Cheers zurück, wird der Chat freigeschaltet.' ,
   },
   hr: {
     loginFirst: 'Prvo se prijavi',
@@ -191,7 +193,7 @@ const copy = {
     whisky: 'Viski',
     coffee: 'Kava',
     drinks: 'Piće',
-    hangout: 'Druženje',
+    hangout: 'Druženje', cheersHint: 'Dodirni Cheers ako bi popio piće s ovom osobom. Ako i ona pošalje Cheers, otključava se chat.' ,
   },
 } as const;
 
@@ -211,6 +213,7 @@ export default function UserProfileScreen() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState<string | null>(null);
   const [cheersStatus, setCheersStatus] = useState<CheersStatus>('none');
+  const [showCheersHint, setShowCheersHint] = useState(false);
 
   const cheersScale = useRef(new Animated.Value(0)).current;
   const { width, height } = useWindowDimensions();
@@ -237,6 +240,9 @@ export default function UserProfileScreen() {
 
   useEffect(() => {
     loadUserProfile();
+    AsyncStorage.getItem('sipmate:cheers-hint:v1').then((value) => {
+      setShowCheersHint(!value);
+    });
   }, [id]);
 
   function localizeCurrentUpFor(value: string | null) {
@@ -388,6 +394,11 @@ export default function UserProfileScreen() {
   async function handleCheers() {
     if (!profile) return;
 
+    if (showCheersHint) {
+      setShowCheersHint(false);
+      AsyncStorage.setItem('sipmate:cheers-hint:v1', 'seen');
+    }
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -407,6 +418,7 @@ export default function UserProfileScreen() {
     }
 
     setCheersStatus('sent');
+    Vibration.vibrate(35);
 
     const { error: sendError } = await supabase.from('cheers').insert({
       sender_id: senderId,
@@ -435,6 +447,7 @@ export default function UserProfileScreen() {
     if (mutualCheers) {
       setCheersStatus('mutual');
       setShowMutualCheers(true);
+      Vibration.vibrate([0, 55, 60, 90]);
       playCheersAnimation();
 
       supabase.functions
@@ -691,6 +704,12 @@ export default function UserProfileScreen() {
           <Text style={styles.label}>{text.about}</Text>
           <Text style={styles.bio}>{profile.bio || text.noBio}</Text>
         </View>
+
+        {showCheersHint && cheersStatus === 'none' && (
+          <View style={styles.cheersHint}>
+            <Text style={styles.cheersHintText}>🍻 {text.cheersHint}</Text>
+          </View>
+        )}
 
         {cheersStatus === 'mutual' ? (
           <Pressable style={styles.primaryButton} onPress={startChat}>
@@ -1096,6 +1115,8 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   actionRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   actionEmoji: { fontSize: 17 },
+  cheersHint: { width: '100%', marginTop: 18, backgroundColor: '#151518', borderWidth: 1, borderColor: '#3A2020', borderRadius: 15, paddingHorizontal: 14, paddingVertical: 12 },
+  cheersHintText: { color: '#CFCFD4', fontSize: 11, lineHeight: 17, textAlign: 'center' },
   primaryButton: {
     width: '100%',
     marginTop: 24,
