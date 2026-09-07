@@ -326,3 +326,17 @@ body::after{
 @media(max-width:1050px){.premium-tier-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){.premium-tier-grid{grid-template-columns:1fr}.premium-tier{min-height:225px}.premium-benefits{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.tier-shine,.premium-tier::after{animation:none}}
+
+/* Animated community glows */
+.community-card{--community-rgb:37,211,102;position:relative;overflow:hidden}
+.whatsapp-card{--community-rgb:37,211,102;border-color:rgba(37,211,102,.34);box-shadow:0 28px 80px rgba(0,0,0,.28),0 0 34px rgba(37,211,102,.10)}
+.discord-card-new{--community-rgb:88,101,242;border-color:rgba(88,101,242,.34);box-shadow:0 28px 80px rgba(0,0,0,.28),0 0 34px rgba(88,101,242,.10)}
+.community-shine{position:absolute;z-index:0;top:-35%;bottom:-35%;left:-45%;width:34%;transform:skewX(-18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),rgba(var(--community-rgb),.40),rgba(255,255,255,.16),transparent);filter:blur(1px);animation:communitySweep 3.9s cubic-bezier(.45,0,.2,1) infinite;pointer-events:none}
+.discord-card-new .community-shine{animation-delay:.85s}
+.community-card::after{content:"";position:absolute;inset:auto -20% -42% -20%;height:54%;background:radial-gradient(ellipse,rgba(var(--community-rgb),.20),transparent 68%);filter:blur(18px);animation:communityGlow 3s ease-in-out infinite;pointer-events:none}
+.community-card>*:not(.community-shine){position:relative;z-index:1}
+.whatsapp-card:hover{border-color:rgba(37,211,102,.78);box-shadow:0 34px 90px rgba(0,0,0,.38),0 0 48px rgba(37,211,102,.22)}
+.discord-card-new:hover{border-color:rgba(88,101,242,.78);box-shadow:0 34px 90px rgba(0,0,0,.38),0 0 48px rgba(88,101,242,.22)}
+@keyframes communitySweep{0%{left:-55%;opacity:0}12%{opacity:1}55%{opacity:.95}75%,100%{left:125%;opacity:0}}
+@keyframes communityGlow{0%,100%{opacity:.42;transform:scale(.92)}50%{opacity:1;transform:scale(1.08)}}
+@media(prefers-reduced-motion:reduce){.community-shine,.community-card::after{animation:none}}
