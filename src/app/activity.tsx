@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -161,6 +162,7 @@ export default function ActivityScreen() {
         .slice(0, 40);
 
       setItems(merged);
+      await AsyncStorage.setItem('sipmate:activity-seen-at', new Date().toISOString());
     } finally {
       setLoading(false);
     }
