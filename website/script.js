@@ -165,3 +165,31 @@ if(menuBtn&&nav){
   if(!nav.id)nav.id="primary-navigation";
   menuBtn.setAttribute("aria-controls",nav.id);
 }
+
+
+// pwa-service-worker
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("/sw.js").catch(()=>{});
+  });
+}
+
+// faq-single-open
+document.querySelectorAll(".faq-list details").forEach(item=>{
+  item.addEventListener("toggle",()=>{
+    if(!item.open)return;
+    document.querySelectorAll(".faq-list details").forEach(other=>{
+      if(other!==item)other.open=false;
+    });
+  });
+});
+
+// keyboard-and-mobile-nav polish
+document.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&nav?.classList.contains("open")){
+    nav.classList.remove("open");
+    menuBtn?.setAttribute("aria-expanded","false");
+    if(menuBtn)menuBtn.textContent="☰";
+    menuBtn?.focus();
+  }
+});
