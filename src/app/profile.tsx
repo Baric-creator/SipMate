@@ -157,37 +157,121 @@ export default function UserProfileScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={styles.card}>
-          {profile.avatar_url ? <Image source={{ uri: profile.avatar_url }} style={styles.profileAvatar} resizeMode="cover" /> : <View style={styles.profileAvatarFallback}><Text style={styles.profileAvatarFallbackText}>{profile.name?.charAt(0).toUpperCase() || '?'}</Text></View>}
-          <Text style={styles.name}>{profile.name ?? text.user}{profile.age ? `, ${profile.age}` : ''}</Text>
-          {premiumActive && <View style={styles.premiumBadge}><Text style={styles.premiumBadgeText}>💎 PREMIUM</Text></View>}
-          <Text style={styles.city}>📍 {profile.city ?? text.location}</Text>
-          <View style={[styles.statusBadge, profile.is_active ? styles.statusBadgeActive : styles.statusBadgeInactive]}><Text style={[styles.statusBadgeText, profile.is_active ? styles.statusTextActive : styles.statusTextInactive]}>{profile.is_active ? `● ${t('profileScreen.active')}` : `● ${t('profileScreen.inactive')}`}</Text></View>
-          <View style={styles.section}><Text style={styles.label}>{t('profileScreen.currentlyUpFor')}</Text><View style={styles.drinkChip}><Text style={styles.drink}>{profile.currently_up_for ?? t('profileScreen.readyForDrink')}</Text></View></View>
-          <View style={styles.section}><Text style={styles.label}>{t('profileScreen.about')}</Text><Text style={styles.bio}>{profile.bio?.trim() ? profile.bio : t('profileScreen.noBioYet')}</Text></View>
-          <Pressable style={styles.premiumButton} onPress={() => router.push('/premium')}><View style={styles.buttonContent}><Text style={styles.buttonEmoji}>💎</Text><Text style={styles.premiumButtonText}>{t('profileScreen.premium')}</Text></View></Pressable>
-          <View style={styles.discordCard}>
-            <View style={styles.discordHeader}><Text style={styles.discordLogo}>Discord</Text><Text style={styles.discordStatus}>{profile.discord_user_id ? '●' : '○'} {profile.discord_user_id ? text.discordConnected : text.connectDiscord}</Text></View>
-            {profile.discord_user_id && <Text style={styles.discordUser}>@{profile.discord_username ?? profile.discord_user_id}</Text>}
-            <Pressable style={[styles.discordButton, profile.discord_user_id && styles.discordDisconnectButton]} onPress={profile.discord_user_id ? handleDisconnectDiscord : handleConnectDiscord}>
-              <View style={styles.buttonContent}><Text style={styles.buttonEmoji}>{profile.discord_user_id ? '🔌' : '🎮'}</Text><Text style={styles.discordButtonText}>{profile.discord_user_id ? text.disconnectDiscord : text.connectDiscord}</Text></View>
-            </Pressable>
-          </View>
-          <Pressable style={styles.editButton} onPress={() => router.push('/edit-profile')}><View style={styles.buttonContent}><Text style={styles.buttonEmoji}>✏️</Text><Text style={styles.editButtonText}>{t('profileScreen.editProfile')}</Text></View></Pressable>
-          <Pressable style={styles.secondaryButton} onPress={() => router.push('/blocked-users')}><View style={styles.buttonContent}><Text style={styles.buttonEmoji}>🚫</Text><Text style={styles.dangerText}>{t('profileScreen.blockedUsers')}</Text></View></Pressable>
-          <Pressable style={styles.languageButton} onPress={() => router.push('/language')}><View style={styles.buttonContent}><Text style={styles.buttonEmoji}>🌍</Text><Text style={styles.languageButtonText}>{t('profileScreen.language')}</Text></View></Pressable>
-          <Pressable style={styles.logoutButton} onPress={handleLogout}><View style={styles.buttonContent}><Text style={styles.buttonEmoji}>🚪</Text><Text style={styles.dangerText}>{t('profileScreen.logout')}</Text></View></Pressable>
-          <Pressable style={styles.deleteButton} onPress={() => router.push('/delete-account')}><View style={styles.buttonContent}><Text style={styles.buttonEmoji}>⚠️</Text><Text style={styles.deleteText}>{text.deleteAccount}</Text></View></Pressable>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.topBar}>
+          <Text style={styles.brand}>SipMate 🍻</Text>
+          <Pressable style={styles.topAction} onPress={() => router.push('/edit-profile')}>
+            <Text style={styles.topActionText}>✏️</Text>
+          </Pressable>
+        </View>
 
-          <View style={styles.legalLinks}>
-            <Pressable style={styles.legalLink} onPress={() => router.push('/community-guidelines')}>
-              <Text style={styles.legalLinkText}>🤝 {text.communityGuidelines}</Text>
-            </Pressable>
-            <Pressable style={styles.legalLink} onPress={() => router.push('/privacy')}>
-              <Text style={styles.legalLinkText}>🔒 {text.privacyPolicy}</Text>
-            </Pressable>
+        <View style={styles.hero}>
+          <View style={styles.avatarShell}>
+            {profile.avatar_url ? (
+              <Image source={{ uri: profile.avatar_url }} style={styles.profileAvatar} resizeMode="cover" />
+            ) : (
+              <View style={styles.profileAvatarFallback}>
+                <Text style={styles.profileAvatarFallbackText}>{profile.name?.charAt(0).toUpperCase() || '?'}</Text>
+              </View>
+            )}
+            <View style={[styles.presenceDot, profile.is_active ? styles.presenceDotActive : styles.presenceDotInactive]} />
           </View>
+
+          <Text style={styles.name}>{profile.name ?? text.user}{profile.age ? `, ${profile.age}` : ''}</Text>
+          <Text style={styles.city}>📍 {profile.city ?? text.location}</Text>
+
+          <View style={styles.badgeRow}>
+            <View style={[styles.statusPill, profile.is_active ? styles.statusPillActive : styles.statusPillInactive]}>
+              <Text style={[styles.statusPillText, profile.is_active ? styles.statusTextActive : styles.statusTextInactive]}>
+                {profile.is_active ? t('profileScreen.active') : t('profileScreen.inactive')}
+              </Text>
+            </View>
+            {premiumActive && (
+              <View style={styles.premiumBadge}>
+                <Text style={styles.premiumBadgeText}>💎 PREMIUM</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.quickGrid}>
+          <Pressable style={styles.quickCard} onPress={() => router.push('/edit-profile')}>
+            <Text style={styles.quickIcon}>✏️</Text>
+            <Text style={styles.quickLabel}>{t('profileScreen.editProfile')}</Text>
+          </Pressable>
+          <Pressable style={styles.quickCard} onPress={() => router.push('/language')}>
+            <Text style={styles.quickIcon}>🌍</Text>
+            <Text style={styles.quickLabel}>{t('profileScreen.language')}</Text>
+          </Pressable>
+          <Pressable style={styles.quickCard} onPress={() => router.push('/premium')}>
+            <Text style={styles.quickIcon}>💎</Text>
+            <Text style={styles.quickLabel}>{t('profileScreen.premium')}</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.infoCard}>
+          <View style={styles.infoHeader}>
+            <Text style={styles.infoEyebrow}>{t('profileScreen.currentlyUpFor')}</Text>
+            <Text style={styles.infoIcon}>🍻</Text>
+          </View>
+          <Text style={styles.drink}>{profile.currently_up_for ?? t('profileScreen.readyForDrink')}</Text>
+        </View>
+
+        <View style={styles.infoCard}>
+          <Text style={styles.infoEyebrow}>{t('profileScreen.about')}</Text>
+          <Text style={styles.bio}>{profile.bio?.trim() ? profile.bio : t('profileScreen.noBioYet')}</Text>
+        </View>
+
+        <View style={styles.discordCard}>
+          <View style={styles.discordTop}>
+            <View>
+              <Text style={styles.discordTitle}>Discord</Text>
+              <Text style={styles.discordStatus}>
+                {profile.discord_user_id ? text.discordConnected : text.connectDiscord}
+              </Text>
+            </View>
+            <Text style={styles.discordMark}>◉</Text>
+          </View>
+          {profile.discord_user_id && (
+            <Text style={styles.discordUser}>@{profile.discord_username ?? profile.discord_user_id}</Text>
+          )}
+          <Pressable
+            style={[styles.discordButton, profile.discord_user_id && styles.discordDisconnectButton]}
+            onPress={profile.discord_user_id ? handleDisconnectDiscord : handleConnectDiscord}
+          >
+            <Text style={styles.discordButtonText}>
+              {profile.discord_user_id ? text.disconnectDiscord : text.connectDiscord}
+            </Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.settingsCard}>
+          <Pressable style={styles.settingsRow} onPress={() => router.push('/blocked-users')}>
+            <View style={styles.settingsRowLeft}><Text style={styles.settingsIcon}>🚫</Text><Text style={styles.settingsText}>{t('profileScreen.blockedUsers')}</Text></View>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+          <Pressable style={styles.settingsRow} onPress={handleLogout}>
+            <View style={styles.settingsRowLeft}><Text style={styles.settingsIcon}>🚪</Text><Text style={[styles.settingsText, styles.settingsDanger]}>{t('profileScreen.logout')}</Text></View>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+          <Pressable style={[styles.settingsRow, styles.settingsRowLast]} onPress={() => router.push('/delete-account')}>
+            <View style={styles.settingsRowLeft}><Text style={styles.settingsIcon}>⚠️</Text><Text style={[styles.settingsText, styles.deleteText]}>{text.deleteAccount}</Text></View>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.legalLinks}>
+          <Pressable style={styles.legalLink} onPress={() => router.push('/community-guidelines')}>
+            <Text style={styles.legalLinkText}>🤝 {text.communityGuidelines}</Text>
+          </Pressable>
+          <Pressable style={styles.legalLink} onPress={() => router.push('/privacy')}>
+            <Text style={styles.legalLinkText}>🔒 {text.privacyPolicy}</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -195,12 +279,70 @@ export default function UserProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#09090B' }, scroll: { flex: 1 }, scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40 }, loading: { color: '#FFFFFF', fontSize: 16, textAlign: 'center', marginTop: 40 }, card: { width: '100%', maxWidth: 520, backgroundColor: '#18181B', borderRadius: 28, padding: 28, alignItems: 'center' },
-  buttonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }, buttonEmoji: { fontSize: 18 },
-  profileAvatar: { width: 140, height: 140, borderRadius: 70, marginBottom: 18, backgroundColor: '#27272A', borderWidth: 3, borderColor: '#DC2626' }, profileAvatarFallback: { width: 140, height: 140, borderRadius: 70, marginBottom: 18, backgroundColor: '#450A0A', borderWidth: 3, borderColor: '#DC2626', alignItems: 'center', justifyContent: 'center' }, profileAvatarFallbackText: { color: '#FFFFFF', fontSize: 48, fontWeight: '900' }, name: { color: '#FFFFFF', fontSize: 30, fontWeight: '900', marginTop: 18 }, city: { color: '#A1A1AA', marginTop: 6 }, premiumBadge: { marginTop: 10, backgroundColor: '#F59E0B', borderWidth: 1, borderColor: '#FBBF24', paddingHorizontal: 13, paddingVertical: 6, borderRadius: 999 }, premiumBadgeText: { color: '#09090B', fontSize: 11, fontWeight: '900', letterSpacing: 0.8 },
-  statusBadge: { marginTop: 14, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1 }, statusBadgeActive: { backgroundColor: '#052E16', borderColor: '#22C55E' }, statusBadgeInactive: { backgroundColor: '#27272A', borderColor: '#52525B' }, statusBadgeText: { fontSize: 11, fontWeight: '900' }, statusTextActive: { color: '#4ADE80' }, statusTextInactive: { color: '#A1A1AA' }, section: { width: '100%', backgroundColor: '#27272A', padding: 16, borderRadius: 18, marginTop: 18 }, label: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.3 }, drinkChip: { marginTop: 10, backgroundColor: '#09090B', borderWidth: 1, borderColor: '#DC2626', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12 }, drink: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' }, bio: { color: '#D4D4D8', fontSize: 14, lineHeight: 21, marginTop: 7 },
-  legalLinks: { width: '100%', marginTop: 22, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
-  legalLink: { paddingHorizontal: 11, paddingVertical: 8, borderRadius: 999, backgroundColor: '#111113', borderWidth: 1, borderColor: '#27272A' },
-  legalLinkText: { color: '#71717A', fontSize: 10, fontWeight: '700', fontFamily: 'sans-serif' },
-  premiumButton: { width: '100%', marginTop: 24, backgroundColor: '#F59E0B', borderWidth: 1, borderColor: '#FBBF24', paddingVertical: 16, borderRadius: 22, alignItems: 'center' }, premiumButtonText: { color: '#09090B', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }, discordCard: { width: '100%', marginTop: 14, backgroundColor: '#16141F', borderWidth: 1, borderColor: '#5865F2', borderRadius: 18, padding: 16 }, discordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }, discordLogo: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' }, discordStatus: { color: '#A5B4FC', fontSize: 11, fontWeight: '800' }, discordUser: { color: '#D4D4D8', fontSize: 13, marginTop: 8 }, discordButton: { marginTop: 14, backgroundColor: '#5865F2', paddingVertical: 13, borderRadius: 14, alignItems: 'center' }, discordDisconnectButton: { backgroundColor: '#27272A', borderWidth: 1, borderColor: '#5865F2' }, discordButtonText: { color: '#FFFFFF', fontSize: 13, fontWeight: '900', letterSpacing: 0.4 }, editButton: { width: '100%', marginTop: 14, backgroundColor: '#DC2626', paddingVertical: 16, borderRadius: 22, alignItems: 'center' }, editButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' }, secondaryButton: { width: '100%', marginTop: 14, backgroundColor: '#27272A', borderWidth: 1, borderColor: '#DC2626', borderRadius: 14, paddingVertical: 16, alignItems: 'center' }, languageButton: { width: '100%', marginTop: 14, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#3F3F46', borderRadius: 14, paddingVertical: 16, alignItems: 'center' }, languageButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900', letterSpacing: 0.6 }, infoButton: { width: '100%', marginTop: 14, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#3F3F46', borderRadius: 14, paddingVertical: 16, alignItems: 'center' }, infoButtonText: { color: '#D4D4D8', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }, logoutButton: { width: '100%', marginTop: 24, backgroundColor: '#27272A', borderWidth: 1, borderColor: '#DC2626', paddingVertical: 16, borderRadius: 22, alignItems: 'center' }, dangerText: { color: '#EF4444', fontSize: 14, fontWeight: '900', letterSpacing: 0.5 }, deleteButton: { width: '100%', marginTop: 14, backgroundColor: '#450A0A', borderWidth: 1, borderColor: '#EF4444', paddingVertical: 16, borderRadius: 22, alignItems: 'center' }, deleteText: { color: '#FCA5A5', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 },
+  screen: { flex: 1, backgroundColor: '#09090B' },
+  scroll: { flex: 1 },
+  scrollContent: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 18, paddingTop: 10, paddingBottom: 44 },
+  loading: { color: '#FFFFFF', fontSize: 16, textAlign: 'center', marginTop: 40 },
+
+  topBar: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  brand: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
+  topAction: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#17171A', borderWidth: 1, borderColor: '#2A2A2E', alignItems: 'center', justifyContent: 'center' },
+  topActionText: { fontSize: 16 },
+
+  hero: { alignItems: 'center', paddingTop: 6, paddingBottom: 22 },
+  avatarShell: { position: 'relative', width: 128, height: 128, borderRadius: 64, padding: 4, backgroundColor: '#161619', borderWidth: 2, borderColor: '#2B2B30' },
+  profileAvatar: { width: '100%', height: '100%', borderRadius: 60, backgroundColor: '#27272A' },
+  profileAvatarFallback: { flex: 1, borderRadius: 60, backgroundColor: '#450A0A', alignItems: 'center', justifyContent: 'center' },
+  profileAvatarFallbackText: { color: '#FFFFFF', fontSize: 44, fontWeight: '900' },
+  presenceDot: { position: 'absolute', right: 8, bottom: 8, width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: '#09090B' },
+  presenceDotActive: { backgroundColor: '#22C55E' },
+  presenceDotInactive: { backgroundColor: '#52525B' },
+
+  name: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', marginTop: 16, letterSpacing: -0.4 },
+  city: { color: '#8B8B94', fontSize: 13, marginTop: 6 },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 12 },
+  statusPill: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 1 },
+  statusPillActive: { backgroundColor: '#0A2815', borderColor: '#1F7A3D' },
+  statusPillInactive: { backgroundColor: '#1C1C20', borderColor: '#3A3A40' },
+  statusPillText: { fontSize: 10, fontWeight: '900' },
+  statusTextActive: { color: '#4ADE80' },
+  statusTextInactive: { color: '#A1A1AA' },
+  premiumBadge: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#2B1C02', borderWidth: 1, borderColor: '#7A5208' },
+  premiumBadgeText: { color: '#FBBF24', fontSize: 10, fontWeight: '900' },
+
+  quickGrid: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  quickCard: { flex: 1, minHeight: 86, backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', borderRadius: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  quickIcon: { fontSize: 22, marginBottom: 7 },
+  quickLabel: { color: '#E4E4E7', fontSize: 10, fontWeight: '800', textAlign: 'center', fontFamily: 'sans-serif' },
+
+  infoCard: { backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', borderRadius: 20, padding: 18, marginBottom: 12 },
+  infoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  infoEyebrow: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2 },
+  infoIcon: { fontSize: 18 },
+  drink: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', marginTop: 10, fontFamily: 'sans-serif' },
+  bio: { color: '#D4D4D8', fontSize: 14, lineHeight: 21, marginTop: 9 },
+
+  discordCard: { backgroundColor: '#11131A', borderWidth: 1, borderColor: '#303657', borderRadius: 20, padding: 18, marginBottom: 12 },
+  discordTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  discordTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+  discordStatus: { color: '#9CA3C7', fontSize: 11, marginTop: 3 },
+  discordMark: { color: '#5865F2', fontSize: 24 },
+  discordUser: { color: '#C7C9D9', fontSize: 12, marginTop: 9 },
+  discordButton: { marginTop: 14, minHeight: 44, borderRadius: 14, backgroundColor: '#5865F2', alignItems: 'center', justifyContent: 'center' },
+  discordDisconnectButton: { backgroundColor: '#202128', borderWidth: 1, borderColor: '#3B3D4A' },
+  discordButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', fontFamily: 'sans-serif' },
+
+  settingsCard: { backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', borderRadius: 20, overflow: 'hidden' },
+  settingsRow: { minHeight: 58, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#25252A' },
+  settingsRowLast: { borderBottomWidth: 0 },
+  settingsRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 11, flex: 1 },
+  settingsIcon: { fontSize: 17 },
+  settingsText: { color: '#E4E4E7', fontSize: 13, fontWeight: '800', fontFamily: 'sans-serif' },
+  settingsDanger: { color: '#F87171' },
+  deleteText: { color: '#FCA5A5' },
+  chevron: { color: '#52525B', fontSize: 26, fontWeight: '300' },
+
+  legalLinks: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 16 },
+  legalLink: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: '#101012', borderWidth: 1, borderColor: '#222226' },
+  legalLinkText: { color: '#66666E', fontSize: 9, fontWeight: '700', fontFamily: 'sans-serif' },
 });
