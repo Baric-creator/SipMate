@@ -293,3 +293,6 @@ body::after{
 .community-widget iframe{width:100%;height:360px}
 @media(max-width:900px){.community-grid{grid-template-columns:1fr}.community-hub{padding:85px 0 75px}}
 @media(max-width:560px){.community-hub{padding:72px 0 64px}.community-head h2{font-size:40px;letter-spacing:-2px}.community-card{padding:20px 16px;border-radius:22px}.whatsapp-join{grid-template-columns:1fr}.qr-wrap{display:none}.community-widget iframe{height:390px}}
+
+.community-subgroup-link{color:#d2d2d6;font-size:12px;text-decoration:none;transition:color .18s ease,transform .18s ease;display:inline-block}
+.community-subgroup-link:hover{color:#4ade80;transform:translateX(2px)}
