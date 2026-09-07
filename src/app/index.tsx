@@ -17,6 +17,7 @@ import {
   Text,
   View,
   Vibration,
+  Linking,
 } from 'react-native';
 
 import { useTranslation } from 'react-i18next';
@@ -32,7 +33,28 @@ type UserProfile = {
 };
 
 export default function HomeScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language?.split('-')[0];
+  const communityText = language === 'de'
+    ? {
+        eyebrow: 'SIPMATE COMMUNITY',
+        title: 'Find a SipMate',
+        body: 'Finde Leute, teile deine Stadt und bleib über WhatsApp mit der Community verbunden.',
+        button: 'AUF WHATSAPP BEITRETEN',
+      }
+    : language === 'hr'
+      ? {
+          eyebrow: 'SIPMATE COMMUNITY',
+          title: 'Find a SipMate',
+          body: 'Pronađi ekipu, napiši svoj grad i poveži se s communityjem direktno na WhatsAppu.',
+          button: 'PRIDRUŽI SE NA WHATSAPPU',
+        }
+      : {
+          eyebrow: 'SIPMATE COMMUNITY',
+          title: 'Find a SipMate',
+          body: 'Meet people, share your city and stay connected with the community directly on WhatsApp.',
+          button: 'JOIN ON WHATSAPP',
+        };
 
   const [profile, setProfile] =
     useState<UserProfile | null>(null);
@@ -578,6 +600,29 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
+      <View style={styles.communityCard}>
+        <View style={styles.communityTop}>
+          <View style={styles.communityIcon}>
+            <Text style={styles.communityIconText}>💬</Text>
+          </View>
+          <View style={styles.communityCopy}>
+            <Text style={styles.communityEyebrow}>{communityText.eyebrow}</Text>
+            <Text style={styles.communityTitle}>{communityText.title}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.communityBody}>{communityText.body}</Text>
+
+        <Pressable
+          style={styles.communityButton}
+          onPress={() => Linking.openURL('https://chat.whatsapp.com/FpMoaBczdHiBQeKpPbpLcr')}
+        >
+          <Text style={styles.communityButtonText}>
+            {communityText.button} ↗
+          </Text>
+        </Pressable>
+      </View>
+
       <View
         style={styles.cheersCard}
       >
@@ -921,6 +966,66 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '900',
     marginTop: 10,
+  },
+
+  communityCard: {
+    marginTop: 18,
+    backgroundColor: '#101812',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#1F4D2A',
+  },
+  communityTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  communityIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#163D22',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  communityIconText: {
+    fontSize: 18,
+  },
+  communityCopy: {
+    flex: 1,
+  },
+  communityEyebrow: {
+    color: '#4ADE80',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+  },
+  communityTitle: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  communityBody: {
+    color: '#A1A1AA',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 12,
+  },
+  communityButton: {
+    marginTop: 14,
+    minHeight: 46,
+    borderRadius: 15,
+    backgroundColor: '#25D366',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  communityButtonText: {
+    color: '#07160D',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.4,
   },
 
   cheersCard: {
