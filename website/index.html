@@ -36,6 +36,7 @@
     <a href="#how" data-i18n="how">How it works</a>
     <a href="#preview" data-i18n="preview">App preview</a>
     <a href="#premium" data-i18n="premium">Premium</a>
+    <a href="#community" data-i18n="communityNav">Community</a>
     <div class="language-switch" aria-label="Language">
       <button type="button" data-lang="en">EN</button><button type="button" data-lang="de">DE</button><button type="button" data-lang="hr">HR</button>
     </div>
@@ -209,23 +210,70 @@
 </section>
 
 
-<section class="discord-community reveal" aria-label="SipMate Discord community">
-  <div class="discord-community-card">
-    <div class="discord-community-copy">
-      <p class="eyebrow">SIPMATE DISCORD</p>
-      <h2>Join the SipMate community 🍻</h2>
-      <p>See who’s online, jump into the community and stay close to new SipMate updates.</p>
+<section id="community" class="community-hub reveal" aria-label="SipMate Community">
+  <div class="shell">
+    <div class="community-head">
+      <p class="eyebrow" data-i18n="communityEyebrow">SIPMATE COMMUNITY</p>
+      <h2 data-i18n="communityTitle">Choose where you want to hang out. 🍻</h2>
+      <p data-i18n="communityCopy">Quick updates on WhatsApp. Deeper conversations, support and more on Discord.</p>
     </div>
-    <div class="discord-widget-shell">
-      <iframe
-        src="https://discord.com/widget?id=1545876541387440188&theme=dark"
-        width="350"
-        height="500"
-        allowtransparency="true"
-        frameborder="0"
-        sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-        title="SipMate Discord server widget">
-      </iframe>
+
+    <div class="community-grid">
+      <article class="community-card whatsapp-card">
+        <div class="community-card-top">
+          <div class="community-logo whatsapp-logo">◔</div>
+          <div>
+            <p class="community-kicker">WHATSAPP</p>
+            <h3 data-i18n="whatsappTitle">SipMate WhatsApp Community</h3>
+          </div>
+        </div>
+        <p class="community-description" data-i18n="whatsappCopy">Join announcements, general chat and the SipMate community directly on WhatsApp.</p>
+
+        <div class="community-points">
+          <span data-i18n="whatsappPoint1">📢 Launch & update announcements</span>
+          <span data-i18n="whatsappPoint2">💬 General community chat</span>
+          <span data-i18n="whatsappPoint3">🍻 Meet other SipMate users</span>
+        </div>
+
+        <div class="whatsapp-join">
+          <a class="community-button whatsapp-button" href="https://chat.whatsapp.com/FpMoaBczdHiBQeKpPbpLcr" target="_blank" rel="noopener noreferrer">
+            <span data-i18n="joinWhatsapp">Join on WhatsApp</span> ↗
+          </a>
+          <div class="qr-wrap">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Fchat.whatsapp.com%2FFpMoaBczdHiBQeKpPbpLcr" alt="QR code for SipMate WhatsApp Community" loading="lazy">
+            <small data-i18n="scanWhatsapp">Scan on desktop</small>
+          </div>
+        </div>
+      </article>
+
+      <article class="community-card discord-card-new">
+        <div class="community-card-top">
+          <div class="community-logo discord-logo">◉</div>
+          <div>
+            <p class="community-kicker">DISCORD</p>
+            <h3 data-i18n="discordTitle">SipMate Discord Community</h3>
+          </div>
+        </div>
+        <p class="community-description" data-i18n="discordCopy">Get support, use ticket channels, follow updates and hang out with the SipMate community.</p>
+
+        <div class="community-points">
+          <span data-i18n="discordPoint1">🆘 Support & tickets</span>
+          <span data-i18n="discordPoint2">💎 Premium community features</span>
+          <span data-i18n="discordPoint3">🍻 Community & CHEERS feed</span>
+        </div>
+
+        <div class="discord-widget-shell community-widget">
+          <iframe
+            src="https://discord.com/widget?id=1545876541387440188&theme=dark"
+            width="350"
+            height="360"
+            allowtransparency="true"
+            frameborder="0"
+            sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+            title="SipMate Discord server widget">
+          </iframe>
+        </div>
+      </article>
     </div>
   </div>
 </section>
