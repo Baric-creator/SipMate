@@ -83,6 +83,7 @@ export default function RootLayout() {
         <Tabs.Screen name="onboarding" options={{ href: null, tabBarStyle: hiddenTabBar }} />
         <Tabs.Screen name="register" options={{ href: null, tabBarStyle: hiddenTabBar }} />
 
+        <Tabs.Screen name="activity" options={{ href: null }} />
         <Tabs.Screen name="blocked-users" options={{ href: null }} />
         <Tabs.Screen name="chat" options={{ href: null }} />
         <Tabs.Screen name="chats" options={{ href: null }} />
