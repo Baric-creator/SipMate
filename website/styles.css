@@ -16,3 +16,21 @@
   .discord-widget-shell{width:100%}
   .discord-widget-shell iframe{width:100%;height:460px}
 }
+
+.modern-profile-demo{background:#09090b;padding-top:40px}
+.modern-profile-demo .mini-top{margin-bottom:8px}
+.mini-edit{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#17171a;border:1px solid #2a2a2e;font-size:12px}
+.modern-profile-head{display:flex;flex-direction:column;align-items:center;text-align:center;padding:3px 0 14px}
+.modern-avatar-wrap{position:relative;width:88px;height:88px;border-radius:50%;padding:3px;background:#17171a;border:2px solid #2b2b30}
+.modern-avatar{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.modern-online-dot{position:absolute;right:5px;bottom:5px;width:13px;height:13px;border-radius:50%;background:#22c55e;border:3px solid #09090b}
+.modern-name{font-size:21px;margin-top:10px}
+.modern-city{color:#898992;font-size:10px;margin-top:4px}
+.modern-status{margin-top:8px;padding:5px 8px;border-radius:999px;border:1px solid #1f7a3d;background:#0a2815;color:#4ade80;font-size:7px;font-weight:900;letter-spacing:.4px}
+.modern-quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:2px 0 9px}
+.modern-quick-grid span{min-height:55px;border-radius:13px;background:#151518;border:1px solid #25252a;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:16px}
+.modern-quick-grid small{margin-top:4px;color:#d4d4d8;font-size:6px;font-weight:800}
+.modern-info-card{background:#151518;border:1px solid #25252a;border-radius:14px;padding:11px 12px;margin-top:8px}
+.modern-info-card small{display:block;color:#71717a;font-size:7px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+.modern-info-card strong{display:block;margin-top:7px;font-size:16px}
+.modern-about p{margin:7px 0 0;color:#b6b6bc;font-size:9px;line-height:1.4}
