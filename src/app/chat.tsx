@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Vibration,
 } from 'react-native';
 
 import { showAlert } from '../lib/notify';
@@ -167,6 +168,7 @@ export default function ChatScreen() {
     }
     const sent = data as Message;
     setMessages((prev) => prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]);
+    Vibration.vibrate(20);
     setMessageText('');
     await sendTypingStatus(false);
   }
