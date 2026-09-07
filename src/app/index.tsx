@@ -615,7 +615,7 @@ export default function HomeScreen() {
 
         <Pressable
           style={styles.communityButton}
-          onPress={() => Linking.openURL('https://chat.whatsapp.com/FpMoaBczdHiBQeKpPbpLcr')}
+          onPress={() => Linking.openURL('https://chat.whatsapp.com/LfjUaAs4NBEINuPpU768n0?s=cl&p=a&mlu=4&ilr=4')}
         >
           <Text style={styles.communityButtonText}>
             {communityText.button} ↗
