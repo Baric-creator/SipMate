@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+<div class="scroll-progress" aria-hidden="true"><span></span></div>
 <div class="ambient-beer" aria-hidden="true">🍺</div>
 <div class="ambient-glow ambient-glow-one" aria-hidden="true"></div>
 <div class="ambient-glow ambient-glow-two" aria-hidden="true"></div>
@@ -126,6 +127,15 @@
   </div>
 </section>
 
+<section class="trust-section shell reveal">
+  <div class="trust-title"><p class="eyebrow" data-i18n="trustEyebrow">BUILT FOR REAL-LIFE HANGOUTS</p><h2 data-i18n="trustTitle">Social without giving up your privacy.</h2></div>
+  <div class="trust-grid">
+    <article><span>📍</span><strong data-i18n="trustLocation">No exact location shown</strong><p data-i18n="trustLocationCopy">SipMate uses nearby distance without publishing your precise position.</p></article>
+    <article><span>🫥</span><strong data-i18n="trustInvisible">Go invisible anytime</strong><p data-i18n="trustInvisibleCopy">Switch inactive whenever you do not want to appear nearby.</p></article>
+    <article><span>🍻</span><strong data-i18n="trustNotDating">Not a dating app</strong><p data-i18n="trustNotDatingCopy">The goal is simple: drinks, coffee and spontaneous social plans.</p></article>
+  </div>
+</section>
+
 <section id="preview" class="section app-showcase reveal">
   <div class="shell">
     <div class="section-head"><p class="eyebrow" data-i18n="flowEyebrow">MEET SIPMATE</p><h2><span class="heading-neutral" data-i18n="flowLead">Discover. Cheers.</span> <span data-i18n="flowAccent">Chat.</span></h2><p class="subcopy" data-i18n="flowCopy">Three simple screens. One simple idea: turn “maybe someday” into “one drink tonight?”.</p></div>
@@ -222,6 +232,11 @@
       <div class="tier-price"><strong>€14.99</strong><span data-i18n="firstYear">/ first year</span></div>
       <p data-i18n="foundersDesc">Exclusive launch price for the first 100 confirmed yearly Premium members.</p>
       <span class="tier-highlight" data-i18n="foundersHighlight">LIMITED · 100 SPOTS</span>
+      <div class="founders-live" aria-live="polite">
+        <span class="founders-dot"></span>
+        <strong data-founders-remaining>--</strong>
+        <span data-i18n="foundersRemaining">Founder spots left</span>
+      </div>
     </article>
 
     <article class="premium-tier tier-early">
@@ -241,6 +256,14 @@
     </article>
   </div>
 
+  <div class="premium-timeline" aria-label="Premium launch pricing timeline">
+    <div class="timeline-stage active"><span>01</span><strong>14,99 €</strong><small data-i18n="timelineFounders">Founders · first 100</small></div>
+    <i>→</i>
+    <div class="timeline-stage"><span>02</span><strong>17,99 €</strong><small data-i18n="timelineEarly">Early Access · first year</small></div>
+    <i>→</i>
+    <div class="timeline-stage"><span>03</span><strong>19,99 €</strong><small data-i18n="timelineStandard">Standard yearly</small></div>
+  </div>
+
   <div class="premium-benefits">
     <div data-i18n="featureCheers">✓ See who sent you 🍻</div>
     <div data-i18n="featureFilters">✓ Advanced filters</div>
@@ -251,6 +274,13 @@
   </div>
 </section>
 
+
+<section class="community-activity-strip reveal" aria-label="SipMate launch locations">
+  <div class="shell activity-track">
+    <strong data-i18n="activityStripLead">GERMANY FIRST</strong>
+    <span>📍 Nürnberg</span><i>•</i><span>📍 München</span><i>•</i><span>📍 Berlin</span><i>•</i><span data-i18n="activityStripMore">more cities coming</span>
+  </div>
+</section>
 
 <section id="community" class="community-hub reveal" aria-label="SipMate Community">
   <div class="shell">
@@ -356,6 +386,10 @@
   </div>
 </footer>
 <script src="./script.js"></script>
+  <div class="mobile-sticky-cta" aria-label="SipMate quick actions">
+    <a href="#waitlist">🍻 <span data-i18n="join">Join waitlist</span></a>
+    <a href="#community">💬 <span data-i18n="communityNav">Community</span></a>
+  </div>
   <a class="support-fab" href="https://discord.com/channels/1545876541387440188/1545880341699493978" data-support-link target="_blank" rel="noopener noreferrer" aria-label="Need assistance?">
     <span class="support-fab-icon">💬</span>
     <span data-i18n="supportHelp">Need assistance?</span>
