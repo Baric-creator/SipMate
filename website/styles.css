@@ -532,3 +532,6 @@ img{content-visibility:auto}
   .activity-city-row{gap:10px 12px}
   .activity-city-row i{display:none}
 }
+
+.activity-track-worldwide{border-color:rgba(59,130,246,.24);background:linear-gradient(145deg,#111319,#0d0f14)}
+.activity-track-worldwide>strong{color:#f3f3f4}
