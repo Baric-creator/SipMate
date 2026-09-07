@@ -42,6 +42,7 @@ export default function HomeScreen() {
         body: 'Finde Leute, teile deine Stadt und bleib über WhatsApp mit der Community verbunden.',
         button: 'FIND A SIPMATE ÖFFNEN',
         generalButton: 'GENERAL CHAT ÖFFNEN',
+        feedbackButton: 'FEEDBACK & IDEEN ÖFFNEN',
       }
     : language === 'hr'
       ? {
@@ -50,6 +51,7 @@ export default function HomeScreen() {
           body: 'Pronađi ekipu, napiši svoj grad i poveži se s communityjem direktno na WhatsAppu.',
           button: 'OTVORI FIND A SIPMATE',
           generalButton: 'OTVORI GENERAL CHAT',
+          feedbackButton: 'OTVORI FEEDBACK & IDEJE',
         }
       : {
           eyebrow: 'SIPMATE COMMUNITY',
@@ -57,6 +59,7 @@ export default function HomeScreen() {
           body: 'Meet people, share your city and stay connected with the community directly on WhatsApp.',
           button: 'OPEN FIND A SIPMATE',
           generalButton: 'OPEN GENERAL CHAT',
+          feedbackButton: 'OPEN FEEDBACK & IDEAS',
         };
 
   const [profile, setProfile] =
@@ -634,6 +637,15 @@ export default function HomeScreen() {
               💬 {communityText.generalButton} ↗
             </Text>
           </Pressable>
+
+          <Pressable
+            style={[styles.communityButton, styles.communityButtonTertiary]}
+            onPress={() => Linking.openURL('https://chat.whatsapp.com/LiBN1xeTfzEI68P2yDyt0t?s=cl&p=a&mlu=4&ilr=4')}
+          >
+            <Text style={styles.communityButtonText}>
+              💡 {communityText.feedbackButton} ↗
+            </Text>
+          </Pressable>
         </View>
       </View>
 
@@ -1040,6 +1052,9 @@ const styles = StyleSheet.create({
   },
   communityButtonSecondary: {
     backgroundColor: '#1E8E4A',
+  },
+  communityButtonTertiary: {
+    backgroundColor: '#16723B',
   },
   communityButtonText: {
     color: '#07160D',
