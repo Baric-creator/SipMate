@@ -23,8 +23,8 @@ type UserProfile = {
 };
 
 const copy = {
-  en: { loading: 'Loading profile...', notFound: 'Profile not found.', user: 'SipMate User', location: 'Location not set', privacyPolicy: 'PRIVACY POLICY', communityGuidelines: 'COMMUNITY GUIDELINES', deleteAccount: 'DELETE ACCOUNT', connectDiscord: 'CONNECT DISCORD', disconnectDiscord: 'DISCONNECT DISCORD', discordConnected: 'Discord connected', discordConnectError: 'Could not connect Discord right now.', discordDisconnectError: 'Could not disconnect Discord.', discordDisconnected: 'Discord disconnected.' },
-  de: { loading: 'Profil wird geladen...', notFound: 'Profil nicht gefunden.', user: 'SipMate-Nutzer', location: 'Standort nicht festgelegt', privacyPolicy: 'DATENSCHUTZERKLÄRUNG', communityGuidelines: 'COMMUNITY-RICHTLINIEN', deleteAccount: 'KONTO LÖSCHEN', connectDiscord: 'DISCORD VERBINDEN', disconnectDiscord: 'DISCORD TRENNEN', discordConnected: 'Discord verbunden', discordConnectError: 'Discord konnte gerade nicht verbunden werden.', discordDisconnectError: 'Discord konnte nicht getrennt werden.', discordDisconnected: 'Discord getrennt.' },
+  en: { loading: 'Loading profile...', notFound: 'Profile not found.', user: 'SipMate User', location: 'Location not set', privacyPolicy: 'PRIVACY POLICY', communityGuidelines: 'COMMUNITY GUIDELINES', deleteAccount: 'DELETE ACCOUNT', connectDiscord: 'CONNECT DISCORD', disconnectDiscord: 'DISCONNECT DISCORD', discordConnected: 'Discord connected', discordConnectError: 'Could not connect Discord right now.', discordDisconnectError: 'Could not disconnect Discord.', discordDisconnected: 'Discord disconnected.', profileCompletion: 'PROFILE COMPLETION', completeProfile: 'Complete your profile to get better nearby results.', complete: 'complete' },
+  de: { loading: 'Profil wird geladen...', notFound: 'Profil nicht gefunden.', user: 'SipMate-Nutzer', location: 'Standort nicht festgelegt', privacyPolicy: 'DATENSCHUTZERKLÄRUNG', communityGuidelines: 'COMMUNITY-RICHTLINIEN', deleteAccount: 'KONTO LÖSCHEN', connectDiscord: 'DISCORD VERBINDEN', disconnectDiscord: 'DISCORD TRENNEN', discordConnected: 'Discord verbunden', discordConnectError: 'Discord konnte gerade nicht verbunden werden.', discordDisconnectError: 'Discord konnte nicht getrennt werden.', discordDisconnected: 'Discord getrennt.', profileCompletion: 'PROFILVOLLSTÄNDIGKEIT', completeProfile: 'Vervollständige dein Profil für bessere Nearby-Ergebnisse.', complete: 'vollständig' },
   hr: { loading: 'Učitavanje profila...', notFound: 'Profil nije pronađen.', user: 'SipMate korisnik', location: 'Lokacija nije postavljena', privacyPolicy: 'PRAVILA PRIVATNOSTI', communityGuidelines: 'PRAVILA ZAJEDNICE', deleteAccount: 'IZBRIŠI RAČUN', connectDiscord: 'POVEŽI DISCORD', disconnectDiscord: 'ODVOJI DISCORD', discordConnected: 'Discord povezan', discordConnectError: 'Discord se trenutno ne može povezati.', discordDisconnectError: 'Discord se ne može odvojiti.', discordDisconnected: 'Discord je odvojen.' },
 } as const;
 
@@ -155,6 +155,18 @@ export default function UserProfileScreen() {
   const premiumActive = profile.is_premium === true &&
     (!profile.premium_until || new Date(profile.premium_until) > new Date());
 
+  const completionItems = [
+    Boolean(profile.avatar_url),
+    Boolean(profile.name?.trim()),
+    Boolean(profile.age),
+    Boolean(profile.city?.trim()),
+    Boolean(profile.currently_up_for?.trim()),
+    Boolean(profile.bio?.trim()),
+  ];
+  const completionPercent = Math.round(
+    (completionItems.filter(Boolean).length / completionItems.length) * 100
+  );
+
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView
@@ -198,6 +210,21 @@ export default function UserProfileScreen() {
             )}
           </View>
         </View>
+
+        {completionPercent < 100 && (
+          <Pressable style={styles.completionCard} onPress={() => router.push('/edit-profile')}>
+            <View style={styles.completionTop}>
+              <View>
+                <Text style={styles.completionLabel}>{text.profileCompletion}</Text>
+                <Text style={styles.completionCopy}>{text.completeProfile}</Text>
+              </View>
+              <Text style={styles.completionPercent}>{completionPercent}%</Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${completionPercent}%` }]} />
+            </View>
+          </Pressable>
+        )}
 
         <View style={styles.quickGrid}>
           <Pressable style={styles.quickCard} onPress={() => router.push('/edit-profile')}>
@@ -309,6 +336,14 @@ const styles = StyleSheet.create({
   statusTextInactive: { color: '#A1A1AA' },
   premiumBadge: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#2B1C02', borderWidth: 1, borderColor: '#7A5208' },
   premiumBadgeText: { color: '#FBBF24', fontSize: 10, fontWeight: '900' },
+
+  completionCard: { backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', borderRadius: 18, padding: 16, marginBottom: 12 },
+  completionTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14 },
+  completionLabel: { color: '#EF4444', fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
+  completionCopy: { color: '#A1A1AA', fontSize: 11, lineHeight: 16, marginTop: 5, maxWidth: 320 },
+  completionPercent: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
+  progressTrack: { height: 6, backgroundColor: '#25252A', borderRadius: 999, overflow: 'hidden', marginTop: 14 },
+  progressFill: { height: '100%', backgroundColor: '#EF4444', borderRadius: 999 },
 
   quickGrid: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   quickCard: { flex: 1, minHeight: 86, backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', borderRadius: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
