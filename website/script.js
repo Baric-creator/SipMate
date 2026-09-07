@@ -61,6 +61,7 @@ if(form&&status){
       if(!response.ok||data?.ok!==true)throw new Error("request_failed");
       status.textContent=translations[locale][data.already?"already":"success"];
       form.reset();
+      loadPremiumPublicStatus();
       const waitlistSection=form.closest(".waitlist");
       if(waitlistSection){
         waitlistSection.classList.remove("waitlist-celebrate");
