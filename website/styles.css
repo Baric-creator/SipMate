@@ -296,3 +296,33 @@ body::after{
 
 .community-subgroup-link{color:#d2d2d6;font-size:12px;text-decoration:none;transition:color .18s ease,transform .18s ease;display:inline-block}
 .community-subgroup-link:hover{color:#4ade80;transform:translateX(2px)}
+
+/* Premium launch pricing — four distinct animated windows */
+.premium-zone{position:relative}
+.premium-heading{max-width:760px;margin-bottom:30px}
+.premium-tier-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.premium-tier{--tier:#ef4444;--tier-rgb:239,68,68;position:relative;overflow:hidden;min-height:255px;padding:24px 20px;border-radius:24px;background:linear-gradient(160deg,rgba(var(--tier-rgb),.10),rgba(14,14,17,.96) 38%,rgba(9,9,11,.98));border:1px solid rgba(var(--tier-rgb),.55);box-shadow:0 20px 60px rgba(0,0,0,.32),0 0 24px rgba(var(--tier-rgb),.10),inset 0 1px 0 rgba(255,255,255,.06);transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.premium-tier:hover{transform:translateY(-7px);border-color:rgba(var(--tier-rgb),.95);box-shadow:0 28px 75px rgba(0,0,0,.42),0 0 42px rgba(var(--tier-rgb),.24)}
+.tier-founders{--tier:#f5b942;--tier-rgb:245,185,66}
+.tier-early{--tier:#3b82f6;--tier-rgb:59,130,246}
+.tier-standard{--tier:#fb5a58;--tier-rgb:251,90,88}
+.tier-shine{position:absolute;z-index:0;top:-35%;bottom:-35%;left:-45%;width:34%;transform:skewX(-18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),rgba(var(--tier-rgb),.42),rgba(255,255,255,.18),transparent);filter:blur(1px);animation:tierSweep 3.6s cubic-bezier(.45,0,.2,1) infinite;pointer-events:none}
+.tier-founders .tier-shine{animation-delay:.45s}
+.tier-early .tier-shine{animation-delay:.9s}
+.tier-standard .tier-shine{animation-delay:1.35s}
+.premium-tier::after{content:"";position:absolute;inset:auto -20% -45% -20%;height:55%;background:radial-gradient(ellipse,rgba(var(--tier-rgb),.20),transparent 68%);filter:blur(18px);animation:tierGlow 2.8s ease-in-out infinite;pointer-events:none}
+.premium-tier>*:not(.tier-shine){position:relative;z-index:1}
+.tier-badge{display:inline-block;color:var(--tier);font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+.premium-tier h3{font-size:18px;margin:11px 0 21px;letter-spacing:-.4px}
+.tier-price{display:flex;align-items:flex-end;gap:7px}
+.tier-price strong{font-size:34px;line-height:1;color:#fff;letter-spacing:-1.4px}
+.tier-price span{color:#898992;font-size:10px;margin-bottom:4px}
+.premium-tier p{color:#9b9ba3;font-size:11px;line-height:1.55;margin:18px 0 0}
+.tier-highlight{display:inline-block;margin-top:16px;padding:7px 9px;border-radius:999px;background:rgba(var(--tier-rgb),.12);border:1px solid rgba(var(--tier-rgb),.38);color:var(--tier);font-size:8px;font-weight:900;letter-spacing:.8px}
+.premium-benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:18px}
+.premium-benefits div{padding:13px 14px;border-radius:14px;background:#111114;border:1px solid #26262b;color:#c9c9ce;font-size:11px}
+@keyframes tierSweep{0%{left:-55%;opacity:0}12%{opacity:1}55%{opacity:.95}75%,100%{left:125%;opacity:0}}
+@keyframes tierGlow{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:1;transform:scale(1.08)}}
+@media(max-width:1050px){.premium-tier-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.premium-tier-grid{grid-template-columns:1fr}.premium-tier{min-height:225px}.premium-benefits{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.tier-shine,.premium-tier::after{animation:none}}
