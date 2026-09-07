@@ -30,6 +30,7 @@ type Profile = {
   premium_until: string | null;
   is_active: boolean | null;
   avatar_url: string | null;
+  share_cheers_discord: boolean | null;
 };
 
 type GalleryPhoto = {
@@ -53,6 +54,7 @@ export default function EditProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [profilePhotos, setProfilePhotos] = useState<GalleryPhoto[]>([]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [shareCheersDiscord, setShareCheersDiscord] = useState(false);
 
   const drinks = [
     { value: '🍺 Beer', emoji: '🍺', label: t('editProfileScreen.beer') },
@@ -97,6 +99,7 @@ export default function EditProfileScreen() {
       setDrink(loadedProfile.currently_up_for ?? '🍺 Beer');
       setIsActive(loadedProfile.is_active ?? true);
       setAvatarUrl(loadedProfile.avatar_url ?? null);
+      setShareCheersDiscord(loadedProfile.share_cheers_discord ?? false);
 
       const { data: photosData, error: photosError } = await supabase
         .from('profile_photos')
@@ -163,6 +166,7 @@ export default function EditProfileScreen() {
         currently_up_for: drink,
         latitude,
         longitude,
+        share_cheers_discord: shareCheersDiscord,
       }).eq('id', session.user.id);
 
       if (error) throw error;
@@ -385,6 +389,21 @@ export default function EditProfileScreen() {
               {isActive ? `● ${t('editProfileScreen.active')}` : `● ${t('editProfileScreen.inactive')}`}
             </Text>
           </Pressable>
+
+          <View style={styles.discordShareBox}>
+            <View style={styles.discordShareCopy}>
+              <Text style={styles.discordShareTitle}>{t('editProfileScreen.discordCheersShareTitle')}</Text>
+              <Text style={styles.discordShareDescription}>{t('editProfileScreen.discordCheersShareDescription')}</Text>
+            </View>
+            <Pressable
+              style={[styles.discordShareToggle, shareCheersDiscord && styles.discordShareToggleOn]}
+              onPress={() => setShareCheersDiscord((value) => !value)}
+            >
+              <Text style={[styles.discordShareToggleText, shareCheersDiscord && styles.discordShareToggleTextOn]}>
+                {shareCheersDiscord ? t('editProfileScreen.on') : t('editProfileScreen.off')}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         <Pressable style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={saveProfile} disabled={saving}>
@@ -431,6 +450,14 @@ const styles = StyleSheet.create({
   activeButtonText: { fontSize: 12, fontWeight: '900' },
   activeButtonTextOn: { color: '#4ADE80' },
   activeButtonTextOff: { color: '#A1A1AA' },
+  discordShareBox: { marginTop: 16, backgroundColor: '#111113', borderWidth: 1, borderColor: '#27272A', borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  discordShareCopy: { flex: 1 },
+  discordShareTitle: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  discordShareDescription: { color: '#71717A', fontSize: 11, lineHeight: 16, marginTop: 4 },
+  discordShareToggle: { minWidth: 54, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999, backgroundColor: '#27272A', borderWidth: 1, borderColor: '#3F3F46', alignItems: 'center' },
+  discordShareToggleOn: { backgroundColor: '#5865F2', borderColor: '#818CF8' },
+  discordShareToggleText: { color: '#A1A1AA', fontSize: 11, fontWeight: '900', fontFamily: 'sans-serif' },
+  discordShareToggleTextOn: { color: '#FFFFFF' },
   saveButton: { marginTop: 10, backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 20, alignItems: 'center', elevation: 5 },
   saveButtonDisabled: { opacity: 0.5 },
   saveText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
