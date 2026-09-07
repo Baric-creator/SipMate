@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
+import { ChatCardSkeleton } from '../components/Skeleton';
 
 type ChatItem = {
   avatar_url: string | null;
@@ -229,7 +230,11 @@ export default function ChatsScreen() {
         <Text style={styles.subtitle}>{text.subtitle}</Text>
 
         {loading ? (
-          <Text style={styles.emptyText}>{text.loading}</Text>
+          <View>
+            <ChatCardSkeleton />
+            <ChatCardSkeleton />
+            <ChatCardSkeleton />
+          </View>
         ) : chats.length === 0 ? (
           <View style={styles.emptyBox}>
             <Text style={styles.emptyEmoji}>🍻</Text>
