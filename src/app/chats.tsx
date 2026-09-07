@@ -225,7 +225,7 @@ export default function ChatsScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>💬 {text.title}</Text>
+        <View style={styles.titleRow}><Text style={styles.titleEmoji}>💬</Text><Text style={styles.title}>{text.title}</Text></View>
         <Text style={styles.subtitle}>{text.subtitle}</Text>
 
         {loading ? (
@@ -330,6 +330,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 120,
   },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, titleEmoji: { fontSize: 24 },
   title: {
     color: '#FFFFFF',
     fontSize: 32,

@@ -41,9 +41,7 @@ export default function LanguageScreen() {
           }
         >
           <View>
-            <Text style={styles.languageName}>
-              🇬🇧 English
-            </Text>
+            <View style={styles.languageNameRow}><Text style={styles.flag}>🇬🇧</Text><Text style={styles.languageName}>English</Text></View>
 
             <Text style={styles.languageCode}>
               {t('languageScreen.english')}
@@ -68,9 +66,7 @@ export default function LanguageScreen() {
           }
         >
           <View>
-            <Text style={styles.languageName}>
-              🇩🇪 Deutsch
-            </Text>
+            <View style={styles.languageNameRow}><Text style={styles.flag}>🇩🇪</Text><Text style={styles.languageName}>Deutsch</Text></View>
 
             <Text style={styles.languageCode}>
               {t('languageScreen.german')}
@@ -95,9 +91,7 @@ export default function LanguageScreen() {
           }
         >
           <View>
-            <Text style={styles.languageName}>
-              🇭🇷 Hrvatski
-            </Text>
+            <View style={styles.languageNameRow}><Text style={styles.flag}>🇭🇷</Text><Text style={styles.languageName}>Hrvatski</Text></View>
 
             <Text style={styles.languageCode}>
               {t('languageScreen.croatian')}
@@ -168,6 +162,10 @@ const styles = StyleSheet.create({
   languageCardActive: {
     borderColor: '#DC2626',
   },
+
+  languageNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+
+  flag: { fontSize: 20 },
 
   languageName: {
     color: '#FFFFFF',

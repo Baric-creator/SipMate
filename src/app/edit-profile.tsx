@@ -55,11 +55,11 @@ export default function EditProfileScreen() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const drinks = [
-    { value: '🍺 Beer', label: `🍺 ${t('editProfileScreen.beer')}` },
-    { value: '🍹 Cocktail', label: `🍹 ${t('editProfileScreen.cocktail')}` },
-    { value: '🍷 Wine', label: `🍷 ${t('editProfileScreen.wine')}` },
-    { value: '🥃 Whisky', label: `🥃 ${t('editProfileScreen.whisky')}` },
-    { value: '☕ Coffee', label: `☕ ${t('editProfileScreen.coffee')}` },
+    { value: '🍺 Beer', emoji: '🍺', label: t('editProfileScreen.beer') },
+    { value: '🍹 Cocktail', emoji: '🍹', label: t('editProfileScreen.cocktail') },
+    { value: '🍷 Wine', emoji: '🍷', label: t('editProfileScreen.wine') },
+    { value: '🥃 Whisky', emoji: '🥃', label: t('editProfileScreen.whisky') },
+    { value: '☕ Coffee', emoji: '☕', label: t('editProfileScreen.coffee') },
   ];
 
   const genders = [
@@ -370,6 +370,7 @@ export default function EditProfileScreen() {
           <View style={styles.drinks}>
             {drinks.map((item) => (
               <Pressable key={item.value} style={[styles.drinkButton, drink === item.value && styles.drinkButtonSelected]} onPress={() => setDrink(item.value)}>
+                <Text style={styles.drinkEmoji}>{item.emoji}</Text>
                 <Text style={[styles.drinkText, drink === item.value && styles.drinkTextSelected]}>{item.label}</Text>
               </Pressable>
             ))}
@@ -419,7 +420,8 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#09090B', color: '#FFFFFF', borderWidth: 1, borderColor: '#27272A', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14 },
   bioInput: { minHeight: 110, textAlignVertical: 'top' },
   drinks: { flexDirection: 'row', flexWrap: 'wrap' },
-  drinkButton: { backgroundColor: '#27272A', borderWidth: 1, borderColor: '#3F3F46', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, marginRight: 8, marginBottom: 8 },
+  drinkButton: { backgroundColor: '#27272A', borderWidth: 1, borderColor: '#3F3F46', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, marginRight: 8, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  drinkEmoji: { fontSize: 16 },
   drinkButtonSelected: { backgroundColor: '#DC2626', borderColor: '#EF4444' },
   drinkText: { color: '#A1A1AA', fontSize: 13, fontWeight: '700' },
   drinkTextSelected: { color: '#FFFFFF', fontWeight: '900' },

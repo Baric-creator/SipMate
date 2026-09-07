@@ -687,15 +687,15 @@ export default function UserProfileScreen() {
 
         {cheersStatus === 'mutual' ? (
           <Pressable style={styles.primaryButton} onPress={startChat}>
-            <Text style={styles.primaryButtonText}>💬 {text.openChat}</Text>
+            <View style={styles.actionRow}><Text style={styles.actionEmoji}>💬</Text><Text style={styles.primaryButtonText}>{text.openChat}</Text></View>
           </Pressable>
         ) : cheersStatus === 'sent' ? (
           <Pressable style={[styles.primaryButton, styles.sentButton]} disabled>
-            <Text style={styles.primaryButtonText}>🍻 {text.cheersSent}</Text>
+            <View style={styles.actionRow}><Text style={styles.actionEmoji}>🍻</Text><Text style={styles.primaryButtonText}>{text.cheersSent}</Text></View>
           </Pressable>
         ) : (
           <Pressable style={styles.primaryButton} onPress={handleCheers}>
-            <Text style={styles.primaryButtonText}>🍻 {text.sendCheers}</Text>
+            <View style={styles.actionRow}><Text style={styles.actionEmoji}>🍻</Text><Text style={styles.primaryButtonText}>{text.sendCheers}</Text></View>
           </Pressable>
         )}
       </View>
@@ -734,13 +734,13 @@ export default function UserProfileScreen() {
                 setShowReportModal(true);
               }}
             >
-              <Text style={styles.reportOptionText}>⚠️ {text.reportUser}</Text>
+              <View style={styles.actionRowLeft}><Text style={styles.actionEmoji}>⚠️</Text><Text style={styles.reportOptionText}>{text.reportUser}</Text></View>
             </Pressable>
 
             <View style={styles.menuDivider} />
 
             <Pressable style={styles.menuOption} onPress={handleBlockUser}>
-              <Text style={styles.blockOptionText}>🚫 {text.blockUser}</Text>
+              <View style={styles.actionRowLeft}><Text style={styles.actionEmoji}>🚫</Text><Text style={styles.blockOptionText}>{text.blockUser}</Text></View>
             </Pressable>
 
             <Pressable style={styles.cancelMenuButton} onPress={() => setShowUserMenu(false)}>
@@ -845,7 +845,7 @@ export default function UserProfileScreen() {
 
             <View style={styles.cheersActions}>
               <Pressable style={styles.chatButton} onPress={startChat}>
-                <Text style={styles.chatButtonText}>💬 {text.startChat}</Text>
+                <View style={styles.actionRow}><Text style={styles.actionEmoji}>💬</Text><Text style={styles.chatButtonText}>{text.startChat}</Text></View>
               </Pressable>
 
               <Pressable
@@ -855,7 +855,7 @@ export default function UserProfileScreen() {
                   router.push('/nearby');
                 }}
               >
-                <Text style={styles.browseButtonText}>🍻 {text.keepBrowsing}</Text>
+                <View style={styles.actionRow}><Text style={styles.actionEmoji}>🍻</Text><Text style={styles.browseButtonText}>{text.keepBrowsing}</Text></View>
               </Pressable>
             </View>
           </Animated.View>
@@ -1086,6 +1086,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  actionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  actionRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  actionEmoji: { fontSize: 17 },
   primaryButton: {
     width: '100%',
     marginTop: 24,

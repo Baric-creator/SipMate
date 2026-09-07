@@ -200,9 +200,14 @@ export default function RegisterScreen() {
             onPress={handleRegister}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>
-              {loading ? text.creating : `🍻 ${text.create}`}
-            </Text>
+            {loading ? (
+              <Text style={styles.buttonText}>{text.creating}</Text>
+            ) : (
+              <View style={styles.buttonContent}>
+                <Text style={styles.buttonEmoji}>🍻</Text>
+                <Text style={styles.buttonText}>{text.create}</Text>
+              </View>
+            )}
           </Pressable>
 
           <Text style={styles.note}>{text.note}</Text>
@@ -311,6 +316,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   buttonDisabled: { opacity: 0.5 },
+  buttonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  buttonEmoji: { fontSize: 17 },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 15,

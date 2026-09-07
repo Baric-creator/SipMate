@@ -203,7 +203,7 @@ export default function ChatScreen() {
           <View style={styles.headerInfo}>
             <Text style={styles.headerName}>{String(name || 'SipMate')}</Text>
             <Text style={[styles.status, { color: otherUserActive ? '#22C55E' : '#71717A' }]}>● {otherUserActive ? text.active : text.inactive}</Text>
-            <Text style={styles.connectedText}>🍻 {text.connected}</Text>
+            <View style={styles.connectedRow}><Text style={styles.connectedEmoji}>🍻</Text><Text style={styles.connectedText}>{text.connected}</Text></View>
           </View>
         </TouchableOpacity>
       </View>
@@ -261,6 +261,7 @@ const styles = StyleSheet.create({
   headerInfo: { flex: 1 },
   headerName: { color: '#FFFFFF', fontSize: 17, fontWeight: '900', marginBottom: 2 },
   status: { fontSize: 12, fontWeight: '700' },
+  connectedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 }, connectedEmoji: { fontSize: 14 },
   connectedText: { color: '#EF4444', fontSize: 10, fontWeight: '900', letterSpacing: 0.4, marginTop: 3 },
   messages: { flex: 1 },
   messagesContent: { flexGrow: 1, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 20 },

@@ -150,9 +150,10 @@ export default function BlockedUsersScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>
-          🚫 {t('blockedUsers.title')}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.titleEmoji}>🚫</Text>
+          <Text style={styles.title}>{t('blockedUsers.title')}</Text>
+        </View>
 
         <Text style={styles.subtitle}>
           {t('blockedUsers.subtitle')}
@@ -261,6 +262,8 @@ const styles = StyleSheet.create({
     paddingTop: 48,
   },
 
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  titleEmoji: { fontSize: 24 },
   title: {
     color: '#FFFFFF',
     fontSize: 30,
