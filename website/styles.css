@@ -483,3 +483,6 @@ img{content-visibility:auto}
 .nav-share,.install-app-button{transition:transform .18s ease,border-color .18s ease,background .18s ease}
 .install-app-button:hover{transform:translateY(-2px);border-color:#ef4444;background:#1b1517}
 @media(display-mode:standalone){.install-app-button{display:none!important}}
+
+.activity-next{color:#d6d6dc!important;font-weight:700}
+.activity-next:first-of-type{color:#f87171!important}
