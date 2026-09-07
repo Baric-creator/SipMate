@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import {
   Animated,
+  DimensionValue,
   StyleProp,
   StyleSheet,
   View,
@@ -8,7 +9,7 @@ import {
 } from 'react-native';
 
 type SkeletonProps = {
-  width?: number | string;
+  width?: DimensionValue;
   height: number;
   radius?: number;
   style?: StyleProp<ViewStyle>;
