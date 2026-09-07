@@ -40,6 +40,9 @@ export default function HomeScreen() {
   const [loading, setLoading] =
     useState(true);
 
+  const [activityCount, setActivityCount] =
+    useState(0);
+
   useFocusEffect(
     useCallback(() => {
       loadProfile();
@@ -162,12 +165,48 @@ export default function HomeScreen() {
         }
 
         setProfile(created);
+        await loadActivityCount(session.user.id);
         return;
       }
 
       setProfile(data);
+      await loadActivityCount(session.user.id);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadActivityCount(myId: string) {
+    try {
+      const [{ data: conversations }, { data: receivedCheers }] = await Promise.all([
+        supabase
+          .from('conversations')
+          .select('id')
+          .or(`user_one.eq.${myId},user_two.eq.${myId}`),
+        supabase
+          .from('cheers')
+          .select('id', { count: 'exact' })
+          .eq('receiver_id', myId),
+      ]);
+
+      const conversationIds = (conversations ?? []).map((item) => item.id);
+      let unreadMessages = 0;
+
+      if (conversationIds.length) {
+        const { count } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .in('conversation_id', conversationIds)
+          .neq('sender_id', myId)
+          .is('read_at', null);
+
+        unreadMessages = count ?? 0;
+      }
+
+      const cheersCount = receivedCheers?.length ?? 0;
+      setActivityCount(Math.min(99, unreadMessages + cheersCount));
+    } catch (error) {
+      console.log('ACTIVITY COUNT ERROR:', error);
     }
   }
 
@@ -256,7 +295,19 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        <Pressable
+        <View style={styles.headerActions}>
+          <Pressable style={styles.activityButton} onPress={() => router.push('/activity')}>
+            <Text style={styles.activityIcon}>🔔</Text>
+            {activityCount > 0 && (
+              <View style={styles.activityBadge}>
+                <Text style={styles.activityBadgeText}>
+                  {activityCount > 99 ? '99+' : activityCount}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+
+          <Pressable
           style={[
             styles.statusBadge,
             profile?.is_active
@@ -281,7 +332,8 @@ export default function HomeScreen() {
                   'discoverScreen.inactive'
                 )}`}
           </Text>
-        </Pressable>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.hero}>
@@ -601,6 +653,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  activityButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#141417',
+    borderWidth: 1,
+    borderColor: '#242428',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  activityIcon: {
+    fontSize: 16,
+  },
+  activityBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#09090B',
+  },
+  activityBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: '900',
   },
 
   logo: {
