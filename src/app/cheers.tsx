@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
+import { ChatCardSkeleton, Skeleton } from '../components/Skeleton';
 
 type CheersItem = {
   id: string;
@@ -217,7 +218,16 @@ export default function CheersScreen() {
         </View>
 
         {loading ? (
-          <View style={styles.emptyBox}><Text style={styles.emptyEmoji}>🍻</Text><Text style={styles.emptyText}>{t('cheersScreen.loading')}</Text></View>
+          <View>
+            <View style={styles.statsRow}>
+              <Skeleton height={72} radius={16} style={{ flex: 1, marginHorizontal: 4 }} />
+              <Skeleton height={72} radius={16} style={{ flex: 1, marginHorizontal: 4 }} />
+              <Skeleton height={72} radius={16} style={{ flex: 1, marginHorizontal: 4 }} />
+            </View>
+            <ChatCardSkeleton />
+            <ChatCardSkeleton />
+            <ChatCardSkeleton />
+          </View>
         ) : cheers.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyEmoji}>🍻</Text>
