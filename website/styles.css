@@ -474,3 +474,12 @@ button{font:inherit}
   .referral-card{padding:22px 18px}
   .install-app-button{right:14px;bottom:132px}
 }
+
+/* performance interaction polish */
+img{content-visibility:auto}
+.faq-list details{transition:border-color .2s ease,background .2s ease}
+.faq-list details[open]{border-color:#3b2a2c;background:#151214}
+.nav-share:hover{border-color:#ef4444;color:#fff;transform:translateY(-1px)}
+.nav-share,.install-app-button{transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.install-app-button:hover{transform:translateY(-2px);border-color:#ef4444;background:#1b1517}
+@media(display-mode:standalone){.install-app-button{display:none!important}}
