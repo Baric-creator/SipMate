@@ -132,22 +132,59 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const latitude = currentLocation.coords.latitude;
-      const longitude = currentLocation.coords.longitude;
-
+      let latitude: number | null = null;
+      let longitude: number | null = null;
       let detectedCity = city.trim() || null;
+
       try {
-        const reverseResponse = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`
-        );
-        if (reverseResponse.ok) {
-          const reverseData = await reverseResponse.json();
-          detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ??
-            reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity;
+        const currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+          timeout: 8000,
+        });
+        latitude = currentLocation.coords.latitude;
+        longitude = currentLocation.coords.longitude;
+
+        try {
+          const reverseResponse = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+            { headers: { 'User-Agent': 'SipMate/1.0' } }
+          );
+          if (reverseResponse.ok) {
+            const reverseData = await reverseResponse.json();
+            detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ??
+              reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity;
+          }
+        } catch (reverseError) {
+          console.log('REVERSE GEOCODE ERROR:', reverseError);
         }
-      } catch (reverseError) {
-        console.log('REVERSE GEOCODE ERROR:', reverseError);
+      } catch (locationError) {
+        console.log('LOCATION FIX UNAVAILABLE:', locationError);
+
+        if (!detectedCity) {
+          showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
+          return;
+        }
+
+        try {
+          const searchResponse = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,
+            { headers: { 'User-Agent': 'SipMate/1.0' } }
+          );
+          if (searchResponse.ok) {
+            const results = await searchResponse.json();
+            if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
+              latitude = Number(results[0].lat);
+              longitude = Number(results[0].lon);
+            }
+          }
+        } catch (geocodeError) {
+          console.log('CITY GEOCODE FALLBACK ERROR:', geocodeError);
+        }
+
+        if (latitude == null || longitude == null) {
+          showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
+          return;
+        }
       }
 
       const numericAge = age.trim() ? Number(age) : null;
