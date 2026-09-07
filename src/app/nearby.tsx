@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
+import { ProfileCardSkeleton } from '../components/Skeleton';
 
 export default function NearbyScreen() {
   const { t, i18n } = useTranslation();
@@ -1421,14 +1422,11 @@ export default function NearbyScreen() {
         )}
 
       {loading ? (
-        <Text
-          style={styles.subtitle}
-        >
-          📍{' '}
-          {t(
-            'nearbyScreen.findingPeople'
-          )}
-        </Text>
+        <View>
+          <ProfileCardSkeleton />
+          <ProfileCardSkeleton />
+          <ProfileCardSkeleton />
+        </View>
       ) : needsLocation ? (
         <View style={styles.locationRequiredCard}>
           <Text style={styles.locationRequiredText}>📍 {locationMissingText}</Text>
