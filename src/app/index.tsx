@@ -40,20 +40,23 @@ export default function HomeScreen() {
         eyebrow: 'SIPMATE COMMUNITY',
         title: 'Find a SipMate',
         body: 'Finde Leute, teile deine Stadt und bleib über WhatsApp mit der Community verbunden.',
-        button: 'AUF WHATSAPP BEITRETEN',
+        button: 'FIND A SIPMATE ÖFFNEN',
+        generalButton: 'GENERAL CHAT ÖFFNEN',
       }
     : language === 'hr'
       ? {
           eyebrow: 'SIPMATE COMMUNITY',
           title: 'Find a SipMate',
           body: 'Pronađi ekipu, napiši svoj grad i poveži se s communityjem direktno na WhatsAppu.',
-          button: 'PRIDRUŽI SE NA WHATSAPPU',
+          button: 'OTVORI FIND A SIPMATE',
+          generalButton: 'OTVORI GENERAL CHAT',
         }
       : {
           eyebrow: 'SIPMATE COMMUNITY',
           title: 'Find a SipMate',
           body: 'Meet people, share your city and stay connected with the community directly on WhatsApp.',
-          button: 'JOIN ON WHATSAPP',
+          button: 'OPEN FIND A SIPMATE',
+          generalButton: 'OPEN GENERAL CHAT',
         };
 
   const [profile, setProfile] =
@@ -613,14 +616,25 @@ export default function HomeScreen() {
 
         <Text style={styles.communityBody}>{communityText.body}</Text>
 
-        <Pressable
-          style={styles.communityButton}
-          onPress={() => Linking.openURL('https://chat.whatsapp.com/LfjUaAs4NBEINuPpU768n0?s=cl&p=a&mlu=4&ilr=4')}
-        >
-          <Text style={styles.communityButtonText}>
-            {communityText.button} ↗
-          </Text>
-        </Pressable>
+        <View style={styles.communityButtons}>
+          <Pressable
+            style={styles.communityButton}
+            onPress={() => Linking.openURL('https://chat.whatsapp.com/LfjUaAs4NBEINuPpU768n0?s=cl&p=a&mlu=4&ilr=4')}
+          >
+            <Text style={styles.communityButtonText}>
+              📍 {communityText.button} ↗
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.communityButton, styles.communityButtonSecondary]}
+            onPress={() => Linking.openURL('https://chat.whatsapp.com/FIeAP13z4x5H6Ow86E9PYE?s=cl&p=a&mlu=4&ilr=4')}
+          >
+            <Text style={styles.communityButtonText}>
+              💬 {communityText.generalButton} ↗
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <View
@@ -1013,13 +1027,19 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 12,
   },
-  communityButton: {
+  communityButtons: {
+    gap: 9,
     marginTop: 14,
+  },
+  communityButton: {
     minHeight: 46,
     borderRadius: 15,
     backgroundColor: '#25D366',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  communityButtonSecondary: {
+    backgroundColor: '#1E8E4A',
   },
   communityButtonText: {
     color: '#07160D',
