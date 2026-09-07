@@ -34,11 +34,11 @@ export default function PremiumAndroidScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#09090B' },
-  content: { flexGrow: 1, width: '100%', maxWidth: 620, alignSelf: 'center', justifyContent: 'center', padding: 24 },
+  content: { flexGrow: 1, width: '100%', maxWidth: 620, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 36 },
   logo: { color: '#EF4444', fontSize: 17, fontWeight: '900', textAlign: 'center', marginBottom: 14 },
-  title: { color: '#FFFFFF', fontSize: 32, fontWeight: '900', textAlign: 'center', marginBottom: 24 },
-  card: { backgroundColor: '#18181B', borderWidth: 1, borderColor: '#F59E0B', borderRadius: 24, padding: 24, alignItems: 'center' },
-  icon: { fontSize: 44, marginBottom: 16 },
+  title: { color: '#FFFFFF', fontSize: 29, fontWeight: '900', textAlign: 'center', marginBottom: 24 },
+  card: { backgroundColor: '#141417', borderWidth: 1, borderColor: '#5F430A', borderRadius: 20, padding: 22, alignItems: 'center' },
+  icon: { fontSize: 38, marginBottom: 16 },
   body: { color: '#E4E4E7', fontSize: 15, lineHeight: 23, textAlign: 'center', fontWeight: '700' },
   note: { color: '#A1A1AA', fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 14 },
   backButton: { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 14, marginTop: 22 },
