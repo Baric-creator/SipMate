@@ -178,15 +178,22 @@ export default function HomeScreen() {
 
   async function loadActivityCount(myId: string) {
     try {
-      const [{ data: conversations }, { data: receivedCheers }] = await Promise.all([
+      const seenAt = await AsyncStorage.getItem('sipmate:activity-seen-at');
+
+      const [{ data: conversations }, cheersResult] = await Promise.all([
         supabase
           .from('conversations')
           .select('id')
           .or(`user_one.eq.${myId},user_two.eq.${myId}`),
-        supabase
-          .from('cheers')
-          .select('id', { count: 'exact' })
-          .eq('receiver_id', myId),
+        (() => {
+          let query = supabase
+            .from('cheers')
+            .select('id', { count: 'exact', head: true })
+            .eq('receiver_id', myId);
+
+          if (seenAt) query = query.gt('created_at', seenAt);
+          return query;
+        })(),
       ]);
 
       const conversationIds = (conversations ?? []).map((item) => item.id);
@@ -203,7 +210,7 @@ export default function HomeScreen() {
         unreadMessages = count ?? 0;
       }
 
-      const cheersCount = receivedCheers?.length ?? 0;
+      const cheersCount = cheersResult.count ?? 0;
       setActivityCount(Math.min(99, unreadMessages + cheersCount));
     } catch (error) {
       console.log('ACTIVITY COUNT ERROR:', error);
