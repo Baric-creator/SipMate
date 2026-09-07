@@ -59,3 +59,16 @@ if(form&&status){
     finally{clearTimeout(timer);submitting=false;button.disabled=false;form.removeAttribute("aria-busy")}
   });
 }
+
+// sipmate-parallax
+const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+const stage=document.querySelector(".phone-stage");
+const beerShadow=document.querySelector(".ambient-beer");
+if(!reducedMotion&&stage&&window.matchMedia("(pointer:fine)").matches){
+  window.addEventListener("pointermove",e=>{
+    const x=(e.clientX/window.innerWidth-.5);
+    const y=(e.clientY/window.innerHeight-.5);
+    stage.style.transform=`rotateY(${x*2.5}deg) rotateX(${-y*2}deg)`;
+    if(beerShadow)beerShadow.style.marginRight=`${x*10}px`;
+  },{passive:true});
+}
