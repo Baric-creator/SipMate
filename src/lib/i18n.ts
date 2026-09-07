@@ -46,6 +46,8 @@ const resources = {
 editProfileScreen: {
   locationPermissionRequired:
     'Location permission is required for Nearby.',
+  locationUnavailableCityFallback:
+    'Current GPS location is unavailable. Enter a city and try saving again.',
   nameRequired: 'Name is required.',
 
   title: 'Edit Profile',
@@ -315,6 +317,8 @@ cheersScreen: {
     editProfileScreen: {
   locationPermissionRequired:
     'Für Nearby ist die Standortberechtigung erforderlich.',
+  locationUnavailableCityFallback:
+    'Der aktuelle GPS-Standort ist nicht verfügbar. Gib eine Stadt ein und speichere erneut.',
   nameRequired: 'Name ist erforderlich.',
 
   title: 'Profil bearbeiten',
@@ -604,6 +608,8 @@ cheersScreen: {
 editProfileScreen: {
   locationPermissionRequired:
     'Za Nearby je potrebna dozvola za lokaciju.',
+  locationUnavailableCityFallback:
+    'Trenutna GPS lokacija nije dostupna. Upiši grad i pokušaj ponovno spremiti profil.',
   nameRequired: 'Ime je obavezno.',
 
   title: 'Uredi profil',
