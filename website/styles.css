@@ -34,3 +34,8 @@
 .modern-info-card small{display:block;color:#71717a;font-size:7px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
 .modern-info-card strong{display:block;margin-top:7px;font-size:16px}
 .modern-about p{margin:7px 0 0;color:#b6b6bc;font-size:9px;line-height:1.4}
+
+.support-fab{position:fixed;right:20px;bottom:20px;z-index:80;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;background:rgba(20,20,23,.94);border:1px solid #3a2020;color:#f4f4f5;text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.38);backdrop-filter:blur(12px);transition:transform .2s ease,border-color .2s ease,background .2s ease}
+.support-fab:hover{transform:translateY(-2px);border-color:#ef4444;background:#1b1416}
+.support-fab-icon{font-size:16px}
+@media(max-width:640px){.support-fab{right:14px;bottom:14px;min-height:42px;padding:0 13px;font-size:11px}}
