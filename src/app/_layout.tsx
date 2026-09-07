@@ -33,7 +33,7 @@ export default function RootLayout() {
     language === 'hr' ? 'Trebaš pomoć?' :
     'Need assistance?';
   const currentRoute = segments[0] ?? '';
-  const hideSupport = currentRoute === 'login' || currentRoute === 'register';
+  const hideSupport = currentRoute === 'login' || currentRoute === 'register' || currentRoute === 'onboarding';
 
   return (
     <>
@@ -80,6 +80,7 @@ export default function RootLayout() {
         />
 
         <Tabs.Screen name="login" options={{ href: null, tabBarStyle: hiddenTabBar }} />
+        <Tabs.Screen name="onboarding" options={{ href: null, tabBarStyle: hiddenTabBar }} />
         <Tabs.Screen name="register" options={{ href: null, tabBarStyle: hiddenTabBar }} />
 
         <Tabs.Screen name="blocked-users" options={{ href: null }} />
