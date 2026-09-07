@@ -32,6 +32,11 @@ export default function RootLayout() {
     language === 'de' ? 'Brauchst du Hilfe?' :
     language === 'hr' ? 'Trebaš pomoć?' :
     'Need assistance?';
+  const supportChannelId =
+    language === 'de' ? '1545890557652635768' :
+    language === 'hr' ? '1545891206322458775' :
+    '1545880341699493978';
+  const supportUrl = `https://discord.com/channels/1545876541387440188/${supportChannelId}`;
   const currentRoute = segments[0] ?? '';
   const hideSupport = currentRoute === 'login' || currentRoute === 'register' || currentRoute === 'onboarding';
 
@@ -101,7 +106,7 @@ export default function RootLayout() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={supportLabel}
-          onPress={() => Linking.openURL('https://discord.com/channels/1545876541387440188/1545889672448843856')}
+          onPress={() => Linking.openURL(supportUrl)}
           style={({ pressed }) => ({
             position: 'absolute',
             right: 16,
