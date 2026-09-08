@@ -1,4 +1,4 @@
-const CACHE="sipmate-site-v1";
+const CACHE="sipmate-site-v2";
 const CORE=[
   "/",
   "/index.html",
@@ -37,6 +37,21 @@ self.addEventListener("fetch",event=>{
           return res;
         })
         .catch(()=>caches.match(req).then(r=>r||caches.match("/offline.html")))
+    );
+    return;
+  }
+
+  if(url.pathname.endsWith("/styles.css")||url.pathname.endsWith("/script.js")){
+    event.respondWith(
+      fetch(req)
+        .then(res=>{
+          if(res&&res.ok){
+            const copy=res.clone();
+            caches.open(CACHE).then(cache=>cache.put(req,copy));
+          }
+          return res;
+        })
+        .catch(()=>caches.match(req))
     );
     return;
   }
