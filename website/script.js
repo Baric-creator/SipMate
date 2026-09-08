@@ -88,7 +88,7 @@ if(form&&status){
 // sipmate-parallax
 const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const stage=document.querySelector(".phone-stage");
-const beerShadow=document.querySelector(".ambient-beer");
+const beerShadow=document.querySelector(".ambient-bar");
 if(!reducedMotion&&stage&&window.matchMedia("(pointer:fine)").matches){
   window.addEventListener("pointermove",e=>{
     const x=(e.clientX/window.innerWidth-.5);
