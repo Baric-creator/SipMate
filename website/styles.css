@@ -77,7 +77,7 @@ body::after{
   top:9vh;
   font-size:clamp(280px,43vw,720px);
   line-height:1;
-  opacity:.035;
+  opacity:.0655;
   filter:grayscale(1) blur(.4px);
   transform:rotate(-12deg);
   pointer-events:none;
@@ -603,4 +603,12 @@ img{content-visibility:auto}
 @media(max-width:760px){
   .city-demand-panel{grid-template-columns:1fr}
   .city-demand-list{justify-content:flex-start}
+}
+
+/* ambient beer visibility boost */
+.ambient-beer{
+  filter:drop-shadow(0 0 42px rgba(245,158,11,.08));
+}
+@media(max-width:900px){
+  .ambient-beer{filter:drop-shadow(0 0 30px rgba(245,158,11,.07))}
 }
