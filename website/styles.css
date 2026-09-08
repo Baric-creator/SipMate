@@ -81,12 +81,12 @@ body::after{
   user-select:none;
   overflow:hidden;
   border-radius:46px;
-  opacity:.46;
+  opacity:.38;
   background:
     linear-gradient(90deg,rgba(9,9,11,.70) 0%,rgba(9,9,11,.22) 26%,rgba(9,9,11,.04) 62%,rgba(9,9,11,.16) 100%),
     linear-gradient(180deg,rgba(9,9,11,.06),rgba(9,9,11,.38) 92%),
-    url("https://images.pexels.com/photos/18677558/pexels-photo-18677558.jpeg?auto=compress&dpr=1&w=1800") center/cover no-repeat;
-  filter:saturate(.92) contrast(1.08) brightness(.94);
+    url("https://images.pexels.com/photos/5490965/pexels-photo-5490965.jpeg?auto=compress&dpr=1&w=1800") center/cover no-repeat;
+  filter:saturate(.82) contrast(1.06) brightness(.82);
   box-shadow:
     inset 0 0 78px rgba(9,9,11,.62),
     0 0 130px rgba(239,68,68,.10);
