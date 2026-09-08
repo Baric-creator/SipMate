@@ -70,22 +70,73 @@ body::after{
   opacity:.28;
   mask-image:linear-gradient(to bottom,rgba(0,0,0,.45),transparent 80%);
 }
-.ambient-beer{
+.ambient-bar{
   position:fixed;
   z-index:-2;
-  right:-13vw;
-  top:5vh;
-  font-size:clamp(340px,54vw,860px);
-  line-height:1;
-  opacity:.105;
-  filter:grayscale(.65) sepia(.18) saturate(1.15) blur(.15px)
-    drop-shadow(0 0 28px rgba(245,158,11,.12))
-    drop-shadow(0 0 70px rgba(239,68,68,.08));
-  transform:rotate(-12deg);
+  right:-6vw;
+  top:2vh;
+  width:min(72vw,1180px);
+  height:94vh;
   pointer-events:none;
   user-select:none;
-  animation:beerFloat 13s ease-in-out infinite;
-  will-change:transform,filter;
+  overflow:hidden;
+  border-radius:46px;
+  opacity:.26;
+  background:
+    linear-gradient(90deg,rgba(9,9,11,.94) 0%,rgba(9,9,11,.45) 28%,rgba(9,9,11,.12) 62%,rgba(9,9,11,.36) 100%),
+    linear-gradient(180deg,rgba(9,9,11,.18),rgba(9,9,11,.74) 88%),
+    url("https://images.pexels.com/photos/15789101/pexels-photo-15789101/free-photo-of-interior-of-a-bar.jpeg?auto=compress&dpr=1&w=1600") center/cover no-repeat;
+  filter:saturate(.78) contrast(1.05) brightness(.72);
+  box-shadow:
+    inset 0 0 110px rgba(9,9,11,.92),
+    0 0 120px rgba(239,68,68,.08);
+  mask-image:linear-gradient(to left,rgba(0,0,0,.96) 0%,rgba(0,0,0,.88) 68%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to left,rgba(0,0,0,.96) 0%,rgba(0,0,0,.88) 68%,transparent 100%);
+  animation:barDrift 18s ease-in-out infinite;
+  will-change:transform,filter,opacity;
+}
+.ambient-bar::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 76% 24%,rgba(239,68,68,.20),transparent 16%),
+    radial-gradient(circle at 60% 42%,rgba(59,130,246,.12),transparent 18%),
+    linear-gradient(180deg,transparent 0 58%,rgba(245,158,11,.04) 80%,transparent 100%);
+  mix-blend-mode:screen;
+  opacity:.55;
+  animation:ambientNeonFlicker 5.8s steps(1,end) infinite;
+}
+.ambient-neon{
+  position:absolute;
+  z-index:2;
+  right:17%;
+  top:18%;
+  width:160px;
+  height:4px;
+  border-radius:999px;
+  background:rgba(248,113,113,.78);
+  box-shadow:
+    0 0 8px rgba(248,113,113,.95),
+    0 0 22px rgba(239,68,68,.68),
+    0 0 52px rgba(239,68,68,.34);
+  transform:rotate(-3deg);
+  opacity:.72;
+  animation:neonTubeFlicker 4.7s steps(1,end) infinite;
+}
+@keyframes barDrift{
+  0%,100%{transform:translate3d(0,0,0) scale(1.015)}
+  50%{transform:translate3d(-10px,8px,0) scale(1.03)}
+}
+@keyframes ambientNeonFlicker{
+  0%,18%,22%,64%,68%,100%{opacity:.55}
+  19%,21%,65%{opacity:.18}
+  20%,66%{opacity:.8}
+}
+@keyframes neonTubeFlicker{
+  0%,12%,15%,54%,57%,88%,100%{opacity:.72}
+  13%,55%,89%{opacity:.16}
+  14%,56%,90%{opacity:.94}
 }
 .ambient-glow{
   position:fixed;
@@ -94,12 +145,9 @@ body::after{
   filter:blur(100px);
   pointer-events:none;
 }
-.ambient-glow-one{width:520px;height:520px;right:-150px;top:10%;background:radial-gradient(circle,rgba(245,158,11,.12),rgba(239,68,68,.09) 42%,transparent 72%)}
+.ambient-glow-one{width:520px;height:520px;right:-150px;top:10%;background:radial-gradient(circle,rgba(245,158,11,.08),rgba(239,68,68,.07) 42%,transparent 72%)}
 .ambient-glow-two{width:340px;height:340px;left:-170px;top:58%;background:rgba(127,29,29,.08)}
-@keyframes beerFloat{
-  0%,100%{transform:translate3d(0,0,0) rotate(-12deg) scale(1)}
-  50%{transform:translate3d(-18px,20px,0) rotate(-10deg) scale(1.018)}
-}
+
 .nav{
   position:sticky;
   top:0;
@@ -254,18 +302,22 @@ body::after{
 .reveal.visible{opacity:1;transform:none}
 @media(max-width:900px){
   .polish-strip{grid-template-columns:1fr;margin-top:0}
-  .ambient-beer{right:-25vw;top:14vh;font-size:82vw;opacity:.072}
+  .ambient-bar{right:-18vw;top:8vh;width:92vw;height:84vh;opacity:.22;border-radius:34px}
 }
 @media(max-width:560px){
   .nav{width:100%;padding-inline:14px}
-  .ambient-beer{
-    font-size:118vw;
-    right:-43vw;
-    top:20vh;
-    opacity:.052;
-    filter:grayscale(.75) sepia(.14) saturate(1.05) blur(.2px)
-      drop-shadow(0 0 20px rgba(245,158,11,.08));
+  .ambient-bar{
+    right:-42vw;
+    top:16vh;
+    width:138vw;
+    height:68vh;
+    opacity:.16;
+    border-radius:28px;
+    filter:saturate(.7) contrast(1.02) brightness(.66);
+    mask-image:linear-gradient(to left,rgba(0,0,0,.92) 0%,rgba(0,0,0,.76) 60%,transparent 100%);
+    -webkit-mask-image:linear-gradient(to left,rgba(0,0,0,.92) 0%,rgba(0,0,0,.76) 60%,transparent 100%);
   }
+  .ambient-neon{right:18%;top:20%;width:110px;opacity:.52}
   .polish-strip{width:min(100% - 28px,1180px);margin-bottom:52px}
   .polish-card{min-height:72px}
 }
@@ -624,3 +676,7 @@ img{content-visibility:auto}
 }
 
 .confirm-note{display:block;margin-top:7px;color:#72727b;font-size:9px;line-height:1.5}
+
+@media(prefers-reduced-motion:reduce){
+  .ambient-bar,.ambient-bar::after,.ambient-neon{animation:none!important}
+}
