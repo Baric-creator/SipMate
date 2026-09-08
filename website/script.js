@@ -12,7 +12,15 @@ how:"Kako radi",preview:"Pregled aplikacije",premium:"Premium",communityNav:"Com
 
 const supportChannels={en:"1545880341699493978",de:"1545890557652635768",hr:"1545891206322458775"};
 let locale="en";
-try{const saved=localStorage.getItem("sipmate-locale");if(saved&&translations[saved])locale=saved}catch{}
+try{
+  const saved=localStorage.getItem("sipmate-locale");
+  if(saved&&translations[saved]){
+    locale=saved;
+  }else{
+    const browserLang=(navigator.language||"en").split("-")[0].toLowerCase();
+    if(translations[browserLang])locale=browserLang;
+  }
+}catch{}
 function applyLocale(lang){
   locale=translations[lang]?lang:"en";
   try{localStorage.setItem("sipmate-locale",locale)}catch{}
@@ -131,7 +139,12 @@ if(cheersDemo&&!reducedMotion){
 
 // share-sipmate
 async function shareSipMate(){
-  const shareData={title:"SipMate 🍻",text:"Not dating. Just drinks, people & good times.",url:"https://officialsipmate.com/"};
+  const shareTexts={
+    en:"Not dating. Just drinks, people & good times.",
+    de:"Kein Dating. Nur Drinks, Leute & gute Zeit.",
+    hr:"Nije dating. Samo piće, ljudi i dobra zabava."
+  };
+  const shareData={title:"SipMate 🍻",text:shareTexts[locale]||shareTexts.en,url:"https://officialsipmate.com/"};
   try{
     if(navigator.share){await navigator.share(shareData);return;}
     await navigator.clipboard?.writeText(shareData.url);
@@ -220,3 +233,43 @@ document.querySelectorAll("[data-city]").forEach(btn=>{
   btn.addEventListener("click",()=>focusWaitlistCity(btn.dataset.city||""));
 });
 document.querySelector("[data-request-city]")?.addEventListener("click",()=>focusWaitlistCity(""));
+
+
+// active-section-nav
+const navSectionLinks=[...document.querySelectorAll('.nav-links a[href^="#"]')];
+const sectionMap=navSectionLinks
+  .map(link=>({link,section:document.querySelector(link.getAttribute("href"))}))
+  .filter(item=>item.section);
+if(sectionMap.length){
+  const navObserver=new IntersectionObserver(entries=>{
+    const visible=entries
+      .filter(entry=>entry.isIntersecting)
+      .sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+    if(!visible)return;
+    sectionMap.forEach(({link,section})=>{
+      link.classList.toggle("active-section",section===visible.target);
+    });
+  },{rootMargin:"-30% 0px -55% 0px",threshold:[0,.1,.25,.5]});
+  sectionMap.forEach(({section})=>navObserver.observe(section));
+}
+
+// rollout-selected-city
+document.querySelectorAll("[data-city]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll("[data-city]").forEach(other=>other.classList.remove("selected-city"));
+    btn.classList.add("selected-city");
+  });
+});
+
+// hide mobile sticky CTA around waitlist/footer
+const stickyCta=document.querySelector(".mobile-sticky-cta");
+const waitlistSection=document.getElementById("waitlist");
+const pageFooter=document.querySelector("footer");
+if(stickyCta&&(waitlistSection||pageFooter)){
+  const stickyObserver=new IntersectionObserver(entries=>{
+    const shouldHide=entries.some(entry=>entry.isIntersecting);
+    stickyCta.classList.toggle("is-hidden",shouldHide);
+  },{threshold:.15});
+  if(waitlistSection)stickyObserver.observe(waitlistSection);
+  if(pageFooter)stickyObserver.observe(pageFooter);
+}
