@@ -588,3 +588,19 @@ img{content-visibility:auto}
 
 .city-select-hint{margin:2px 4px 0;color:#686870;font-size:9px;text-align:right}
 @media(max-width:640px){.city-select-hint{text-align:left;margin-left:2px}}
+
+/* city demand pulse */
+.city-demand-panel{display:grid;grid-template-columns:1fr 1.25fr;gap:20px;align-items:center;padding:20px;border-radius:22px;background:linear-gradient(145deg,#121215,#0d0d10);border:1px solid #29292f}
+.city-demand-copy strong{display:block;font-size:18px;margin:6px 0 8px}
+.city-demand-copy>span{display:block;color:#85858e;font-size:10px;line-height:1.6;max-width:520px}
+.city-demand-list{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.city-demand-empty{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;background:#17171b;border:1px solid #29292f;color:#76767f;font-size:9px}
+.city-demand-chip{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;min-height:38px;padding:0 11px;border-radius:999px;background:#17171b;border:1px solid #303038;color:#fff;cursor:pointer}
+.city-demand-chip:hover{border-color:#ef4444}
+.city-demand-chip strong{font-size:10px}
+.city-demand-chip>span:last-child{display:grid;place-items:center;min-width:22px;height:22px;border-radius:999px;background:#222228;color:#d4d4d8;font-size:9px;font-weight:900}
+.city-demand-rank{color:#ef4444;font-size:8px;font-weight:900}
+@media(max-width:760px){
+  .city-demand-panel{grid-template-columns:1fr}
+  .city-demand-list{justify-content:flex-start}
+}
