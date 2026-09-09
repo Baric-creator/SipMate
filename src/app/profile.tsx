@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AppState, Image, Linking, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { showAlert } from '../lib/notify';
+import { FutureBackdrop } from '../components/FutureBackdrop';
 import { clearPresence } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 
@@ -171,6 +172,7 @@ export default function UserProfileScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
+      <FutureBackdrop />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbLower]} />
       <View pointerEvents="none" style={styles.scanAccent} />
