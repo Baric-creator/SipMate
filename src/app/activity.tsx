@@ -263,7 +263,11 @@ export default function ActivityScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#09090B' },
+  screen: { flex: 1, backgroundColor: '#08090B' },
+  ambientOrb: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(220,38,38,0.09)', shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 44, shadowOffset: { width: 0, height: 0 }, elevation: 1 },
+  ambientOrbTop: { width: 240, height: 240, top: -90, right: -120 },
+  ambientOrbLow: { width: 210, height: 210, top: 430, left: -130, backgroundColor: 'rgba(127,29,29,0.07)' },
+  scanAccent: { position: 'absolute', top: 108, left: 22, width: 58, height: 1, backgroundColor: 'rgba(248,113,113,0.32)' },
   container: {
     width: '100%',
     maxWidth: 720,
@@ -276,10 +280,10 @@ const styles = StyleSheet.create({
   brand: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
   title: { color: '#FFFFFF', fontSize: 29, fontWeight: '900', marginTop: 20, letterSpacing: -0.4 },
   subtitle: { color: '#8B8B94', fontSize: 13, lineHeight: 19, marginTop: 7, maxWidth: 420 },
-  closeButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', alignItems: 'center', justifyContent: 'center' },
+  closeButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#121215', borderWidth: 1, borderColor: '#3A2A2D', alignItems: 'center', justifyContent: 'center' },
   closeText: { color: '#FFFFFF', fontSize: 27, lineHeight: 29, fontWeight: '300' },
   list: { width: '100%' },
-  item: { minHeight: 78, flexDirection: 'row', alignItems: 'center', backgroundColor: '#141417', borderWidth: 1, borderColor: '#242428', borderRadius: 18, padding: 13, marginBottom: 10 },
+  item: { minHeight: 78, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(18,18,21,0.97)', borderWidth: 1, borderColor: '#2F2F34', borderRadius: 21, padding: 13, marginBottom: 10, shadowColor: '#000000', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.16, shadowRadius: 14, elevation: 2 },
   avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#202024' },
   avatarFallback: { width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#211315', borderWidth: 1, borderColor: '#3A2020', alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
@@ -290,7 +294,7 @@ const styles = StyleSheet.create({
   detail: { color: '#A1A1AA', fontSize: 12, lineHeight: 17, marginTop: 5 },
   detailMutual: { color: '#F87171', fontWeight: '800' },
   chevron: { color: '#52525B', fontSize: 25, marginLeft: 8 },
-  emptyCard: { backgroundColor: '#141417', borderWidth: 1, borderColor: '#242428', borderRadius: 22, paddingVertical: 48, paddingHorizontal: 24, alignItems: 'center' },
+  emptyCard: { backgroundColor: '#121215', borderWidth: 1, borderColor: '#342326', borderRadius: 24, paddingVertical: 48, paddingHorizontal: 24, alignItems: 'center', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.07, shadowRadius: 22, elevation: 3 },
   emptyEmoji: { fontSize: 42 },
   emptyTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '900', marginTop: 16 },
   emptyText: { color: '#71717A', fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 8 },
