@@ -43,6 +43,41 @@ document.getElementById("year").textContent=String(new Date().getFullYear());
 const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("visible")}),{threshold:.08});
 document.querySelectorAll(".reveal").forEach(el=>observer.observe(el));
 
+function animateWaitlistCount(el,target){
+  const end=Math.max(0,Math.floor(target));
+  if(reducedMotion){
+    el.textContent=String(end);
+    return;
+  }
+
+  const current=Number.parseInt(el.textContent||"0",10);
+  const start=Number.isFinite(current)?current:0;
+  if(start===end){
+    el.textContent=String(end);
+    return;
+  }
+
+  const duration=Math.min(900,420+Math.abs(end-start)*45);
+  const started=performance.now();
+
+  const tick=now=>{
+    const progress=Math.min(1,(now-started)/duration);
+    const eased=1-Math.pow(1-progress,3);
+    const value=Math.round(start+(end-start)*eased);
+    el.textContent=String(value);
+    if(progress<1){
+      requestAnimationFrame(tick);
+    }else{
+      el.textContent=String(end);
+      el.classList.add("count-pop");
+      setTimeout(()=>el.classList.remove("count-pop"),260);
+    }
+  };
+
+  requestAnimationFrame(tick);
+}
+
+
 const menuBtn=document.querySelector(".menu-toggle");
 const nav=document.querySelector(".nav-links");
 if(menuBtn&&nav){
@@ -120,7 +155,9 @@ async function loadPremiumPublicStatus(){
       if(founderProgress)founderProgress.style.width=`${Math.min(100,(used/total)*100)}%`;
     }
     const waitlistEl=document.querySelector("[data-waitlist-count]");
-    if(waitlistEl&&data?.ok&&Number.isFinite(data?.waitlist_count))waitlistEl.textContent=String(data.waitlist_count);
+    if(waitlistEl&&data?.ok&&Number.isFinite(data?.waitlist_count)){
+      animateWaitlistCount(waitlistEl,Number(data.waitlist_count));
+    }
 
     const demandEl=document.querySelector("[data-city-demand]");
     if(demandEl&&data?.ok){
@@ -258,9 +295,29 @@ if(rolloutToggle&&rolloutCities){
 function focusWaitlistCity(city=""){
   const input=document.querySelector('#waitlist-form input[name="city"]');
   const waitlist=document.getElementById("waitlist");
+  const form=document.getElementById("waitlist-form");
+  const hint=document.querySelector(".city-select-hint");
+
   if(input&&city)input.value=city;
+
+  if(city){
+    form?.classList.remove("city-prefilled");
+    hint?.classList.remove("city-hint-flash");
+    requestAnimationFrame(()=>{
+      form?.classList.add("city-prefilled");
+      hint?.classList.add("city-hint-flash");
+    });
+    setTimeout(()=>{
+      form?.classList.remove("city-prefilled");
+      hint?.classList.remove("city-hint-flash");
+    },1400);
+  }
+
   waitlist?.scrollIntoView({behavior:reducedMotion?"auto":"smooth",block:"center"});
-  setTimeout(()=>input?.focus({preventScroll:true}),reducedMotion?0:650);
+  setTimeout(()=>{
+    input?.focus({preventScroll:true});
+    if(input&&city)input.setSelectionRange?.(input.value.length,input.value.length);
+  },reducedMotion?0:650);
 }
 document.querySelectorAll("[data-city]").forEach(btn=>{
   btn.addEventListener("click",()=>focusWaitlistCity(btn.dataset.city||""));
