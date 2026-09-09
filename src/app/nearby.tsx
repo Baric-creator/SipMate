@@ -1640,7 +1640,7 @@ export default function NearbyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: '#08090B',
     paddingTop: 42,
   },
 
@@ -1670,12 +1670,17 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: '#141417',
+    backgroundColor: '#121215',
     padding: 18,
-    borderRadius: 19,
+    borderRadius: 22,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#242428',
+    borderColor: '#2F2F34',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 3,
   },
 
   name: {
@@ -1691,11 +1696,11 @@ const styles = StyleSheet.create({
 
   activityBox: {
     marginTop: 14,
-    backgroundColor: '#202023',
-    borderRadius: 16,
+    backgroundColor: '#18181C',
+    borderRadius: 17,
     padding: 13,
     borderWidth: 1,
-    borderColor: '#2F2F35',
+    borderColor: '#34343A',
   },
 
   activityLabel: {
@@ -1726,10 +1731,10 @@ const styles = StyleSheet.create({
   },
 
   distanceFilterButton: {
-    backgroundColor: '#1B1B1F',
+    backgroundColor: '#151519',
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 15,
+    paddingVertical: 9,
+    borderRadius: 999,
     marginRight: 8,
     marginBottom: 8,
     borderWidth: 1,
@@ -1738,7 +1743,7 @@ const styles = StyleSheet.create({
 
   distanceFilterButtonActive: {
     backgroundColor: '#DC2626',
-    borderColor: '#EF4444',
+    borderColor: '#F87171',
   },
 
   distanceFilterText: {
@@ -1758,10 +1763,10 @@ const styles = StyleSheet.create({
   },
 
   drinkFilterButton: {
-    backgroundColor: '#1B1B1F',
+    backgroundColor: '#151519',
     paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 15,
+    paddingVertical: 10,
+    borderRadius: 999,
     marginRight: 8,
     marginBottom: 8,
     borderWidth: 1,
