@@ -847,3 +847,68 @@ img{content-visibility:auto}
   .button.primary::after,.nav-cta::after,.waitlist-form button::after{animation:none!important}
   [data-waitlist-count]{transition:none}
 }
+
+
+/* SipMate custom validation bubble */
+.waitlist-form{position:relative}
+.field-validation{
+  position:absolute;
+  z-index:30;
+  padding:10px 12px 10px 34px;
+  border:1px solid rgba(248,113,113,.55);
+  border-radius:12px;
+  background:linear-gradient(180deg,rgba(35,16,18,.98),rgba(17,11,12,.98));
+  color:#f8d7da;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.35;
+  text-align:left;
+  box-shadow:0 12px 28px rgba(0,0,0,.42),0 0 20px rgba(239,68,68,.10);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  animation:validationIn .18s ease-out both;
+}
+.field-validation::before{
+  content:"!";
+  position:absolute;
+  left:11px;
+  top:50%;
+  transform:translateY(-50%);
+  width:15px;
+  height:15px;
+  border-radius:5px;
+  display:grid;
+  place-items:center;
+  background:#ef4444;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  box-shadow:0 0 12px rgba(239,68,68,.35);
+}
+.field-validation::after{
+  content:"";
+  position:absolute;
+  top:-6px;
+  left:22px;
+  width:10px;
+  height:10px;
+  border-left:1px solid rgba(248,113,113,.55);
+  border-top:1px solid rgba(248,113,113,.55);
+  background:#231012;
+  transform:rotate(45deg);
+}
+.waitlist-form input.field-invalid{
+  border-color:#ef4444!important;
+  outline:none!important;
+  box-shadow:0 0 0 2px rgba(239,68,68,.13),0 0 22px rgba(239,68,68,.10);
+}
+@keyframes validationIn{
+  from{opacity:0;transform:translateY(-4px) scale(.985)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(max-width:560px){
+  .field-validation{font-size:10px;max-width:calc(100vw - 56px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .field-validation{animation:none}
+}
