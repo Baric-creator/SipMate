@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 
 import { showAlert } from '../lib/notify';
+import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 
 type Message = {
@@ -78,9 +79,9 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!id) return;
     async function loadOtherUser() {
-      const { data, error } = await supabase.from('profiles').select('is_active, avatar_url').eq('id', String(id)).maybeSingle();
+      const { data, error } = await supabase.from('profiles').select('is_active, last_seen_at, avatar_url').eq('id', String(id)).maybeSingle();
       if (error) return console.log('OTHER USER PROFILE ERROR:', error.message);
-      setOtherUserActive(data?.is_active ?? false);
+      setOtherUserActive(isProfileOnline(data ?? {}));
       setOtherAvatar(data?.avatar_url ?? null);
     }
     loadOtherUser();
@@ -101,8 +102,8 @@ export default function ChatScreen() {
     const channel = supabase.channel(`profile-status-${id}`).on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${String(id)}`,
     }, (payload) => {
-      const profile = payload.new as { is_active?: boolean | null; avatar_url?: string | null };
-      setOtherUserActive(profile.is_active ?? false);
+      const profile = payload.new as { is_active?: boolean | null; last_seen_at?: string | null; avatar_url?: string | null };
+      setOtherUserActive(isProfileOnline(profile));
       if (typeof profile.avatar_url !== 'undefined') setOtherAvatar(profile.avatar_url ?? null);
     }).subscribe();
     return () => { supabase.removeChannel(channel); };
