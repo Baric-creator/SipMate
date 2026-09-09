@@ -519,9 +519,9 @@
     <p class="eyebrow" data-i18n="waitEyebrow">THE NEXT ROUND IS CLOSER THAN YOU THINK.</p>
     <h2 data-i18n="waittitle">BE FIRST TO SAY CHEERS. 🍻</h2>
     <p data-i18n="waitcopy">Join the launch list for early access and SipMate updates.</p>
-    <form id="waitlist-form" class="waitlist-form">
+    <form id="waitlist-form" class="waitlist-form" novalidate>
       <input name="name" type="text" maxlength="80" placeholder="Name" data-i18n-placeholder="namePlaceholder" autocomplete="name">
-      <input id="email" name="email" type="email" maxlength="254" placeholder="Email" data-i18n-placeholder="emailPlaceholder" autocomplete="email" required>
+      <input id="email" name="email" type="email" maxlength="254" placeholder="Email" data-i18n-placeholder="emailPlaceholder" autocomplete="email" required aria-describedby="email-validation"><div id="email-validation" class="field-validation" role="alert" aria-live="assertive" hidden></div>
       <input name="city" type="text" maxlength="120" placeholder="City (optional)" data-i18n-placeholder="cityPlaceholder" autocomplete="address-level2">
       <button type="submit" data-i18n="join">Join waitlist</button>
     </form>
