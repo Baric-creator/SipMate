@@ -21,6 +21,7 @@ const copy = {
     email: 'EMAIL',
     password: 'PASSWORD',
     passwordPlaceholder: 'Enter your password',
+    forgotPassword: 'Forgot password?',
     loggingIn: 'LOGGING IN...',
     login: 'LOG IN',
     newHere: 'NEW HERE?',
@@ -35,6 +36,7 @@ const copy = {
     email: 'E-MAIL',
     password: 'PASSWORT',
     passwordPlaceholder: 'Passwort eingeben',
+    forgotPassword: 'Passwort vergessen?',
     loggingIn: 'ANMELDUNG...',
     login: 'ANMELDEN',
     newHere: 'NEU HIER?',
@@ -49,6 +51,7 @@ const copy = {
     email: 'E-MAIL',
     password: 'LOZINKA',
     passwordPlaceholder: 'Unesi lozinku',
+    forgotPassword: 'Zaboravljena lozinka?',
     loggingIn: 'PRIJAVA...',
     login: 'PRIJAVI SE',
     newHere: 'NOVI OVDJE?',
@@ -93,10 +96,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <Text style={styles.logo}>SipMate 🍻</Text>
           <Text style={styles.tagline}>{text.tagline}</Text>
@@ -130,6 +130,10 @@ export default function LoginScreen() {
             autoCapitalize="none"
             style={styles.input}
           />
+
+          <Pressable style={styles.forgotButton} onPress={() => router.push('/forgot-password')}>
+            <Text style={styles.forgotText}>{text.forgotPassword}</Text>
+          </Pressable>
 
           <Pressable
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -165,131 +169,27 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#09090B' },
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 60,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 470,
-    backgroundColor: '#111113',
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 28,
-    borderWidth: 1,
-    borderColor: '#222226',
-  },
-  logo: {
-    color: '#FFFFFF',
-    fontSize: 27,
-    fontWeight: '900',
-    textAlign: 'center',
-    letterSpacing: -0.6,
-  },
-  tagline: {
-    color: '#71717A',
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginTop: 6,
-  },
-  heroIcon: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#202023',
-    borderWidth: 1,
-    borderColor: '#3F1D1D',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginTop: 24,
-  },
+  container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 60 },
+  card: { width: '100%', maxWidth: 470, backgroundColor: '#111113', borderRadius: 24, paddingHorizontal: 24, paddingVertical: 28, borderWidth: 1, borderColor: '#222226' },
+  logo: { color: '#FFFFFF', fontSize: 27, fontWeight: '900', textAlign: 'center', letterSpacing: -0.6 },
+  tagline: { color: '#71717A', fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 6 },
+  heroIcon: { width: 68, height: 68, borderRadius: 34, backgroundColor: '#202023', borderWidth: 1, borderColor: '#3F1D1D', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 24 },
   heroEmoji: { fontSize: 32 },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 30,
-    fontWeight: '900',
-    textAlign: 'center',
-    marginTop: 22,
-  },
-  subtitle: {
-    color: '#A1A1AA',
-    fontSize: 14,
-    lineHeight: 21,
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 28,
-  },
-  label: {
-    color: '#71717A',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.2,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#0D0D10',
-    color: '#FFFFFF',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    marginBottom: 18,
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: '#27272A',
-  },
-  button: {
-    backgroundColor: '#DC2626',
-    paddingVertical: 17,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginTop: 4,
-  },
+  title: { color: '#FFFFFF', fontSize: 30, fontWeight: '900', textAlign: 'center', marginTop: 22 },
+  subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 8, marginBottom: 28 },
+  label: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginBottom: 8 },
+  input: { backgroundColor: '#0D0D10', color: '#FFFFFF', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 15, marginBottom: 18, fontSize: 15, borderWidth: 1, borderColor: '#27272A' },
+  forgotButton: { alignSelf: 'flex-end', marginTop: -6, marginBottom: 18, paddingVertical: 4 },
+  forgotText: { color: '#EF4444', fontSize: 12, fontWeight: '800' },
+  button: { backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 16, alignItems: 'center', marginTop: 4 },
   buttonDisabled: { opacity: 0.5 },
   buttonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   buttonEmoji: { fontSize: 17 },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 28,
-    marginBottom: 18,
-  },
+  buttonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 28, marginBottom: 18 },
   divider: { flex: 1, height: 1, backgroundColor: '#27272A' },
-  dividerText: {
-    color: '#52525B',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1.2,
-    marginHorizontal: 12,
-  },
-  registerButton: {
-    borderWidth: 1,
-    borderColor: '#DC2626',
-    borderRadius: 20,
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-  registerButtonText: {
-    color: '#EF4444',
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  footer: {
-    color: '#52525B',
-    fontSize: 11,
-    lineHeight: 17,
-    textAlign: 'center',
-    marginTop: 24,
-  },
+  dividerText: { color: '#52525B', fontSize: 9, fontWeight: '900', letterSpacing: 1.2, marginHorizontal: 12 },
+  registerButton: { borderWidth: 1, borderColor: '#DC2626', borderRadius: 20, paddingVertical: 15, alignItems: 'center' },
+  registerButtonText: { color: '#EF4444', fontSize: 14, fontWeight: '900', letterSpacing: 0.5 },
+  footer: { color: '#52525B', fontSize: 11, lineHeight: 17, textAlign: 'center', marginTop: 24 },
 });
