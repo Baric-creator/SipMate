@@ -705,15 +705,15 @@ export default function NearbyScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={
-        styles.scrollContent
-      }
-      showsVerticalScrollIndicator={
-        false
-      }
-    >
+    <View style={styles.container}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbBottom]} />
+      <View pointerEvents="none" style={styles.scanAccent} />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
       <Text style={styles.title}>
         🍻 SipMate
       </Text>
@@ -1633,7 +1633,8 @@ export default function NearbyScreen() {
           )
         )
       )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -1644,8 +1645,45 @@ const styles = StyleSheet.create({
     paddingTop: 42,
   },
 
+  scroll: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  ambientOrb: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(220,38,38,0.09)',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.18,
+    shadowRadius: 42,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 1,
+  },
+  ambientOrbTop: {
+    width: 240,
+    height: 240,
+    top: -85,
+    right: -120,
+  },
+  ambientOrbBottom: {
+    width: 220,
+    height: 220,
+    top: 520,
+    left: -135,
+    backgroundColor: 'rgba(127,29,29,0.07)',
+  },
+  scanAccent: {
+    position: 'absolute',
+    top: 104,
+    left: 20,
+    width: 54,
+    height: 1,
+    backgroundColor: 'rgba(248,113,113,0.34)',
+  },
+
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 150,
+    paddingHorizontal: 20,
   },
 
   logo: {
@@ -1670,7 +1708,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: '#121215',
+    backgroundColor: 'rgba(18,18,21,0.96)',
     padding: 18,
     borderRadius: 22,
     marginBottom: 14,
@@ -1678,7 +1716,7 @@ const styles = StyleSheet.create({
     borderColor: '#2F2F34',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.20,
     shadowRadius: 18,
     elevation: 3,
   },
@@ -1743,7 +1781,11 @@ const styles = StyleSheet.create({
 
   distanceFilterButtonActive: {
     backgroundColor: '#DC2626',
-    borderColor: '#F87171',
+    borderColor: '#FCA5A5',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.20,
+    shadowRadius: 8,
+    elevation: 3,
   },
 
   distanceFilterText: {
@@ -1775,6 +1817,11 @@ const styles = StyleSheet.create({
 
   drinkFilterButtonActive: {
     backgroundColor: '#DC2626',
+    borderColor: '#F87171',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
   },
 
   drinkFilterText: {
