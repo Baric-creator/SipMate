@@ -345,6 +345,9 @@ export default function EditProfileScreen() {
 
   return (
     <View style={styles.screen}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbLow]} />
+      <View pointerEvents="none" style={styles.scanAccent} />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.logo}>SipMate 🍻</Text>
@@ -454,31 +457,35 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#09090B' },
-  loadingScreen: { flex: 1, backgroundColor: '#09090B', alignItems: 'center', justifyContent: 'center' },
+  screen: { flex: 1, backgroundColor: '#08090B' },
+  ambientOrb: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(220,38,38,0.09)', shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 44, shadowOffset: { width: 0, height: 0 }, elevation: 1 },
+  ambientOrbTop: { width: 250, height: 250, top: -95, right: -125 },
+  ambientOrbLow: { width: 220, height: 220, top: 520, left: -135, backgroundColor: 'rgba(127,29,29,0.07)' },
+  scanAccent: { position: 'absolute', top: 112, right: 22, width: 62, height: 1, backgroundColor: 'rgba(248,113,113,0.32)' },
+  loadingScreen: { flex: 1, backgroundColor: '#08090B', alignItems: 'center', justifyContent: 'center' },
   loadingText: { color: '#A1A1AA', fontSize: 14 },
-  container: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingTop: 42, paddingHorizontal: 20, paddingBottom: 100 },
+  container: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingTop: 42, paddingHorizontal: 20, paddingBottom: 150 },
   header: { marginBottom: 26 },
   logo: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
   title: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', marginTop: 18, letterSpacing: -0.5 },
   subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, marginTop: 7 },
   avatarSection: { alignItems: 'center', marginBottom: 24 },
-  avatarWrapper: { width: 118, height: 118, borderRadius: 59, borderWidth: 2, borderColor: '#2F2F35', padding: 3, backgroundColor: '#141417' },
+  avatarWrapper: { width: 118, height: 118, borderRadius: 59, borderWidth: 2, borderColor: '#4A2A2D', padding: 3, backgroundColor: '#141417', shadowColor: '#EF4444', shadowOpacity: 0.14, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 4 },
   avatarImage: { width: '100%', height: '100%', borderRadius: 60 },
   avatarPlaceholder: { flex: 1, borderRadius: 60, backgroundColor: '#450A0A', alignItems: 'center', justifyContent: 'center' },
   avatarPlaceholderText: { color: '#FFFFFF', fontSize: 42, fontWeight: '900' },
   avatarButton: { marginTop: 14, backgroundColor: '#141417', borderWidth: 1, borderColor: '#303036', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 16 },
   avatarButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
-  formCard: { backgroundColor: '#141417', borderRadius: 20, padding: 18, borderWidth: 1, borderColor: '#242428', marginBottom: 14 },
+  formCard: { backgroundColor: 'rgba(18,18,21,0.97)', borderRadius: 22, padding: 18, borderWidth: 1, borderColor: '#2F2F34', marginBottom: 14, shadowColor: '#000000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.16, shadowRadius: 16, elevation: 2 },
   sectionTitle: { color: '#FFFFFF', fontSize: 13, fontWeight: '900', letterSpacing: 1 },
   sectionDescription: { color: '#71717A', fontSize: 12, lineHeight: 18, marginTop: 5, marginBottom: 16 },
   label: { color: '#71717A', fontSize: 9, fontWeight: '900', letterSpacing: 1.3, marginBottom: 7, marginTop: 17 },
-  input: { backgroundColor: '#09090B', color: '#FFFFFF', borderWidth: 1, borderColor: '#242428', borderRadius: 14, paddingHorizontal: 15, paddingVertical: 13, fontSize: 14 },
+  input: { backgroundColor: '#0B0B0E', color: '#FFFFFF', borderWidth: 1, borderColor: '#34343A', borderRadius: 16, paddingHorizontal: 15, paddingVertical: 13, fontSize: 14 },
   bioInput: { minHeight: 110, textAlignVertical: 'top' },
   drinks: { flexDirection: 'row', flexWrap: 'wrap' },
   drinkButton: { backgroundColor: '#1B1B1F', borderWidth: 1, borderColor: '#303036', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, marginRight: 8, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 7 },
   drinkEmoji: { fontSize: 16 },
-  drinkButtonSelected: { backgroundColor: '#DC2626', borderColor: '#EF4444' },
+  drinkButtonSelected: { backgroundColor: '#DC2626', borderColor: '#F87171', shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 8, elevation: 3 },
   drinkText: { color: '#A1A1AA', fontSize: 13, fontWeight: '700', fontFamily: 'sans-serif' },
   drinkTextSelected: { color: '#FFFFFF' },
   activeButton: { width: '100%', paddingVertical: 15, paddingHorizontal: 14, borderRadius: 16, alignItems: 'center', borderWidth: 1 },
@@ -495,7 +502,7 @@ const styles = StyleSheet.create({
   discordShareToggleOn: { backgroundColor: '#5865F2', borderColor: '#818CF8' },
   discordShareToggleText: { color: '#A1A1AA', fontSize: 11, fontWeight: '900', fontFamily: 'sans-serif' },
   discordShareToggleTextOn: { color: '#FFFFFF' },
-  saveButton: { marginTop: 10, backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 16, alignItems: 'center' },
+  saveButton: { marginTop: 10, backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 18, alignItems: 'center', borderWidth: 1, borderColor: '#F87171', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 4 },
   saveButtonDisabled: { opacity: 0.5 },
   saveText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
   cancelButton: { marginTop: 10, paddingVertical: 15, alignItems: 'center' },
@@ -503,7 +510,7 @@ const styles = StyleSheet.create({
   footer: { color: '#52525B', textAlign: 'center', fontSize: 11, fontWeight: '700', marginTop: 18 },
   genderRow: { flexDirection: 'row', flexWrap: 'wrap' },
   genderButton: { backgroundColor: '#1B1B1F', borderWidth: 1, borderColor: '#303036', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, marginRight: 8, marginBottom: 8 },
-  genderButtonSelected: { backgroundColor: '#DC2626', borderColor: '#EF4444' },
+  genderButtonSelected: { backgroundColor: '#DC2626', borderColor: '#F87171', shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 8, elevation: 3 },
   genderText: { color: '#A1A1AA', fontSize: 13, fontWeight: '700' },
   genderTextSelected: { color: '#FFFFFF', fontWeight: '900' },
   gallerySection: { width: '100%', marginTop: 18 },
