@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
+import { ChatCardSkeleton } from '../components/Skeleton';
 
 type ChatItem = {
   avatar_url: string | null;
@@ -229,7 +230,11 @@ export default function ChatsScreen() {
         <Text style={styles.subtitle}>{text.subtitle}</Text>
 
         {loading ? (
-          <Text style={styles.emptyText}>{text.loading}</Text>
+          <View>
+            <ChatCardSkeleton />
+            <ChatCardSkeleton />
+            <ChatCardSkeleton />
+          </View>
         ) : chats.length === 0 ? (
           <View style={styles.emptyBox}>
             <Text style={styles.emptyEmoji}>🍻</Text>
@@ -326,14 +331,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 900,
     alignSelf: 'center',
-    paddingTop: 60,
+    paddingTop: 42,
     paddingHorizontal: 20,
     paddingBottom: 120,
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, titleEmoji: { fontSize: 24 },
   title: {
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900',
   },
   subtitle: {
@@ -346,9 +351,9 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#18181B',
-    padding: 16,
-    borderRadius: 22,
+    backgroundColor: '#141417',
+    padding: 14,
+    borderRadius: 18,
     marginBottom: 12,
   },
   chatContent: {
@@ -390,7 +395,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 12,
     borderRadius: 20,
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
   },
   refreshText: {
     color: '#FFFFFF',
@@ -407,7 +412,7 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     marginRight: 12,
-    backgroundColor: '#DC2626',
+    backgroundColor: '#EF4444',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -454,7 +459,7 @@ const styles = StyleSheet.create({
   },
   chatCardUnread: {
     borderWidth: 1,
-    borderColor: '#DC2626',
+    borderColor: '#3A2020',
   },
   nameUnread: {
     color: '#FFFFFF',

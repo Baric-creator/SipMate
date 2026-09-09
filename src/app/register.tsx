@@ -100,7 +100,6 @@ export default function RegisterScreen() {
     }
 
     const numericAge = Number(age);
-
     if (!Number.isFinite(numericAge) || numericAge < 18 || numericAge > 120) {
       showAlert(text.ageRequirement);
       return;
@@ -108,9 +107,10 @@ export default function RegisterScreen() {
 
     try {
       setLoading(true);
+      const cleanEmail = email.trim().toLowerCase();
 
-      const { error } = await supabase.auth.signUp({
-        email: email.trim(),
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
         password,
         options: {
           data: {
@@ -125,6 +125,24 @@ export default function RegisterScreen() {
         return;
       }
 
+      // When signup returns a session (for example with email auto-confirm),
+      // securely trigger the welcome automation through our JWT-protected Edge Function.
+      // Email delivery is intentionally non-blocking: registration must still succeed
+      // if the welcome email provider has a temporary problem.
+      if (data.session) {
+        const { error: welcomeError } = await supabase.functions.invoke('send-welcome-email', {
+          body: {
+            email: cleanEmail,
+            name: name.trim(),
+            language: ['en', 'de', 'hr'].includes(language) ? language : 'en',
+          },
+        });
+
+        if (welcomeError) {
+          console.log('WELCOME EMAIL ERROR:', welcomeError.message);
+        }
+      }
+
       showAlert(text.welcome);
       router.replace('/login');
     } catch (error) {
@@ -137,91 +155,30 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <Text style={styles.logo}>SipMate 🍻</Text>
           <Text style={styles.tagline}>{text.tagline}</Text>
-
-          <View style={styles.heroIcon}>
-            <Text style={styles.heroEmoji}>🍻</Text>
-          </View>
-
+          <View style={styles.heroIcon}><Text style={styles.heroEmoji}>🍻</Text></View>
           <Text style={styles.title}>{text.title}</Text>
           <Text style={styles.subtitle}>{text.subtitle}</Text>
 
           <Text style={styles.label}>{text.name}</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder={text.namePlaceholder}
-            placeholderTextColor="#52525B"
-            autoCapitalize="words"
-            style={styles.input}
-          />
-
+          <TextInput value={name} onChangeText={setName} placeholder={text.namePlaceholder} placeholderTextColor="#52525B" autoCapitalize="words" style={styles.input} />
           <Text style={styles.label}>{text.age}</Text>
-          <TextInput
-            value={age}
-            onChangeText={setAge}
-            placeholder={text.agePlaceholder}
-            placeholderTextColor="#52525B"
-            keyboardType="numeric"
-            style={styles.input}
-          />
-
+          <TextInput value={age} onChangeText={setAge} placeholder={text.agePlaceholder} placeholderTextColor="#52525B" keyboardType="numeric" style={styles.input} />
           <Text style={styles.label}>{text.email}</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            placeholderTextColor="#52525B"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={styles.input}
-          />
-
+          <TextInput value={email} onChangeText={setEmail} placeholder="you@example.com" placeholderTextColor="#52525B" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} style={styles.input} />
           <Text style={styles.label}>{text.password}</Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            placeholder={text.passwordPlaceholder}
-            placeholderTextColor="#52525B"
-            secureTextEntry
-            autoCapitalize="none"
-            style={styles.input}
-          />
+          <TextInput value={password} onChangeText={setPassword} placeholder={text.passwordPlaceholder} placeholderTextColor="#52525B" secureTextEntry autoCapitalize="none" style={styles.input} />
 
-          <Pressable
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <Text style={styles.buttonText}>{text.creating}</Text>
-            ) : (
-              <View style={styles.buttonContent}>
-                <Text style={styles.buttonEmoji}>🍻</Text>
-                <Text style={styles.buttonText}>{text.create}</Text>
-              </View>
-            )}
+          <Pressable style={[styles.button, loading && styles.buttonDisabled]} onPress={handleRegister} disabled={loading}>
+            {loading ? <Text style={styles.buttonText}>{text.creating}</Text> : <View style={styles.buttonContent}><Text style={styles.buttonEmoji}>🍻</Text><Text style={styles.buttonText}>{text.create}</Text></View>}
           </Pressable>
 
           <Text style={styles.note}>{text.note}</Text>
-
-          <View style={styles.dividerRow}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>{text.member}</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <Pressable style={styles.loginButton} onPress={() => router.push('/login')}>
-            <Text style={styles.loginButtonText}>{text.login}</Text>
-          </Pressable>
-
+          <View style={styles.dividerRow}><View style={styles.divider} /><Text style={styles.dividerText}>{text.member}</Text><View style={styles.divider} /></View>
+          <Pressable style={styles.loginButton} onPress={() => router.push('/login')}><Text style={styles.loginButtonText}>{text.login}</Text></Pressable>
           <Text style={styles.footer}>{text.footer}</Text>
         </View>
       </ScrollView>
@@ -231,138 +188,26 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#09090B' },
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 60,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 470,
-    backgroundColor: '#18181B',
-    borderRadius: 30,
-    paddingHorizontal: 26,
-    paddingVertical: 32,
-    borderWidth: 1,
-    borderColor: '#27272A',
-  },
-  logo: {
-    color: '#FFFFFF',
-    fontSize: 34,
-    fontWeight: '900',
-    textAlign: 'center',
-    letterSpacing: -0.6,
-  },
-  tagline: {
-    color: '#71717A',
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginTop: 6,
-  },
-  heroIcon: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    backgroundColor: '#202023',
-    borderWidth: 1,
-    borderColor: '#3F1D1D',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginTop: 30,
-  },
-  heroEmoji: { fontSize: 38 },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 30,
-    fontWeight: '900',
-    textAlign: 'center',
-    marginTop: 22,
-  },
-  subtitle: {
-    color: '#A1A1AA',
-    fontSize: 14,
-    lineHeight: 21,
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 28,
-  },
-  label: {
-    color: '#71717A',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.2,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#09090B',
-    color: '#FFFFFF',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    marginBottom: 18,
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: '#27272A',
-  },
-  button: {
-    backgroundColor: '#DC2626',
-    paddingVertical: 17,
-    borderRadius: 20,
-    alignItems: 'center',
-    marginTop: 4,
-  },
+  container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 60 },
+  card: { width: '100%', maxWidth: 470, backgroundColor: '#111113', borderRadius: 24, paddingHorizontal: 24, paddingVertical: 28, borderWidth: 1, borderColor: '#222226' },
+  logo: { color: '#FFFFFF', fontSize: 27, fontWeight: '900', textAlign: 'center', letterSpacing: -0.6 },
+  tagline: { color: '#71717A', fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 6 },
+  heroIcon: { width: 68, height: 68, borderRadius: 34, backgroundColor: '#202023', borderWidth: 1, borderColor: '#3F1D1D', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 24 },
+  heroEmoji: { fontSize: 32 },
+  title: { color: '#FFFFFF', fontSize: 30, fontWeight: '900', textAlign: 'center', marginTop: 22 },
+  subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 8, marginBottom: 28 },
+  label: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginBottom: 8 },
+  input: { backgroundColor: '#0D0D10', color: '#FFFFFF', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 15, marginBottom: 18, fontSize: 15, borderWidth: 1, borderColor: '#27272A' },
+  button: { backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 16, alignItems: 'center', marginTop: 4 },
   buttonDisabled: { opacity: 0.5 },
   buttonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   buttonEmoji: { fontSize: 17 },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  note: {
-    color: '#52525B',
-    fontSize: 10,
-    lineHeight: 16,
-    textAlign: 'center',
-    marginTop: 16,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 28,
-    marginBottom: 18,
-  },
+  buttonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
+  note: { color: '#52525B', fontSize: 10, lineHeight: 16, textAlign: 'center', marginTop: 16 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 28, marginBottom: 18 },
   divider: { flex: 1, height: 1, backgroundColor: '#27272A' },
-  dividerText: {
-    color: '#52525B',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1.1,
-    marginHorizontal: 12,
-  },
-  loginButton: {
-    borderWidth: 1,
-    borderColor: '#DC2626',
-    borderRadius: 20,
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    color: '#EF4444',
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  footer: {
-    color: '#52525B',
-    fontSize: 11,
-    lineHeight: 17,
-    textAlign: 'center',
-    marginTop: 24,
-  },
+  dividerText: { color: '#52525B', fontSize: 9, fontWeight: '900', letterSpacing: 1.1, marginHorizontal: 12 },
+  loginButton: { borderWidth: 1, borderColor: '#DC2626', borderRadius: 20, paddingVertical: 15, alignItems: 'center' },
+  loginButtonText: { color: '#EF4444', fontSize: 14, fontWeight: '900', letterSpacing: 0.5 },
+  footer: { color: '#52525B', fontSize: 11, lineHeight: 17, textAlign: 'center', marginTop: 24 },
 });

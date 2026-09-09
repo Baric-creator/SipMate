@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080808">
+  <meta name="robots" content="noindex,nofollow">
+  <title>SipMate — Confirm waitlist</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 70% 20%,rgba(239,68,68,.10),transparent 30%),#09090b;color:#fff;font-family:Inter,system-ui,sans-serif;padding:24px}
+    main{width:min(620px,100%);text-align:center;padding:36px 28px;border-radius:28px;background:linear-gradient(145deg,#151518,#0d0d10);border:1px solid #2b2b31;box-shadow:0 30px 100px rgba(0,0,0,.5)}
+    .brand{font-size:24px;font-weight:900}.brand span{color:#ef4444}.icon{font-size:54px;margin:24px 0 12px}h1{font-size:clamp(32px,7vw,52px);line-height:1;margin:0 0 14px;letter-spacing:-2px}
+    p{color:#9b9ba3;line-height:1.65;margin:0 auto 22px;max-width:520px}.status{min-height:24px}.ref{display:none;margin-top:22px;padding:18px;border-radius:18px;background:#111114;border:1px solid #29292f}
+    .ref.show{display:block}.ref strong{display:block;margin-bottom:8px}.ref-row{display:flex;gap:8px}.ref-row input{flex:1;min-width:0;background:#0b0b0d;border:1px solid #303038;border-radius:12px;color:#fff;padding:12px}.ref-row button,.home{border:0;border-radius:12px;padding:12px 16px;background:#dc2626;color:#fff;font-weight:900;cursor:pointer;text-decoration:none}
+    .ref-count{display:flex;align-items:baseline;justify-content:center;gap:7px;margin-top:14px}.ref-count strong{font-size:24px;color:#fff;margin:0}.ref-count span{font-size:11px;color:#7f7f88}
+    .home{display:inline-block;margin-top:18px}.muted{font-size:11px;color:#6f6f78}
+    @media(max-width:560px){main{padding:30px 18px}.ref-row{flex-direction:column}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="brand"><span>Sip</span>Mate 🍻</div>
+  <div class="icon" id="icon">⏳</div>
+  <h1 id="title">Confirming your spot…</h1>
+  <p id="copy">One moment while we confirm your SipMate waitlist email.</p>
+  <div class="status" id="status"></div>
+  <div class="ref" id="refBox">
+    <strong id="refTitle">Your personal invite link</strong>
+    <div class="ref-row"><input id="refUrl" readonly><button id="copyBtn">Copy</button></div>
+    <div class="ref-count"><strong id="refCount">0</strong><span id="refCountLabel">confirmed friends</span></div>
+    <p class="muted" id="refCopy">Share it with friends. Confirmed referrals can count toward future launch rewards.</p>
+  </div>
+  <a class="home" href="/" id="home">Back to SipMate</a>
+</main>
+<script>
+const translations={
+  en:{loading:"Confirming your spot…",loadingCopy:"One moment while we confirm your SipMate waitlist email.",ok:"You’re confirmed. CHEERS! 🍻",okCopy:"Your email is verified and your SipMate waitlist spot is secured.",bad:"This confirmation link is invalid or expired.",badCopy:"Join the waitlist again to receive a fresh confirmation link.",refTitle:"Your personal invite link",refCopy:"Share it with friends. Confirmed referrals can count toward future launch rewards.",refCount:"confirmed friends",copy:"Copy",copied:"Copied!",home:"Back to SipMate"},
+  de:{loading:"Dein Platz wird bestätigt…",loadingCopy:"Einen Moment, wir bestätigen deine SipMate-Wartelisten-E-Mail.",ok:"Bestätigt. CHEERS! 🍻",okCopy:"Deine E-Mail ist verifiziert und dein SipMate-Wartelistenplatz ist gesichert.",bad:"Dieser Bestätigungslink ist ungültig oder abgelaufen.",badCopy:"Trag dich erneut ein, um einen neuen Bestätigungslink zu erhalten.",refTitle:"Dein persönlicher Einladungslink",refCopy:"Teile ihn mit Freunden. Bestätigte Empfehlungen können später für Launch-Belohnungen zählen.",refCount:"bestätigte Freunde",copy:"Kopieren",copied:"Kopiert!",home:"Zurück zu SipMate"},
+  hr:{loading:"Potvrđujemo tvoje mjesto…",loadingCopy:"Samo trenutak dok potvrđujemo tvoj SipMate waitlist e-mail.",ok:"Potvrđeno. CHEERS! 🍻",okCopy:"Tvoj e-mail je potvrđen i tvoje mjesto na SipMate waitlisti je osigurano.",bad:"Ovaj link za potvrdu nije važeći ili je istekao.",badCopy:"Prijavi se ponovno na waitlistu kako bi dobio/la novi link za potvrdu.",refTitle:"Tvoj osobni invite link",refCopy:"Podijeli ga s prijateljima. Potvrđene preporuke mogu se kasnije računati za launch nagrade.",refCount:"potvrđenih prijatelja",copy:"Kopiraj",copied:"Kopirano!",home:"Natrag na SipMate"}
+};
+const lang=(navigator.language||"en").split("-")[0].toLowerCase();
+const t=translations[lang]||translations.en;
+document.documentElement.lang=translations[lang]?lang:"en";
+const title=document.getElementById("title"),copy=document.getElementById("copy"),icon=document.getElementById("icon"),status=document.getElementById("status"),refBox=document.getElementById("refBox"),refUrl=document.getElementById("refUrl"),copyBtn=document.getElementById("copyBtn"),home=document.getElementById("home"),refCount=document.getElementById("refCount"),refCountLabel=document.getElementById("refCountLabel");
+title.textContent=t.loading;copy.textContent=t.loadingCopy;document.getElementById("refTitle").textContent=t.refTitle;document.getElementById("refCopy").textContent=t.refCopy;refCountLabel.textContent=t.refCount;copyBtn.textContent=t.copy;home.textContent=t.home;
+const token=new URLSearchParams(location.search).get("token")||"";
+(async()=>{
+  try{
+    if(!token)throw new Error("missing");
+    const r=await fetch("https://poatmbsfglhrcdbosinb.supabase.co/functions/v1/confirm-waitlist",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token})});
+    const data=await r.json();
+    if(!r.ok||!data?.ok)throw new Error("invalid");
+    icon.textContent="🍻";title.textContent=t.ok;copy.textContent=t.okCopy;status.textContent="";
+    if(data.referral_url){refUrl.value=data.referral_url;refCount.textContent=String(data.referral_count||0);refBox.classList.add("show")}
+    history.replaceState({},document.title,"/confirm.html");
+  }catch{
+    icon.textContent="⚠️";title.textContent=t.bad;copy.textContent=t.badCopy;status.textContent="";
+  }
+})();
+copyBtn.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(refUrl.value);copyBtn.textContent=t.copied;setTimeout(()=>copyBtn.textContent=t.copy,1400)}catch{refUrl.select();document.execCommand("copy")}});
+</script>
+</body>
+</html>

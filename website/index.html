@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#080808">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SipMate">
   <meta name="description" data-i18n-content="metaDescription" content="SipMate helps you meet nearby people for a drink, coffee or spontaneous hangout. Send a Cheers — if it's mutual, it's CHEERS!">
   <meta name="robots" content="index,follow">
   <meta property="og:type" content="website">
@@ -20,27 +24,74 @@
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="./site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://images.pexels.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@graph":[
+      {
+        "@type":"Organization",
+        "name":"SipMate",
+        "url":"https://officialsipmate.com/",
+        "sameAs":[
+          "https://www.instagram.com/officialsipmate",
+          "https://www.tiktok.com/@sipmateofficial"
+        ]
+      },
+      {
+        "@type":"SoftwareApplication",
+        "name":"SipMate",
+        "applicationCategory":"SocialNetworkingApplication",
+        "operatingSystem":"Android, Web",
+        "description":"Meet nearby people for drinks, coffee and spontaneous hangouts. Not a dating app.",
+        "offers":[
+          {"@type":"Offer","price":"1.99","priceCurrency":"EUR","description":"Monthly Premium"},
+          {"@type":"Offer","price":"14.99","priceCurrency":"EUR","description":"Founders Premium for the first 100 yearly members"},
+          {"@type":"Offer","price":"17.99","priceCurrency":"EUR","description":"Early Access yearly Premium"},
+          {"@type":"Offer","price":"19.99","priceCurrency":"EUR","description":"Standard yearly Premium"}
+        ]
+      },
+      {
+        "@type":"FAQPage",
+        "mainEntity":[
+          {"@type":"Question","name":"Is SipMate a dating app?","acceptedAnswer":{"@type":"Answer","text":"No. SipMate is a social app for finding nearby people for drinks, coffee and spontaneous hangouts."}},
+          {"@type":"Question","name":"Does SipMate show my exact location?","acceptedAnswer":{"@type":"Answer","text":"No. SipMate uses location to calculate nearby discovery without publicly showing your precise position."}},
+          {"@type":"Question","name":"How does CHEERS work?","acceptedAnswer":{"@type":"Answer","text":"Send a Cheers to someone. If they send one back, it becomes a mutual CHEERS and chat unlocks."}},
+          {"@type":"Question","name":"How much does Premium cost?","acceptedAnswer":{"@type":"Answer","text":"Monthly Premium is 1.99 EUR. Founders Premium is 14.99 EUR for the first year for the first 100 yearly members, followed by 17.99 EUR Early Access and 19.99 EUR standard yearly pricing."}}
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="scroll-progress" aria-hidden="true"><span></span></div>
+<div class="ambient-bar" aria-hidden="true"><span class="ambient-neon"></span></div>
+<div class="ambient-glow ambient-glow-one" aria-hidden="true"></div>
+<div class="ambient-glow ambient-glow-two" aria-hidden="true"></div>
 <div class="noise" aria-hidden="true"></div>
 <header class="nav shell">
   <a href="#top" class="brand"><span>Sip</span>Mate <b>🍻</b></a>
+  <span class="launch-status"><i></i><span data-i18n="launchStatus">BETA PREPARATION</span></span>
   <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
   <nav class="nav-links">
     <a href="#how" data-i18n="how">How it works</a>
     <a href="#preview" data-i18n="preview">App preview</a>
     <a href="#premium" data-i18n="premium">Premium</a>
+    <a href="#community" data-i18n="communityNav">Community</a>
     <div class="language-switch" aria-label="Language">
       <button type="button" data-lang="en">EN</button><button type="button" data-lang="de">DE</button><button type="button" data-lang="hr">HR</button>
     </div>
+    <button class="nav-share" type="button" data-share-sipmate aria-label="Share SipMate">↗</button>
     <a href="#waitlist" class="nav-cta" data-i18n="join">Join waitlist</a>
   </nav>
 </header>
 
-<main id="top">
+<main id="top"><div id="main-content" tabindex="-1"></div>
 <section class="hero shell reveal">
   <div class="hero-copy">
     <p class="eyebrow" data-i18n="eyebrow">COMING SOON · GERMANY FIRST</p>
@@ -60,7 +111,7 @@
       <div class="phone-screen profile-screen">
         <span class="tiny-label" data-i18n="nearbyDistance">NEARBY · 800 m</span>
         <div class="app-photo">
-          <img class="profile-photo" src="https://images.pexels.com/photos/32403506/pexels-photo-32403506/free-photo-of-candid-portrait-of-smiling-woman-in-cafe.jpeg?auto=compress&cs=tinysrgb&w=700" alt="Illustrative photo for fictional Laura demo profile">
+          <img class="profile-photo" fetchpriority="high" decoding="async" src="https://images.pexels.com/photos/32403506/pexels-photo-32403506/free-photo-of-candid-portrait-of-smiling-woman-in-cafe.jpeg?auto=compress&cs=tinysrgb&w=700" alt="Illustrative photo for fictional Laura demo profile">
           <span class="online-dot"></span>
         </div>
         <h3>Laura, 29</h3>
@@ -77,13 +128,45 @@
         <p data-i18n="mutualLabel">MUTUAL CHEERS</p>
         <h2>CHEERS!</h2>
         <div class="demo-faces">
-          <img class="face-photo" src="https://images.pexels.com/photos/35255493/pexels-photo-35255493/free-photo-of-portrait-of-a-smiling-man-outdoors-at-sunset.jpeg?auto=compress&cs=tinysrgb&w=300" alt="">
+          <img class="face-photo" loading="lazy" decoding="async" src="https://images.pexels.com/photos/35255493/pexels-photo-35255493/free-photo-of-portrait-of-a-smiling-man-outdoors-at-sunset.jpeg?auto=compress&cs=tinysrgb&w=300" alt="">
           <span class="demo-clink">🍻</span>
-          <img class="face-photo" src="https://images.pexels.com/photos/32403506/pexels-photo-32403506/free-photo-of-candid-portrait-of-smiling-woman-in-cafe.jpeg?auto=compress&cs=tinysrgb&w=300" alt="">
+          <img class="face-photo" loading="lazy" decoding="async" src="https://images.pexels.com/photos/32403506/pexels-photo-32403506/free-photo-of-candid-portrait-of-smiling-woman-in-cafe.jpeg?auto=compress&cs=tinysrgb&w=300" alt="">
         </div>
         <p class="muted" data-i18n="bothUp">You’re both up for a drink.</p>
         <span class="demo-action" data-i18n="startChat">Start chat</span>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="polish-strip shell reveal" aria-label="SipMate app experience">
+  <article class="polish-card">
+    <span class="polish-icon">✨</span>
+    <div><strong>Modern onboarding</strong><small>Discover · Cheers · Privacy</small></div>
+  </article>
+  <article class="polish-card">
+    <span class="polish-icon">⚡</span>
+    <div><strong>Fast & responsive</strong><small>Skeleton loading · Realtime chat</small></div>
+  </article>
+  <article class="polish-card">
+    <span class="polish-icon">💬</span>
+    <div><strong>Support one tap away</strong><small>Direct Discord assistance</small></div>
+  </article>
+</section>
+
+<section class="why-now shell reveal">
+  <div class="why-now-card">
+    <div>
+      <p class="eyebrow" data-i18n="whyNowEyebrow">WHY JOIN NOW?</p>
+      <h2 data-i18n="whyNowTitle">Be early. Pay less. Be part of the first 100.</h2>
+      <p data-i18n="whyNowCopy">The first 100 yearly Premium members unlock Founders pricing at 14,99 € for their first year.</p>
+    </div>
+    <div class="why-now-actions">
+      <div class="social-proof">
+        <strong data-waitlist-count>--</strong>
+        <span data-i18n="waitlistPeople">people already on the waitlist</span>
+      </div>
+      <a href="#waitlist" class="button primary">🍻 <span data-i18n="claimEarly">Join early</span></a>
     </div>
   </div>
 </section>
@@ -107,20 +190,48 @@
   </div>
 </section>
 
+<section class="trust-section shell reveal">
+  <div class="trust-title"><p class="eyebrow" data-i18n="trustEyebrow">BUILT FOR REAL-LIFE HANGOUTS</p><h2 data-i18n="trustTitle">Social without giving up your privacy.</h2></div>
+  <div class="trust-grid">
+    <article><span>📍</span><strong data-i18n="trustLocation">No exact location shown</strong><p data-i18n="trustLocationCopy">SipMate uses nearby distance without publishing your precise position.</p></article>
+    <article><span>🫥</span><strong data-i18n="trustInvisible">Go invisible anytime</strong><p data-i18n="trustInvisibleCopy">Switch inactive whenever you do not want to appear nearby.</p></article>
+    <article><span>🍻</span><strong data-i18n="trustNotDating">Not a dating app</strong><p data-i18n="trustNotDatingCopy">The goal is simple: drinks, coffee and spontaneous social plans.</p></article>
+  </div>
+</section>
+
 <section id="preview" class="section app-showcase reveal">
   <div class="shell">
     <div class="section-head"><p class="eyebrow" data-i18n="flowEyebrow">MEET SIPMATE</p><h2><span class="heading-neutral" data-i18n="flowLead">Discover. Cheers.</span> <span data-i18n="flowAccent">Chat.</span></h2><p class="subcopy" data-i18n="flowCopy">Three simple screens. One simple idea: turn “maybe someday” into “one drink tonight?”.</p></div>
     <div class="screen-grid">
-      <div class="mini-phone">
+      <div class="mini-phone modern-profile-demo">
         <div class="device-status"><span>9:41</span><span class="device-island"></span><span>▂▄▆ ▰</span></div>
-        <div class="mini-top"><strong>SipMate 🍻</strong><b data-i18n="nearbyTab">Nearby</b></div>
-        <div class="mini-photo">
-          <img src="https://images.pexels.com/photos/35255493/pexels-photo-35255493/free-photo-of-portrait-of-a-smiling-man-outdoors-at-sunset.jpeg?auto=compress&cs=tinysrgb&w=700" alt="Illustrative photo for fictional Marko demo profile">
-          <div class="photo-shade"></div><div class="photo-caption"><span>⌖ 800 m</span><strong>Marko, 31</strong></div>
+        <div class="mini-top"><strong>SipMate 🍻</strong><span class="mini-edit">✏️</span></div>
+        <div class="modern-profile-head">
+          <div class="modern-avatar-wrap">
+            <img class="modern-avatar" loading="lazy" decoding="async" src="https://images.pexels.com/photos/35255493/pexels-photo-35255493/free-photo-of-portrait-of-a-smiling-man-outdoors-at-sunset.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Illustrative photo for fictional Marko demo profile">
+            <span class="modern-online-dot"></span>
+          </div>
+          <strong class="modern-name">Marko, 31</strong>
+          <span class="modern-city">📍 Nürnberg</span>
+          <span class="modern-status">ACTIVE · READY FOR A DRINK</span>
         </div>
-        <div class="profile-meta"><small data-i18n="currently">Currently up for</small><span class="drink-tag" data-i18n="beer">🍺 Beer</span></div>
-        <p class="demo-bio" data-i18n="profileBio">Spontaneous plans, good coffee and better company.</p>
-        <span class="demo-action" data-i18n="sendCheers">🍻 Send Cheers</span>
+        <div class="modern-completion">
+          <div><small>PROFILE COMPLETION</small><b>83%</b></div>
+          <span><i style="width:83%"></i></span>
+        </div>
+        <div class="modern-quick-grid">
+          <span>✏️<small>EDIT</small></span>
+          <span>🌍<small>LANGUAGE</small></span>
+          <span>💎<small>PREMIUM</small></span>
+        </div>
+        <div class="modern-info-card">
+          <small data-i18n="currently">Currently up for</small>
+          <strong data-i18n="beer">🍺 Beer</strong>
+        </div>
+        <div class="modern-info-card modern-about">
+          <small>ABOUT</small>
+          <p data-i18n="profileBio">Spontaneous plans, good coffee and better company.</p>
+        </div>
       </div>
 
       <div class="mini-phone cheers-demo">
@@ -130,7 +241,7 @@
           <div class="celebration-emojis">🍷 🥂 🍹 🍺</div>
           <small class="cheers-kicker" data-i18n="mutualLabel">MUTUAL CHEERS</small>
           <strong>CHEERS!</strong>
-          <div class="demo-faces"><img class="face-photo" src="https://images.pexels.com/photos/35255493/pexels-photo-35255493/free-photo-of-portrait-of-a-smiling-man-outdoors-at-sunset.jpeg?auto=compress&cs=tinysrgb&w=300" alt=""><span class="demo-clink">🍻</span><img class="face-photo" src="https://images.pexels.com/photos/32403506/pexels-photo-32403506/free-photo-of-candid-portrait-of-smiling-woman-in-cafe.jpeg?auto=compress&cs=tinysrgb&w=300" alt=""></div>
+          <div class="demo-faces"><img class="face-photo" loading="lazy" decoding="async" src="https://images.pexels.com/photos/35255493/pexels-photo-35255493/free-photo-of-portrait-of-a-smiling-man-outdoors-at-sunset.jpeg?auto=compress&cs=tinysrgb&w=300" alt=""><span class="demo-clink">🍻</span><img class="face-photo" loading="lazy" decoding="async" src="https://images.pexels.com/photos/32403506/pexels-photo-32403506/free-photo-of-candid-portrait-of-smiling-woman-in-cafe.jpeg?auto=compress&cs=tinysrgb&w=300" alt=""></div>
           <div class="demo-names">Marko <span>&amp;</span> Laura</div>
           <p data-i18n="bothUp">You’re both up for a drink.</p>
           <span class="demo-action" data-i18n="startChat">Start chat</span>
@@ -139,7 +250,7 @@
 
       <div class="mini-phone chat-demo">
         <div class="device-status"><span>9:41</span><span class="device-island"></span><span>▂▄▆ ▰</span></div>
-        <div class="chat-person"><span>‹</span><img class="chat-avatar" src="https://images.pexels.com/photos/32403506/pexels-photo-32403506/free-photo-of-candid-portrait-of-smiling-woman-in-cafe.jpeg?auto=compress&cs=tinysrgb&w=200" alt=""><div><strong>Laura</strong><small data-i18n="online">Online now</small></div><span>⋯</span></div>
+        <div class="chat-person"><span>‹</span><img class="chat-avatar" loading="lazy" decoding="async" src="https://images.pexels.com/photos/32403506/pexels-photo-32403506/free-photo-of-candid-portrait-of-smiling-woman-in-cafe.jpeg?auto=compress&cs=tinysrgb&w=200" alt=""><div><strong>Laura</strong><small data-i18n="online">Online now</small></div><span>⋯</span></div>
         <div class="chat-day" data-i18n="today">TODAY</div>
         <div class="mini-chat">
           <div class="message-bubble"><span data-i18n="chatHi">Hey! 🍻</span><time>19:41</time></div>
@@ -161,12 +272,244 @@
   </div>
 </section>
 
-<section id="premium" class="section shell reveal">
-  <div class="premium-card">
-    <div class="premium-copy"><p class="eyebrow">SIPMATE PREMIUM 👑</p><h2><span class="heading-neutral" data-i18n="premiumLead">More control.</span><br><span data-i18n="premiumAccent">More ways to connect.</span></h2><p data-i18n="premiumCopy">Keep SipMate simple, with extra freedom when you want it.</p></div>
-    <div class="premium-side">
-      <div class="premium-prices"><div><strong>€1.99</strong><span data-i18n="perMonth">/ month</span></div><div><strong>€19.99</strong><span data-i18n="perYear">/ year</span></div></div>
-      <div class="premium-list"><div data-i18n="featureCheers">✓ See who sent you 🍻</div><div data-i18n="featureFilters">✓ Advanced filters</div><div data-i18n="featureRewind">✓ Revisit skipped profiles</div><div data-i18n="featureLocation">✓ Change your location</div><div data-i18n="featurePhotos">✓ More profile photos</div><div data-i18n="featureMessages">✓ Direct messaging features</div></div>
+<section id="premium" class="section shell reveal premium-zone">
+  <div class="section-head premium-heading">
+    <p class="eyebrow">SIPMATE PREMIUM 👑</p>
+    <h2><span class="heading-neutral" data-i18n="premiumLead">More control.</span><br><span data-i18n="premiumAccent">More ways to connect.</span></h2>
+    <p class="subcopy" data-i18n="premiumCopy">Keep SipMate simple, with extra freedom when you want it.</p>
+  </div>
+
+  <div class="premium-tier-grid">
+    <article class="premium-tier tier-monthly">
+      <span class="tier-shine" aria-hidden="true"></span>
+      <span class="tier-badge" data-i18n="monthlyBadge">FLEXIBLE</span>
+      <h3 data-i18n="monthlyName">Premium Monthly</h3>
+      <div class="tier-price"><strong>€1.99</strong><span data-i18n="perMonth">/ month</span></div>
+      <p data-i18n="monthlyDesc">Full Premium access with monthly flexibility.</p>
+    </article>
+
+    <article class="premium-tier tier-founders">
+      <span class="tier-shine" aria-hidden="true"></span>
+      <span class="tier-badge" data-i18n="foundersBadge">🔥 FIRST 100 MEMBERS</span>
+      <h3 data-i18n="foundersName">Founders Premium</h3>
+      <div class="tier-price"><strong>€14.99</strong><span data-i18n="firstYear">/ first year</span></div>
+      <p data-i18n="foundersDesc">Exclusive launch price for the first 100 confirmed yearly Premium members.</p>
+      <span class="tier-highlight" data-i18n="foundersHighlight">LIMITED · 100 SPOTS</span>
+      <div class="founders-live" aria-live="polite">
+        <span class="founders-dot"></span>
+        <strong data-founders-remaining>--</strong>
+        <span data-i18n="foundersRemaining">Founder spots left</span>
+      </div>
+      <div class="founders-progress" aria-label="Founders Premium progress">
+        <div class="founders-progress-head">
+          <span data-i18n="foundersProgressLabel">Founders claimed</span>
+          <strong><span data-founders-used>--</span> / <span data-founders-total>100</span></strong>
+        </div>
+        <div class="founders-progress-track">
+          <span data-founders-progress></span>
+        </div>
+      </div>
+    </article>
+
+    <article class="premium-tier tier-early">
+      <span class="tier-shine" aria-hidden="true"></span>
+      <span class="tier-badge" data-i18n="earlyBadge">⚡ EARLY ACCESS</span>
+      <h3 data-i18n="earlyName">Early Access Premium</h3>
+      <div class="tier-price"><strong>€17.99</strong><span data-i18n="firstYear">/ first year</span></div>
+      <p data-i18n="earlyDesc">Starts after the first 100 Founder spots are taken.</p>
+    </article>
+
+    <article class="premium-tier tier-standard">
+      <span class="tier-shine" aria-hidden="true"></span>
+      <span class="tier-badge" data-i18n="standardBadge">STANDARD</span>
+      <h3 data-i18n="standardName">Premium Yearly</h3>
+      <div class="tier-price"><strong>€19.99</strong><span data-i18n="perYear">/ year</span></div>
+      <p data-i18n="standardDesc">Standard yearly Premium price after the Early Access period.</p>
+    </article>
+  </div>
+
+  <div class="premium-timeline" aria-label="Premium launch pricing timeline">
+    <div class="timeline-stage active"><span>01</span><strong>14,99 €</strong><small data-i18n="timelineFounders">Founders · first 100</small></div>
+    <i>→</i>
+    <div class="timeline-stage"><span>02</span><strong>17,99 €</strong><small data-i18n="timelineEarly">Early Access · first year</small></div>
+    <i>→</i>
+    <div class="timeline-stage"><span>03</span><strong>19,99 €</strong><small data-i18n="timelineStandard">Standard yearly</small></div>
+  </div>
+
+  <div class="premium-benefits">
+    <div data-i18n="featureCheers">✓ See who sent you 🍻</div>
+    <div data-i18n="featureFilters">✓ Advanced filters</div>
+    <div data-i18n="featureRewind">✓ Revisit skipped profiles</div>
+    <div data-i18n="featureLocation">✓ Change your location</div>
+    <div data-i18n="featurePhotos">✓ More profile photos</div>
+    <div data-i18n="featureMessages">✓ Direct messaging features</div>
+  </div>
+</section>
+
+
+<section class="roadmap-section shell reveal">
+  <div class="section-head roadmap-head">
+    <p class="eyebrow" data-i18n="roadmapEyebrow">WHAT'S NEXT</p>
+    <h2 data-i18n="roadmapTitle">SipMate launch roadmap.</h2>
+  </div>
+  <div class="roadmap">
+    <article class="roadmap-step current"><span>NOW</span><strong data-i18n="roadmapNow">Community & testing</strong><p data-i18n="roadmapNowCopy">Website, Discord, WhatsApp and real-device app testing.</p></article>
+    <article class="roadmap-step"><span>NEXT</span><strong data-i18n="roadmapNext">Private beta</strong><p data-i18n="roadmapNextCopy">Early members start using SipMate in real-life scenarios.</p></article>
+    <article class="roadmap-step"><span>LAUNCH</span><strong data-i18n="roadmapLaunch">Germany first</strong><p data-i18n="roadmapLaunchCopy">Public rollout starting in Germany, then expanding city by city.</p></article>
+  </div>
+</section>
+
+<section class="community-activity-strip reveal" aria-label="SipMate launch locations">
+  <div class="shell activity-rollout-stack">
+    <div class="activity-track activity-track-block">
+      <strong data-i18n="activityStripLead">GERMANY FIRST</strong>
+      <div class="activity-city-row">
+        <button type="button" class="activity-city" data-city="Berlin">📍 Berlin</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Hamburg">📍 Hamburg</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Köln">📍 Köln</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Frankfurt">📍 Frankfurt</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Nürnberg">📍 Nürnberg</button><i>•</i>
+        <button type="button" class="activity-city" data-city="München">📍 München</button>
+      </div>
+    </div>
+
+    <div class="activity-track activity-track-block activity-track-balkans">
+      <strong data-i18n="activityBalkans">BALKANS NEXT</strong>
+      <div class="activity-city-row">
+        <button type="button" class="activity-city" data-city="Zagreb">📍 Zagreb</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Beograd">📍 Beograd</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Sarajevo">📍 Sarajevo</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Split">📍 Split</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Podgorica">📍 Podgorica</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Skopje">📍 Skopje</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Tirana">📍 Tirana</button>
+      </div>
+    </div>
+
+    <div class="activity-track activity-track-block activity-track-worldwide">
+      <strong data-i18n="activityWorldwide">WORLDWIDE LATER</strong>
+      <div class="activity-city-row">
+        <button type="button" class="activity-city" data-city="London">📍 London</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Paris">📍 Paris</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Amsterdam">📍 Amsterdam</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Madrid">📍 Madrid</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Rome">📍 Rome</button><i>•</i>
+        <button type="button" class="activity-city" data-city="New York">📍 New York</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Toronto">📍 Toronto</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Dubai">📍 Dubai</button><i>•</i>
+        <button type="button" class="activity-city" data-city="Sydney">📍 Sydney</button>
+      </div>
+    </div>
+
+    <p class="city-select-hint" data-i18n="citySelectHint">Tap a city to prefill it in the waitlist.</p>
+    <div class="city-demand-panel">
+      <div class="city-demand-copy">
+        <p class="eyebrow" data-i18n="cityDemandEyebrow">CITY PULSE</p>
+        <strong data-i18n="cityDemandTitle">Where should SipMate grow next?</strong>
+        <span data-i18n="cityDemandCopy">We’ll show city demand here once at least 3 people from the same city join the waitlist.</span>
+      </div>
+      <div class="city-demand-list" data-city-demand>
+        <span class="city-demand-empty" data-i18n="cityDemandEmpty">Not enough public city demand yet.</span>
+      </div>
+    </div>
+
+    <div class="rollout-request">
+      <div>
+        <strong data-i18n="requestCityTitle">Your city not listed?</strong>
+        <span data-i18n="requestCityCopy">Tell us where SipMate should launch next.</span>
+      </div>
+      <button type="button" class="request-city-button" data-request-city>📍 <span data-i18n="requestCityButton">Request your city</span></button>
+    </div>
+  </div>
+</section>
+
+<section id="community" class="community-hub reveal" aria-label="SipMate Community">
+  <div class="shell">
+    <div class="community-head">
+      <p class="eyebrow" data-i18n="communityEyebrow">SIPMATE COMMUNITY</p>
+      <h2 data-i18n="communityTitle">Choose where you want to hang out. 🍻</h2>
+      <p data-i18n="communityCopy">Quick updates on WhatsApp. Deeper conversations, support and more on Discord.</p>
+    </div>
+
+    <div class="community-grid">
+      <article class="community-card whatsapp-card">
+        <span class="community-shine" aria-hidden="true"></span>
+        <div class="community-card-top">
+          <div class="community-logo whatsapp-logo">◔</div>
+          <div>
+            <p class="community-kicker">WHATSAPP</p>
+            <h3 data-i18n="whatsappTitle">SipMate WhatsApp Community</h3>
+          </div>
+        </div>
+        <p class="community-description" data-i18n="whatsappCopy">Join announcements, general chat and the SipMate community directly on WhatsApp.</p>
+
+        <div class="community-points">
+          <span data-i18n="whatsappPoint1">📢 Launch & update announcements</span>
+          <a class="community-subgroup-link" href="https://chat.whatsapp.com/LiBN1xeTfzEI68P2yDyt0t?s=cl&p=a&mlu=4&ilr=4" target="_blank" rel="noopener noreferrer" data-i18n="whatsappFeedback">💡 Feedback & Ideas ↗</a>
+          <a class="community-subgroup-link" href="https://chat.whatsapp.com/FIeAP13z4x5H6Ow86E9PYE?s=cl&p=a&mlu=4&ilr=4" target="_blank" rel="noopener noreferrer" data-i18n="whatsappPoint2">💬 General community chat ↗</a>
+          <a class="community-subgroup-link" href="https://chat.whatsapp.com/LfjUaAs4NBEINuPpU768n0?s=cl&p=a&mlu=4&ilr=4" target="_blank" rel="noopener noreferrer" data-i18n="whatsappPoint3">📍 Find a SipMate — share your city & find company ↗</a>
+        </div>
+
+        <div class="whatsapp-join">
+          <a class="community-button whatsapp-button" href="https://chat.whatsapp.com/FpMoaBczdHiBQeKpPbpLcr" target="_blank" rel="noopener noreferrer">
+            <span data-i18n="joinWhatsapp">Join on WhatsApp</span> ↗
+          </a>
+          <div class="qr-wrap">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Fchat.whatsapp.com%2FFpMoaBczdHiBQeKpPbpLcr" alt="QR code for SipMate WhatsApp Community" loading="lazy">
+            <small data-i18n="scanWhatsapp">Scan on desktop</small>
+          </div>
+        </div>
+      </article>
+
+      <article class="community-card discord-card-new">
+        <span class="community-shine" aria-hidden="true"></span>
+        <div class="community-card-top">
+          <div class="community-logo discord-logo">◉</div>
+          <div>
+            <p class="community-kicker">DISCORD</p>
+            <h3 data-i18n="discordTitle">SipMate Discord Community</h3>
+          </div>
+        </div>
+        <p class="community-description" data-i18n="discordCopy">Get support, use ticket channels, follow updates and hang out with the SipMate community.</p>
+
+        <div class="community-points">
+          <span data-i18n="discordPoint1">🆘 Support & tickets</span>
+          <span data-i18n="discordPoint2">💎 Premium community features</span>
+          <span data-i18n="discordPoint3">🍻 Community & CHEERS feed</span>
+        </div>
+
+        <div class="discord-widget-shell community-widget">
+          <iframe
+            src="https://discord.com/widget?id=1545876541387440188&theme=dark"
+            width="350"
+            height="360"
+            allowtransparency="true"
+            frameborder="0"
+            sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+            title="SipMate Discord server widget">
+          </iframe>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="referral-teaser shell reveal">
+  <div class="referral-card">
+    <div><p class="eyebrow" data-i18n="referralEyebrow">BRING YOUR CREW</p><h2 data-i18n="referralTitle">Invite friends. Launch rewards are coming.</h2><p data-i18n="referralCopy">We’re preparing referral rewards for early SipMate supporters. Join now so you’re in from the beginning.</p></div>
+    <button type="button" class="share-big" data-share-sipmate>↗ <span data-i18n="shareSipMate">Share SipMate</span></button>
+  </div>
+
+  <div class="referral-how">
+    <div class="referral-how-head">
+      <p class="eyebrow" data-i18n="refHowEyebrow">INVITE & GROW</p>
+      <h3 data-i18n="refHowTitle">Your invite link unlocks after email confirmation.</h3>
+      <p data-i18n="refHowCopy">Join the waitlist, confirm your email, then share your personal SipMate link with friends.</p>
+    </div>
+    <div class="referral-how-steps">
+      <article><span>01</span><strong data-i18n="refStep1">Join the waitlist</strong><small data-i18n="refStep1Copy">Enter your email and city.</small></article>
+      <article><span>02</span><strong data-i18n="refStep2">Confirm your email</strong><small data-i18n="refStep2Copy">Your invite link appears after verification.</small></article>
+      <article><span>03</span><strong data-i18n="refStep3">Invite your friends</strong><small data-i18n="refStep3Copy">Confirmed referrals are counted toward future launch rewards.</small></article>
     </div>
   </div>
 </section>
@@ -184,12 +527,24 @@
     </form>
     <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
     <small data-i18n="noSpam">No spam. Just launch news and early access updates.</small>
+    <small class="confirm-note" data-i18n="confirmNote">After joining, confirm your email to secure your waitlist spot and unlock your invite link.</small>
     <div class="social-links">
       <a href="https://www.instagram.com/officialsipmate" target="_blank" rel="noopener noreferrer">◎ Instagram <span>@officialsipmate</span></a>
       <a href="https://www.tiktok.com/@sipmateofficial" target="_blank" rel="noopener noreferrer">♪ TikTok <span>@sipmateofficial</span></a>
     </div>
   </div>
 </section>
+<section id="faq" class="faq-section shell reveal">
+  <div class="section-head faq-head"><p class="eyebrow">FAQ</p><h2 data-i18n="faqTitle">Before you say CHEERS.</h2></div>
+  <div class="faq-list">
+    <details><summary data-i18n="faqDatingQ">Is SipMate a dating app?</summary><p data-i18n="faqDatingA">No. SipMate is built for drinks, coffee and spontaneous social hangouts — not dating.</p></details>
+    <details><summary data-i18n="faqLocationQ">Can people see my exact location?</summary><p data-i18n="faqLocationA">No. Your precise location is not publicly shown. Location is used for nearby discovery and distance.</p></details>
+    <details><summary data-i18n="faqCheersQ">How does CHEERS work?</summary><p data-i18n="faqCheersA">Send 🍻 to someone. If they send 🍻 back, it becomes CHEERS and chat unlocks.</p></details>
+    <details><summary data-i18n="faqPremiumQ">What does Premium cost?</summary><p data-i18n="faqPremiumA">1,99 € monthly. Founders: 14,99 € for the first year for the first 100 yearly members, then 17,99 € Early Access, then 19,99 € standard yearly.</p></details>
+    <details><summary data-i18n="faqInvisibleQ">Can I hide from Nearby?</summary><p data-i18n="faqInvisibleA">Yes. Switch yourself inactive whenever you want to stop appearing to nearby users.</p></details>
+  </div>
+</section>
+
 </main>
 
 <footer class="footer shell">
@@ -204,5 +559,14 @@
   </div>
 </footer>
 <script src="./script.js"></script>
+  <button class="install-app-button" type="button" data-install-app hidden>＋ <span data-i18n="installApp">Install SipMate</span></button>
+  <div class="mobile-sticky-cta" aria-label="SipMate quick actions">
+    <a href="#waitlist">🍻 <span data-i18n="join">Join waitlist</span></a>
+    <a href="#community">💬 <span data-i18n="communityNav">Community</span></a>
+  </div>
+  <a class="support-fab" href="https://discord.com/channels/1545876541387440188/1545880341699493978" data-support-link target="_blank" rel="noopener noreferrer" aria-label="Need assistance?">
+    <span class="support-fab-icon">💬</span>
+    <span data-i18n="supportHelp">Need assistance?</span>
+  </a>
 </body>
 </html>

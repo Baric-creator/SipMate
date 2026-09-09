@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>SipMate · Launch Dashboard</title>
+  <style>
+    :root{color-scheme:dark;--bg:#09090b;--panel:#111114;--line:#29292f;--muted:#8d8d96;--text:#f7f7f8;--red:#ef4444;--gold:#f6c65b;--green:#22c55e}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% 5%,rgba(239,68,68,.08),transparent 24%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input{font:inherit}.shell{width:min(1180px,calc(100% - 28px));margin:auto}.top{display:flex;align-items:center;justify-content:space-between;padding:24px 0;border-bottom:1px solid #1e1e22}.brand{font-size:22px;font-weight:900}.brand span{color:var(--red)}.badge{font-size:11px;color:#ffb0b0;border:1px solid rgba(239,68,68,.28);background:rgba(239,68,68,.08);padding:7px 10px;border-radius:999px}
+    .login{max-width:440px;margin:11vh auto;padding:24px;border:1px solid var(--line);border-radius:22px;background:rgba(17,17,20,.94);box-shadow:0 30px 90px rgba(0,0,0,.38)}h1,h2,p{margin-top:0}.login p,.muted{color:var(--muted)}label{display:block;font-size:12px;color:#b5b5bc;margin:14px 0 7px}input{width:100%;border:1px solid #303036;background:#0c0c0f;color:#fff;border-radius:12px;padding:12px 13px;outline:none}input:focus{border-color:#55555e}.btn{border:0;border-radius:12px;padding:12px 15px;font-weight:800;cursor:pointer}.primary{background:var(--red);color:#fff;width:100%;margin-top:16px}.ghost{background:#17171b;color:#d6d6da;border:1px solid #303036}.err{color:#fca5a5;font-size:12px;margin-top:12px;min-height:18px}
+    #app{display:none}.bar{display:flex;gap:10px;align-items:center;padding:20px 0}.bar .spacer{flex:1}.stamp{font-size:11px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{padding:18px;border:1px solid var(--line);background:linear-gradient(145deg,#131316,#0e0e11);border-radius:18px}.card small{display:block;color:var(--muted);font-size:11px}.card strong{display:block;font-size:30px;margin-top:8px;letter-spacing:-1px}.card em{display:block;color:#a7a7ae;font-size:11px;font-style:normal;margin-top:6px}.gold strong{color:var(--gold)}.green strong{color:#86efac}
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.section{margin-top:12px;padding:18px;border:1px solid var(--line);background:#101013;border-radius:18px}.section h2{font-size:15px;margin-bottom:14px}.bars{display:grid;gap:9px}.city{display:grid;grid-template-columns:120px 1fr 38px;align-items:center;gap:10px;font-size:12px}.track{height:7px;border-radius:999px;background:#242428;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,#ef4444,#fb7185);border-radius:inherit}.ref{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #202025;font-size:12px}.ref:last-child{border:0}.ref b{margin-left:auto;color:#f6c65b}
+    .tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;font-size:11px;min-width:820px}.table th,.table td{text-align:left;padding:10px 8px;border-bottom:1px solid #212126;white-space:nowrap}.table th{color:#8f8f98;font-weight:700}.ok{color:#86efac}.no{color:#fca5a5}.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#c4b5fd}
+    .progress{height:9px;background:#242428;border-radius:999px;overflow:hidden;margin-top:12px}.progress span{display:block;height:100%;background:linear-gradient(90deg,#d69b2d,#f6c65b,#fff0a6);box-shadow:0 0 18px rgba(246,198,91,.4)}
+    @media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}.city{grid-template-columns:90px 1fr 34px}}@media(max-width:520px){.grid{grid-template-columns:1fr}.shell{width:min(100% - 18px,1180px)}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="top"><div class="brand"><span>Sip</span>Mate 🍻</div><div class="badge">PRIVATE · LAUNCH OPS</div></div>
+
+    <section id="login" class="login">
+      <h1>Launch Dashboard</h1>
+      <p>Private SipMate launch metrics. Only the authorized admin account can access this page.</p>
+      <form id="loginForm">
+        <label>Email</label><input id="email" type="email" autocomplete="username" value="sipmate.app@gmail.com" required>
+        <label>Password</label><input id="password" type="password" autocomplete="current-password" required>
+        <button class="btn primary" type="submit">Open dashboard</button>
+        <div class="err" id="loginError"></div>
+      </form>
+    </section>
+
+    <main id="app">
+      <div class="bar">
+        <span class="stamp" id="stamp">Loading…</span><span class="spacer"></span>
+        <button class="btn ghost" id="refresh">Refresh</button><button class="btn ghost" id="logout">Log out</button>
+      </div>
+
+      <section class="grid">
+        <div class="card"><small>Waitlist</small><strong id="waitTotal">—</strong><em id="confirmRate">— confirmed</em></div>
+        <div class="card green"><small>Confirmed emails</small><strong id="confirmed">—</strong><em id="unconfirmed">— awaiting confirmation</em></div>
+        <div class="card"><small>Confirmed referrals</small><strong id="referrals">—</strong><em>Referral signups that verified email</em></div>
+        <div class="card gold"><small>Founders Premium</small><strong id="founders">—</strong><em id="foundersLeft">— spots remaining</em><div class="progress"><span id="founderBar" style="width:0"></span></div></div>
+      </section>
+
+      <section class="grid" style="margin-top:12px">
+        <div class="card"><small>App profiles</small><strong id="profiles">—</strong></div>
+        <div class="card"><small>Active Premium</small><strong id="premium">—</strong></div>
+        <div class="card"><small>Pending reports</small><strong id="reports">—</strong></div>
+        <div class="card"><small>Founders price</small><strong id="founderPrice">—</strong><em>first year</em></div>
+      </section>
+
+      <div class="cols">
+        <section class="section"><h2>Top cities</h2><div id="cities" class="bars"></div></section>
+        <section class="section"><h2>Top referrers</h2><div id="referrers"></div></section>
+      </div>
+
+      <section class="section"><h2>Recent waitlist</h2><div class="tablewrap"><table class="table"><thead><tr><th>Date</th><th>Name</th><th>Email</th><th>City</th><th>Status</th><th>Referral code</th><th>Referred by</th></tr></thead><tbody id="waitRows"></tbody></table></div></section>
+    </main>
+  </div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const SUPABASE_URL="https://poatmbsfglhrcdbosinb.supabase.co";
+const SUPABASE_KEY="sb_publishable_VooWOnzPl1SCUA44rZDTow_Ee5XrMd3";
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+
+async function load(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){$("login").style.display="block";$("app").style.display="none";return;}
+  $("login").style.display="none";$("app").style.display="block";
+  const res=await fetch(SUPABASE_URL+"/functions/v1/admin-launch-status",{headers:{Authorization:"Bearer "+session.access_token,apikey:SUPABASE_KEY}});
+  if(res.status===401||res.status===403){await sb.auth.signOut();$("loginError").textContent="This account is not authorized.";return load();}
+  if(!res.ok)throw new Error("Dashboard request failed");
+  const d=await res.json(); render(d);
+}
+function render(d){
+  $("stamp").textContent="Updated "+new Date(d.generated_at).toLocaleString();
+  $("waitTotal").textContent=d.waitlist.total;$("confirmed").textContent=d.waitlist.confirmed;$("unconfirmed").textContent=d.waitlist.unconfirmed+" awaiting confirmation";$("confirmRate").textContent=d.waitlist.confirmation_rate+"% confirmed";$("referrals").textContent=d.waitlist.confirmed_referrals;
+  $("founders").textContent=d.founders.used+" / "+d.founders.total;$("foundersLeft").textContent=d.founders.remaining+" spots remaining";$("founderBar").style.width=Math.min(100,d.founders.used/d.founders.total*100)+"%";$("founderPrice").textContent="€"+(d.founders.price_cents/100).toFixed(2);
+  $("profiles").textContent=d.app.profiles;$("premium").textContent=d.app.active_premium;$("reports").textContent=d.app.pending_reports;
+  const max=Math.max(1,...d.cities.map(x=>x.count));$("cities").innerHTML=d.cities.length?d.cities.map(x=>`<div class="city"><span>${esc(x.city)}</span><div class="track"><div class="fill" style="width:${x.count/max*100}%"></div></div><b>${x.count}</b></div>`).join(""):'<span class="muted">No city data yet.</span>';
+  $("referrers").innerHTML=d.top_referrers.length?d.top_referrers.map(x=>`<div class="ref"><span>${esc(x.name||x.email)}</span><span class="code">${esc(x.code)}</span><b>${x.confirmed_referrals}</b></div>`).join(""):'<span class="muted">No confirmed referrals yet.</span>';
+  $("waitRows").innerHTML=d.recent_waitlist.map(r=>`<tr><td>${new Date(r.created_at).toLocaleDateString()}</td><td>${esc(r.name||"—")}</td><td>${esc(r.email)}</td><td>${esc(r.city||"—")}</td><td class="${r.confirmed_at?"ok":"no"}">${r.confirmed_at?"Confirmed":"Pending"}</td><td class="code">${esc(r.referral_code||"—")}</td><td class="code">${esc(r.referred_by_code||"—")}</td></tr>`).join("");
+}
+$("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginError").textContent="Signing in…";const {error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){$("loginError").textContent=error.message;return}$("loginError").textContent="";load().catch(err=>$("loginError").textContent=err.message)});
+$("refresh").addEventListener("click",()=>load().catch(console.error));
+$("logout").addEventListener("click",async()=>{await sb.auth.signOut();location.reload()});
+load().catch(err=>{$("login").style.display="block";$("app").style.display="none";$("loginError").textContent=err.message});
+</script>
+</body>
+</html>

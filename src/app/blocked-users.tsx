@@ -259,14 +259,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 760,
     paddingHorizontal: 24,
-    paddingTop: 48,
+    paddingTop: 34,
   },
 
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titleEmoji: { fontSize: 24 },
   title: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: 27,
     fontWeight: '900',
     marginBottom: 8,
   },
@@ -279,10 +279,10 @@ const styles = StyleSheet.create({
 
   emptyCard: {
     width: '100%',
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     borderWidth: 1,
-    borderColor: '#27272A',
-    borderRadius: 18,
+    borderColor: '#242428',
+    borderRadius: 20,
     padding: 24,
     alignItems: 'center',
   },
@@ -307,11 +307,11 @@ const styles = StyleSheet.create({
 
   userCard: {
     width: '100%',
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     borderWidth: 1,
-    borderColor: '#27272A',
-    borderRadius: 16,
-    padding: 16,
+    borderColor: '#242428',
+    borderRadius: 18,
+    padding: 15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

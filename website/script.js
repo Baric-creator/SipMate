@@ -1,17 +1,26 @@
 const translations={
 en:{
 pageTitle:"SipMate — Ready for a drink?",metaDescription:"SipMate helps you meet nearby people for a drink, coffee or spontaneous hangout. Send a Cheers — if it's mutual, it's CHEERS!",
-how:"How it works",preview:"App preview",premium:"Premium",join:"Join waitlist",eyebrow:"COMING SOON · GERMANY FIRST",heroLead:"READY FOR",heroAccent:"A DRINK?",hero:"Meet nearby people who are up for a beer, cocktail, coffee or just good company. Send a 🍻 — if it’s mutual, it’s CHEERS!",rule:"SipMate is a social app for real-life drinks and hangouts — not a dating app.",see:"See how it works ↓",nearbyFeature:"Nearby discovery",privacyFeature:"Go invisible anytime",chatFeature:"Chat after CHEERS",nearbyDistance:"NEARBY · 800 m",demoProfile:"Demo profile",currently:"Currently up for",cocktails:"🍸 Cocktails",mutualLabel:"MUTUAL CHEERS",bothUp:"You’re both up for a drink.",startChat:"Start chat",notdating:"THIS IS NOT A DATING APP.",good:"JUST DRINKS. PEOPLE. GOOD TIMES.",howEyebrow:"HOW SIPMATE WORKS",howtitle:"From “one drink?” to CHEERS! in minutes.",nearby:"Discover nearby people",nearbycopy:"See active people around you and what they’re currently up for.",send:"Send a Cheers",sendcopy:"One tap says you’d be up for a drink — without dating mechanics or pressure.",mutual:"It’s a CHEERS!",mutualcopy:"When it’s mutual, chat unlocks and you can make a real plan.",flowEyebrow:"MEET SIPMATE",flowLead:"Discover. Cheers.",flowAccent:"Chat.",flowCopy:"Three simple screens. One simple idea: turn “maybe someday” into “one drink tonight?”.",nearbyTab:"Nearby",beer:"🍺 Beer",profileBio:"Spontaneous plans, good coffee and better company.",sendCheers:"🍻 Send Cheers",online:"Online now",today:"TODAY",chatHi:"Hey! 🍻",chatInvite:"One drink tonight?",chatYes:"Absolutely 😄",read:"READ",message:"Message…",demoNote:"Illustrative app preview · Fictional profiles and conversations",vibesEyebrow:"WHATEVER YOU’RE UP FOR",city:"Your city.",vibe:"Your vibe.",people:"Your people.",vibesCopy:"Go active when you feel social. Go invisible when you don’t. SipMate is about right now — not collecting matches.",coffee:"☕ Coffee",wine:"🥂 Wine",party:"🎉 Party",hangingOut:"🍹 Hanging out",premiumLead:"More control.",premiumAccent:"More ways to connect.",premiumCopy:"Keep SipMate simple, with extra freedom when you want it.",perMonth:"/ month",perYear:"/ year",featureCheers:"✓ See who sent you 🍻",featureFilters:"✓ Advanced filters",featureRewind:"✓ Revisit skipped profiles",featureLocation:"✓ Change your location",featurePhotos:"✓ More profile photos",featureMessages:"✓ Direct messaging features",waitEyebrow:"THE NEXT ROUND IS CLOSER THAN YOU THINK.",waittitle:"BE FIRST TO SAY CHEERS. 🍻",waitcopy:"Join the launch list for early access and SipMate updates.",namePlaceholder:"Name",emailPlaceholder:"Email",cityPlaceholder:"City (optional)",noSpam:"No spam. Just launch news and early access updates.",privacy:"Privacy",terms:"Terms",imprint:"Imprint",contact:"Contact",deleteAccount:"Delete account",loading:"Sending…",success:"🍻 You’re in! Welcome to the SipMate waitlist.",already:"🍻 You’re already on the list. Cheers!",error:"Something went wrong. Please try again.",timeout:"The request took too long. Please try again."},
+how:"How it works",preview:"App preview",premium:"Premium",communityNav:"Community",communityEyebrow:"SIPMATE COMMUNITY",communityTitle:"Choose where you want to hang out. 🍻",communityCopy:"Quick updates on WhatsApp. Deeper conversations, support and more on Discord.",whatsappTitle:"SipMate WhatsApp Community",whatsappCopy:"Join announcements, general chat and the SipMate community directly on WhatsApp.",whatsappPoint1:"📢 Launch & update announcements",whatsappFeedback:"💡 Feedback & Ideas ↗",whatsappPoint2:"💬 General community chat ↗",whatsappPoint3:"📍 Find a SipMate — share your city & find company ↗",joinWhatsapp:"Join on WhatsApp",scanWhatsapp:"Scan on desktop",discordTitle:"SipMate Discord Community",discordCopy:"Get support, use ticket channels, follow updates and hang out with the SipMate community.",discordPoint1:"🆘 Support & tickets",discordPoint2:"💎 Premium community features",discordPoint3:"🍻 Community & CHEERS feed",join:"Join waitlist",eyebrow:"COMING SOON · GERMANY FIRST",heroLead:"READY FOR",heroAccent:"A DRINK?",hero:"Meet nearby people who are up for a beer, cocktail, coffee or just good company. Send a 🍻 — if it’s mutual, it’s CHEERS!",rule:"SipMate is a social app for real-life drinks and hangouts — not a dating app.",see:"See how it works ↓",nearbyFeature:"Nearby discovery",privacyFeature:"Go invisible anytime",chatFeature:"Chat after CHEERS",nearbyDistance:"NEARBY · 800 m",demoProfile:"Demo profile",currently:"Currently up for",cocktails:"🍸 Cocktails",mutualLabel:"MUTUAL CHEERS",bothUp:"You’re both up for a drink.",startChat:"Start chat",notdating:"THIS IS NOT A DATING APP.",good:"JUST DRINKS. PEOPLE. GOOD TIMES.",howEyebrow:"HOW SIPMATE WORKS",howtitle:"From “one drink?” to CHEERS! in minutes.",nearby:"Discover nearby people",nearbycopy:"See active people around you and what they’re currently up for.",send:"Send a Cheers",sendcopy:"One tap says you’d be up for a drink — without dating mechanics or pressure.",mutual:"It’s a CHEERS!",mutualcopy:"When it’s mutual, chat unlocks and you can make a real plan.",flowEyebrow:"MEET SIPMATE",flowLead:"Discover. Cheers.",flowAccent:"Chat.",flowCopy:"Three simple screens. One simple idea: turn “maybe someday” into “one drink tonight?”.",nearbyTab:"Nearby",beer:"🍺 Beer",profileBio:"Spontaneous plans, good coffee and better company.",sendCheers:"🍻 Send Cheers",online:"Online now",today:"TODAY",chatHi:"Hey! 🍻",chatInvite:"One drink tonight?",chatYes:"Absolutely 😄",read:"READ",message:"Message…",demoNote:"Illustrative app preview · Fictional profiles and conversations",vibesEyebrow:"WHATEVER YOU’RE UP FOR",city:"Your city.",vibe:"Your vibe.",people:"Your people.",vibesCopy:"Go active when you feel social. Go invisible when you don’t. SipMate is about right now — not collecting matches.",coffee:"☕ Coffee",wine:"🥂 Wine",party:"🎉 Party",hangingOut:"🍹 Hanging out",monthlyBadge:"FLEXIBLE",monthlyName:"Premium Monthly",monthlyDesc:"Full Premium access with monthly flexibility.",foundersBadge:"🔥 FIRST 100 MEMBERS",foundersName:"Founders Premium",foundersDesc:"Exclusive launch price for the first 100 confirmed yearly Premium members.",foundersHighlight:"LIMITED · 100 SPOTS",earlyBadge:"⚡ EARLY ACCESS",earlyName:"Early Access Premium",earlyDesc:"Starts after the first 100 Founder spots are taken.",standardBadge:"STANDARD",standardName:"Premium Yearly",standardDesc:"Standard yearly Premium price after the Early Access period.",firstYear:"/ first year",premiumLead:"More control.",premiumAccent:"More ways to connect.",premiumCopy:"Keep SipMate simple, with extra freedom when you want it.",perMonth:"/ month",perYear:"/ year",featureCheers:"✓ See who sent you 🍻",featureFilters:"✓ Advanced filters",featureRewind:"✓ Revisit skipped profiles",featureLocation:"✓ Change your location",featurePhotos:"✓ More profile photos",featureMessages:"✓ Direct messaging features",waitEyebrow:"THE NEXT ROUND IS CLOSER THAN YOU THINK.",waittitle:"BE FIRST TO SAY CHEERS. 🍻",waitcopy:"Join the launch list for early access and SipMate updates.",namePlaceholder:"Name",emailPlaceholder:"Email",cityPlaceholder:"City (optional)",noSpam:"No spam. Just launch news and early access updates.",confirmNote:"After joining, confirm your email to secure your waitlist spot and unlock your invite link.",privacy:"Privacy",terms:"Terms",imprint:"Imprint",contact:"Contact",deleteAccount:"Delete account",loading:"Sending…",success:"🍻 You’re in! Welcome to the SipMate waitlist.",already:"🍻 You’re already on the list. Cheers!",error:"Something went wrong. Please try again.",timeout:"The request took too long. Please try again.",foundersRemaining:"Founder spots left",foundersProgressLabel:"Founders claimed",timelineFounders:"Founders · first 100",timelineEarly:"Early Access · first year",timelineStandard:"Standard yearly",trustEyebrow:"BUILT FOR REAL-LIFE HANGOUTS",trustTitle:"Social without giving up your privacy.",trustLocation:"No exact location shown",trustLocationCopy:"SipMate uses nearby distance without publishing your precise position.",trustInvisible:"Go invisible anytime",trustInvisibleCopy:"Switch inactive whenever you do not want to appear nearby.",trustNotDating:"Not a dating app",trustNotDatingCopy:"The goal is simple: drinks, coffee and spontaneous social plans.",activityStripLead:"GERMANY FIRST",activityStripMore:"more cities coming",activityCroatia:"Croatia",activityBalkans:"BALKANS NEXT",activityWorldwide:"WORLDWIDE LATER",requestCityTitle:"Your city not listed?",requestCityCopy:"Tell us where SipMate should launch next.",requestCityButton:"Request your city",citySelectHint:"Tap a city to prefill it in the waitlist.",cityDemandEyebrow:"CITY PULSE",cityDemandTitle:"Where should SipMate grow next?",cityDemandCopy:"We’ll show city demand here once at least 3 people from the same city join the waitlist.",cityDemandEmpty:"Not enough public city demand yet.",rolloutCities:"Cities",rolloutGermany:"Germany · north → south",rolloutBalkans:"Balkans · north → south",launchStatus:"BETA PREPARATION",whyNowEyebrow:"WHY JOIN NOW?",whyNowTitle:"Be early. Pay less. Be part of the first 100.",whyNowCopy:"The first 100 yearly Premium members unlock Founders pricing at 14,99 € for their first year.",waitlistPeople:"people already on the waitlist",claimEarly:"Join early",roadmapEyebrow:"WHAT'S NEXT",roadmapTitle:"SipMate launch roadmap.",roadmapNow:"Community & testing",roadmapNowCopy:"Website, Discord, WhatsApp and real-device app testing.",roadmapNext:"Private beta",roadmapNextCopy:"Early members start using SipMate in real-life scenarios.",roadmapLaunch:"Germany first",roadmapLaunchCopy:"Public rollout starting in Germany, then expanding city by city.",referralEyebrow:"BRING YOUR CREW",referralTitle:"Invite friends. Launch rewards are coming.",referralCopy:"We’re preparing referral rewards for early SipMate supporters. Join now so you’re in from the beginning.",shareSipMate:"Share SipMate",refHowEyebrow:"INVITE & GROW",refHowTitle:"Your invite link unlocks after email confirmation.",refHowCopy:"Join the waitlist, confirm your email, then share your personal SipMate link with friends.",refStep1:"Join the waitlist",refStep1Copy:"Enter your email and city.",refStep2:"Confirm your email",refStep2Copy:"Your invite link appears after verification.",refStep3:"Invite your friends",refStep3Copy:"Confirmed referrals are counted toward future launch rewards.",faqTitle:"Before you say CHEERS.",faqDatingQ:"Is SipMate a dating app?",faqDatingA:"No. SipMate is built for drinks, coffee and spontaneous social hangouts — not dating.",faqLocationQ:"Can people see my exact location?",faqLocationA:"No. Your precise location is not publicly shown. Location is used for nearby discovery and distance.",faqCheersQ:"How does CHEERS work?",faqCheersA:"Send 🍻 to someone. If they send 🍻 back, it becomes CHEERS and chat unlocks.",faqPremiumQ:"What does Premium cost?",faqPremiumA:"1,99 € monthly. Founders: 14,99 € for the first year for the first 100 yearly members, then 17,99 € Early Access, then 19,99 € standard yearly.",faqInvisibleQ:"Can I hide from Nearby?",faqInvisibleA:"Yes. Switch yourself inactive whenever you want to stop appearing to nearby users.",installApp:"Install SipMate",supportHelp:"Need assistance?"},
 de:{
 pageTitle:"SipMate — Lust auf einen Drink?",metaDescription:"SipMate bringt dich mit Leuten in deiner Nähe für Drinks, Kaffee oder spontane Treffen zusammen. Kein Dating — einfach gute Gesellschaft.",
-how:"So funktioniert’s",preview:"App-Vorschau",premium:"Premium",join:"Zur Warteliste",eyebrow:"BALD VERFÜGBAR · ZUERST IN DEUTSCHLAND",heroLead:"LUST AUF",heroAccent:"EINEN DRINK?",hero:"Triff Leute in deiner Nähe, die gerade Lust auf Bier, Cocktails, Kaffee oder einfach gute Gesellschaft haben. Sende 🍻 — ist es gegenseitig, heißt es CHEERS!",rule:"SipMate ist eine Social-App für echte Drinks und Treffen — keine Dating-App.",see:"So funktioniert’s ↓",nearbyFeature:"Leute in der Nähe",privacyFeature:"Jederzeit unsichtbar",chatFeature:"Chat nach CHEERS",nearbyDistance:"IN DER NÄHE · 800 m",demoProfile:"Beispielprofil",currently:"Gerade Lust auf",cocktails:"🍸 Cocktails",mutualLabel:"GEGENSEITIGER CHEERS",bothUp:"Ihr habt beide Lust auf einen Drink.",startChat:"Chat starten",notdating:"DAS IST KEINE DATING-APP.",good:"DRINKS. LEUTE. GUTE ZEIT.",howEyebrow:"SO FUNKTIONIERT SIPMATE",howtitle:"Von „ein Drink?“ zu CHEERS! in Minuten.",nearby:"Leute in der Nähe entdecken",nearbycopy:"Sieh aktive Leute um dich herum und worauf sie gerade Lust haben.",send:"Cheers senden",sendcopy:"Ein Tap zeigt: Du wärst für einen Drink dabei — ohne Dating-Mechanik und ohne Druck.",mutual:"Es ist CHEERS!",mutualcopy:"Wenn es gegenseitig ist, wird der Chat freigeschaltet und ihr könnt euch verabreden.",flowEyebrow:"ENTDECKE SIPMATE",flowLead:"Entdecken. Cheers.",flowAccent:"Chat.",flowCopy:"Drei einfache Screens. Eine einfache Idee: aus „irgendwann mal“ wird „heute ein Drink?“. ",nearbyTab:"In der Nähe",beer:"🍺 Bier",profileBio:"Spontane Pläne, guter Kaffee und noch bessere Gesellschaft.",sendCheers:"🍻 Cheers senden",online:"Jetzt online",today:"HEUTE",chatHi:"Hey! 🍻",chatInvite:"Heute Abend einen Drink?",chatYes:"Auf jeden Fall 😄",read:"GELESEN",message:"Nachricht…",demoNote:"Illustrative App-Vorschau · Fiktive Profile und Gespräche",vibesEyebrow:"WORAUF DU AUCH LUST HAST",city:"Deine Stadt.",vibe:"Deine Stimmung.",people:"Deine Leute.",vibesCopy:"Sei aktiv, wenn du Gesellschaft willst. Geh unsichtbar, wenn du Ruhe möchtest. Bei SipMate geht es um jetzt — nicht ums Sammeln von Matches.",coffee:"☕ Kaffee",wine:"🥂 Wein",party:"🎉 Feiern",hangingOut:"🍹 Zusammensitzen",premiumLead:"Mehr Kontrolle.",premiumAccent:"Mehr Möglichkeiten.",premiumCopy:"SipMate bleibt einfach und gibt dir auf Wunsch mehr Freiheit.",perMonth:"/ Monat",perYear:"/ Jahr",featureCheers:"✓ Sieh, wer dir 🍻 gesendet hat",featureFilters:"✓ Erweiterte Filter",featureRewind:"✓ Übersprungene Profile erneut ansehen",featureLocation:"✓ Standort ändern",featurePhotos:"✓ Mehr Profilfotos",featureMessages:"✓ Direkte Nachrichten",waitEyebrow:"DIE NÄCHSTE RUNDE IST NÄHER, ALS DU DENKST.",waittitle:"SAG ALS ERSTER CHEERS. 🍻",waitcopy:"Trag dich für Early Access und SipMate-Updates ein.",namePlaceholder:"Name",emailPlaceholder:"E-Mail",cityPlaceholder:"Stadt (optional)",noSpam:"Kein Spam. Nur Launch-News und Early-Access-Updates.",privacy:"Datenschutz",terms:"Nutzungsbedingungen",imprint:"Impressum",contact:"Kontakt",deleteAccount:"Konto löschen",loading:"Wird gesendet…",success:"🍻 Du bist dabei! Willkommen auf der SipMate-Warteliste.",already:"🍻 Du bist schon auf der Liste. Cheers!",error:"Etwas ist schiefgelaufen. Bitte versuche es erneut.",timeout:"Die Anfrage dauert zu lange. Bitte versuche es erneut."},
+how:"So funktioniert’s",preview:"App-Vorschau",premium:"Premium",communityNav:"Community",communityEyebrow:"SIPMATE COMMUNITY",communityTitle:"Wähle, wo du mit der Community abhängen möchtest. 🍻",communityCopy:"Schnelle Updates auf WhatsApp. Mehr Gespräche, Support und Community auf Discord.",whatsappTitle:"SipMate WhatsApp Community",whatsappCopy:"Erhalte Ankündigungen, chatte allgemein und bleib direkt über WhatsApp mit SipMate verbunden.",whatsappPoint1:"📢 Launch- & Update-Ankündigungen",whatsappFeedback:"💡 Feedback & Ideen ↗",whatsappPoint2:"💬 Allgemeiner Community-Chat ↗",whatsappPoint3:"📍 Find a SipMate — Stadt teilen & Gesellschaft finden ↗",joinWhatsapp:"Auf WhatsApp beitreten",scanWhatsapp:"Am Desktop scannen",discordTitle:"SipMate Discord Community",discordCopy:"Support, Ticket-Kanäle, Updates und die SipMate Community an einem Ort.",discordPoint1:"🆘 Support & Tickets",discordPoint2:"💎 Premium-Community-Features",discordPoint3:"🍻 Community & CHEERS-Feed",join:"Zur Warteliste",eyebrow:"BALD VERFÜGBAR · ZUERST IN DEUTSCHLAND",heroLead:"LUST AUF",heroAccent:"EINEN DRINK?",hero:"Triff Leute in deiner Nähe, die gerade Lust auf Bier, Cocktails, Kaffee oder einfach gute Gesellschaft haben. Sende 🍻 — ist es gegenseitig, heißt es CHEERS!",rule:"SipMate ist eine Social-App für echte Drinks und Treffen — keine Dating-App.",see:"So funktioniert’s ↓",nearbyFeature:"Leute in der Nähe",privacyFeature:"Jederzeit unsichtbar",chatFeature:"Chat nach CHEERS",nearbyDistance:"IN DER NÄHE · 800 m",demoProfile:"Beispielprofil",currently:"Gerade Lust auf",cocktails:"🍸 Cocktails",mutualLabel:"GEGENSEITIGER CHEERS",bothUp:"Ihr habt beide Lust auf einen Drink.",startChat:"Chat starten",notdating:"DAS IST KEINE DATING-APP.",good:"DRINKS. LEUTE. GUTE ZEIT.",howEyebrow:"SO FUNKTIONIERT SIPMATE",howtitle:"Von „ein Drink?“ zu CHEERS! in Minuten.",nearby:"Leute in der Nähe entdecken",nearbycopy:"Sieh aktive Leute um dich herum und worauf sie gerade Lust haben.",send:"Cheers senden",sendcopy:"Ein Tap zeigt: Du wärst für einen Drink dabei — ohne Dating-Mechanik und ohne Druck.",mutual:"Es ist CHEERS!",mutualcopy:"Wenn es gegenseitig ist, wird der Chat freigeschaltet und ihr könnt euch verabreden.",flowEyebrow:"ENTDECKE SIPMATE",flowLead:"Entdecken. Cheers.",flowAccent:"Chat.",flowCopy:"Drei einfache Screens. Eine einfache Idee: aus „irgendwann mal“ wird „heute ein Drink?“. ",nearbyTab:"In der Nähe",beer:"🍺 Bier",profileBio:"Spontane Pläne, guter Kaffee und noch bessere Gesellschaft.",sendCheers:"🍻 Cheers senden",online:"Jetzt online",today:"HEUTE",chatHi:"Hey! 🍻",chatInvite:"Heute Abend einen Drink?",chatYes:"Auf jeden Fall 😄",read:"GELESEN",message:"Nachricht…",demoNote:"Illustrative App-Vorschau · Fiktive Profile und Gespräche",vibesEyebrow:"WORAUF DU AUCH LUST HAST",city:"Deine Stadt.",vibe:"Deine Stimmung.",people:"Deine Leute.",vibesCopy:"Sei aktiv, wenn du Gesellschaft willst. Geh unsichtbar, wenn du Ruhe möchtest. Bei SipMate geht es um jetzt — nicht ums Sammeln von Matches.",coffee:"☕ Kaffee",wine:"🥂 Wein",party:"🎉 Feiern",hangingOut:"🍹 Zusammensitzen",monthlyBadge:"FLEXIBEL",monthlyName:"Premium monatlich",monthlyDesc:"Voller Premium-Zugang mit monatlicher Flexibilität.",foundersBadge:"🔥 DIE ERSTEN 100 MITGLIEDER",foundersName:"Founders Premium",foundersDesc:"Exklusiver Launch-Preis für die ersten 100 bestätigten jährlichen Premium-Mitglieder.",foundersHighlight:"LIMITIERT · 100 PLÄTZE",earlyBadge:"⚡ EARLY ACCESS",earlyName:"Early Access Premium",earlyDesc:"Startet, sobald die ersten 100 Founder-Plätze vergeben sind.",standardBadge:"STANDARD",standardName:"Premium jährlich",standardDesc:"Regulärer jährlicher Premium-Preis nach der Early-Access-Phase.",firstYear:"/ erstes Jahr",premiumLead:"Mehr Kontrolle.",premiumAccent:"Mehr Möglichkeiten.",premiumCopy:"SipMate bleibt einfach und gibt dir auf Wunsch mehr Freiheit.",perMonth:"/ Monat",perYear:"/ Jahr",featureCheers:"✓ Sieh, wer dir 🍻 gesendet hat",featureFilters:"✓ Erweiterte Filter",featureRewind:"✓ Übersprungene Profile erneut ansehen",featureLocation:"✓ Standort ändern",featurePhotos:"✓ Mehr Profilfotos",featureMessages:"✓ Direkte Nachrichten",waitEyebrow:"DIE NÄCHSTE RUNDE IST NÄHER, ALS DU DENKST.",waittitle:"SAG ALS ERSTER CHEERS. 🍻",waitcopy:"Trag dich für Early Access und SipMate-Updates ein.",namePlaceholder:"Name",emailPlaceholder:"E-Mail",cityPlaceholder:"Stadt (optional)",noSpam:"Kein Spam. Nur Launch-News und Early-Access-Updates.",confirmNote:"Nach der Anmeldung bestätigst du deine E-Mail, sicherst deinen Wartelistenplatz und schaltest deinen Einladungslink frei.",privacy:"Datenschutz",terms:"Nutzungsbedingungen",imprint:"Impressum",contact:"Kontakt",deleteAccount:"Konto löschen",loading:"Wird gesendet…",success:"🍻 Du bist dabei! Willkommen auf der SipMate-Warteliste.",already:"🍻 Du bist schon auf der Liste. Cheers!",error:"Etwas ist schiefgelaufen. Bitte versuche es erneut.",timeout:"Die Anfrage dauert zu lange. Bitte versuche es erneut.",foundersRemaining:"Founder-Plätze übrig",foundersProgressLabel:"Founders vergeben",timelineFounders:"Founders · erste 100",timelineEarly:"Early Access · erstes Jahr",timelineStandard:"Standard jährlich",trustEyebrow:"FÜR ECHTE TREFFEN GEMACHT",trustTitle:"Social, ohne deine Privatsphäre aufzugeben.",trustLocation:"Kein genauer Standort sichtbar",trustLocationCopy:"SipMate zeigt Nähe, ohne deine exakte Position öffentlich zu machen.",trustInvisible:"Jederzeit unsichtbar",trustInvisibleCopy:"Schalte dich inaktiv, wenn du nicht in der Nähe erscheinen möchtest.",trustNotDating:"Keine Dating-App",trustNotDatingCopy:"Das Ziel ist einfach: Drinks, Kaffee und spontane Treffen.",activityStripLead:"ZUERST IN DEUTSCHLAND",activityStripMore:"weitere Städte folgen",activityCroatia:"Kroatien",activityBalkans:"BALKAN ALS NÄCHSTES",activityWorldwide:"SPÄTER WELTWEIT",requestCityTitle:"Deine Stadt fehlt?",requestCityCopy:"Sag uns, wo SipMate als Nächstes starten soll.",requestCityButton:"Stadt vorschlagen",citySelectHint:"Tippe auf eine Stadt, um sie in der Warteliste vorauszufüllen.",cityDemandEyebrow:"CITY PULSE",cityDemandTitle:"Wo soll SipMate als Nächstes wachsen?",cityDemandCopy:"Wir zeigen die Nachfrage einer Stadt, sobald mindestens 3 Personen aus derselben Stadt auf der Warteliste stehen.",cityDemandEmpty:"Noch nicht genug öffentliche Stadtnachfrage.",rolloutCities:"Städte",rolloutGermany:"Deutschland · Nord → Süd",rolloutBalkans:"Balkan · Nord → Süd",launchStatus:"BETA-VORBEREITUNG",whyNowEyebrow:"WARUM JETZT DABEI SEIN?",whyNowTitle:"Früh dabei. Weniger zahlen. Teil der ersten 100 sein.",whyNowCopy:"Die ersten 100 jährlichen Premium-Mitglieder erhalten den Founders-Preis von 14,99 € für ihr erstes Jahr.",waitlistPeople:"Personen sind bereits auf der Warteliste",claimEarly:"Früh beitreten",roadmapEyebrow:"WAS KOMMT ALS NÄCHSTES",roadmapTitle:"SipMate Launch-Roadmap.",roadmapNow:"Community & Tests",roadmapNowCopy:"Website, Discord, WhatsApp und App-Tests auf echten Geräten.",roadmapNext:"Private Beta",roadmapNextCopy:"Frühe Mitglieder testen SipMate in echten Alltagssituationen.",roadmapLaunch:"Zuerst Deutschland",roadmapLaunchCopy:"Öffentlicher Start in Deutschland, danach Stadt für Stadt.",referralEyebrow:"BRING DEINE CREW MIT",referralTitle:"Freunde einladen. Launch-Belohnungen kommen.",referralCopy:"Wir bereiten Referral-Belohnungen für frühe SipMate-Unterstützer vor. Sei von Anfang an dabei.",shareSipMate:"SipMate teilen",refHowEyebrow:"EINLADEN & WACHSEN",refHowTitle:"Dein Einladungslink wird nach der E-Mail-Bestätigung freigeschaltet.",refHowCopy:"Trag dich ein, bestätige deine E-Mail und teile danach deinen persönlichen SipMate-Link.",refStep1:"Warteliste beitreten",refStep1Copy:"E-Mail und Stadt eintragen.",refStep2:"E-Mail bestätigen",refStep2Copy:"Nach der Bestätigung erscheint dein Einladungslink.",refStep3:"Freunde einladen",refStep3Copy:"Bestätigte Empfehlungen zählen für zukünftige Launch-Belohnungen.",faqTitle:"Bevor du CHEERS sagst.",faqDatingQ:"Ist SipMate eine Dating-App?",faqDatingA:"Nein. SipMate ist für Drinks, Kaffee und spontane soziale Treffen gedacht — nicht fürs Dating.",faqLocationQ:"Können andere meinen genauen Standort sehen?",faqLocationA:"Nein. Dein genauer Standort wird nicht öffentlich angezeigt. Er wird für Nähe und Distanz verwendet.",faqCheersQ:"Wie funktioniert CHEERS?",faqCheersA:"Sende jemandem 🍻. Bekommst du 🍻 zurück, wird daraus CHEERS und der Chat wird freigeschaltet.",faqPremiumQ:"Was kostet Premium?",faqPremiumA:"1,99 € monatlich. Founders: 14,99 € im ersten Jahr für die ersten 100 Jahresmitglieder, danach 17,99 € Early Access und später 19,99 € jährlich.",faqInvisibleQ:"Kann ich mich bei Nearby ausblenden?",faqInvisibleA:"Ja. Stelle dich jederzeit auf inaktiv, wenn du nicht in Nearby erscheinen möchtest.",installApp:"SipMate installieren",supportHelp:"Brauchst du Hilfe?"},
 hr:{
 pageTitle:"SipMate — Jesi za piće?",metaDescription:"SipMate povezuje ljude u blizini za piće, kavu ili spontano druženje. Nije dating — samo dobro društvo.",
-how:"Kako radi",preview:"Pregled aplikacije",premium:"Premium",join:"Pridruži se",eyebrow:"USKORO · PRVO U NJEMAČKOJ",heroLead:"JESI ZA",heroAccent:"PIĆE?",hero:"Upoznaj ljude u blizini koji su za pivo, koktel, kavu ili jednostavno dobro društvo. Pošalji 🍻 — ako je obostrano, to je CHEERS!",rule:"SipMate je društvena aplikacija za stvarna druženja i piće — nije dating aplikacija.",see:"Pogledaj kako radi ↓",nearbyFeature:"Ljudi u blizini",privacyFeature:"Sakrij se kad želiš",chatFeature:"Chat nakon CHEERS",nearbyDistance:"U BLIZINI · 800 m",demoProfile:"Primjer profila",currently:"Trenutno za",cocktails:"🍸 Koktele",mutualLabel:"UZAJAMNI CHEERS",bothUp:"Oboje ste za piće.",startChat:"Započni razgovor",notdating:"OVO NIJE DATING APLIKACIJA.",good:"PIĆE. LJUDI. DOBRA ZABAVA.",howEyebrow:"KAKO SIPMATE RADI",howtitle:"Od „idemo na jedno?“ do CHEERS! za par minuta.",nearby:"Otkrij ljude u blizini",nearbycopy:"Vidi aktivne ljude oko sebe i za što su trenutno raspoloženi.",send:"Pošalji Cheers",sendcopy:"Jedan dodir kaže da si za piće — bez dating mehanike i bez pritiska.",mutual:"To je CHEERS!",mutualcopy:"Kad je obostrano, otključava se chat i možete napraviti pravi plan.",flowEyebrow:"UPOZNAJ SIPMATE",flowLead:"Otkrij. Cheers.",flowAccent:"Razgovaraj.",flowCopy:"Tri jednostavna ekrana. Jedna ideja: od „jednom ćemo“ do „idemo večeras na piće?“. ",nearbyTab:"U blizini",beer:"🍺 Pivo",profileBio:"Spontani planovi, dobra kava i još bolje društvo.",sendCheers:"🍻 Pošalji Cheers",online:"Trenutno online",today:"DANAS",chatHi:"Bok! 🍻",chatInvite:"Idemo večeras na piće?",chatYes:"Naravno 😄",read:"PROČITANO",message:"Poruka…",demoNote:"Ilustrativni prikaz aplikacije · Izmišljeni profili i razgovori",vibesEyebrow:"ZA ŠTO GOD SI RASPOLOŽEN/A",city:"Tvoj grad.",vibe:"Tvoje raspoloženje.",people:"Tvoja ekipa.",vibesCopy:"Budi aktivan kad si za društvo. Sakrij se kad želiš mir. SipMate je za sada — ne za skupljanje matcheva.",coffee:"☕ Kavu",wine:"🥂 Vino",party:"🎉 Izlazak",hangingOut:"🍹 Druženje",premiumLead:"Više kontrole.",premiumAccent:"Više načina za povezivanje.",premiumCopy:"SipMate ostaje jednostavan, a Premium ti daje više slobode.",perMonth:"/ mjesečno",perYear:"/ godišnje",featureCheers:"✓ Vidi tko ti je poslao 🍻",featureFilters:"✓ Napredni filtri",featureRewind:"✓ Vrati preskočene profile",featureLocation:"✓ Promijeni lokaciju",featurePhotos:"✓ Više profilnih fotografija",featureMessages:"✓ Direktne poruke",waitEyebrow:"SLJEDEĆA RUNDA BLIŽE JE NEGO ŠTO MISLIŠ.",waittitle:"BUDI PRVI KOJI ĆE REĆI CHEERS. 🍻",waitcopy:"Pridruži se za rani pristup i SipMate novosti.",namePlaceholder:"Ime",emailPlaceholder:"E-mail",cityPlaceholder:"Grad (opcionalno)",noSpam:"Bez spama. Samo novosti o pokretanju i ranom pristupu.",privacy:"Privatnost",terms:"Uvjeti korištenja",imprint:"Podaci o vlasniku",contact:"Kontakt",deleteAccount:"Brisanje računa",loading:"Šaljem…",success:"🍻 Na listi si! Dobrodošao/la na SipMate waitlistu.",already:"🍻 Već si na listi. Cheers!",error:"Nešto nije uspjelo. Pokušaj ponovno.",timeout:"Zahtjev traje predugo. Pokušaj ponovno."}
+how:"Kako radi",preview:"Pregled aplikacije",premium:"Premium",communityNav:"Community",communityEyebrow:"SIPMATE COMMUNITY",communityTitle:"Odaberi gdje želiš biti dio ekipe. 🍻",communityCopy:"Brze novosti na WhatsAppu. Više razgovora, podrške i community sadržaja na Discordu.",whatsappTitle:"SipMate WhatsApp Community",whatsappCopy:"Pridruži se objavama, općem chatu i SipMate zajednici direktno na WhatsAppu.",whatsappPoint1:"📢 Launch i update objave",whatsappFeedback:"💡 Feedback & ideje ↗",whatsappPoint2:"💬 Opći community chat ↗",whatsappPoint3:"📍 Find a SipMate — napiši grad i pronađi ekipu ↗",joinWhatsapp:"Pridruži se na WhatsAppu",scanWhatsapp:"Skeniraj na računalu",discordTitle:"SipMate Discord Community",discordCopy:"Podrška, ticket kanali, novosti i druženje sa SipMate zajednicom.",discordPoint1:"🆘 Podrška i ticketi",discordPoint2:"💎 Premium community mogućnosti",discordPoint3:"🍻 Community i CHEERS feed",join:"Pridruži se",eyebrow:"USKORO · PRVO U NJEMAČKOJ",heroLead:"JESI ZA",heroAccent:"PIĆE?",hero:"Upoznaj ljude u blizini koji su za pivo, koktel, kavu ili jednostavno dobro društvo. Pošalji 🍻 — ako je obostrano, to je CHEERS!",rule:"SipMate je društvena aplikacija za stvarna druženja i piće — nije dating aplikacija.",see:"Pogledaj kako radi ↓",nearbyFeature:"Ljudi u blizini",privacyFeature:"Sakrij se kad želiš",chatFeature:"Chat nakon CHEERS",nearbyDistance:"U BLIZINI · 800 m",demoProfile:"Primjer profila",currently:"Trenutno za",cocktails:"🍸 Koktele",mutualLabel:"UZAJAMNI CHEERS",bothUp:"Oboje ste za piće.",startChat:"Započni razgovor",notdating:"OVO NIJE DATING APLIKACIJA.",good:"PIĆE. LJUDI. DOBRA ZABAVA.",howEyebrow:"KAKO SIPMATE RADI",howtitle:"Od „idemo na jedno?“ do CHEERS! za par minuta.",nearby:"Otkrij ljude u blizini",nearbycopy:"Vidi aktivne ljude oko sebe i za što su trenutno raspoloženi.",send:"Pošalji Cheers",sendcopy:"Jedan dodir kaže da si za piće — bez dating mehanike i bez pritiska.",mutual:"To je CHEERS!",mutualcopy:"Kad je obostrano, otključava se chat i možete napraviti pravi plan.",flowEyebrow:"UPOZNAJ SIPMATE",flowLead:"Otkrij. Cheers.",flowAccent:"Razgovaraj.",flowCopy:"Tri jednostavna ekrana. Jedna ideja: od „jednom ćemo“ do „idemo večeras na piće?“. ",nearbyTab:"U blizini",beer:"🍺 Pivo",profileBio:"Spontani planovi, dobra kava i još bolje društvo.",sendCheers:"🍻 Pošalji Cheers",online:"Trenutno online",today:"DANAS",chatHi:"Bok! 🍻",chatInvite:"Idemo večeras na piće?",chatYes:"Naravno 😄",read:"PROČITANO",message:"Poruka…",demoNote:"Ilustrativni prikaz aplikacije · Izmišljeni profili i razgovori",vibesEyebrow:"ZA ŠTO GOD SI RASPOLOŽEN/A",city:"Tvoj grad.",vibe:"Tvoje raspoloženje.",people:"Tvoja ekipa.",vibesCopy:"Budi aktivan kad si za društvo. Sakrij se kad želiš mir. SipMate je za sada — ne za skupljanje matcheva.",coffee:"☕ Kavu",wine:"🥂 Vino",party:"🎉 Izlazak",hangingOut:"🍹 Druženje",monthlyBadge:"FLEKSIBILNO",monthlyName:"Premium mjesečno",monthlyDesc:"Puni Premium pristup uz mjesečnu fleksibilnost.",foundersBadge:"🔥 PRVIH 100 ČLANOVA",foundersName:"Founders Premium",foundersDesc:"Ekskluzivna launch cijena za prvih 100 potvrđenih godišnjih Premium članova.",foundersHighlight:"OGRANIČENO · 100 MJESTA",earlyBadge:"⚡ EARLY ACCESS",earlyName:"Early Access Premium",earlyDesc:"Počinje nakon što se popuni prvih 100 Founder mjesta.",standardBadge:"STANDARD",standardName:"Premium godišnje",standardDesc:"Standardna godišnja Premium cijena nakon Early Access razdoblja.",firstYear:"/ prva godina",premiumLead:"Više kontrole.",premiumAccent:"Više načina za povezivanje.",premiumCopy:"SipMate ostaje jednostavan, a Premium ti daje više slobode.",perMonth:"/ mjesečno",perYear:"/ godišnje",featureCheers:"✓ Vidi tko ti je poslao 🍻",featureFilters:"✓ Napredni filtri",featureRewind:"✓ Vrati preskočene profile",featureLocation:"✓ Promijeni lokaciju",featurePhotos:"✓ Više profilnih fotografija",featureMessages:"✓ Direktne poruke",waitEyebrow:"SLJEDEĆA RUNDA BLIŽE JE NEGO ŠTO MISLIŠ.",waittitle:"BUDI PRVI KOJI ĆE REĆI CHEERS. 🍻",waitcopy:"Pridruži se za rani pristup i SipMate novosti.",namePlaceholder:"Ime",emailPlaceholder:"E-mail",cityPlaceholder:"Grad (opcionalno)",noSpam:"Bez spama. Samo novosti o pokretanju i ranom pristupu.",confirmNote:"Nakon prijave potvrdi e-mail kako bi osigurao/la mjesto na waitlisti i otključao/la svoj invite link.",privacy:"Privatnost",terms:"Uvjeti korištenja",imprint:"Podaci o vlasniku",contact:"Kontakt",deleteAccount:"Brisanje računa",loading:"Šaljem…",success:"🍻 Na listi si! Dobrodošao/la na SipMate waitlistu.",checkEmail:"📩 Provjeri inbox i potvrdi e-mail kako bi osigurao/la svoje mjesto.",already:"🍻 Već si na listi. Cheers!",error:"Nešto nije uspjelo. Pokušaj ponovno.",timeout:"Zahtjev traje predugo. Pokušaj ponovno.",foundersRemaining:"Founder mjesta preostalo",foundersProgressLabel:"Founders zauzeto",timelineFounders:"Founders · prvih 100",timelineEarly:"Early Access · prva godina",timelineStandard:"Standard godišnje",trustEyebrow:"NAPRAVLJENO ZA STVARNA DRUŽENJA",trustTitle:"Društveno, bez odricanja od privatnosti.",trustLocation:"Točna lokacija nije javna",trustLocationCopy:"SipMate prikazuje blizinu bez objavljivanja tvoje precizne pozicije.",trustInvisible:"Sakrij se kad želiš",trustInvisibleCopy:"Prebaci se na inactive kada ne želiš biti vidljiv u blizini.",trustNotDating:"Nije dating aplikacija",trustNotDatingCopy:"Cilj je jednostavan: piće, kava i spontano druženje.",activityStripLead:"PRVO U NJEMAČKOJ",activityStripMore:"uskoro još gradova",activityCroatia:"Hrvatska",activityBalkans:"BALKAN SLJEDEĆI",activityWorldwide:"KASNIJE GLOBALNO",requestCityTitle:"Tvoj grad nije na listi?",requestCityCopy:"Reci nam gdje bi SipMate trebao sljedeće krenuti.",requestCityButton:"Predloži svoj grad",citySelectHint:"Dodirni grad i automatski ćemo ga upisati u waitlist.",cityDemandEyebrow:"CITY PULSE",cityDemandTitle:"Gdje bi SipMate trebao rasti sljedeće?",cityDemandCopy:"Potražnju po gradu prikazujemo tek kada su najmanje 3 osobe iz istog grada na waitlisti.",cityDemandEmpty:"Još nema dovoljno javne potražnje po gradovima.",rolloutCities:"Gradovi",rolloutGermany:"Njemačka · sjever → jug",rolloutBalkans:"Balkan · sjever → jug",launchStatus:"PRIPREMA BETA VERZIJE",whyNowEyebrow:"ZAŠTO UĆI SADA?",whyNowTitle:"Uđi ranije. Plati manje. Budi među prvih 100.",whyNowCopy:"Prvih 100 godišnjih Premium članova dobiva Founders cijenu od 14,99 € za prvu godinu.",waitlistPeople:"ljudi je već na waitlisti",claimEarly:"Pridruži se ranije",roadmapEyebrow:"ŠTO SLIJEDI",roadmapTitle:"SipMate launch roadmap.",roadmapNow:"Community i testiranje",roadmapNowCopy:"Website, Discord, WhatsApp i testiranje aplikacije na pravim uređajima.",roadmapNext:"Privatna beta",roadmapNextCopy:"Rani članovi počinju koristiti SipMate u stvarnim situacijama.",roadmapLaunch:"Prvo Njemačka",roadmapLaunchCopy:"Javni launch kreće u Njemačkoj, zatim grad po grad.",referralEyebrow:"POVEDI EKIPU",referralTitle:"Pozovi prijatelje. Launch nagrade dolaze.",referralCopy:"Pripremamo referral nagrade za rane SipMate podržavatelje. Uđi sada da budeš tu od početka.",shareSipMate:"Podijeli SipMate",refHowEyebrow:"POZOVI & RASTI",refHowTitle:"Tvoj invite link se otključava nakon potvrde e-maila.",refHowCopy:"Pridruži se waitlisti, potvrdi e-mail i zatim podijeli svoj osobni SipMate link s prijateljima.",refStep1:"Pridruži se waitlisti",refStep1Copy:"Upiši e-mail i grad.",refStep2:"Potvrdi e-mail",refStep2Copy:"Nakon potvrde pojavljuje se tvoj invite link.",refStep3:"Pozovi prijatelje",refStep3Copy:"Potvrđeni referral korisnici računaju se za buduće launch nagrade.",faqTitle:"Prije nego kažeš CHEERS.",faqDatingQ:"Je li SipMate dating aplikacija?",faqDatingA:"Ne. SipMate je napravljen za piće, kavu i spontana druženja — ne za dating.",faqLocationQ:"Mogu li drugi vidjeti moju točnu lokaciju?",faqLocationA:"Ne. Precizna lokacija nije javno prikazana. Koristi se za Nearby i udaljenost.",faqCheersQ:"Kako radi CHEERS?",faqCheersA:"Pošalji nekome 🍻. Ako ti vrati 🍻, nastaje CHEERS i otključava se chat.",faqPremiumQ:"Koliko košta Premium?",faqPremiumA:"1,99 € mjesečno. Founders: 14,99 € za prvu godinu za prvih 100 godišnjih članova, zatim 17,99 € Early Access i nakon toga 19,99 € godišnje.",faqInvisibleQ:"Mogu li se sakriti iz Nearby?",faqInvisibleA:"Da. Prebaci se na inactive kad god ne želiš biti vidljiv korisnicima u blizini.",installApp:"Instaliraj SipMate",supportHelp:"Trebaš pomoć?"}
 };
 
+const supportChannels={en:"1545880341699493978",de:"1545890557652635768",hr:"1545891206322458775"};
 let locale="en";
-try{const saved=localStorage.getItem("sipmate-locale");if(saved&&translations[saved])locale=saved}catch{}
+try{
+  const saved=localStorage.getItem("sipmate-locale");
+  if(saved&&translations[saved]){
+    locale=saved;
+  }else{
+    const browserLang=(navigator.language||"en").split("-")[0].toLowerCase();
+    if(translations[browserLang])locale=browserLang;
+  }
+}catch{}
 function applyLocale(lang){
   locale=translations[lang]?lang:"en";
   try{localStorage.setItem("sipmate-locale",locale)}catch{}
@@ -21,6 +30,11 @@ function applyLocale(lang){
   document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>{const v=translations[locale][el.dataset.i18nPlaceholder];if(v)el.setAttribute("placeholder",v)});
   document.querySelectorAll("[data-lang]").forEach(el=>{const active=el.dataset.lang===locale;el.classList.toggle("active",active);el.setAttribute("aria-pressed",String(active))});
   document.title=translations[locale].pageTitle;
+  const supportLink=document.querySelector("[data-support-link]");
+  if(supportLink){
+    supportLink.href=`https://discord.com/channels/1545876541387440188/${supportChannels[locale]||supportChannels.en}`;
+    supportLink.setAttribute("aria-label",translations[locale].supportHelp);
+  }
 }
 document.querySelectorAll("[data-lang]").forEach(btn=>btn.addEventListener("click",()=>applyLocale(btn.dataset.lang)));
 applyLocale(locale);
@@ -45,7 +59,9 @@ if(form&&status){
     e.preventDefault();
     if(submitting||!form.reportValidity())return;
     const fd=new FormData(form);
-    const payload={name:String(fd.get("name")||"").trim(),email:String(fd.get("email")||"").trim(),city:String(fd.get("city")||"").trim(),locale};
+    let refCode=(new URLSearchParams(location.search).get("ref")||"").trim();
+    try{if(!refCode)refCode=localStorage.getItem("sipmate-ref")||""}catch{}
+    const payload={name:String(fd.get("name")||"").trim(),email:String(fd.get("email")||"").trim(),city:String(fd.get("city")||"").trim(),locale,ref:refCode};
     const button=form.querySelector("button");
     submitting=true;button.disabled=true;status.textContent=translations[locale].loading;form.setAttribute("aria-busy","true");
     const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
@@ -53,9 +69,250 @@ if(form&&status){
       const response=await fetch(endpoint,{signal:controller.signal,method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       const data=await response.json();
       if(!response.ok||data?.ok!==true)throw new Error("request_failed");
-      status.textContent=translations[locale][data.already?"already":"success"];
+      status.textContent=data?.email_sent
+        ? translations[locale].checkEmail
+        : translations[locale][data.already?"already":"success"];
       form.reset();
+      loadPremiumPublicStatus();
+      const waitlistSection=form.closest(".waitlist");
+      if(waitlistSection){
+        waitlistSection.classList.remove("waitlist-celebrate");
+        requestAnimationFrame(()=>waitlistSection.classList.add("waitlist-celebrate"));
+        setTimeout(()=>waitlistSection.classList.remove("waitlist-celebrate"),1800);
+      }
     }catch(error){status.textContent=translations[locale][error?.name==="AbortError"?"timeout":"error"]}
     finally{clearTimeout(timer);submitting=false;button.disabled=false;form.removeAttribute("aria-busy")}
   });
 }
+
+// sipmate-parallax
+const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+const stage=document.querySelector(".phone-stage");
+const beerShadow=document.querySelector(".ambient-bar");
+if(!reducedMotion&&stage&&window.matchMedia("(pointer:fine)").matches){
+  window.addEventListener("pointermove",e=>{
+    const x=(e.clientX/window.innerWidth-.5);
+    const y=(e.clientY/window.innerHeight-.5);
+    stage.style.transform=`rotateY(${x*2.5}deg) rotateX(${-y*2}deg)`;
+    if(beerShadow)beerShadow.style.marginRight=`${x*10}px`;
+  },{passive:true});
+}
+
+
+// premium-live-status
+const premiumStatusEndpoint="https://poatmbsfglhrcdbosinb.supabase.co/functions/v1/public-launch-status";
+async function loadPremiumPublicStatus(){
+  try{
+    const r=await fetch(premiumStatusEndpoint,{headers:{Accept:"application/json"}});
+    if(!r.ok)return;
+    const data=await r.json();
+    const el=document.querySelector("[data-founders-remaining]");
+    if(el&&data?.ok&&Number.isFinite(data?.founders?.remaining))el.textContent=String(data.founders.remaining);
+
+    const founderUsed=document.querySelector("[data-founders-used]");
+    const founderTotal=document.querySelector("[data-founders-total]");
+    const founderProgress=document.querySelector("[data-founders-progress]");
+    if(data?.ok&&Number.isFinite(data?.founders?.used)&&Number.isFinite(data?.founders?.total)){
+      const used=Math.max(0,Number(data.founders.used));
+      const total=Math.max(1,Number(data.founders.total));
+      if(founderUsed)founderUsed.textContent=String(used);
+      if(founderTotal)founderTotal.textContent=String(total);
+      if(founderProgress)founderProgress.style.width=`${Math.min(100,(used/total)*100)}%`;
+    }
+    const waitlistEl=document.querySelector("[data-waitlist-count]");
+    if(waitlistEl&&data?.ok&&Number.isFinite(data?.waitlist_count))waitlistEl.textContent=String(data.waitlist_count);
+
+    const demandEl=document.querySelector("[data-city-demand]");
+    if(demandEl&&data?.ok){
+      const cities=Array.isArray(data?.city_demand)?data.city_demand:[];
+      if(cities.length){
+        demandEl.innerHTML=cities.map((item,index)=>`
+          <button type="button" class="city-demand-chip" data-city="${String(item.city).replace(/"/g,"&quot;")}">
+            <span class="city-demand-rank">#${index+1}</span>
+            <strong>${item.city}</strong>
+            <span>${item.count}</span>
+          </button>`).join("");
+        demandEl.querySelectorAll("[data-city]").forEach(btn=>{
+          btn.addEventListener("click",()=>focusWaitlistCity(btn.dataset.city||""));
+        });
+      }else{
+        demandEl.innerHTML=`<span class="city-demand-empty">${translations[locale].cityDemandEmpty}</span>`;
+      }
+    }
+  }catch{}
+}
+loadPremiumPublicStatus();
+setInterval(loadPremiumPublicStatus,60000);
+
+// scroll-progress
+const progressBar=document.querySelector(".scroll-progress span");
+function updateScrollProgress(){
+  if(!progressBar)return;
+  const max=document.documentElement.scrollHeight-window.innerHeight;
+  const p=max>0?Math.min(1,Math.max(0,window.scrollY/max)):0;
+  progressBar.style.transform=`scaleX(${p})`;
+}
+window.addEventListener("scroll",updateScrollProgress,{passive:true});
+updateScrollProgress();
+
+// cheers-demo-reveal
+const cheersDemo=document.querySelector(".cheers-demo");
+if(cheersDemo&&!reducedMotion){
+  const cheersObserver=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting)return;
+      cheersDemo.classList.remove("cheers-live");
+      requestAnimationFrame(()=>cheersDemo.classList.add("cheers-live"));
+      setTimeout(()=>cheersDemo.classList.remove("cheers-live"),2200);
+    });
+  },{threshold:.45});
+  cheersObserver.observe(cheersDemo);
+}
+
+
+// share-sipmate
+async function shareSipMate(){
+  const shareTexts={
+    en:"Not dating. Just drinks, people & good times.",
+    de:"Kein Dating. Nur Drinks, Leute & gute Zeit.",
+    hr:"Nije dating. Samo piće, ljudi i dobra zabava."
+  };
+  const shareData={title:"SipMate 🍻",text:shareTexts[locale]||shareTexts.en,url:"https://officialsipmate.com/"};
+  try{
+    if(navigator.share){await navigator.share(shareData);return;}
+    await navigator.clipboard?.writeText(shareData.url);
+    const buttons=document.querySelectorAll("[data-share-sipmate]");
+    buttons.forEach(btn=>{const old=btn.dataset.originalText||btn.textContent;btn.dataset.originalText=old;btn.textContent="✓";setTimeout(()=>btn.textContent=old,1200)});
+  }catch{}
+}
+document.querySelectorAll("[data-share-sipmate]").forEach(btn=>btn.addEventListener("click",shareSipMate));
+
+// pwa-install
+let deferredInstallPrompt=null;
+const installButton=document.querySelector("[data-install-app]");
+window.addEventListener("beforeinstallprompt",event=>{
+  event.preventDefault();
+  deferredInstallPrompt=event;
+  if(installButton)installButton.hidden=false;
+});
+if(installButton){
+  installButton.addEventListener("click",async()=>{
+    if(!deferredInstallPrompt)return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt=null;
+    installButton.hidden=true;
+  });
+}
+window.addEventListener("appinstalled",()=>{if(installButton)installButton.hidden=true;});
+
+// accessible nav button relationship
+if(menuBtn&&nav){
+  if(!nav.id)nav.id="primary-navigation";
+  menuBtn.setAttribute("aria-controls",nav.id);
+}
+
+
+// pwa-service-worker
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("/sw.js").catch(()=>{});
+  });
+}
+
+// faq-single-open
+document.querySelectorAll(".faq-list details").forEach(item=>{
+  item.addEventListener("toggle",()=>{
+    if(!item.open)return;
+    document.querySelectorAll(".faq-list details").forEach(other=>{
+      if(other!==item)other.open=false;
+    });
+  });
+});
+
+// keyboard-and-mobile-nav polish
+document.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&nav?.classList.contains("open")){
+    nav.classList.remove("open");
+    menuBtn?.setAttribute("aria-expanded","false");
+    if(menuBtn)menuBtn.textContent="☰";
+    menuBtn?.focus();
+  }
+});
+
+
+// rollout-cities-dropdown
+const rolloutToggle=document.querySelector(".rollout-toggle");
+const rolloutCities=document.getElementById("rollout-cities");
+if(rolloutToggle&&rolloutCities){
+  rolloutToggle.addEventListener("click",()=>{
+    const open=rolloutToggle.getAttribute("aria-expanded")==="true";
+    rolloutToggle.setAttribute("aria-expanded",String(!open));
+    rolloutCities.hidden=open;
+    rolloutCities.classList.toggle("open",!open);
+  });
+}
+
+
+// rollout-city-request
+function focusWaitlistCity(city=""){
+  const input=document.querySelector('#waitlist-form input[name="city"]');
+  const waitlist=document.getElementById("waitlist");
+  if(input&&city)input.value=city;
+  waitlist?.scrollIntoView({behavior:reducedMotion?"auto":"smooth",block:"center"});
+  setTimeout(()=>input?.focus({preventScroll:true}),reducedMotion?0:650);
+}
+document.querySelectorAll("[data-city]").forEach(btn=>{
+  btn.addEventListener("click",()=>focusWaitlistCity(btn.dataset.city||""));
+});
+document.querySelector("[data-request-city]")?.addEventListener("click",()=>focusWaitlistCity(""));
+
+
+// active-section-nav
+const navSectionLinks=[...document.querySelectorAll('.nav-links a[href^="#"]')];
+const sectionMap=navSectionLinks
+  .map(link=>({link,section:document.querySelector(link.getAttribute("href"))}))
+  .filter(item=>item.section);
+if(sectionMap.length){
+  const navObserver=new IntersectionObserver(entries=>{
+    const visible=entries
+      .filter(entry=>entry.isIntersecting)
+      .sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+    if(!visible)return;
+    sectionMap.forEach(({link,section})=>{
+      link.classList.toggle("active-section",section===visible.target);
+    });
+  },{rootMargin:"-30% 0px -55% 0px",threshold:[0,.1,.25,.5]});
+  sectionMap.forEach(({section})=>navObserver.observe(section));
+}
+
+// rollout-selected-city
+document.querySelectorAll("[data-city]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll("[data-city]").forEach(other=>other.classList.remove("selected-city"));
+    btn.classList.add("selected-city");
+  });
+});
+
+// hide mobile sticky CTA around waitlist/footer
+const stickyCta=document.querySelector(".mobile-sticky-cta");
+const waitlistSection=document.getElementById("waitlist");
+const pageFooter=document.querySelector("footer");
+if(stickyCta&&(waitlistSection||pageFooter)){
+  const stickyObserver=new IntersectionObserver(entries=>{
+    const shouldHide=entries.some(entry=>entry.isIntersecting);
+    stickyCta.classList.toggle("is-hidden",shouldHide);
+  },{threshold:.15});
+  if(waitlistSection)stickyObserver.observe(waitlistSection);
+  if(pageFooter)stickyObserver.observe(pageFooter);
+}
+
+
+// referral-query-persist
+try{
+  const qs=new URLSearchParams(location.search);
+  const ref=qs.get("ref");
+  if(ref){
+    localStorage.setItem("sipmate-ref",ref.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,12));
+  }
+}catch{}

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
+import { ProfileCardSkeleton } from '../components/Skeleton';
 
 export default function NearbyScreen() {
   const { t, i18n } = useTranslation();
@@ -1421,14 +1422,11 @@ export default function NearbyScreen() {
         )}
 
       {loading ? (
-        <Text
-          style={styles.subtitle}
-        >
-          📍{' '}
-          {t(
-            'nearbyScreen.findingPeople'
-          )}
-        </Text>
+        <View>
+          <ProfileCardSkeleton />
+          <ProfileCardSkeleton />
+          <ProfileCardSkeleton />
+        </View>
       ) : needsLocation ? (
         <View style={styles.locationRequiredCard}>
           <Text style={styles.locationRequiredText}>📍 {locationMissingText}</Text>
@@ -1643,7 +1641,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#09090B',
-    paddingTop: 60,
+    paddingTop: 42,
   },
 
   scrollContent: {
@@ -1651,8 +1649,8 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    color: '#A855F7',
-    fontSize: 32,
+    color: '#FFFFFF',
+    fontSize: 27,
     fontWeight: '900',
   },
 
@@ -1672,12 +1670,12 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     padding: 18,
-    borderRadius: 24,
+    borderRadius: 19,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: '#242428',
   },
 
   name: {
@@ -1728,14 +1726,14 @@ const styles = StyleSheet.create({
   },
 
   distanceFilterButton: {
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 18,
+    borderRadius: 15,
     marginRight: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
   },
 
   distanceFilterButtonActive: {
@@ -1760,14 +1758,14 @@ const styles = StyleSheet.create({
   },
 
   drinkFilterButton: {
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
     paddingHorizontal: 14,
     paddingVertical: 9,
-    borderRadius: 18,
+    borderRadius: 15,
     marginRight: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
   },
 
   drinkFilterButtonActive: {
@@ -1791,12 +1789,12 @@ const styles = StyleSheet.create({
   },
 
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#450A0A',
-    borderWidth: 2,
-    borderColor: '#DC2626',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#202024',
+    borderWidth: 1,
+    borderColor: '#3A3A40',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -1809,11 +1807,11 @@ const styles = StyleSheet.create({
   },
 
   avatarImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     marginRight: 12,
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
     borderWidth: 2,
     borderColor: '#DC2626',
   },
@@ -1846,10 +1844,10 @@ const styles = StyleSheet.create({
 
   advancedFilterButton: {
     width: '100%',
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     borderWidth: 1,
     borderColor: '#F59E0B',
-    borderRadius: 20,
+    borderRadius: 17,
     paddingHorizontal: 18,
     paddingVertical: 15,
     marginBottom: 24,
@@ -1884,10 +1882,10 @@ const styles = StyleSheet.create({
 
   advancedPanel: {
     width: '100%',
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     borderWidth: 1,
     borderColor: '#F59E0B',
-    borderRadius: 20,
+    borderRadius: 17,
     padding: 18,
     marginBottom: 24,
   },
@@ -1914,9 +1912,9 @@ const styles = StyleSheet.create({
   },
 
   filterChip: {
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
@@ -1946,9 +1944,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 14,
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
   },
 
   resetFiltersText: {
@@ -1959,9 +1957,9 @@ const styles = StyleSheet.create({
 
   changeLocationButton: {
     width: '100%',
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
     borderRadius: 16,
     paddingHorizontal: 15,
     paddingVertical: 13,
@@ -1991,7 +1989,7 @@ const styles = StyleSheet.create({
   locationChangerBox: {
     backgroundColor: '#09090B',
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
     borderRadius: 14,
     padding: 14,
     marginTop: 8,
@@ -2007,9 +2005,9 @@ const styles = StyleSheet.create({
 
   locationInput: {
     width: '100%',
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
     borderRadius: 14,
     color: '#FFFFFF',
     paddingHorizontal: 14,
@@ -2052,7 +2050,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
     alignItems: 'center',
   },
 
@@ -2063,10 +2061,10 @@ const styles = StyleSheet.create({
   },
 
   locationRequiredCard: {
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     borderWidth: 1,
     borderColor: '#DC2626',
-    borderRadius: 18,
+    borderRadius: 15,
     padding: 18,
     marginTop: 16,
   },
@@ -2098,9 +2096,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
   },
 
   skipButtonText: {
@@ -2111,9 +2109,9 @@ const styles = StyleSheet.create({
 
   skippedProfilesButton: {
     width: '100%',
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
     borderRadius: 16,
     paddingHorizontal: 15,
     paddingVertical: 13,
@@ -2144,7 +2142,7 @@ const styles = StyleSheet.create({
   skippedProfilesPanel: {
     backgroundColor: '#09090B',
     borderWidth: 1,
-    borderColor: '#3F3F46',
+    borderColor: '#303036',
     borderRadius: 14,
     padding: 14,
     marginTop: 8,

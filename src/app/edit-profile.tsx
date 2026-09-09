@@ -30,6 +30,7 @@ type Profile = {
   premium_until: string | null;
   is_active: boolean | null;
   avatar_url: string | null;
+  share_cheers_discord: boolean | null;
 };
 
 type GalleryPhoto = {
@@ -53,6 +54,7 @@ export default function EditProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [profilePhotos, setProfilePhotos] = useState<GalleryPhoto[]>([]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [shareCheersDiscord, setShareCheersDiscord] = useState(false);
 
   const drinks = [
     { value: '🍺 Beer', emoji: '🍺', label: t('editProfileScreen.beer') },
@@ -97,6 +99,7 @@ export default function EditProfileScreen() {
       setDrink(loadedProfile.currently_up_for ?? '🍺 Beer');
       setIsActive(loadedProfile.is_active ?? true);
       setAvatarUrl(loadedProfile.avatar_url ?? null);
+      setShareCheersDiscord(loadedProfile.share_cheers_discord ?? false);
 
       const { data: photosData, error: photosError } = await supabase
         .from('profile_photos')
@@ -129,22 +132,59 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const latitude = currentLocation.coords.latitude;
-      const longitude = currentLocation.coords.longitude;
-
+      let latitude: number | null = null;
+      let longitude: number | null = null;
       let detectedCity = city.trim() || null;
+
       try {
-        const reverseResponse = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`
-        );
-        if (reverseResponse.ok) {
-          const reverseData = await reverseResponse.json();
-          detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ??
-            reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity;
+        const currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+          timeout: 8000,
+        });
+        latitude = currentLocation.coords.latitude;
+        longitude = currentLocation.coords.longitude;
+
+        try {
+          const reverseResponse = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+            { headers: { 'User-Agent': 'SipMate/1.0' } }
+          );
+          if (reverseResponse.ok) {
+            const reverseData = await reverseResponse.json();
+            detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ??
+              reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity;
+          }
+        } catch (reverseError) {
+          console.log('REVERSE GEOCODE ERROR:', reverseError);
         }
-      } catch (reverseError) {
-        console.log('REVERSE GEOCODE ERROR:', reverseError);
+      } catch (locationError) {
+        console.log('LOCATION FIX UNAVAILABLE:', locationError);
+
+        if (!detectedCity) {
+          showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
+          return;
+        }
+
+        try {
+          const searchResponse = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,
+            { headers: { 'User-Agent': 'SipMate/1.0' } }
+          );
+          if (searchResponse.ok) {
+            const results = await searchResponse.json();
+            if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
+              latitude = Number(results[0].lat);
+              longitude = Number(results[0].lon);
+            }
+          }
+        } catch (geocodeError) {
+          console.log('CITY GEOCODE FALLBACK ERROR:', geocodeError);
+        }
+
+        if (latitude == null || longitude == null) {
+          showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
+          return;
+        }
       }
 
       const numericAge = age.trim() ? Number(age) : null;
@@ -163,6 +203,7 @@ export default function EditProfileScreen() {
         currently_up_for: drink,
         latitude,
         longitude,
+        share_cheers_discord: shareCheersDiscord,
       }).eq('id', session.user.id);
 
       if (error) throw error;
@@ -385,6 +426,21 @@ export default function EditProfileScreen() {
               {isActive ? `● ${t('editProfileScreen.active')}` : `● ${t('editProfileScreen.inactive')}`}
             </Text>
           </Pressable>
+
+          <View style={styles.discordShareBox}>
+            <View style={styles.discordShareCopy}>
+              <Text style={styles.discordShareTitle}>{t('editProfileScreen.discordCheersShareTitle')}</Text>
+              <Text style={styles.discordShareDescription}>{t('editProfileScreen.discordCheersShareDescription')}</Text>
+            </View>
+            <Pressable
+              style={[styles.discordShareToggle, shareCheersDiscord && styles.discordShareToggleOn]}
+              onPress={() => setShareCheersDiscord((value) => !value)}
+            >
+              <Text style={[styles.discordShareToggleText, shareCheersDiscord && styles.discordShareToggleTextOn]}>
+                {shareCheersDiscord ? t('editProfileScreen.on') : t('editProfileScreen.off')}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         <Pressable style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={saveProfile} disabled={saving}>
@@ -401,54 +457,62 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#09090B' },
   loadingScreen: { flex: 1, backgroundColor: '#09090B', alignItems: 'center', justifyContent: 'center' },
   loadingText: { color: '#A1A1AA', fontSize: 14 },
-  container: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingTop: 70, paddingHorizontal: 20, paddingBottom: 100 },
+  container: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingTop: 42, paddingHorizontal: 20, paddingBottom: 100 },
   header: { marginBottom: 26 },
-  logo: { color: '#FFFFFF', fontSize: 26, fontWeight: '900' },
-  title: { color: '#FFFFFF', fontSize: 32, fontWeight: '900', marginTop: 28, letterSpacing: -0.5 },
+  logo: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
+  title: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', marginTop: 18, letterSpacing: -0.5 },
   subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, marginTop: 7 },
   avatarSection: { alignItems: 'center', marginBottom: 24 },
-  avatarWrapper: { width: 126, height: 126, borderRadius: 63, borderWidth: 3, borderColor: '#DC2626', padding: 3, backgroundColor: '#18181B' },
+  avatarWrapper: { width: 118, height: 118, borderRadius: 59, borderWidth: 2, borderColor: '#2F2F35', padding: 3, backgroundColor: '#141417' },
   avatarImage: { width: '100%', height: '100%', borderRadius: 60 },
   avatarPlaceholder: { flex: 1, borderRadius: 60, backgroundColor: '#450A0A', alignItems: 'center', justifyContent: 'center' },
   avatarPlaceholderText: { color: '#FFFFFF', fontSize: 42, fontWeight: '900' },
-  avatarButton: { marginTop: 14, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#3F3F46', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 16 },
+  avatarButton: { marginTop: 14, backgroundColor: '#141417', borderWidth: 1, borderColor: '#303036', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 16 },
   avatarButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
-  formCard: { backgroundColor: '#18181B', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#27272A', marginBottom: 14 },
+  formCard: { backgroundColor: '#141417', borderRadius: 20, padding: 18, borderWidth: 1, borderColor: '#242428', marginBottom: 14 },
   sectionTitle: { color: '#FFFFFF', fontSize: 13, fontWeight: '900', letterSpacing: 1 },
   sectionDescription: { color: '#71717A', fontSize: 12, lineHeight: 18, marginTop: 5, marginBottom: 16 },
   label: { color: '#71717A', fontSize: 9, fontWeight: '900', letterSpacing: 1.3, marginBottom: 7, marginTop: 17 },
-  input: { backgroundColor: '#09090B', color: '#FFFFFF', borderWidth: 1, borderColor: '#27272A', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14 },
+  input: { backgroundColor: '#09090B', color: '#FFFFFF', borderWidth: 1, borderColor: '#242428', borderRadius: 14, paddingHorizontal: 15, paddingVertical: 13, fontSize: 14 },
   bioInput: { minHeight: 110, textAlignVertical: 'top' },
   drinks: { flexDirection: 'row', flexWrap: 'wrap' },
-  drinkButton: { backgroundColor: '#27272A', borderWidth: 1, borderColor: '#3F3F46', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, marginRight: 8, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  drinkButton: { backgroundColor: '#1B1B1F', borderWidth: 1, borderColor: '#303036', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, marginRight: 8, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 7 },
   drinkEmoji: { fontSize: 16 },
   drinkButtonSelected: { backgroundColor: '#DC2626', borderColor: '#EF4444' },
   drinkText: { color: '#A1A1AA', fontSize: 13, fontWeight: '700', fontFamily: 'sans-serif' },
   drinkTextSelected: { color: '#FFFFFF' },
   activeButton: { width: '100%', paddingVertical: 15, paddingHorizontal: 14, borderRadius: 16, alignItems: 'center', borderWidth: 1 },
   activeButtonOn: { backgroundColor: '#052E16', borderColor: '#22C55E' },
-  activeButtonOff: { backgroundColor: '#27272A', borderColor: '#52525B' },
+  activeButtonOff: { backgroundColor: '#1B1B1F', borderColor: '#52525B' },
   activeButtonText: { fontSize: 12, fontWeight: '900' },
   activeButtonTextOn: { color: '#4ADE80' },
   activeButtonTextOff: { color: '#A1A1AA' },
-  saveButton: { marginTop: 10, backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 20, alignItems: 'center', elevation: 5 },
+  discordShareBox: { marginTop: 16, backgroundColor: '#111113', borderWidth: 1, borderColor: '#242428', borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  discordShareCopy: { flex: 1 },
+  discordShareTitle: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  discordShareDescription: { color: '#71717A', fontSize: 11, lineHeight: 16, marginTop: 4 },
+  discordShareToggle: { minWidth: 54, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 999, backgroundColor: '#1B1B1F', borderWidth: 1, borderColor: '#303036', alignItems: 'center' },
+  discordShareToggleOn: { backgroundColor: '#5865F2', borderColor: '#818CF8' },
+  discordShareToggleText: { color: '#A1A1AA', fontSize: 11, fontWeight: '900', fontFamily: 'sans-serif' },
+  discordShareToggleTextOn: { color: '#FFFFFF' },
+  saveButton: { marginTop: 10, backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 16, alignItems: 'center' },
   saveButtonDisabled: { opacity: 0.5 },
   saveText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
   cancelButton: { marginTop: 10, paddingVertical: 15, alignItems: 'center' },
   cancelText: { color: '#71717A', fontSize: 13, fontWeight: '700' },
   footer: { color: '#52525B', textAlign: 'center', fontSize: 11, fontWeight: '700', marginTop: 18 },
   genderRow: { flexDirection: 'row', flexWrap: 'wrap' },
-  genderButton: { backgroundColor: '#27272A', borderWidth: 1, borderColor: '#3F3F46', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, marginRight: 8, marginBottom: 8 },
+  genderButton: { backgroundColor: '#1B1B1F', borderWidth: 1, borderColor: '#303036', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999, marginRight: 8, marginBottom: 8 },
   genderButtonSelected: { backgroundColor: '#DC2626', borderColor: '#EF4444' },
   genderText: { color: '#A1A1AA', fontSize: 13, fontWeight: '700' },
   genderTextSelected: { color: '#FFFFFF', fontWeight: '900' },
   gallerySection: { width: '100%', marginTop: 18 },
   galleryTitle: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', marginBottom: 10 },
   addPhotoButton: { backgroundColor: '#F59E0B', borderRadius: 16, paddingVertical: 13, alignItems: 'center' },
-  addPhotoButtonLocked: { backgroundColor: '#27272A', borderWidth: 1, borderColor: '#F59E0B' },
+  addPhotoButtonLocked: { backgroundColor: '#1B1B1F', borderWidth: 1, borderColor: '#F59E0B' },
   addPhotoButtonText: { color: '#09090B', fontSize: 11, fontWeight: '900' },
   galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
-  galleryImage: { width: '100%', height: '100%', borderRadius: 14, backgroundColor: '#27272A' },
+  galleryImage: { width: '100%', height: '100%', borderRadius: 14, backgroundColor: '#1B1B1F' },
   galleryImageWrapper: { width: 92, height: 92, marginRight: 8, marginBottom: 8, position: 'relative' },
   deletePhotoButton: { position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: 12, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' },
   deletePhotoText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },

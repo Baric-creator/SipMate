@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +13,7 @@ import {
   TouchableOpacity,
   View,
   useWindowDimensions,
+  Vibration,
 } from 'react-native';
 
 import { askConfirmation, showAlert } from '../lib/notify';
@@ -87,7 +89,7 @@ const copy = {
     whisky: 'Whisky',
     coffee: 'Coffee',
     drinks: 'Drinks',
-    hangout: 'Hangout',
+    hangout: 'Hangout', cheersHint: 'Tap Cheers if you would grab a drink with this person. If they send one back, chat unlocks.' ,
   },
   de: {
     loginFirst: 'Bitte melde dich zuerst an',
@@ -139,7 +141,7 @@ const copy = {
     whisky: 'Whisky',
     coffee: 'Kaffee',
     drinks: 'Drinks',
-    hangout: 'Treffen',
+    hangout: 'Treffen', cheersHint: 'Tippe auf Cheers, wenn du mit dieser Person etwas trinken würdest. Kommt ein Cheers zurück, wird der Chat freigeschaltet.' ,
   },
   hr: {
     loginFirst: 'Prvo se prijavi',
@@ -191,7 +193,7 @@ const copy = {
     whisky: 'Viski',
     coffee: 'Kava',
     drinks: 'Piće',
-    hangout: 'Druženje',
+    hangout: 'Druženje', cheersHint: 'Dodirni Cheers ako bi popio piće s ovom osobom. Ako i ona pošalje Cheers, otključava se chat.' ,
   },
 } as const;
 
@@ -211,6 +213,7 @@ export default function UserProfileScreen() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState<string | null>(null);
   const [cheersStatus, setCheersStatus] = useState<CheersStatus>('none');
+  const [showCheersHint, setShowCheersHint] = useState(false);
 
   const cheersScale = useRef(new Animated.Value(0)).current;
   const { width, height } = useWindowDimensions();
@@ -237,6 +240,9 @@ export default function UserProfileScreen() {
 
   useEffect(() => {
     loadUserProfile();
+    AsyncStorage.getItem('sipmate:cheers-hint:v1').then((value) => {
+      setShowCheersHint(!value);
+    });
   }, [id]);
 
   function localizeCurrentUpFor(value: string | null) {
@@ -388,6 +394,11 @@ export default function UserProfileScreen() {
   async function handleCheers() {
     if (!profile) return;
 
+    if (showCheersHint) {
+      setShowCheersHint(false);
+      AsyncStorage.setItem('sipmate:cheers-hint:v1', 'seen');
+    }
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -407,6 +418,7 @@ export default function UserProfileScreen() {
     }
 
     setCheersStatus('sent');
+    Vibration.vibrate(35);
 
     const { error: sendError } = await supabase.from('cheers').insert({
       sender_id: senderId,
@@ -435,7 +447,15 @@ export default function UserProfileScreen() {
     if (mutualCheers) {
       setCheersStatus('mutual');
       setShowMutualCheers(true);
+      Vibration.vibrate([0, 55, 60, 90]);
       playCheersAnimation();
+
+      supabase.functions
+        .invoke('announce-cheers', { body: { other_user_id: receiverId } })
+        .then(({ error }) => {
+          if (error) console.log('DISCORD CHEERS ANNOUNCE ERROR:', error.message);
+        });
+
       return;
     }
 
@@ -685,6 +705,12 @@ export default function UserProfileScreen() {
           <Text style={styles.bio}>{profile.bio || text.noBio}</Text>
         </View>
 
+        {showCheersHint && cheersStatus === 'none' && (
+          <View style={styles.cheersHint}>
+            <Text style={styles.cheersHintText}>🍻 {text.cheersHint}</Text>
+          </View>
+        )}
+
         {cheersStatus === 'mutual' ? (
           <Pressable style={styles.primaryButton} onPress={startChat}>
             <View style={styles.actionRow}><Text style={styles.actionEmoji}>💬</Text><Text style={styles.primaryButtonText}>{text.openChat}</Text></View>
@@ -900,7 +926,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 18,
     paddingBottom: 120,
   },
   loading: {
@@ -910,13 +936,13 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 520,
-    backgroundColor: '#18181B',
-    borderRadius: 32,
-    paddingHorizontal: 24,
-    paddingVertical: 28,
+    backgroundColor: '#111113',
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: '#242428',
   },
   name: {
     color: '#FFFFFF',
@@ -932,12 +958,12 @@ const styles = StyleSheet.create({
   },
   section: {
     width: '100%',
-    backgroundColor: '#202023',
+    backgroundColor: '#161619',
     padding: 16,
-    borderRadius: 20,
+    borderRadius: 18,
     marginTop: 18,
     borderWidth: 1,
-    borderColor: '#2F2F35',
+    borderColor: '#25252A',
   },
   label: {
     color: '#71717A',
@@ -974,7 +1000,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#18181B',
     borderWidth: 2,
     borderColor: '#DC2626',
-    borderRadius: 30,
+    borderRadius: 24,
     paddingHorizontal: 30,
     paddingVertical: 34,
     alignItems: 'center',
@@ -1004,7 +1030,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#DC2626',
     paddingVertical: 16,
-    borderRadius: 22,
+    borderRadius: 16,
     alignItems: 'center',
   },
   chatButtonText: {
@@ -1014,7 +1040,7 @@ const styles = StyleSheet.create({
   },
   browseButton: {
     width: '100%',
-    backgroundColor: '#27272A',
+    backgroundColor: '#1B1B1F',
     paddingVertical: 16,
     borderRadius: 22,
     alignItems: 'center',
@@ -1026,14 +1052,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   profileAvatar: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 124,
+    height: 124,
+    borderRadius: 62,
     alignSelf: 'center',
     marginBottom: 18,
     backgroundColor: '#27272A',
-    borderWidth: 3,
-    borderColor: '#DC2626',
+    borderWidth: 2,
+    borderColor: '#34343A',
   },
   profileAvatarFallback: {
     width: 140,
@@ -1041,7 +1067,7 @@ const styles = StyleSheet.create({
     borderRadius: 70,
     alignSelf: 'center',
     marginBottom: 18,
-    backgroundColor: '#450A0A',
+    backgroundColor: '#211315',
     borderWidth: 3,
     borderColor: '#DC2626',
     alignItems: 'center',
@@ -1089,6 +1115,8 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   actionRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   actionEmoji: { fontSize: 17 },
+  cheersHint: { width: '100%', marginTop: 18, backgroundColor: '#151518', borderWidth: 1, borderColor: '#3A2020', borderRadius: 15, paddingHorizontal: 14, paddingVertical: 12 },
+  cheersHintText: { color: '#CFCFD4', fontSize: 11, lineHeight: 17, textAlign: 'center' },
   primaryButton: {
     width: '100%',
     marginTop: 24,
@@ -1138,7 +1166,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#18181B',
     borderWidth: 1,
     borderColor: '#27272A',
-    borderRadius: 26,
+    borderRadius: 20,
     padding: 20,
   },
   menuTitle: {

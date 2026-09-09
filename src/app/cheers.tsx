@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
+import { ChatCardSkeleton, Skeleton } from '../components/Skeleton';
 
 type CheersItem = {
   id: string;
@@ -217,7 +218,16 @@ export default function CheersScreen() {
         </View>
 
         {loading ? (
-          <View style={styles.emptyBox}><Text style={styles.emptyEmoji}>🍻</Text><Text style={styles.emptyText}>{t('cheersScreen.loading')}</Text></View>
+          <View>
+            <View style={styles.statsRow}>
+              <Skeleton height={72} radius={16} style={{ flex: 1, marginHorizontal: 4 }} />
+              <Skeleton height={72} radius={16} style={{ flex: 1, marginHorizontal: 4 }} />
+              <Skeleton height={72} radius={16} style={{ flex: 1, marginHorizontal: 4 }} />
+            </View>
+            <ChatCardSkeleton />
+            <ChatCardSkeleton />
+            <ChatCardSkeleton />
+          </View>
         ) : cheers.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyEmoji}>🍻</Text>
@@ -268,24 +278,24 @@ export default function CheersScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#09090B' },
-  container: { width: '100%', maxWidth: 900, alignSelf: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 120 },
+  container: { width: '100%', maxWidth: 900, alignSelf: 'center', paddingTop: 42, paddingHorizontal: 20, paddingBottom: 120 },
   header: { marginBottom: 28 },
   logo: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
-  title: { color: '#FFFFFF', fontSize: 34, fontWeight: '900', marginTop: 26, letterSpacing: -0.5 },
+  title: { color: '#FFFFFF', fontSize: 29, fontWeight: '900', marginTop: 26, letterSpacing: -0.5 },
   subtitle: { color: '#A1A1AA', marginTop: 8, fontSize: 14, lineHeight: 21 },
   statsRow: { flexDirection: 'row', marginBottom: 32 },
-  statBox: { flex: 1, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A', borderRadius: 20, paddingVertical: 18, alignItems: 'center', marginHorizontal: 4 },
-  statNumber: { color: '#FFFFFF', fontSize: 24, fontWeight: '900' },
+  statBox: { flex: 1, backgroundColor: '#141417', borderWidth: 1, borderColor: '#242428', borderRadius: 16, paddingVertical: 14, alignItems: 'center', marginHorizontal: 4 },
+  statNumber: { color: '#FFFFFF', fontSize: 21, fontWeight: '900' },
   statLabel: { color: '#71717A', fontSize: 9, fontWeight: '900', letterSpacing: 1, marginTop: 5 },
   section: { marginBottom: 28 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center' },
   sectionTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.7 },
   sectionCount: { minWidth: 24, height: 24, borderRadius: 12, backgroundColor: '#27272A', color: '#FFFFFF', textAlign: 'center', lineHeight: 24, fontSize: 11, fontWeight: '900', marginLeft: 9, paddingHorizontal: 6 },
   sectionDescription: { color: '#71717A', fontSize: 12, lineHeight: 18, marginTop: 6, marginBottom: 13 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#18181B', padding: 16, borderRadius: 22, marginBottom: 10, borderWidth: 1, borderColor: '#27272A' },
-  cardMutual: { borderColor: '#7F1D1D', backgroundColor: '#1C1111' },
-  cardLocked: { borderColor: '#92400E', backgroundColor: '#18130D' },
-  avatar: { width: 58, height: 58, borderRadius: 29, backgroundColor: '#27272A', alignItems: 'center', justifyContent: 'center', marginRight: 14, borderWidth: 1, borderColor: '#3F3F46' },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#141417', padding: 16, borderRadius: 18, marginBottom: 10, borderWidth: 1, borderColor: '#242428' },
+  cardMutual: { borderColor: '#7F1D1D', backgroundColor: '#171113' },
+  cardLocked: { borderColor: '#92400E', backgroundColor: '#16140F' },
+  avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#27272A', alignItems: 'center', justifyContent: 'center', marginRight: 14, borderWidth: 1, borderColor: '#3F3F46' },
   avatarMutual: { backgroundColor: '#450A0A', borderColor: '#DC2626' },
   avatarLocked: { backgroundColor: '#27272A', borderColor: '#F59E0B', opacity: 0.85 },
   avatarText: { color: '#FFFFFF', fontSize: 21, fontWeight: '900' },
@@ -300,13 +310,13 @@ const styles = StyleSheet.create({
   unlockButton: { backgroundColor: '#F59E0B', paddingHorizontal: 15, paddingVertical: 12, borderRadius: 16, marginLeft: 12 },
   unlockButtonText: { color: '#09090B', fontSize: 11, fontWeight: '900' },
   emptyBox: { alignItems: 'center', paddingVertical: 70 },
-  emptyCard: { backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A', borderRadius: 26, paddingVertical: 55, paddingHorizontal: 25, alignItems: 'center' },
+  emptyCard: { backgroundColor: '#141417', borderWidth: 1, borderColor: '#242428', borderRadius: 26, paddingVertical: 42, paddingHorizontal: 25, alignItems: 'center' },
   emptyEmoji: { fontSize: 58 },
   emptyTitle: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', marginTop: 18 },
   emptyText: { color: '#71717A', fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 8 },
   discoverButton: { backgroundColor: '#DC2626', paddingHorizontal: 22, paddingVertical: 14, borderRadius: 18, marginTop: 24 },
   discoverButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-  refreshButton: { alignSelf: 'center', marginTop: 10, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 18, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A' },
+  refreshButton: { alignSelf: 'center', marginTop: 10, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 18, backgroundColor: '#141417', borderWidth: 1, borderColor: '#242428' },
   refreshText: { color: '#A1A1AA', fontSize: 11, fontWeight: '900' },
   footer: { color: '#52525B', textAlign: 'center', fontSize: 11, fontWeight: '700', marginTop: 24 },
 });

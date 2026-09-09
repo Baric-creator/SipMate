@@ -8,17 +8,21 @@ import {
   useState,
 } from 'react';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  Vibration,
+  Linking,
 } from 'react-native';
 
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
+import { Skeleton } from '../components/Skeleton';
 
 type UserProfile = {
   id: string;
@@ -29,13 +33,43 @@ type UserProfile = {
 };
 
 export default function HomeScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language?.split('-')[0];
+  const communityText = language === 'de'
+    ? {
+        eyebrow: 'SIPMATE COMMUNITY',
+        title: 'Find a SipMate',
+        body: 'Finde Leute, teile deine Stadt und bleib über WhatsApp mit der Community verbunden.',
+        button: 'FIND A SIPMATE ÖFFNEN',
+        generalButton: 'GENERAL CHAT ÖFFNEN',
+        feedbackButton: 'FEEDBACK & IDEEN ÖFFNEN',
+      }
+    : language === 'hr'
+      ? {
+          eyebrow: 'SIPMATE COMMUNITY',
+          title: 'Find a SipMate',
+          body: 'Pronađi ekipu, napiši svoj grad i poveži se s communityjem direktno na WhatsAppu.',
+          button: 'OTVORI FIND A SIPMATE',
+          generalButton: 'OTVORI GENERAL CHAT',
+          feedbackButton: 'OTVORI FEEDBACK & IDEJE',
+        }
+      : {
+          eyebrow: 'SIPMATE COMMUNITY',
+          title: 'Find a SipMate',
+          body: 'Meet people, share your city and stay connected with the community directly on WhatsApp.',
+          button: 'OPEN FIND A SIPMATE',
+          generalButton: 'OPEN GENERAL CHAT',
+          feedbackButton: 'OPEN FEEDBACK & IDEAS',
+        };
 
   const [profile, setProfile] =
     useState<UserProfile | null>(null);
 
   const [loading, setLoading] =
     useState(true);
+
+  const [activityCount, setActivityCount] =
+    useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -99,6 +133,12 @@ export default function HomeScreen() {
     try {
       setLoading(true);
 
+      const onboardingDone = await AsyncStorage.getItem('sipmate:onboarding:v1');
+      if (!onboardingDone) {
+        router.replace('/onboarding');
+        return;
+      }
+
       const {
         data: { session },
       } =
@@ -153,12 +193,55 @@ export default function HomeScreen() {
         }
 
         setProfile(created);
+        await loadActivityCount(session.user.id);
         return;
       }
 
       setProfile(data);
+      await loadActivityCount(session.user.id);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadActivityCount(myId: string) {
+    try {
+      const seenAt = await AsyncStorage.getItem('sipmate:activity-seen-at');
+
+      const [{ data: conversations }, cheersResult] = await Promise.all([
+        supabase
+          .from('conversations')
+          .select('id')
+          .or(`user_one.eq.${myId},user_two.eq.${myId}`),
+        (() => {
+          let query = supabase
+            .from('cheers')
+            .select('id', { count: 'exact', head: true })
+            .eq('receiver_id', myId);
+
+          if (seenAt) query = query.gt('created_at', seenAt);
+          return query;
+        })(),
+      ]);
+
+      const conversationIds = (conversations ?? []).map((item) => item.id);
+      let unreadMessages = 0;
+
+      if (conversationIds.length) {
+        const { count } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .in('conversation_id', conversationIds)
+          .neq('sender_id', myId)
+          .is('read_at', null);
+
+        unreadMessages = count ?? 0;
+      }
+
+      const cheersCount = cheersResult.count ?? 0;
+      setActivityCount(Math.min(99, unreadMessages + cheersCount));
+    } catch (error) {
+      console.log('ACTIVITY COUNT ERROR:', error);
     }
   }
 
@@ -191,6 +274,8 @@ export default function HomeScreen() {
       is_active: newStatus,
     });
 
+    Vibration.vibrate(35);
+
     console.log(
       'ACTIVE STATUS:',
       newStatus
@@ -201,21 +286,22 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View
-        style={styles.loadingScreen}
-      >
-        <ActivityIndicator
-          size="large"
-          color="#DC2626"
-        />
-
-        <Text
-          style={styles.loadingText}
-        >
-          {t(
-            'discoverScreen.loading'
-          )}
-        </Text>
+      <View style={styles.loadingScreen}>
+        <View style={styles.loadingShell}>
+          <View style={styles.loadingHeader}>
+            <View style={{ flex: 1 }}>
+              <Skeleton width="48%" height={24} radius={10} />
+              <Skeleton width="34%" height={10} radius={5} style={{ marginTop: 9 }} />
+            </View>
+            <Skeleton width={72} height={30} radius={15} />
+          </View>
+          <Skeleton height={220} radius={20} style={{ marginTop: 22 }} />
+          <Skeleton height={72} radius={18} style={{ marginTop: 14 }} />
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 24 }}>
+            <Skeleton height={140} radius={18} style={{ flex: 1 }} />
+            <Skeleton height={140} radius={18} style={{ flex: 1 }} />
+          </View>
+        </View>
       </View>
     );
   }
@@ -244,7 +330,19 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        <Pressable
+        <View style={styles.headerActions}>
+          <Pressable style={styles.activityButton} onPress={() => router.push('/activity')}>
+            <Text style={styles.activityIcon}>🔔</Text>
+            {activityCount > 0 && (
+              <View style={styles.activityBadge}>
+                <Text style={styles.activityBadgeText}>
+                  {activityCount > 99 ? '99+' : activityCount}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+
+          <Pressable
           style={[
             styles.statusBadge,
             profile?.is_active
@@ -269,7 +367,8 @@ export default function HomeScreen() {
                   'discoverScreen.inactive'
                 )}`}
           </Text>
-        </Pressable>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.hero}>
@@ -507,6 +606,49 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
+      <View style={styles.communityCard}>
+        <View style={styles.communityTop}>
+          <View style={styles.communityIcon}>
+            <Text style={styles.communityIconText}>💬</Text>
+          </View>
+          <View style={styles.communityCopy}>
+            <Text style={styles.communityEyebrow}>{communityText.eyebrow}</Text>
+            <Text style={styles.communityTitle}>{communityText.title}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.communityBody}>{communityText.body}</Text>
+
+        <View style={styles.communityButtons}>
+          <Pressable
+            style={styles.communityButton}
+            onPress={() => Linking.openURL('https://chat.whatsapp.com/LfjUaAs4NBEINuPpU768n0?s=cl&p=a&mlu=4&ilr=4')}
+          >
+            <Text style={styles.communityButtonText}>
+              📍 {communityText.button} ↗
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.communityButton, styles.communityButtonSecondary]}
+            onPress={() => Linking.openURL('https://chat.whatsapp.com/FIeAP13z4x5H6Ow86E9PYE?s=cl&p=a&mlu=4&ilr=4')}
+          >
+            <Text style={styles.communityButtonText}>
+              💬 {communityText.generalButton} ↗
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.communityButton, styles.communityButtonTertiary]}
+            onPress={() => Linking.openURL('https://chat.whatsapp.com/LiBN1xeTfzEI68P2yDyt0t?s=cl&p=a&mlu=4&ilr=4')}
+          >
+            <Text style={styles.communityButtonText}>
+              💡 {communityText.feedbackButton} ↗
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
       <View
         style={styles.cheersCard}
       >
@@ -557,7 +699,7 @@ const styles = StyleSheet.create({
   },
 
   screenContent: {
-    paddingTop: 58,
+    paddingTop: 42,
     paddingHorizontal: 20,
     paddingBottom: 150,
   },
@@ -565,8 +707,18 @@ const styles = StyleSheet.create({
   loadingScreen: {
     flex: 1,
     backgroundColor: '#09090B',
+  },
+  loadingShell: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 42,
+  },
+  loadingHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 14,
   },
 
   loadingText: {
@@ -580,10 +732,48 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  activityButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#141417',
+    borderWidth: 1,
+    borderColor: '#242428',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  activityIcon: {
+    fontSize: 16,
+  },
+  activityBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#09090B',
+  },
+  activityBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: '900',
+  },
 
   logo: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: '900',
     letterSpacing: -0.7,
   },
@@ -626,22 +816,22 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    marginTop: 30,
-    backgroundColor: '#18181B',
-    borderRadius: 30,
-    paddingHorizontal: 22,
-    paddingVertical: 27,
+    marginTop: 22,
+    backgroundColor: '#141417',
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: '#242428',
   },
 
   heroEmoji: {
-    fontSize: 46,
+    fontSize: 38,
   },
 
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '900',
     marginTop: 13,
     letterSpacing: -0.5,
@@ -657,8 +847,8 @@ const styles = StyleSheet.create({
 
   currentActivity: {
     marginTop: 21,
-    backgroundColor: '#202023',
-    borderRadius: 17,
+    backgroundColor: '#101012',
+    borderRadius: 14,
     padding: 14,
     borderWidth: 1,
     borderColor: '#2F2F35',
@@ -681,8 +871,8 @@ const styles = StyleSheet.create({
   nearbyButton: {
     marginTop: 22,
     backgroundColor: '#DC2626',
-    borderRadius: 20,
-    paddingVertical: 17,
+    borderRadius: 16,
+    paddingVertical: 15,
     alignItems: 'center',
 
     shadowColor: '#DC2626',
@@ -704,7 +894,7 @@ const styles = StyleSheet.create({
 
   statusCard: {
     marginTop: 15,
-    backgroundColor: '#18181B',
+    backgroundColor: '#141417',
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
@@ -760,13 +950,13 @@ const styles = StyleSheet.create({
 
   quickCard: {
     flex: 1,
-    backgroundColor: '#18181B',
-    borderRadius: 22,
+    backgroundColor: '#141417',
+    borderRadius: 18,
     padding: 16,
     borderWidth: 1,
     borderColor: '#27272A',
     marginRight: 8,
-    minHeight: 170,
+    minHeight: 140,
   },
 
   quickIconBox: {
@@ -804,13 +994,82 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
+  communityCard: {
+    marginTop: 18,
+    backgroundColor: '#101812',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#1F4D2A',
+  },
+  communityTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  communityIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#163D22',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  communityIconText: {
+    fontSize: 18,
+  },
+  communityCopy: {
+    flex: 1,
+  },
+  communityEyebrow: {
+    color: '#4ADE80',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+  },
+  communityTitle: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  communityBody: {
+    color: '#A1A1AA',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 12,
+  },
+  communityButtons: {
+    gap: 9,
+    marginTop: 14,
+  },
+  communityButton: {
+    minHeight: 46,
+    borderRadius: 15,
+    backgroundColor: '#25D366',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  communityButtonSecondary: {
+    backgroundColor: '#1E8E4A',
+  },
+  communityButtonTertiary: {
+    backgroundColor: '#16723B',
+  },
+  communityButtonText: {
+    color: '#07160D',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.4,
+  },
+
   cheersCard: {
     marginTop: 16,
-    backgroundColor: '#18181B',
-    borderRadius: 22,
+    backgroundColor: '#141417',
+    borderRadius: 18,
     padding: 17,
     borderWidth: 1,
-    borderColor: '#3F1D1D',
+    borderColor: '#3A2020',
     flexDirection: 'row',
     alignItems: 'center',
   },

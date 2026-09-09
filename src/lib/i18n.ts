@@ -46,6 +46,8 @@ const resources = {
 editProfileScreen: {
   locationPermissionRequired:
     'Location permission is required for Nearby.',
+  locationUnavailableCityFallback:
+    'Current GPS location is unavailable. Enter a city and try saving again.',
   nameRequired: 'Name is required.',
 
   title: 'Edit Profile',
@@ -87,6 +89,10 @@ editProfileScreen: {
     'Control whether people can find you in Nearby.',
   active: 'ACTIVE — Ready for a drink',
   inactive: 'INACTIVE — Hidden from Nearby',
+  discordCheersShareTitle: 'SHARE CHEERS ON DISCORD',
+  discordCheersShareDescription: 'If both people enable this, SipMate may post only avatars, city and CHEERS! in the Discord feed.',
+  on: 'ON',
+  off: 'OFF',
 
   saving: 'SAVING...',
   saveProfile: 'SAVE PROFILE',
@@ -311,6 +317,8 @@ cheersScreen: {
     editProfileScreen: {
   locationPermissionRequired:
     'Für Nearby ist die Standortberechtigung erforderlich.',
+  locationUnavailableCityFallback:
+    'Der aktuelle GPS-Standort ist nicht verfügbar. Gib eine Stadt ein und speichere erneut.',
   nameRequired: 'Name ist erforderlich.',
 
   title: 'Profil bearbeiten',
@@ -352,6 +360,10 @@ cheersScreen: {
     'Bestimme, ob andere dich in Nearby finden können.',
   active: 'AKTIV — Bereit für einen Drink',
   inactive: 'INAKTIV — In Nearby verborgen',
+  discordCheersShareTitle: 'CHEERS AUF DISCORD TEILEN',
+  discordCheersShareDescription: 'Wenn beide zustimmen, kann SipMate nur Avatare, Stadt und CHEERS! im Discord-Feed posten.',
+  on: 'AN',
+  off: 'AUS',
 
   saving: 'WIRD GESPEICHERT...',
   saveProfile: 'PROFIL SPEICHERN',
@@ -596,6 +608,8 @@ cheersScreen: {
 editProfileScreen: {
   locationPermissionRequired:
     'Za Nearby je potrebna dozvola za lokaciju.',
+  locationUnavailableCityFallback:
+    'Trenutna GPS lokacija nije dostupna. Upiši grad i pokušaj ponovno spremiti profil.',
   nameRequired: 'Ime je obavezno.',
 
   title: 'Uredi profil',
@@ -638,6 +652,10 @@ editProfileScreen: {
     'Odredi mogu li te drugi pronaći u Nearby.',
   active: 'AKTIVAN — Spreman za piće',
   inactive: 'NEAKTIVAN — Skriven u Nearby',
+  discordCheersShareTitle: 'PODIJELI CHEERS NA DISCORDU',
+  discordCheersShareDescription: 'Ako oboje uključite ovu opciju, SipMate može objaviti samo avatare, grad i CHEERS! u Discord feedu.',
+  on: 'UKLJ.',
+  off: 'ISKLJ.',
 
   saving: 'SPREMANJE...',
   saveProfile: 'SPREMI PROFIL',

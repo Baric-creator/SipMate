@@ -92,11 +92,11 @@ export default function DeleteAccountScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#09090B', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  card: { width: '100%', maxWidth: 500, backgroundColor: '#18181B', borderRadius: 28, borderWidth: 1, borderColor: '#3F3F46', padding: 28, alignItems: 'center' },
+  card: { width: '100%', maxWidth: 500, backgroundColor: '#141417', borderRadius: 22, borderWidth: 1, borderColor: '#2A2A2F', padding: 24, alignItems: 'center' },
   icon: { fontSize: 48 },
-  title: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', marginTop: 14 },
+  title: { color: '#FFFFFF', fontSize: 25, fontWeight: '900', marginTop: 14 },
   warning: { color: '#D4D4D8', fontSize: 14, lineHeight: 22, textAlign: 'center', marginTop: 14, marginBottom: 28 },
-  deleteButton: { width: '100%', backgroundColor: '#DC2626', borderRadius: 20, paddingVertical: 16, alignItems: 'center' },
+  deleteButton: { width: '100%', backgroundColor: '#DC2626', borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
   disabled: { opacity: 0.5 },
   deleteText: { color: '#FFFFFF', fontWeight: '900', fontSize: 14 },
   cancelButton: { width: '100%', marginTop: 14, borderWidth: 1, borderColor: '#52525B', borderRadius: 20, paddingVertical: 15, alignItems: 'center' },
