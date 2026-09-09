@@ -15,6 +15,7 @@ import {
 import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 import { ProfileCardSkeleton } from '../components/Skeleton';
+import { FutureBackdrop } from '../components/FutureBackdrop';
 
 export default function NearbyScreen() {
   const { t, i18n } = useTranslation();
@@ -707,6 +708,7 @@ export default function NearbyScreen() {
 
   return (
     <View style={styles.container}>
+      <FutureBackdrop />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbBottom]} />
       <View pointerEvents="none" style={styles.scanAccent} />
