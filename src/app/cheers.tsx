@@ -210,6 +210,9 @@ export default function CheersScreen() {
 
   return (
     <View style={styles.screen}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbMid]} />
+      <View pointerEvents="none" style={styles.scanAccent} />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <Text style={styles.logo}>SipMate 🍻</Text>
@@ -278,13 +281,17 @@ export default function CheersScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#08090B' },
+  ambientOrb: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(220,38,38,0.09)', shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 46, shadowOffset: { width: 0, height: 0 }, elevation: 1 },
+  ambientOrbTop: { width: 250, height: 250, top: -90, right: -120 },
+  ambientOrbMid: { width: 210, height: 210, top: 460, left: -130, backgroundColor: 'rgba(127,29,29,0.07)' },
+  scanAccent: { position: 'absolute', top: 120, right: 22, width: 66, height: 1, backgroundColor: 'rgba(248,113,113,0.34)', shadowColor: '#EF4444', shadowOpacity: 0.35, shadowRadius: 7 },
   container: { width: '100%', maxWidth: 900, alignSelf: 'center', paddingTop: 42, paddingHorizontal: 20, paddingBottom: 120 },
   header: { marginBottom: 28 },
   logo: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
   title: { color: '#FFFFFF', fontSize: 29, fontWeight: '900', marginTop: 26, letterSpacing: -0.5 },
   subtitle: { color: '#A1A1AA', marginTop: 8, fontSize: 14, lineHeight: 21 },
   statsRow: { flexDirection: 'row', marginBottom: 32 },
-  statBox: { flex: 1, backgroundColor: '#121215', borderWidth: 1, borderColor: '#2F2F34', borderRadius: 18, paddingVertical: 15, alignItems: 'center', marginHorizontal: 4 },
+  statBox: { flex: 1, backgroundColor: 'rgba(18,18,21,0.96)', borderWidth: 1, borderColor: '#38282B', borderRadius: 18, paddingVertical: 15, alignItems: 'center', marginHorizontal: 4, shadowColor: '#000000', shadowOpacity: 0.15, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 2 },
   statNumber: { color: '#FFFFFF', fontSize: 21, fontWeight: '900' },
   statLabel: { color: '#71717A', fontSize: 9, fontWeight: '900', letterSpacing: 1, marginTop: 5 },
   section: { marginBottom: 28 },
@@ -293,10 +300,10 @@ const styles = StyleSheet.create({
   sectionCount: { minWidth: 24, height: 24, borderRadius: 12, backgroundColor: '#27272A', color: '#FFFFFF', textAlign: 'center', lineHeight: 24, fontSize: 11, fontWeight: '900', marginLeft: 9, paddingHorizontal: 6 },
   sectionDescription: { color: '#71717A', fontSize: 12, lineHeight: 18, marginTop: 6, marginBottom: 13 },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#121215', padding: 16, borderRadius: 21, marginBottom: 10, borderWidth: 1, borderColor: '#2F2F34', shadowColor: '#000000', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.16, shadowRadius: 15, elevation: 2 },
-  cardMutual: { borderColor: '#7F2A2A', backgroundColor: '#171113', shadowColor: '#EF4444', shadowOpacity: 0.08, shadowRadius: 16, elevation: 3 },
+  cardMutual: { borderColor: '#8B3232', backgroundColor: '#171113', shadowColor: '#EF4444', shadowOpacity: 0.16, shadowRadius: 18, elevation: 4 },
   cardLocked: { borderColor: '#92400E', backgroundColor: '#16140F' },
   avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#27272A', alignItems: 'center', justifyContent: 'center', marginRight: 14, borderWidth: 1, borderColor: '#3F3F46' },
-  avatarMutual: { backgroundColor: '#450A0A', borderColor: '#DC2626' },
+  avatarMutual: { backgroundColor: '#450A0A', borderColor: '#F87171', shadowColor: '#EF4444', shadowOpacity: 0.22, shadowRadius: 10, elevation: 3 },
   avatarLocked: { backgroundColor: '#27272A', borderColor: '#F59E0B', opacity: 0.85 },
   avatarText: { color: '#FFFFFF', fontSize: 21, fontWeight: '900' },
   content: { flex: 1 },
@@ -316,7 +323,7 @@ const styles = StyleSheet.create({
   emptyText: { color: '#71717A', fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 8 },
   discoverButton: { backgroundColor: '#DC2626', paddingHorizontal: 22, paddingVertical: 15, borderRadius: 19, marginTop: 24, borderWidth: 1, borderColor: '#F87171' },
   discoverButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-  refreshButton: { alignSelf: 'center', marginTop: 10, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 18, backgroundColor: '#141417', borderWidth: 1, borderColor: '#242428' },
+  refreshButton: { alignSelf: 'center', marginTop: 10, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 999, backgroundColor: '#121215', borderWidth: 1, borderColor: '#3A2A2D' },
   refreshText: { color: '#A1A1AA', fontSize: 11, fontWeight: '900' },
   footer: { color: '#52525B', textAlign: 'center', fontSize: 11, fontWeight: '700', marginTop: 24 },
 });
