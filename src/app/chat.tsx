@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -192,7 +194,11 @@ export default function ChatScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
       <View style={styles.header}>
         <TouchableOpacity style={styles.chatHeaderUser} activeOpacity={0.8} onPress={() => {
           if (id) router.push({ pathname: '/user-profile', params: { id: String(id) } });
@@ -210,8 +216,15 @@ export default function ChatScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView ref={scrollViewRef} style={styles.messages} contentContainerStyle={styles.messagesContent}
-        keyboardShouldPersistTaps="handled" onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}>
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.messages}
+        contentContainerStyle={styles.messagesContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+        onKeyboardDidShow={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
         {loading ? <Text style={styles.emptyText}>{text.loading}</Text> : messages.length === 0 ? (
           <View style={styles.emptyContainer}><Text style={styles.emptyEmoji}>🍻</Text><Text style={styles.emptyTitle}>CHEERS!</Text><Text style={styles.emptyText}>{text.empty}</Text></View>
         ) : messages.map((item, index) => {
@@ -239,17 +252,27 @@ export default function ChatScreen() {
         <View style={styles.blockedBar}><Text style={styles.blockedText}>{text.blocked}</Text></View>
       ) : (
         <View style={styles.inputBar}>
-          <TextInput style={styles.input} value={messageText} onChangeText={(value) => {
-            setMessageText(value); sendTypingStatus(true);
-            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-            typingTimeoutRef.current = setTimeout(() => sendTypingStatus(false), 1200);
-          }} placeholder={text.placeholder} placeholderTextColor="#71717A" onSubmitEditing={sendMessage} returnKeyType="send" />
+          <TextInput
+            style={styles.input}
+            value={messageText}
+            onFocus={() => setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 120)}
+            onChangeText={(value) => {
+              setMessageText(value);
+              sendTypingStatus(true);
+              if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+              typingTimeoutRef.current = setTimeout(() => sendTypingStatus(false), 1200);
+            }}
+            placeholder={text.placeholder}
+            placeholderTextColor="#71717A"
+            onSubmitEditing={sendMessage}
+            returnKeyType="send"
+          />
           <TouchableOpacity style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]} onPress={sendMessage} disabled={!messageText.trim()} activeOpacity={0.8}>
             <Text style={styles.sendText}>➤</Text>
           </TouchableOpacity>
         </View>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
