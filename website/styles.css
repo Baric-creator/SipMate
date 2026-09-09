@@ -912,3 +912,208 @@ img{content-visibility:auto}
 @media(prefers-reduced-motion:reduce){
   .field-validation{animation:none}
 }
+
+
+/* 2032 polish: referral + invite flow + FAQ */
+.referral-card,
+.referral-how{
+  position:relative;
+  overflow:hidden;
+  border:1px solid #3a2428;
+  background:linear-gradient(145deg,rgba(21,21,24,.98),rgba(12,12,15,.98));
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.30),
+    0 0 0 1px rgba(255,255,255,.015) inset,
+    0 0 28px rgba(239,68,68,.045);
+}
+.referral-card::before,
+.referral-how::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(120deg,transparent 0 36%,rgba(255,255,255,.035) 48%,transparent 60%),
+    radial-gradient(circle at 85% 18%,rgba(239,68,68,.10),transparent 32%);
+  opacity:.75;
+}
+.referral-card{
+  border-radius:26px;
+  padding:30px 30px;
+}
+.referral-card:hover{
+  border-color:#5a2a30;
+  box-shadow:
+    0 26px 76px rgba(0,0,0,.34),
+    0 0 32px rgba(239,68,68,.07);
+}
+.share-big{
+  position:relative;
+  overflow:hidden;
+  min-width:190px;
+  min-height:54px;
+  border:1px solid #5a2a30;
+  border-radius:17px;
+  background:linear-gradient(180deg,#1c1518,#151216);
+  box-shadow:0 10px 28px rgba(0,0,0,.24),0 0 18px rgba(239,68,68,.05);
+}
+.share-big::after{
+  content:"";
+  position:absolute;
+  top:-70%;
+  left:-35%;
+  width:18%;
+  height:240%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.17),transparent);
+  transform:rotate(18deg);
+  opacity:0;
+}
+.share-big:hover{
+  transform:translateY(-2px);
+  border-color:#ef4444;
+  box-shadow:0 14px 34px rgba(0,0,0,.28),0 0 22px rgba(239,68,68,.12);
+}
+.share-big:hover::after{animation:referralShine .85s ease forwards}
+@keyframes referralShine{
+  0%{left:-35%;opacity:0}
+  18%{opacity:.8}
+  100%{left:120%;opacity:0}
+}
+
+.referral-how{
+  margin-top:16px;
+  border-radius:26px;
+  padding:30px 24px 22px;
+}
+.referral-how-head{position:relative;z-index:1}
+.referral-how-steps{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:18px;
+}
+.referral-how-steps article{
+  position:relative;
+  min-height:108px;
+  padding:16px;
+  border-radius:18px;
+  border:1px solid #34343a;
+  background:linear-gradient(180deg,rgba(24,24,28,.95),rgba(17,17,20,.95));
+  box-shadow:0 12px 26px rgba(0,0,0,.20);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.referral-how-steps article:hover{
+  transform:translateY(-2px);
+  border-color:#5a2a30;
+  box-shadow:0 16px 30px rgba(0,0,0,.24),0 0 18px rgba(239,68,68,.05);
+}
+.referral-how-steps article>span{
+  display:inline-grid;
+  place-items:center;
+  min-width:30px;
+  height:28px;
+  padding:0 8px;
+  border-radius:10px;
+  background:#251315;
+  border:1px solid #5a2a30;
+  color:#f87171;
+  font-size:9px;
+  font-weight:900;
+  box-shadow:0 0 12px rgba(239,68,68,.08);
+}
+.referral-how-steps strong{
+  display:block;
+  margin-top:12px;
+  color:#f4f4f5;
+}
+.referral-how-steps small{
+  display:block;
+  margin-top:8px;
+  color:#8f8f97;
+  line-height:1.5;
+}
+
+.faq-list{
+  gap:12px;
+}
+.faq-list details{
+  position:relative;
+  border-radius:20px;
+  background:linear-gradient(180deg,rgba(19,19,22,.97),rgba(14,14,17,.97));
+  border:1px solid #34343a;
+  box-shadow:0 12px 28px rgba(0,0,0,.20);
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    background .18s ease,
+    box-shadow .18s ease;
+}
+.faq-list details:hover{
+  transform:translateY(-1px);
+  border-color:#4a2a2e;
+  box-shadow:0 16px 32px rgba(0,0,0,.24),0 0 18px rgba(239,68,68,.04);
+}
+.faq-list details[open]{
+  border-color:#6b3036;
+  background:linear-gradient(180deg,#181214,#131012);
+  box-shadow:0 18px 36px rgba(0,0,0,.28),0 0 24px rgba(239,68,68,.08);
+}
+.faq-list details[open]::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:14px;
+  bottom:14px;
+  width:2px;
+  border-radius:999px;
+  background:#ef4444;
+  box-shadow:0 0 12px rgba(239,68,68,.45);
+}
+.faq-list summary{
+  padding:20px 24px;
+  padding-right:60px;
+  font-size:14px;
+}
+.faq-list summary::after{
+  right:20px;
+  top:50%;
+  transform:translateY(-50%);
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  border:1px solid #3a3a42;
+  background:#17171b;
+  color:#8d8d96;
+  font-size:16px;
+}
+.faq-list details[open] summary::after{
+  transform:translateY(-50%) rotate(45deg);
+  color:#fff;
+  border-color:#6b3036;
+  background:#251315;
+  box-shadow:0 0 14px rgba(239,68,68,.08);
+}
+.faq-list details p{
+  padding:0 24px 22px;
+  color:#9a9aa2;
+}
+
+@media(max-width:900px){
+  .referral-how-steps{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .referral-card,.referral-how{border-radius:22px}
+  .referral-card{padding:24px 18px}
+  .referral-how{padding:24px 18px 18px}
+  .faq-list details{border-radius:18px}
+  .faq-list summary{padding:18px 20px;padding-right:56px}
+  .faq-list details p{padding:0 20px 20px}
+}
+@media(prefers-reduced-motion:reduce){
+  .share-big::after{animation:none!important}
+  .referral-card,.referral-how-steps article,.faq-list details{transition:none}
+}
