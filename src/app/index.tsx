@@ -23,6 +23,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { Skeleton } from '../components/Skeleton';
+import { FutureBackdrop } from '../components/FutureBackdrop';
 
 type UserProfile = {
   id: string;
@@ -308,6 +309,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.screen}>
+      <FutureBackdrop />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbMid]} />
       <View pointerEvents="none" style={styles.scanAccent} />
