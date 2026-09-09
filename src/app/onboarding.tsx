@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#08090B',
-    paddingHorizontal: 22,
+    paddingHorizontal: 20,
     paddingBottom: 24,
   },
   ambientOrb: {
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   button: {
-    minHeight: 52,
+    minHeight: 54,
     borderRadius: 18,
     backgroundColor: '#DC2626',
     borderWidth: 1,
