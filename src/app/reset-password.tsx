@@ -231,10 +231,10 @@ const styles = StyleSheet.create({
   title: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', textAlign: 'center', marginTop: 24 },
   subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 8, marginBottom: 28 },
   label: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginBottom: 8 },
-  input: { backgroundColor: '#0B0B0E', color: '#FFFFFF', borderRadius: 17, paddingHorizontal: 16, paddingVertical: 15, marginBottom: 18, fontSize: 15, borderWidth: 1, borderColor: '#27272A' },
+  input: { backgroundColor: '#0B0B0E', color: '#FFFFFF', borderRadius: 18, paddingHorizontal: 16, paddingVertical: 15, marginBottom: 18, fontSize: 15, borderWidth: 1, borderColor: '#38383F' },
   button: { backgroundColor: '#DC2626', borderRadius: 18, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: '#F87171', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 4, marginTop: 4 },
   disabled: { opacity: 0.5 },
   buttonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 14 },
-  backButton: { borderWidth: 1, borderColor: '#52525B', borderRadius: 20, paddingVertical: 14, alignItems: 'center', marginTop: 14 },
+  backButton: { borderWidth: 1, borderColor: '#52525B', borderRadius: 18, paddingVertical: 14, alignItems: 'center', marginTop: 14 },
   backText: { color: '#D4D4D8', fontWeight: '900', fontSize: 13 },
 });
