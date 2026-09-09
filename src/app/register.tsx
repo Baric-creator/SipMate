@@ -125,9 +125,6 @@ export default function RegisterScreen() {
         return;
       }
 
-      // signUp can return a valid session before the client has persisted it.
-      // Pass that access token explicitly so the JWT-protected Edge Function
-      // always receives the authenticated user's Authorization header.
       if (data.session?.access_token) {
         const { error: welcomeError } = await supabase.functions.invoke('send-welcome-email', {
           headers: {
@@ -143,6 +140,10 @@ export default function RegisterScreen() {
         if (welcomeError) {
           console.log('WELCOME EMAIL ERROR:', welcomeError.message);
         }
+
+        showAlert(text.welcome);
+        router.replace('/');
+        return;
       }
 
       showAlert(text.welcome);
