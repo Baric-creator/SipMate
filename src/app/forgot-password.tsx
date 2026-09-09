@@ -79,6 +79,8 @@ export default function ForgotPasswordScreen() {
 
   return (
     <View style={styles.screen}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbBottom]} />
       <View style={styles.card}>
         <Text style={styles.logo}>SipMate 🍻</Text>
         <Text style={styles.title}>{text.title}</Text>
@@ -109,14 +111,17 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#09090B', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  card: { width: '100%', maxWidth: 470, backgroundColor: '#111113', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: '#222226' },
+  screen: { flex: 1, backgroundColor: '#08090B', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  ambientOrb: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(220,38,38,0.10)', shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 46, shadowOffset: { width: 0, height: 0 }, elevation: 1 },
+  ambientOrbTop: { width: 240, height: 240, top: -90, right: -120 },
+  ambientOrbBottom: { width: 210, height: 210, bottom: -100, left: -120, backgroundColor: 'rgba(127,29,29,0.07)' },
+  card: { width: '100%', maxWidth: 470, backgroundColor: '#111114', borderRadius: 28, padding: 24, borderWidth: 1, borderColor: '#342326', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.08, shadowRadius: 28, elevation: 4 },
   logo: { color: '#FFFFFF', fontSize: 26, fontWeight: '900', textAlign: 'center' },
   title: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', textAlign: 'center', marginTop: 24 },
   subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 8, marginBottom: 28 },
   label: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginBottom: 8 },
-  input: { backgroundColor: '#0D0D10', color: '#FFFFFF', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 15, fontSize: 15, borderWidth: 1, borderColor: '#27272A' },
-  button: { backgroundColor: '#DC2626', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
+  input: { backgroundColor: '#0B0B0E', color: '#FFFFFF', borderRadius: 17, paddingHorizontal: 16, paddingVertical: 15, fontSize: 15, borderWidth: 1, borderColor: '#27272A' },
+  button: { backgroundColor: '#DC2626', borderRadius: 18, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: '#F87171', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 4, marginTop: 20 },
   disabled: { opacity: 0.5 },
   buttonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 14 },
   backButton: { borderWidth: 1, borderColor: '#52525B', borderRadius: 20, paddingVertical: 14, alignItems: 'center', marginTop: 14 },
