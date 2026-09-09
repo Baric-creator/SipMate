@@ -695,7 +695,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: '#08090B',
   },
 
   screenContent: {
@@ -817,12 +817,17 @@ const styles = StyleSheet.create({
 
   hero: {
     marginTop: 22,
-    backgroundColor: '#141417',
-    borderRadius: 18,
+    backgroundColor: '#121215',
+    borderRadius: 22,
     paddingHorizontal: 20,
     paddingVertical: 22,
     borderWidth: 1,
-    borderColor: '#242428',
+    borderColor: '#342326',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.10,
+    shadowRadius: 28,
+    elevation: 5,
   },
 
   heroEmoji: {
@@ -871,9 +876,11 @@ const styles = StyleSheet.create({
   nearbyButton: {
     marginTop: 22,
     backgroundColor: '#DC2626',
-    borderRadius: 16,
-    paddingVertical: 15,
+    borderRadius: 18,
+    paddingVertical: 16,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F87171',
 
     shadowColor: '#DC2626',
     shadowOffset: {
@@ -894,11 +901,11 @@ const styles = StyleSheet.create({
 
   statusCard: {
     marginTop: 15,
-    backgroundColor: '#141417',
-    borderRadius: 20,
+    backgroundColor: '#121215',
+    borderRadius: 22,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: '#2F2F34',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -950,11 +957,16 @@ const styles = StyleSheet.create({
 
   quickCard: {
     flex: 1,
-    backgroundColor: '#141417',
-    borderRadius: 18,
+    backgroundColor: '#121215',
+    borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: '#2F2F34',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 3,
     marginRight: 8,
     minHeight: 140,
   },
@@ -963,7 +975,9 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: '#27272A',
+    backgroundColor: '#1C1C20',
+    borderWidth: 1,
+    borderColor: '#34343A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1065,11 +1079,16 @@ const styles = StyleSheet.create({
 
   cheersCard: {
     marginTop: 16,
-    backgroundColor: '#141417',
-    borderRadius: 18,
+    backgroundColor: '#151113',
+    borderRadius: 20,
     padding: 17,
     borderWidth: 1,
-    borderColor: '#3A2020',
+    borderColor: '#5A2A2A',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 3,
     flexDirection: 'row',
     alignItems: 'center',
   },
