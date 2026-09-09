@@ -1677,3 +1677,52 @@ img{content-visibility:auto}
     linear-gradient(180deg,rgba(10,10,12,.10),rgba(10,10,12,.05)),
     radial-gradient(circle at 50% 22%,rgba(239,68,68,.04),transparent 44%);
 }
+
+
+/* Global quality pass: smoother rendering, less grain, cleaner high-DPI visuals */
+html{
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+body{
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+.noise{
+  opacity:.006;
+  filter:blur(.2px);
+}
+body::after{
+  opacity:.10;
+}
+img{
+  image-rendering:auto;
+  -ms-interpolation-mode:bicubic;
+}
+.ambient-bar{
+  background:
+    linear-gradient(90deg,rgba(9,9,11,.70) 0%,rgba(9,9,11,.22) 26%,rgba(9,9,11,.04) 62%,rgba(9,9,11,.16) 100%),
+    linear-gradient(180deg,rgba(9,9,11,.06),rgba(9,9,11,.38) 92%),
+    url("https://images.pexels.com/photos/5490965/pexels-photo-5490965.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=2400") center/cover no-repeat;
+  filter:saturate(.84) contrast(1.035) brightness(.84);
+}
+.hero h1,
+.statement h2,
+.section h2,
+.waitlist h2,
+.brand,
+.card h3,
+.premium-tier h3{
+  -webkit-font-smoothing:antialiased;
+  text-rendering:geometricPrecision;
+}
+.mini-phone,
+.phone,
+.card,
+.premium-tier,
+.community-card,
+.faq-list details{
+  transform:translateZ(0);
+  backface-visibility:hidden;
+}
