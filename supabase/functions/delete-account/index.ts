@@ -19,6 +19,7 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
+
     if (!supabaseUrl || !anonKey || !serviceRoleKey) {
       console.error('DELETE ACCOUNT FUNCTION CONFIGURATION ERROR')
       return new Response('Account deletion is temporarily unavailable.', { status: 503, headers: corsHeaders })
@@ -28,20 +29,16 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
     })
+
     const { data: { user }, error: userError } = await userClient.auth.getUser()
     if (userError || !user) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
-
-    if (Deno.env.get('ACCOUNT_DELETION_ENABLED') !== 'true') {
-      return new Response('Account deletion is temporarily unavailable while deletion cleanup is being finalized.', { status: 503, headers: corsHeaders })
-    }
 
     const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } })
     const uid = user.id
 
-    // Paid access must be stopped before any local subscription record is removed.
     const { data: subscriptions, error: subscriptionError } = await admin
       .from('premium_subscriptions')
-      .select('stripe_subscription_id,status')
+      .select('stripe_subscription_id')
       .eq('user_id', uid)
     if (subscriptionError) throw subscriptionError
 
@@ -54,6 +51,7 @@ Deno.serve(async (req) => {
         console.error('DELETE ACCOUNT STRIPE CONFIGURATION ERROR')
         return new Response('Account deletion is temporarily unavailable.', { status: 503, headers: corsHeaders })
       }
+
       const stripe = new Stripe(stripeSecretKey)
       for (const subscriptionId of stripeIds) {
         try {
@@ -61,17 +59,29 @@ Deno.serve(async (req) => {
         } catch (error) {
           const code = (error as { code?: string })?.code
           if (code !== 'resource_missing') throw error
-          console.warn('Stripe subscription already missing during account deletion:', subscriptionId)
         }
       }
     }
 
+    const { data: conversations, error: conversationLookupError } = await admin
+      .from('conversations')
+      .select('id')
+      .or(`user_one.eq.${uid},user_two.eq.${uid}`)
+    if (conversationLookupError) throw conversationLookupError
+
+    const conversationIds = (conversations ?? []).map((row) => row.id as string)
+    if (conversationIds.length) {
+      const { error } = await admin.from('messages').delete().in('conversation_id', conversationIds)
+      if (error) throw error
+    }
+
     const { data: objects, error: listError } = await admin.storage.from('avatars').list(uid, { limit: 1000 })
     if (listError) throw listError
+
     const paths = (objects ?? []).map((object) => `${uid}/${object.name}`)
     if (paths.length) {
-      const { error: storageError } = await admin.storage.from('avatars').remove(paths)
-      if (storageError) throw storageError
+      const { error } = await admin.storage.from('avatars').remove(paths)
+      if (error) throw error
     }
 
     const operations = [
@@ -80,13 +90,24 @@ Deno.serve(async (req) => {
       admin.from('blocks').delete().or(`blocker_id.eq.${uid},blocked_id.eq.${uid}`),
       admin.from('skipped_profiles').delete().or(`user_id.eq.${uid},skipped_user_id.eq.${uid}`),
       admin.from('cheers').delete().or(`sender_id.eq.${uid},receiver_id.eq.${uid}`),
-      admin.from('conversations').delete().or(`user_one.eq.${uid},user_two.eq.${uid}`),
+      admin.from('discord_oauth_states').delete().eq('user_id', uid),
+      admin.from('discord_cheers_announcements').delete().or(`user_a.eq.${uid},user_b.eq.${uid}`),
+      admin.from('user_action_rate_limits').delete().eq('user_id', uid),
       admin.from('profile_photos').delete().eq('user_id', uid),
-      admin.from('profiles').delete().eq('id', uid),
     ]
+
     const results = await Promise.all(operations)
     const dbError = results.find((result) => result.error)?.error
     if (dbError) throw dbError
+
+    const { error: conversationDeleteError } = await admin
+      .from('conversations')
+      .delete()
+      .or(`user_one.eq.${uid},user_two.eq.${uid}`)
+    if (conversationDeleteError) throw conversationDeleteError
+
+    const { error: profileDeleteError } = await admin.from('profiles').delete().eq('id', uid)
+    if (profileDeleteError) throw profileDeleteError
 
     const { error: deleteError } = await admin.auth.admin.deleteUser(uid)
     if (deleteError) throw deleteError
