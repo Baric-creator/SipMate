@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -213,6 +214,21 @@ export default function ChatScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
+      <ImageBackground
+        source={{ uri: 'https://images.unsplash.com/photo-1742890188375-9b5817172055?auto=format&fit=crop&fm=jpg&q=82&w=1800' }}
+        style={styles.chatBackdrop}
+        imageStyle={styles.chatBackdropImage}
+        resizeMode="cover"
+        pointerEvents="none"
+      >
+        <View style={styles.chatBackdropShade} />
+        <View style={styles.chatBackdropBrand}>
+          <Text style={styles.chatBackdropKicker}>SIPMATE</Text>
+          <Text style={styles.chatBackdropCheers}>CHEERS</Text>
+          <Text style={styles.chatBackdropSub}>🍻 GOOD PEOPLE. GOOD TIMES.</Text>
+        </View>
+      </ImageBackground>
+
       <View style={styles.header}>
         <TouchableOpacity style={styles.chatHeaderUser} activeOpacity={0.8} onPress={() => {
           if (id) router.push({ pathname: '/user-profile', params: { id: String(id) } });
@@ -292,6 +308,45 @@ export default function ChatScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#08090B' },
+  chatBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 1,
+  },
+  chatBackdropImage: {
+    opacity: 0.24,
+  },
+  chatBackdropShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(8,9,11,0.64)',
+  },
+  chatBackdropBrand: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '43%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatBackdropKicker: {
+    color: 'rgba(255,255,255,0.24)',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 3,
+    marginBottom: 6,
+  },
+  chatBackdropCheers: {
+    color: 'rgba(239,68,68,0.17)',
+    fontSize: 46,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  chatBackdropSub: {
+    color: 'rgba(255,255,255,0.12)',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    marginTop: 5,
+  },
   header: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#2B2224', backgroundColor: '#0B0B0E' },
   chatHeaderUser: { flexDirection: 'row', alignItems: 'center' },
   headerAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12, backgroundColor: '#202024', borderWidth: 1, borderColor: '#34343A' },
