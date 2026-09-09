@@ -38,7 +38,12 @@ export default function RootLayout() {
     '1545880341699493978';
   const supportUrl = `https://discord.com/channels/1545876541387440188/${supportChannelId}`;
   const currentRoute = segments[0] ?? '';
-  const hideSupport = currentRoute === 'login' || currentRoute === 'register' || currentRoute === 'onboarding';
+  const hideSupport =
+    currentRoute === 'login' ||
+    currentRoute === 'register' ||
+    currentRoute === 'onboarding' ||
+    currentRoute === 'forgot-password' ||
+    currentRoute === 'reset-password';
 
   return (
     <>
@@ -87,6 +92,8 @@ export default function RootLayout() {
         <Tabs.Screen name="login" options={{ href: null, tabBarStyle: hiddenTabBar }} />
         <Tabs.Screen name="onboarding" options={{ href: null, tabBarStyle: hiddenTabBar }} />
         <Tabs.Screen name="register" options={{ href: null, tabBarStyle: hiddenTabBar }} />
+        <Tabs.Screen name="forgot-password" options={{ href: null, tabBarStyle: hiddenTabBar }} />
+        <Tabs.Screen name="reset-password" options={{ href: null, tabBarStyle: hiddenTabBar }} />
 
         <Tabs.Screen name="activity" options={{ href: null }} />
         <Tabs.Screen name="blocked-users" options={{ href: null }} />
