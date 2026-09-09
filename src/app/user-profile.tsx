@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 
 import { askConfirmation, showAlert } from '../lib/notify';
+import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 
 type CheersStatus = 'none' | 'sent' | 'mutual';
@@ -30,6 +31,7 @@ type UserProfile = {
   bio: string | null;
   currently_up_for: string | null;
   is_active: boolean | null;
+  last_seen_at: string | null;
 };
 
 type ProfilePhoto = {
@@ -339,7 +341,7 @@ export default function UserProfileScreen() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, age, city, bio, currently_up_for, is_active, avatar_url')
+        .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url')
         .eq('id', targetId)
         .maybeSingle();
 
@@ -596,7 +598,9 @@ export default function UserProfileScreen() {
   }
 
   if (loading) {
-    return (
+    const online = isProfileOnline(profile ?? {});
+
+  return (
       <View style={styles.screen}>
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbLow]} />
@@ -683,16 +687,16 @@ export default function UserProfileScreen() {
         <View
           style={[
             styles.statusBadge,
-            profile.is_active ? styles.statusBadgeActive : styles.statusBadgeInactive,
+            online ? styles.statusBadgeActive : styles.statusBadgeInactive,
           ]}
         >
           <Text
             style={[
               styles.statusBadgeText,
-              profile.is_active ? styles.statusTextActive : styles.statusTextInactive,
+              online ? styles.statusTextActive : styles.statusTextInactive,
             ]}
           >
-            {profile.is_active ? text.active : text.inactive}
+            {online ? text.active : text.inactive}
           </Text>
         </View>
 
