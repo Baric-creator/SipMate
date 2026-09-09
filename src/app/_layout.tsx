@@ -135,7 +135,7 @@ export default function RootLayout() {
 
         <Tabs.Screen name="activity" options={{ href: null }} />
         <Tabs.Screen name="blocked-users" options={{ href: null }} />
-        <Tabs.Screen name="chat" options={{ href: null }} />
+        <Tabs.Screen name="chat" options={{ href: null, tabBarStyle: hiddenTabBar }} />
         <Tabs.Screen name="chats" options={{ href: null }} />
         <Tabs.Screen name="cheers" options={{ href: null }} />
         <Tabs.Screen name="community-guidelines" options={{ href: null }} />
