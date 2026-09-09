@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AppState, Image, Linking, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { showAlert } from '../lib/notify';
+import { clearPresence } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 
 type UserProfile = {
@@ -144,6 +145,7 @@ export default function UserProfileScreen() {
   }
 
   async function handleLogout() {
+    await clearPresence();
     const { error } = await supabase.auth.signOut();
     if (error) { console.log('LOGOUT ERROR:', error.message); return; }
     router.replace('/login');
