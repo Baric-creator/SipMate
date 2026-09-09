@@ -1,6 +1,6 @@
 import { Tabs, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Linking, Pressable, Text } from 'react-native';
+import { Linking, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -10,15 +10,34 @@ const hiddenTabBar = { display: 'none' as const };
 
 function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
   return (
-    <Text
+    <View
       style={{
-        fontSize: 20,
-        opacity: focused ? 1 : 0.7,
-        marginBottom: 2,
+        minWidth: 38,
+        height: 30,
+        paddingHorizontal: 9,
+        borderRadius: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: focused ? '#241316' : 'transparent',
+        borderWidth: focused ? 1 : 0,
+        borderColor: focused ? '#5A2A2F' : 'transparent',
+        shadowColor: focused ? '#EF4444' : '#000000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: focused ? 0.16 : 0,
+        shadowRadius: focused ? 8 : 0,
+        elevation: focused ? 2 : 0,
       }}
     >
-      {icon}
-    </Text>
+      <Text
+        style={{
+          fontSize: 19,
+          opacity: focused ? 1 : 0.62,
+          transform: [{ scale: focused ? 1.06 : 1 }],
+        }}
+      >
+        {icon}
+      </Text>
+    </View>
   );
 }
 
@@ -26,7 +45,7 @@ export default function RootLayout() {
   const insets = useSafeAreaInsets();
   const segments = useSegments();
   const { i18n } = useTranslation();
-  const bottomInset = Math.max(insets.bottom, 12);
+  const bottomInset = Math.max(insets.bottom, 10);
   const language = i18n.language?.split('-')[0];
   const supportLabel =
     language === 'de' ? 'Brauchst du Hilfe?' :
@@ -51,19 +70,37 @@ export default function RootLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#EF4444',
-          tabBarInactiveTintColor: '#E4E4E7',
+          tabBarActiveTintColor: '#F87171',
+          tabBarInactiveTintColor: '#8D8D96',
           tabBarHideOnKeyboard: true,
           tabBarStyle: {
-            backgroundColor: '#09090B',
-            borderTopColor: '#18181B',
-            height: 64 + bottomInset,
+            position: 'absolute',
+            left: 14,
+            right: 14,
+            bottom: bottomInset,
+            height: 70,
             paddingTop: 8,
-            paddingBottom: bottomInset,
+            paddingBottom: 7,
+            backgroundColor: '#111114',
+            borderTopWidth: 1,
+            borderWidth: 1,
+            borderColor: '#2F2427',
+            borderRadius: 25,
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 12 },
+            shadowOpacity: 0.34,
+            shadowRadius: 24,
+            elevation: 14,
+          },
+          tabBarItemStyle: {
+            borderRadius: 18,
+            marginHorizontal: 3,
           },
           tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '800',
+            fontSize: 10,
+            fontWeight: '900',
+            letterSpacing: 0.2,
+            marginTop: 1,
           },
         }}
       >
@@ -109,6 +146,7 @@ export default function RootLayout() {
         <Tabs.Screen name="privacy" options={{ href: null }} />
         <Tabs.Screen name="user-profile" options={{ href: null }} />
       </Tabs>
+
       {!hideSupport && (
         <Pressable
           accessibilityRole="button"
@@ -116,8 +154,8 @@ export default function RootLayout() {
           onPress={() => Linking.openURL(supportUrl)}
           style={({ pressed }) => ({
             position: 'absolute',
-            right: 16,
-            bottom: 76 + bottomInset,
+            right: 18,
+            bottom: 92 + bottomInset,
             minHeight: 42,
             maxWidth: 190,
             paddingHorizontal: 14,
@@ -125,15 +163,16 @@ export default function RootLayout() {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 7,
-            backgroundColor: pressed ? '#211315' : '#141417',
+            backgroundColor: pressed ? '#211315' : '#121215',
             borderWidth: 1,
-            borderColor: '#3A2020',
-            opacity: pressed ? 0.85 : 1,
-            shadowColor: '#000000',
+            borderColor: pressed ? '#6B3036' : '#3D282C',
+            opacity: pressed ? 0.9 : 1,
+            transform: [{ scale: pressed ? 0.98 : 1 }],
+            shadowColor: '#EF4444',
             shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.24,
-            shadowRadius: 12,
-            elevation: 7,
+            shadowOpacity: pressed ? 0.16 : 0.08,
+            shadowRadius: 14,
+            elevation: 6,
           })}
         >
           <Text style={{ fontSize: 15 }}>💬</Text>
