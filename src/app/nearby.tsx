@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 
+import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 import { ProfileCardSkeleton } from '../components/Skeleton';
 
@@ -270,7 +271,7 @@ export default function NearbyScreen() {
         error,
       } = await supabase
         .from('profiles')
-        .select('id, name, age, city, latitude, longitude, avatar_url, currently_up_for, is_active, gender')
+        .select('id, name, age, city, latitude, longitude, avatar_url, currently_up_for, is_active, last_seen_at, gender')
         .neq('id', user.id);
 
       console.log(
@@ -361,7 +362,7 @@ export default function NearbyScreen() {
               !skippedUserIds.has(
                 p.id
               ) &&
-              p.is_active === true &&
+              isProfileOnline(p) &&
               p.latitude != null &&
               p.longitude != null
           )
