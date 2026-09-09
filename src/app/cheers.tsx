@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
+import { FutureBackdrop } from '../components/FutureBackdrop';
 import { ChatCardSkeleton, Skeleton } from '../components/Skeleton';
 
 type CheersItem = {
@@ -210,6 +211,7 @@ export default function CheersScreen() {
 
   return (
     <View style={styles.screen}>
+      <FutureBackdrop />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbMid]} />
       <View pointerEvents="none" style={styles.scanAccent} />
