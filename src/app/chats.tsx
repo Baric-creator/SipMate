@@ -225,6 +225,9 @@ export default function ChatsScreen() {
 
   return (
     <View style={styles.screen}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbLow]} />
+      <View pointerEvents="none" style={styles.scanAccent} />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.titleRow}><Text style={styles.titleEmoji}>💬</Text><Text style={styles.title}>{text.title}</Text></View>
         <Text style={styles.subtitle}>{text.subtitle}</Text>
@@ -325,8 +328,21 @@ export default function ChatsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: '#08090B',
   },
+  ambientOrb: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(220,38,38,0.09)',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.18,
+    shadowRadius: 46,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 1,
+  },
+  ambientOrbTop: { width: 250, height: 250, top: -95, right: -125 },
+  ambientOrbLow: { width: 220, height: 220, top: 480, left: -135, backgroundColor: 'rgba(127,29,29,0.07)' },
+  scanAccent: { position: 'absolute', top: 112, right: 22, width: 64, height: 1, backgroundColor: 'rgba(248,113,113,0.32)' },
   container: {
     width: '100%',
     maxWidth: 900,
@@ -351,10 +367,17 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#141417',
+    backgroundColor: 'rgba(18,18,21,0.97)',
     padding: 14,
-    borderRadius: 18,
+    borderRadius: 21,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#2F2F34',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 3,
   },
   chatContent: {
     flex: 1,
@@ -394,8 +417,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 22,
     paddingVertical: 12,
-    borderRadius: 20,
-    backgroundColor: '#1B1B1F',
+    borderRadius: 999,
+    backgroundColor: '#121215',
+    borderWidth: 1,
+    borderColor: '#3A2A2D',
   },
   refreshText: {
     color: '#FFFFFF',
@@ -443,6 +468,12 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     paddingHorizontal: 6,
     backgroundColor: '#DC2626',
+    borderWidth: 1,
+    borderColor: '#F87171',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
+    elevation: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -459,7 +490,12 @@ const styles = StyleSheet.create({
   },
   chatCardUnread: {
     borderWidth: 1,
-    borderColor: '#3A2020',
+    borderColor: '#5A2A2A',
+    backgroundColor: '#161113',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   nameUnread: {
     color: '#FFFFFF',
