@@ -598,6 +598,9 @@ export default function UserProfileScreen() {
   if (loading) {
     return (
       <View style={styles.screen}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbLow]} />
+      <View pointerEvents="none" style={styles.scanAccent} />
         <Text style={styles.loading}>{text.loading}</Text>
       </View>
     );
@@ -918,8 +921,12 @@ export default function UserProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: '#08090B',
   },
+  ambientOrb: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(220,38,38,0.09)', shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 46, shadowOffset: { width: 0, height: 0 }, elevation: 1 },
+  ambientOrbTop: { width: 250, height: 250, top: -95, right: -125 },
+  ambientOrbLow: { width: 220, height: 220, top: 500, left: -135, backgroundColor: 'rgba(127,29,29,0.07)' },
+  scanAccent: { position: 'absolute', top: 112, right: 22, width: 64, height: 1, backgroundColor: 'rgba(248,113,113,0.32)' },
   scroll: {
     flex: 1,
   },
@@ -942,7 +949,7 @@ const styles = StyleSheet.create({
     paddingVertical: 22,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#242428',
+    borderColor: '#2F2F34',
   },
   name: {
     color: '#FFFFFF',
@@ -1258,7 +1265,14 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#DC2626',
     paddingVertical: 15,
-    borderRadius: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#F87171',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.18,
+    shadowRadius: 11,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
     alignItems: 'center',
     marginTop: 12,
   },
@@ -1274,7 +1288,13 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 520,
     backgroundColor: '#F59E0B',
-    borderRadius: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+    shadowColor: '#F59E0B',
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    elevation: 3,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 10,
@@ -1315,7 +1335,7 @@ const styles = StyleSheet.create({
   profileGalleryImage: {
     width: 150,
     height: 190,
-    borderRadius: 18,
+    borderRadius: 20,
     backgroundColor: '#27272A',
   },
   photoModal: {
