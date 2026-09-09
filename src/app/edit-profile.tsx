@@ -137,12 +137,20 @@ export default function EditProfileScreen() {
       let detectedCity = city.trim() || null;
 
       try {
-        const currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-          timeout: 8000,
+        let resolvedLocation = await Location.getLastKnownPositionAsync({
+          maxAge: 120000,
+          requiredAccuracy: 5000,
         });
-        latitude = currentLocation.coords.latitude;
-        longitude = currentLocation.coords.longitude;
+
+        if (!resolvedLocation) {
+          resolvedLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+            timeout: 8000,
+          });
+        }
+
+        latitude = resolvedLocation.coords.latitude;
+        longitude = resolvedLocation.coords.longitude;
 
         try {
           const reverseResponse = await fetch(
@@ -160,25 +168,32 @@ export default function EditProfileScreen() {
       } catch (locationError) {
         console.log('LOCATION FIX UNAVAILABLE:', locationError);
 
-        if (!detectedCity) {
-          showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
-          return;
+        if (detectedCity) {
+          try {
+            const searchResponse = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,
+              { headers: { 'User-Agent': 'SipMate/1.0' } }
+            );
+            if (searchResponse.ok) {
+              const results = await searchResponse.json();
+              if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
+                latitude = Number(results[0].lat);
+                longitude = Number(results[0].lon);
+                console.log('LOCATION FALLBACK: using city coordinates for', detectedCity);
+              }
+            }
+          } catch (geocodeError) {
+            console.log('CITY GEOCODE FALLBACK ERROR:', geocodeError);
+          }
         }
 
-        try {
-          const searchResponse = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,
-            { headers: { 'User-Agent': 'SipMate/1.0' } }
-          );
-          if (searchResponse.ok) {
-            const results = await searchResponse.json();
-            if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
-              latitude = Number(results[0].lat);
-              longitude = Number(results[0].lon);
-            }
+        if (latitude == null || longitude == null) {
+          const lastKnown = await Location.getLastKnownPositionAsync().catch(() => null);
+          if (lastKnown) {
+            latitude = lastKnown.coords.latitude;
+            longitude = lastKnown.coords.longitude;
+            console.log('LOCATION FALLBACK: using last known coordinates');
           }
-        } catch (geocodeError) {
-          console.log('CITY GEOCODE FALLBACK ERROR:', geocodeError);
         }
 
         if (latitude == null || longitude == null) {
