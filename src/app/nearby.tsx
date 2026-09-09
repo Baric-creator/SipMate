@@ -1896,10 +1896,10 @@ const styles = StyleSheet.create({
 
   advancedFilterButton: {
     width: '100%',
-    backgroundColor: '#141417',
+    backgroundColor: '#121215',
     borderWidth: 1,
     borderColor: '#F59E0B',
-    borderRadius: 17,
+    borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 15,
     marginBottom: 24,
@@ -1934,10 +1934,10 @@ const styles = StyleSheet.create({
 
   advancedPanel: {
     width: '100%',
-    backgroundColor: '#141417',
+    backgroundColor: '#121215',
     borderWidth: 1,
     borderColor: '#F59E0B',
-    borderRadius: 17,
+    borderRadius: 20,
     padding: 18,
     marginBottom: 24,
   },
@@ -1995,7 +1995,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 14,
     paddingVertical: 9,
-    borderRadius: 14,
+    borderRadius: 16,
     backgroundColor: '#1B1B1F',
     borderWidth: 1,
     borderColor: '#303036',
@@ -2039,10 +2039,10 @@ const styles = StyleSheet.create({
   },
 
   locationChangerBox: {
-    backgroundColor: '#09090B',
+    backgroundColor: '#08090B',
     borderWidth: 1,
     borderColor: '#303036',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
     marginTop: 8,
   },
@@ -2057,10 +2057,10 @@ const styles = StyleSheet.create({
 
   locationInput: {
     width: '100%',
-    backgroundColor: '#141417',
+    backgroundColor: '#121215',
     borderWidth: 1,
     borderColor: '#303036',
-    borderRadius: 14,
+    borderRadius: 16,
     color: '#FFFFFF',
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -2069,7 +2069,7 @@ const styles = StyleSheet.create({
 
   applyLocationButton: {
     backgroundColor: '#F59E0B',
-    borderRadius: 14,
+    borderRadius: 16,
     paddingVertical: 12,
     marginTop: 10,
     alignItems: 'center',
@@ -2100,7 +2100,7 @@ const styles = StyleSheet.create({
   useMyLocationButton: {
     marginTop: 10,
     paddingVertical: 10,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#303036',
     alignItems: 'center',
@@ -2113,7 +2113,7 @@ const styles = StyleSheet.create({
   },
 
   locationRequiredCard: {
-    backgroundColor: '#141417',
+    backgroundColor: '#121215',
     borderWidth: 1,
     borderColor: '#DC2626',
     borderRadius: 15,
@@ -2130,7 +2130,9 @@ const styles = StyleSheet.create({
   locationRequiredButton: {
     marginTop: 14,
     backgroundColor: '#DC2626',
-    borderRadius: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#F87171',
     paddingVertical: 13,
     alignItems: 'center',
   },
@@ -2192,10 +2194,10 @@ const styles = StyleSheet.create({
   },
 
   skippedProfilesPanel: {
-    backgroundColor: '#09090B',
+    backgroundColor: '#08090B',
     borderWidth: 1,
     borderColor: '#303036',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
     marginTop: 8,
   },
