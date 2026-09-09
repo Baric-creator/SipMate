@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
 
   loadingScreen: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: '#08090B',
   },
   loadingShell: {
     width: '100%',
@@ -796,12 +796,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   activityButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#141417',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#121215',
     borderWidth: 1,
-    borderColor: '#242428',
+    borderColor: '#34343A',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -910,11 +910,11 @@ const styles = StyleSheet.create({
 
   currentActivity: {
     marginTop: 21,
-    backgroundColor: '#101012',
-    borderRadius: 14,
+    backgroundColor: '#0F0F12',
+    borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#2F2F35',
+    borderColor: '#34343A',
   },
 
   activityLabel: {
@@ -972,7 +972,9 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#202023',
+    backgroundColor: '#1A1A1E',
+    borderWidth: 1,
+    borderColor: '#34343A',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 13,
@@ -1068,8 +1070,8 @@ const styles = StyleSheet.create({
 
   communityCard: {
     marginTop: 18,
-    backgroundColor: '#101812',
-    borderRadius: 20,
+    backgroundColor: '#111813',
+    borderRadius: 22,
     padding: 16,
     borderWidth: 1,
     borderColor: '#1F4D2A',
