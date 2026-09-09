@@ -2,11 +2,12 @@ import * as Notifications from 'expo-notifications';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { AppState, Linking, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import '../lib/i18n';
+import { touchPresence } from '../lib/presence';
 import { registerForPushNotificationsAsync } from '../lib/push-notifications';
 import { supabase } from '../lib/supabase';
 
@@ -105,6 +106,52 @@ export default function RootLayout() {
       notificationSubscription.remove();
     };
   }, [router]);
+
+  useEffect(() => {
+    let heartbeat: ReturnType<typeof setInterval> | null = null;
+
+    const startHeartbeat = async () => {
+      await touchPresence();
+      if (heartbeat) clearInterval(heartbeat);
+      heartbeat = setInterval(() => {
+        touchPresence();
+      }, 45_000);
+    };
+
+    const stopHeartbeat = () => {
+      if (heartbeat) {
+        clearInterval(heartbeat);
+        heartbeat = null;
+      }
+    };
+
+    if (AppState.currentState === 'active') {
+      startHeartbeat();
+    }
+
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        startHeartbeat();
+      } else {
+        stopHeartbeat();
+      }
+    });
+
+    const { data: authSubscription } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user && AppState.currentState === 'active') {
+        startHeartbeat();
+      }
+      if (event === 'SIGNED_OUT') {
+        stopHeartbeat();
+      }
+    });
+
+    return () => {
+      stopHeartbeat();
+      appStateSubscription.remove();
+      authSubscription.subscription.unsubscribe();
+    };
+  }, []);
 
   const currentRoute = segments[0] ?? '';
   const hideSupport =
