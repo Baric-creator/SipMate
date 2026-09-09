@@ -1388,3 +1388,92 @@ img{content-visibility:auto}
   .steps .icon{width:56px;height:56px;border-radius:18px}
   .screen-grid{gap:20px}
 }
+
+
+/* 2032 polish: waitlist social links + city request + footer utility UI */
+.rollout-request{
+  border-color:#3a2a2d;
+  background:linear-gradient(180deg,#131316,#0f0f12);
+  box-shadow:0 14px 32px rgba(0,0,0,.18),0 0 16px rgba(239,68,68,.03);
+}
+.request-city-button{
+  min-height:42px;
+  padding:0 15px;
+  border-radius:16px;
+  border-color:#4a2a2e;
+  background:linear-gradient(180deg,#1b1518,#141215);
+  box-shadow:0 8px 20px rgba(0,0,0,.20),0 0 14px rgba(239,68,68,.04);
+}
+.request-city-button:hover{
+  border-color:#ef4444;
+  background:#1d1417;
+  box-shadow:0 12px 26px rgba(0,0,0,.24),0 0 18px rgba(239,68,68,.08);
+}
+
+.social-links a{
+  border-color:#3a2a2d;
+  background:linear-gradient(180deg,#151518,#101012);
+  box-shadow:0 10px 22px rgba(0,0,0,.18);
+  transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+.social-links a:hover{
+  transform:translateY(-2px);
+  border-color:#5a2a30;
+  background:#181316;
+  box-shadow:0 14px 30px rgba(0,0,0,.24),0 0 16px rgba(239,68,68,.05);
+}
+.social-links a span{
+  color:#9a9aa2;
+}
+
+.footer{
+  margin-top:10px;
+  padding:18px 0;
+  border-top:1px solid #2f2427;
+}
+.footer .brand{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+}
+.footer-links a{
+  display:inline-flex;
+  align-items:center;
+  min-height:34px;
+  padding:0 10px;
+  border-radius:999px;
+  border:1px solid transparent;
+  transition:color .18s ease,border-color .18s ease,background .18s ease;
+}
+.footer-links a:hover{
+  border-color:#3a2a2d;
+  background:#151215;
+}
+.footer p{
+  color:#74747d;
+}
+
+.install-app-button,
+.support-fab{
+  border-color:#4a2a2e;
+  background:rgba(18,18,21,.94);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.install-app-button{
+  min-height:44px;
+  padding:0 15px;
+  box-shadow:0 14px 34px rgba(0,0,0,.36),0 0 16px rgba(239,68,68,.04);
+}
+.install-app-button:hover{
+  border-color:#ef4444;
+  background:#1a1416;
+  box-shadow:0 18px 40px rgba(0,0,0,.42),0 0 20px rgba(239,68,68,.08);
+}
+.support-fab{
+  box-shadow:0 14px 34px rgba(0,0,0,.38),0 0 16px rgba(239,68,68,.04);
+}
+.support-fab:hover{
+  border-color:#ef4444;
+  box-shadow:0 18px 42px rgba(0,0,0,.44),0 0 22px rgba(239,68,68,.09);
+}
