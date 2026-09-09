@@ -125,12 +125,14 @@ export default function RegisterScreen() {
         return;
       }
 
-      // When signup returns a session (for example with email auto-confirm),
-      // securely trigger the welcome automation through our JWT-protected Edge Function.
-      // Email delivery is intentionally non-blocking: registration must still succeed
-      // if the welcome email provider has a temporary problem.
-      if (data.session) {
+      // signUp can return a valid session before the client has persisted it.
+      // Pass that access token explicitly so the JWT-protected Edge Function
+      // always receives the authenticated user's Authorization header.
+      if (data.session?.access_token) {
         const { error: welcomeError } = await supabase.functions.invoke('send-welcome-email', {
+          headers: {
+            Authorization: `Bearer ${data.session.access_token}`,
+          },
           body: {
             email: cleanEmail,
             name: name.trim(),
