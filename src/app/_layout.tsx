@@ -15,33 +15,47 @@ const hiddenTabBar = { display: 'none' as const };
 
 function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
   return (
-    <View
-      style={{
-        minWidth: 38,
-        height: 30,
-        paddingHorizontal: 9,
-        borderRadius: 15,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: focused ? '#241316' : 'transparent',
-        borderWidth: focused ? 1 : 0,
-        borderColor: focused ? '#5A2A2F' : 'transparent',
-        shadowColor: focused ? '#EF4444' : '#000000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: focused ? 0.16 : 0,
-        shadowRadius: focused ? 8 : 0,
-        elevation: focused ? 2 : 0,
-      }}
-    >
-      <Text
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <View
         style={{
-          fontSize: 19,
-          opacity: focused ? 1 : 0.62,
-          transform: [{ scale: focused ? 1.06 : 1 }],
+          minWidth: 40,
+          height: 31,
+          paddingHorizontal: 9,
+          borderRadius: 16,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: focused ? 'rgba(76,24,28,0.72)' : 'transparent',
+          borderWidth: 1,
+          borderColor: focused ? 'rgba(248,113,113,0.38)' : 'transparent',
+          shadowColor: focused ? '#EF4444' : '#000000',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: focused ? 0.20 : 0,
+          shadowRadius: focused ? 10 : 0,
+          elevation: focused ? 3 : 0,
         }}
       >
-        {icon}
-      </Text>
+        <Text
+          style={{
+            fontSize: 19,
+            opacity: focused ? 1 : 0.58,
+            transform: [{ scale: focused ? 1.08 : 1 }],
+          }}
+        >
+          {icon}
+        </Text>
+      </View>
+      <View
+        style={{
+          width: focused ? 12 : 4,
+          height: 2,
+          borderRadius: 1,
+          marginTop: 3,
+          backgroundColor: focused ? '#EF4444' : 'rgba(255,255,255,0.08)',
+          shadowColor: '#EF4444',
+          shadowOpacity: focused ? 0.55 : 0,
+          shadowRadius: focused ? 5 : 0,
+        }}
+      />
     </View>
   );
 }
@@ -179,15 +193,15 @@ export default function RootLayout() {
             height: 70,
             paddingTop: 8,
             paddingBottom: 7,
-            backgroundColor: '#121215',
+            backgroundColor: 'rgba(14,14,17,0.97)',
             borderTopWidth: 1,
             borderWidth: 1,
-            borderColor: '#3A2A2D',
+            borderColor: 'rgba(248,113,113,0.22)',
             borderRadius: 26,
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 12 },
-            shadowOpacity: 0.30,
-            shadowRadius: 24,
+            shadowOpacity: 0.38,
+            shadowRadius: 28,
             elevation: 14,
           },
           tabBarItemStyle: {
