@@ -760,3 +760,90 @@ img{content-visibility:auto}
 @media(max-width:560px){
   .city-select-hint{font-size:11px!important;padding:9px 13px;max-width:94%;text-align:center}
 }
+
+
+/* 2026-09 mobile + CTA micro-polish — background intentionally untouched */
+.button.primary,.nav-cta,.waitlist-form button{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  transition:transform .18s ease,box-shadow .22s ease,border-color .22s ease,filter .22s ease;
+}
+.button.primary::after,.nav-cta::after,.waitlist-form button::after{
+  content:"";
+  position:absolute;
+  top:-65%;
+  left:-34%;
+  width:18%;
+  height:230%;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  transform:rotate(18deg);
+  opacity:0;
+}
+.button.primary:hover,.nav-cta:hover,.waitlist-form button:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.04);
+  box-shadow:0 16px 38px rgba(220,38,38,.25),inset 0 1px 0 rgba(255,255,255,.2);
+}
+.button.primary:hover::after,.nav-cta:hover::after,.waitlist-form button:hover::after{
+  animation:ctaSweep .8s ease forwards;
+}
+.button.primary:active,.nav-cta:active,.waitlist-form button:active{
+  transform:translateY(0) scale(.985);
+}
+@keyframes ctaSweep{
+  0%{left:-34%;opacity:0}
+  18%{opacity:.85}
+  100%{left:116%;opacity:0}
+}
+
+.city-select-hint.city-hint-flash{
+  border-color:rgba(255,255,255,.34);
+  box-shadow:0 0 0 1px rgba(255,255,255,.05) inset,0 10px 28px rgba(0,0,0,.28),0 0 26px rgba(255,255,255,.11);
+}
+.waitlist-form.city-prefilled input[name="city"]{
+  border-color:#ef4444;
+  box-shadow:0 0 0 2px rgba(239,68,68,.13),0 0 22px rgba(239,68,68,.09);
+}
+[data-waitlist-count]{
+  display:inline-block;
+  min-width:1.4ch;
+  font-variant-numeric:tabular-nums;
+  transition:transform .2s ease,text-shadow .2s ease;
+}
+[data-waitlist-count].count-pop{
+  transform:scale(1.13);
+  text-shadow:0 0 18px rgba(255,255,255,.22);
+}
+
+@media(max-width:900px){
+  .hero{padding-top:24px}
+  .hero-text{max-width:620px}
+  .hero-actions{gap:10px}
+  .button{min-height:52px;display:inline-flex;align-items:center;justify-content:center}
+  .trust-row{line-height:1.45}
+  .section,.statement{scroll-margin-top:82px}
+}
+@media(max-width:560px){
+  .nav{min-height:70px}
+  .hero{padding-top:18px;padding-bottom:58px}
+  .hero h1{margin-bottom:20px}
+  .hero-text{line-height:1.55}
+  .hero-actions{display:grid;grid-template-columns:1fr;width:100%;margin-top:24px}
+  .hero-actions .button{width:100%;min-height:54px}
+  .trust-row{margin-top:18px;align-items:flex-start}
+  .section,.statement{padding-top:74px;padding-bottom:74px}
+  .waitlist{padding-top:88px;padding-bottom:88px}
+  .waitlist-inner{width:100%}
+  .waitlist-form{gap:9px;margin-top:26px}
+  .waitlist-form input,.waitlist-form button{min-height:56px;font-size:15px}
+  .confirm-note{font-size:10px;line-height:1.55;margin-top:10px}
+  .city-demand-panel{padding:16px;border-radius:18px}
+  .city-demand-list{gap:7px}
+  .city-demand-chip{min-height:40px}
+}
+@media(prefers-reduced-motion:reduce){
+  .button.primary::after,.nav-cta::after,.waitlist-form button::after{animation:none!important}
+  [data-waitlist-count]{transition:none}
+}
