@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { supabase } from '../lib/supabase';
+import { FutureBackdrop } from '../components/FutureBackdrop';
 import { ChatCardSkeleton } from '../components/Skeleton';
 
 type ChatItem = {
@@ -225,6 +226,7 @@ export default function ChatsScreen() {
 
   return (
     <View style={styles.screen}>
+      <FutureBackdrop />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbLow]} />
       <View pointerEvents="none" style={styles.scanAccent} />
