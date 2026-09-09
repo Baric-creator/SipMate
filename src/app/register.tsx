@@ -158,6 +158,9 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.screen}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbBottom]} />
+      <View pointerEvents="none" style={styles.scanAccent} />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <Text style={styles.logo}>SipMate 🍻</Text>
@@ -191,16 +194,20 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#08090B' },
+  ambientOrb: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(220,38,38,0.10)', shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 48, shadowOffset: { width: 0, height: 0 }, elevation: 1 },
+  ambientOrbTop: { width: 260, height: 260, top: -100, right: -125 },
+  ambientOrbBottom: { width: 220, height: 220, bottom: -110, left: -125, backgroundColor: 'rgba(127,29,29,0.07)' },
+  scanAccent: { position: 'absolute', top: 112, left: 24, width: 58, height: 1, backgroundColor: 'rgba(248,113,113,0.34)' },
   container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 60 },
   card: { width: '100%', maxWidth: 470, backgroundColor: '#111114', borderRadius: 28, paddingHorizontal: 24, paddingVertical: 30, borderWidth: 1, borderColor: '#342326', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.08, shadowRadius: 28, elevation: 4 },
   logo: { color: '#FFFFFF', fontSize: 27, fontWeight: '900', textAlign: 'center', letterSpacing: -0.6 },
   tagline: { color: '#71717A', fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 6 },
-  heroIcon: { width: 68, height: 68, borderRadius: 34, backgroundColor: '#202023', borderWidth: 1, borderColor: '#3F1D1D', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 24 },
+  heroIcon: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#1A1416', borderWidth: 1, borderColor: '#5A2A2F', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 24, shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 16, elevation: 3 },
   heroEmoji: { fontSize: 32 },
   title: { color: '#FFFFFF', fontSize: 30, fontWeight: '900', textAlign: 'center', marginTop: 22 },
   subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 8, marginBottom: 28 },
   label: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginBottom: 8 },
-  input: { backgroundColor: '#0C0C0F', color: '#FFFFFF', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 15, marginBottom: 18, fontSize: 15, borderWidth: 1, borderColor: '#303036' },
+  input: { backgroundColor: '#0B0B0E', color: '#FFFFFF', borderRadius: 17, paddingHorizontal: 16, paddingVertical: 15, marginBottom: 18, fontSize: 15, borderWidth: 1, borderColor: '#38383F', shadowColor: '#000000', shadowOpacity: 0.12, shadowRadius: 8, elevation: 1 },
   button: { backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 18, alignItems: 'center', marginTop: 4, borderWidth: 1, borderColor: '#F87171', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 4 },
   buttonDisabled: { opacity: 0.5 },
   buttonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
