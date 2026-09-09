@@ -62,7 +62,8 @@ export default function RootLayout() {
     currentRoute === 'register' ||
     currentRoute === 'onboarding' ||
     currentRoute === 'forgot-password' ||
-    currentRoute === 'reset-password';
+    currentRoute === 'reset-password' ||
+    currentRoute === 'chat';
 
   return (
     <>
