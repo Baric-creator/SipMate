@@ -12,6 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { ChatCardSkeleton } from '../components/Skeleton';
+import { FutureBackdrop } from '../components/FutureBackdrop';
 import { supabase } from '../lib/supabase';
 
 type ActivityItem = {
@@ -208,6 +209,7 @@ export default function ActivityScreen() {
 
   return (
     <View style={styles.screen}>
+      <FutureBackdrop />
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View>
