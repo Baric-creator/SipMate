@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   title: { color: '#FFFFFF', fontSize: 30, fontWeight: '900', textAlign: 'center', marginTop: 22 },
   subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 8, marginBottom: 28 },
   label: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginBottom: 8 },
-  input: { backgroundColor: '#0B0B0E', color: '#FFFFFF', borderRadius: 17, paddingHorizontal: 16, paddingVertical: 15, marginBottom: 18, fontSize: 15, borderWidth: 1, borderColor: '#38383F', shadowColor: '#000000', shadowOpacity: 0.12, shadowRadius: 8, elevation: 1 },
+  input: { backgroundColor: '#0B0B0E', color: '#FFFFFF', borderRadius: 18, paddingHorizontal: 16, paddingVertical: 15, marginBottom: 18, fontSize: 15, borderWidth: 1, borderColor: '#38383F', shadowColor: '#000000', shadowOpacity: 0.12, shadowRadius: 8, elevation: 1 },
   button: { backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 18, alignItems: 'center', marginTop: 4, borderWidth: 1, borderColor: '#F87171', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 4 },
   buttonDisabled: { opacity: 0.5 },
   buttonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
