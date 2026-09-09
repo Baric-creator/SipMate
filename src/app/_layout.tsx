@@ -1,10 +1,14 @@
-import { Tabs, useSegments } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import { Tabs, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import '../lib/i18n';
+import { registerForPushNotificationsAsync } from '../lib/push-notifications';
+import { supabase } from '../lib/supabase';
 
 const hiddenTabBar = { display: 'none' as const };
 
@@ -44,6 +48,7 @@ function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
 export default function RootLayout() {
   const insets = useSafeAreaInsets();
   const segments = useSegments();
+  const router = useRouter();
   const { i18n } = useTranslation();
   const bottomInset = Math.max(insets.bottom, 10);
   const language = i18n.language?.split('-')[0];
@@ -56,6 +61,51 @@ export default function RootLayout() {
     language === 'hr' ? '1545891206322458775' :
     '1545880341699493978';
   const supportUrl = `https://discord.com/channels/1545876541387440188/${supportChannelId}`;
+  useEffect(() => {
+    let mounted = true;
+
+    const register = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (mounted && data.session?.user) {
+        await registerForPushNotificationsAsync();
+      }
+    };
+
+    register();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted && event === 'SIGNED_IN' && session?.user) {
+        registerForPushNotificationsAsync();
+      }
+    });
+
+    const openChatFromNotification = (response: Notifications.NotificationResponse) => {
+      const data = response.notification.request.content.data as Record<string, unknown>;
+      if (data?.type !== 'message' || !data?.conversationId) return;
+      router.push({
+        pathname: '/chat',
+        params: {
+          conversationId: String(data.conversationId),
+          name: String(data.name ?? 'SipMate'),
+          id: String(data.id ?? ''),
+        },
+      });
+    };
+
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (mounted && response) openChatFromNotification(response);
+    });
+
+    const notificationSubscription =
+      Notifications.addNotificationResponseReceivedListener(openChatFromNotification);
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+      notificationSubscription.remove();
+    };
+  }, [router]);
+
   const currentRoute = segments[0] ?? '';
   const hideSupport =
     currentRoute === 'login' ||
