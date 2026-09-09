@@ -306,18 +306,18 @@ export default function UserProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#09090B' },
+  screen: { flex: 1, backgroundColor: '#08090B' },
   scroll: { flex: 1 },
   scrollContent: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 18, paddingTop: 10, paddingBottom: 44 },
   loading: { color: '#FFFFFF', fontSize: 16, textAlign: 'center', marginTop: 40 },
 
   topBar: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   brand: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
-  topAction: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#17171A', borderWidth: 1, borderColor: '#2A2A2E', alignItems: 'center', justifyContent: 'center' },
+  topAction: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#141417', borderWidth: 1, borderColor: '#34343A', alignItems: 'center', justifyContent: 'center' },
   topActionText: { fontSize: 16 },
 
   hero: { alignItems: 'center', paddingTop: 6, paddingBottom: 22 },
-  avatarShell: { position: 'relative', width: 128, height: 128, borderRadius: 64, padding: 4, backgroundColor: '#161619', borderWidth: 2, borderColor: '#2B2B30' },
+  avatarShell: { position: 'relative', width: 128, height: 128, borderRadius: 64, padding: 4, backgroundColor: '#151518', borderWidth: 2, borderColor: '#4A2A2D', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 4 },
   profileAvatar: { width: '100%', height: '100%', borderRadius: 60, backgroundColor: '#27272A' },
   profileAvatarFallback: { flex: 1, borderRadius: 60, backgroundColor: '#450A0A', alignItems: 'center', justifyContent: 'center' },
   profileAvatarFallbackText: { color: '#FFFFFF', fontSize: 44, fontWeight: '900' },
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   premiumBadge: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#2B1C02', borderWidth: 1, borderColor: '#7A5208' },
   premiumBadgeText: { color: '#FBBF24', fontSize: 10, fontWeight: '900' },
 
-  completionCard: { backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', borderRadius: 18, padding: 16, marginBottom: 12 },
+  completionCard: { backgroundColor: '#121215', borderWidth: 1, borderColor: '#2F2F34', borderRadius: 20, padding: 16, marginBottom: 12, shadowColor: '#000000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.16, shadowRadius: 16, elevation: 2 },
   completionTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14 },
   completionLabel: { color: '#EF4444', fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
   completionCopy: { color: '#A1A1AA', fontSize: 11, lineHeight: 16, marginTop: 5, maxWidth: 320 },
@@ -346,11 +346,11 @@ const styles = StyleSheet.create({
   progressFill: { height: '100%', backgroundColor: '#EF4444', borderRadius: 999 },
 
   quickGrid: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  quickCard: { flex: 1, minHeight: 86, backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', borderRadius: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  quickCard: { flex: 1, minHeight: 90, backgroundColor: '#121215', borderWidth: 1, borderColor: '#2F2F34', borderRadius: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
   quickIcon: { fontSize: 22, marginBottom: 7 },
   quickLabel: { color: '#E4E4E7', fontSize: 10, fontWeight: '800', textAlign: 'center', fontFamily: 'sans-serif' },
 
-  infoCard: { backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', borderRadius: 20, padding: 18, marginBottom: 12 },
+  infoCard: { backgroundColor: '#121215', borderWidth: 1, borderColor: '#2F2F34', borderRadius: 22, padding: 18, marginBottom: 12, shadowColor: '#000000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 16, elevation: 2 },
   infoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   infoEyebrow: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2 },
   infoIcon: { fontSize: 18 },
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   discordDisconnectButton: { backgroundColor: '#202128', borderWidth: 1, borderColor: '#3B3D4A' },
   discordButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', fontFamily: 'sans-serif' },
 
-  settingsCard: { backgroundColor: '#151518', borderWidth: 1, borderColor: '#25252A', borderRadius: 20, overflow: 'hidden' },
+  settingsCard: { backgroundColor: '#121215', borderWidth: 1, borderColor: '#2F2F34', borderRadius: 22, overflow: 'hidden' },
   settingsRow: { minHeight: 58, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#25252A' },
   settingsRowLast: { borderBottomWidth: 0 },
   settingsRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 11, flex: 1 },
