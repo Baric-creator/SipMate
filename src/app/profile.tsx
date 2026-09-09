@@ -169,6 +169,9 @@ export default function UserProfileScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbLower]} />
+      <View pointerEvents="none" style={styles.scanAccent} />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -177,7 +180,7 @@ export default function UserProfileScreen() {
       >
         <View style={styles.topBar}>
           <Text style={styles.brand}>SipMate 🍻</Text>
-          <Pressable style={styles.topAction} onPress={() => router.push('/edit-profile')}>
+          <Pressable style={({ pressed }) => [styles.topAction, pressed && styles.pressDown]} onPress={() => router.push('/edit-profile')}>
             <Text style={styles.topActionText}>✏️</Text>
           </Pressable>
         </View>
@@ -212,7 +215,7 @@ export default function UserProfileScreen() {
         </View>
 
         {completionPercent < 100 && (
-          <Pressable style={styles.completionCard} onPress={() => router.push('/edit-profile')}>
+          <Pressable style={({ pressed }) => [styles.completionCard, pressed && styles.cardPressed]} onPress={() => router.push('/edit-profile')}>
             <View style={styles.completionTop}>
               <View>
                 <Text style={styles.completionLabel}>{text.profileCompletion}</Text>
@@ -227,15 +230,15 @@ export default function UserProfileScreen() {
         )}
 
         <View style={styles.quickGrid}>
-          <Pressable style={styles.quickCard} onPress={() => router.push('/edit-profile')}>
+          <Pressable style={({ pressed }) => [styles.quickCard, pressed && styles.cardPressed]} onPress={() => router.push('/edit-profile')}>
             <Text style={styles.quickIcon}>✏️</Text>
             <Text style={styles.quickLabel}>{t('profileScreen.editProfile')}</Text>
           </Pressable>
-          <Pressable style={styles.quickCard} onPress={() => router.push('/language')}>
+          <Pressable style={({ pressed }) => [styles.quickCard, pressed && styles.cardPressed]} onPress={() => router.push('/language')}>
             <Text style={styles.quickIcon}>🌍</Text>
             <Text style={styles.quickLabel}>{t('profileScreen.language')}</Text>
           </Pressable>
-          <Pressable style={styles.quickCard} onPress={() => router.push('/premium')}>
+          <Pressable style={({ pressed }) => [styles.quickCard, pressed && styles.cardPressed]} onPress={() => router.push('/premium')}>
             <Text style={styles.quickIcon}>💎</Text>
             <Text style={styles.quickLabel}>{t('profileScreen.premium')}</Text>
           </Pressable>
@@ -307,8 +310,14 @@ export default function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#08090B' },
-  scroll: { flex: 1 },
-  scrollContent: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 18, paddingTop: 10, paddingBottom: 44 },
+  scroll: { flex: 1, backgroundColor: 'transparent' },
+  ambientOrb: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(220,38,38,0.09)', shadowColor: '#EF4444', shadowOpacity: 0.18, shadowRadius: 44, shadowOffset: { width: 0, height: 0 }, elevation: 1 },
+  ambientOrbTop: { width: 250, height: 250, top: -95, right: -120 },
+  ambientOrbLower: { width: 210, height: 210, top: 420, left: -130, backgroundColor: 'rgba(127,29,29,0.07)' },
+  scanAccent: { position: 'absolute', top: 92, right: 24, width: 62, height: 1, backgroundColor: 'rgba(248,113,113,0.32)' },
+  pressDown: { transform: [{ scale: 0.97 }], opacity: 0.9 },
+  cardPressed: { transform: [{ scale: 0.985 }], borderColor: '#4A2A2D', backgroundColor: '#151316' },
+  scrollContent: { width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 18, paddingTop: 10, paddingBottom: 150 },
   loading: { color: '#FFFFFF', fontSize: 16, textAlign: 'center', marginTop: 40 },
 
   topBar: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
@@ -334,7 +343,7 @@ const styles = StyleSheet.create({
   statusPillText: { fontSize: 10, fontWeight: '900' },
   statusTextActive: { color: '#4ADE80' },
   statusTextInactive: { color: '#A1A1AA' },
-  premiumBadge: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#2B1C02', borderWidth: 1, borderColor: '#7A5208' },
+  premiumBadge: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#2B1C02', borderWidth: 1, borderColor: '#A76C0A', shadowColor: '#FBBF24', shadowOpacity: 0.18, shadowRadius: 9, elevation: 2 },
   premiumBadgeText: { color: '#FBBF24', fontSize: 10, fontWeight: '900' },
 
   completionCard: { backgroundColor: '#121215', borderWidth: 1, borderColor: '#2F2F34', borderRadius: 20, padding: 16, marginBottom: 12, shadowColor: '#000000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.16, shadowRadius: 16, elevation: 2 },
@@ -343,7 +352,7 @@ const styles = StyleSheet.create({
   completionCopy: { color: '#A1A1AA', fontSize: 11, lineHeight: 16, marginTop: 5, maxWidth: 320 },
   completionPercent: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
   progressTrack: { height: 6, backgroundColor: '#25252A', borderRadius: 999, overflow: 'hidden', marginTop: 14 },
-  progressFill: { height: '100%', backgroundColor: '#EF4444', borderRadius: 999 },
+  progressFill: { height: '100%', backgroundColor: '#EF4444', borderRadius: 999, shadowColor: '#EF4444', shadowOpacity: 0.35, shadowRadius: 8 },
 
   quickGrid: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   quickCard: { flex: 1, minHeight: 90, backgroundColor: '#121215', borderWidth: 1, borderColor: '#2F2F34', borderRadius: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
