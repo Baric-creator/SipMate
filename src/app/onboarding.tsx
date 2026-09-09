@@ -105,6 +105,9 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbBottom]} />
+      <View pointerEvents="none" style={styles.scanAccent} />
       <View style={styles.topBar}>
         <Text style={styles.brand}>SipMate 🍻</Text>
         <Pressable onPress={finish} hitSlop={12}>
@@ -149,10 +152,23 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: '#08090B',
     paddingHorizontal: 22,
     paddingBottom: 24,
   },
+  ambientOrb: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(220,38,38,0.10)',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.18,
+    shadowRadius: 48,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 1,
+  },
+  ambientOrbTop: { width: 270, height: 270, top: -110, right: -130 },
+  ambientOrbBottom: { width: 230, height: 230, bottom: -110, left: -130, backgroundColor: 'rgba(127,29,29,0.07)' },
+  scanAccent: { position: 'absolute', top: 120, left: 24, width: 64, height: 1, backgroundColor: 'rgba(248,113,113,0.34)' },
   topBar: {
     minHeight: 62,
     flexDirection: 'row',
@@ -179,9 +195,14 @@ const styles = StyleSheet.create({
     width: 112,
     height: 112,
     borderRadius: 56,
-    backgroundColor: '#141417',
+    backgroundColor: '#151316',
     borderWidth: 1,
-    borderColor: '#2A2A2F',
+    borderColor: '#4A2A2D',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 30,
@@ -227,11 +248,22 @@ const styles = StyleSheet.create({
   dotActive: {
     width: 24,
     backgroundColor: '#EF4444',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.28,
+    shadowRadius: 7,
+    elevation: 2,
   },
   button: {
     minHeight: 52,
-    borderRadius: 16,
+    borderRadius: 18,
     backgroundColor: '#DC2626',
+    borderWidth: 1,
+    borderColor: '#F87171',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.20,
+    shadowRadius: 14,
+    elevation: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
