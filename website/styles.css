@@ -1578,3 +1578,27 @@ img{content-visibility:auto}
   background:rgba(18,18,21,.72);
   color:#8f8f98;
 }
+
+
+/* Waitlist section: match the site's transparent/glass treatment */
+.waitlist{
+  background:
+    linear-gradient(180deg,rgba(10,10,12,.28),rgba(10,10,12,.16)),
+    radial-gradient(circle at 50% 22%,rgba(239,68,68,.10),transparent 42%);
+  border-top:1px solid rgba(90,42,48,.45);
+  border-bottom:1px solid rgba(255,255,255,.025);
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+.waitlist::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(120deg,transparent 0 38%,rgba(255,255,255,.018) 49%,transparent 60%);
+  opacity:.7;
+}
+.waitlist-inner{
+  position:relative;
+  z-index:1;
+}
