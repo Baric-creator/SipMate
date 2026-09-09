@@ -307,12 +307,16 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.screenContent}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    >
+    <View style={styles.screen}>
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
+      <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbMid]} />
+      <View pointerEvents="none" style={styles.scanAccent} />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.screenContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
       <View style={styles.header}>
         <View>
           <Text style={styles.logo}>
@@ -331,7 +335,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.headerActions}>
-          <Pressable style={styles.activityButton} onPress={() => router.push('/activity')}>
+          <Pressable style={({ pressed }) => [styles.activityButton, pressed && styles.pressDown]} onPress={() => router.push('/activity')}>
             <Text style={styles.activityIcon}>🔔</Text>
             {activityCount > 0 && (
               <View style={styles.activityBadge}>
@@ -423,9 +427,10 @@ export default function HomeScreen() {
         )}
 
         <Pressable
-          style={
-            styles.nearbyButton
-          }
+          style={({ pressed }) => [
+            styles.nearbyButton,
+            pressed && styles.primaryPressed,
+          ]}
           onPress={() =>
             router.push('/nearby')
           }
@@ -444,7 +449,7 @@ export default function HomeScreen() {
       </View>
 
       <Pressable
-        style={styles.statusCard}
+        style={({ pressed }) => [styles.statusCard, pressed && styles.pressDown]}
         onPress={toggleActive}
       >
         <View
@@ -504,7 +509,7 @@ export default function HomeScreen() {
         style={styles.quickActions}
       >
         <Pressable
-          style={styles.quickCard}
+          style={({ pressed }) => [styles.quickCard, pressed && styles.cardPressed]}
           onPress={() =>
             router.push('/chats')
           }
@@ -555,7 +560,7 @@ export default function HomeScreen() {
         </Pressable>
 
         <Pressable
-          style={styles.quickCard}
+          style={({ pressed }) => [styles.quickCard, pressed && styles.cardPressed]}
           onPress={() =>
             router.push('/profile')
           }
@@ -621,7 +626,7 @@ export default function HomeScreen() {
 
         <View style={styles.communityButtons}>
           <Pressable
-            style={styles.communityButton}
+            style={({ pressed }) => [styles.communityButton, pressed && styles.pressDown]}
             onPress={() => Linking.openURL('https://chat.whatsapp.com/LfjUaAs4NBEINuPpU768n0?s=cl&p=a&mlu=4&ilr=4')}
           >
             <Text style={styles.communityButtonText}>
@@ -630,7 +635,7 @@ export default function HomeScreen() {
           </Pressable>
 
           <Pressable
-            style={[styles.communityButton, styles.communityButtonSecondary]}
+            style={({ pressed }) => [styles.communityButton, styles.communityButtonSecondary, pressed && styles.pressDown]}
             onPress={() => Linking.openURL('https://chat.whatsapp.com/FIeAP13z4x5H6Ow86E9PYE?s=cl&p=a&mlu=4&ilr=4')}
           >
             <Text style={styles.communityButtonText}>
@@ -639,7 +644,7 @@ export default function HomeScreen() {
           </Pressable>
 
           <Pressable
-            style={[styles.communityButton, styles.communityButtonTertiary]}
+            style={({ pressed }) => [styles.communityButton, styles.communityButtonTertiary, pressed && styles.pressDown]}
             onPress={() => Linking.openURL('https://chat.whatsapp.com/LiBN1xeTfzEI68P2yDyt0t?s=cl&p=a&mlu=4&ilr=4')}
           >
             <Text style={styles.communityButtonText}>
@@ -688,7 +693,8 @@ export default function HomeScreen() {
           'discoverScreen.footer'
         )}
       </Text>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -696,6 +702,58 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#08090B',
+  },
+
+  scroll: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  ambientOrb: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: 'rgba(220,38,38,0.10)',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.20,
+    shadowRadius: 46,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 1,
+  },
+  ambientOrbTop: {
+    width: 260,
+    height: 260,
+    top: -90,
+    right: -110,
+  },
+  ambientOrbMid: {
+    width: 210,
+    height: 210,
+    top: 420,
+    left: -130,
+    backgroundColor: 'rgba(127,29,29,0.08)',
+  },
+  scanAccent: {
+    position: 'absolute',
+    top: 116,
+    right: 22,
+    width: 72,
+    height: 1,
+    backgroundColor: 'rgba(248,113,113,0.38)',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+  },
+  pressDown: {
+    transform: [{ scale: 0.985 }],
+    opacity: 0.92,
+  },
+  primaryPressed: {
+    transform: [{ scale: 0.985 }],
+    shadowOpacity: 0.35,
+  },
+  cardPressed: {
+    transform: [{ scale: 0.985 }],
+    borderColor: '#4A2A2D',
+    backgroundColor: '#151316',
   },
 
   screenContent: {
