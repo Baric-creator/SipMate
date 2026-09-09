@@ -172,6 +172,20 @@ export default function ChatScreen() {
     setMessages((prev) => prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]);
     Vibration.vibrate(20);
     setMessageText('');
+
+    void supabase.functions.invoke('send-message-notification', {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: { messageId: String(sent.id) },
+    }).then(({ error: notificationError }) => {
+      if (notificationError) {
+        console.log('MESSAGE PUSH ERROR:', notificationError.message);
+      }
+    }).catch((notificationError) => {
+      console.log('MESSAGE PUSH CRASH:', notificationError);
+    });
+
     await sendTypingStatus(false);
   }
 
