@@ -1602,3 +1602,27 @@ img{content-visibility:auto}
   position:relative;
   z-index:1;
 }
+
+
+/* App preview section: transparent/glass like the rest of the page */
+.app-showcase{
+  position:relative;
+  background:
+    linear-gradient(180deg,rgba(10,10,12,.24),rgba(10,10,12,.12)),
+    radial-gradient(circle at 50% 24%,rgba(239,68,68,.07),transparent 44%);
+  border-block:1px solid rgba(90,42,48,.30);
+  backdrop-filter:blur(1.5px);
+  -webkit-backdrop-filter:blur(1.5px);
+}
+.app-showcase::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(120deg,transparent 0 40%,rgba(255,255,255,.014) 49%,transparent 58%);
+  opacity:.65;
+}
+.app-showcase>.shell{
+  position:relative;
+  z-index:1;
+}
