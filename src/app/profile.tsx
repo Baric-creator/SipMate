@@ -366,13 +366,13 @@ const styles = StyleSheet.create({
   drink: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', marginTop: 10, fontFamily: 'sans-serif' },
   bio: { color: '#D4D4D8', fontSize: 14, lineHeight: 21, marginTop: 9 },
 
-  discordCard: { backgroundColor: '#11131A', borderWidth: 1, borderColor: '#303657', borderRadius: 20, padding: 18, marginBottom: 12 },
+  discordCard: { backgroundColor: '#11131A', borderWidth: 1, borderColor: '#3A4166', borderRadius: 22, padding: 18, marginBottom: 12 },
   discordTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   discordTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
   discordStatus: { color: '#9CA3C7', fontSize: 11, marginTop: 3 },
   discordMark: { color: '#5865F2', fontSize: 24 },
   discordUser: { color: '#C7C9D9', fontSize: 12, marginTop: 9 },
-  discordButton: { marginTop: 14, minHeight: 44, borderRadius: 14, backgroundColor: '#5865F2', alignItems: 'center', justifyContent: 'center' },
+  discordButton: { marginTop: 14, minHeight: 46, borderRadius: 18, backgroundColor: '#5865F2', alignItems: 'center', justifyContent: 'center' },
   discordDisconnectButton: { backgroundColor: '#202128', borderWidth: 1, borderColor: '#3B3D4A' },
   discordButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', fontFamily: 'sans-serif' },
 
@@ -387,6 +387,6 @@ const styles = StyleSheet.create({
   chevron: { color: '#52525B', fontSize: 26, fontWeight: '300' },
 
   legalLinks: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 16 },
-  legalLink: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: '#101012', borderWidth: 1, borderColor: '#222226' },
+  legalLink: { paddingHorizontal: 11, paddingVertical: 8, borderRadius: 999, backgroundColor: '#111114', borderWidth: 1, borderColor: '#2F2F34' },
   legalLinkText: { color: '#66666E', fontSize: 9, fontWeight: '700', fontFamily: 'sans-serif' },
 });
