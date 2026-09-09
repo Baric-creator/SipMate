@@ -55,7 +55,17 @@ export default function DeleteAccountScreen() {
 
     try {
       setLoading(true);
-      const { error } = await supabase.functions.invoke('delete-account');
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        showAlert(text.failed);
+        return;
+      }
+
+      const { error } = await supabase.functions.invoke('delete-account', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
       if (error) {
         console.log('DELETE ACCOUNT ERROR:', error.message);
