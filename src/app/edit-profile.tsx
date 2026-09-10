@@ -145,7 +145,6 @@ export default function EditProfileScreen() {
         if (!resolvedLocation) {
           resolvedLocation = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
-            timeout: 8000,
           });
         }
 
@@ -539,3 +538,4 @@ const styles = StyleSheet.create({
   deletePhotoButton: { position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: 12, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' },
   deletePhotoText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
 });
+

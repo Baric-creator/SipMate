@@ -220,7 +220,6 @@ export default function ChatScreen() {
         style={styles.chatBackdrop}
         imageStyle={styles.chatBackdropImage}
         resizeMode="cover"
-        pointerEvents="none"
       >
         <View style={styles.chatBackdropShade} />
         <View style={styles.chatBackdropBrand}>
@@ -261,7 +260,6 @@ export default function ChatScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-        onKeyboardDidShow={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
         {loading ? <Text style={styles.emptyText}>{text.loading}</Text> : messages.length === 0 ? (
           <View style={styles.emptyContainer}><Text style={styles.emptyEmoji}>🍻</Text><Text style={styles.emptyTitle}>CHEERS!</Text><Text style={styles.emptyText}>{text.empty}</Text></View>
@@ -317,14 +315,14 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#08090B' },
   chatBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 1,
   },
   chatBackdropImage: {
     opacity: 0.24,
   },
   chatBackdropShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(8,9,11,0.64)',
   },
   chatBackdropBrand: {
@@ -411,3 +409,5 @@ const styles = StyleSheet.create({
   blockedBar: { paddingHorizontal: 18, paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#27272A', backgroundColor: '#18181B' },
   blockedText: { color: '#EF4444', fontSize: 13, fontWeight: '800', textAlign: 'center', lineHeight: 18 },
 });
+
+

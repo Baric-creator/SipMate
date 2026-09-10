@@ -598,7 +598,6 @@ export default function UserProfileScreen() {
   }
 
   if (loading) {
-    const online = isProfileOnline(profile ?? {});
 
   return (
       <View style={styles.screen}>
@@ -617,6 +616,8 @@ export default function UserProfileScreen() {
       </View>
     );
   }
+
+  const online = isProfileOnline(profile);
 
   const reportReasons = [
     ['inappropriate_behavior', text.inappropriate],
