@@ -14,6 +14,14 @@ Notifications.setNotificationHandler({
   }),
 });
 
+function getProjectId() {
+  return (
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.easConfig?.projectId ??
+    null
+  );
+}
+
 export async function registerForPushNotificationsAsync() {
   if (Platform.OS === 'web' || !Device.isDevice) {
     return null;
@@ -41,9 +49,7 @@ export async function registerForPushNotificationsAsync() {
     return null;
   }
 
-  const projectId =
-    Constants.expoConfig?.extra?.eas?.projectId ??
-    Constants.easConfig?.projectId;
+  const projectId = getProjectId();
 
   if (!projectId) {
     return null;
@@ -82,5 +88,38 @@ export async function registerForPushNotificationsAsync() {
   } catch (error) {
     console.log('PUSH TOKEN ERROR:', error);
     return null;
+  }
+}
+
+export async function unregisterCurrentDevicePushTokenAsync() {
+  if (Platform.OS === 'web' || !Device.isDevice) {
+    return;
+  }
+
+  try {
+    const projectId = getProjectId();
+    if (!projectId) return;
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.user) return;
+
+    const pushToken = (
+      await Notifications.getExpoPushTokenAsync({ projectId })
+    ).data;
+
+    const { error } = await supabase
+      .from('device_push_tokens')
+      .delete()
+      .eq('user_id', session.user.id)
+      .eq('token', pushToken);
+
+    if (error) {
+      console.log('PUSH TOKEN UNREGISTER ERROR:', error.message);
+    }
+  } catch (error) {
+    console.log('PUSH TOKEN UNREGISTER ERROR:', error);
   }
 }
