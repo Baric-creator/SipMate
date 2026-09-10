@@ -111,8 +111,10 @@ if (exists('eas.json')) {
 assert(exists('supabase/functions/delete-account/index.ts'), 'Delete-account Edge Function is missing');
 if (exists('supabase/functions/delete-account/index.ts')) {
   const deletion = read('supabase/functions/delete-account/index.ts');
-  assert(deletion.includes("ACCOUNT_DELETION_ENABLED') !== 'true'"), 'Account deletion safety gate is missing or changed');
-  assert(deletion.includes('auth.admin.deleteUser'), 'Delete-account function no longer deletes the Auth identity');
+  assert(deletion.includes("req.headers.get('Authorization')"), 'Delete-account function no longer requires an Authorization header');
+  assert(deletion.includes('userClient.auth.getUser()'), 'Delete-account function no longer validates the caller against Supabase Auth');
+  assert(deletion.includes('const uid = user.id'), 'Delete-account function no longer scopes deletion to the authenticated user');
+  assert(deletion.includes('auth.admin.deleteUser(uid)'), 'Delete-account function no longer deletes the Auth identity');
 }
 
 for (const fn of ['create-checkout-session', 'create-customer-portal']) {
