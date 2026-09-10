@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import '../lib/i18n';
-import { touchPresence } from '../lib/presence';
+import { clearPresence, touchPresence } from '../lib/presence';
 import { registerForPushNotificationsAsync } from '../lib/push-notifications';
 import { supabase } from '../lib/supabase';
 
@@ -76,6 +76,7 @@ export default function RootLayout() {
     language === 'hr' ? '1545891206322458775' :
     '1545880341699493978';
   const supportUrl = `https://discord.com/channels/1545876541387440188/${supportChannelId}`;
+
   useEffect(() => {
     let mounted = true;
 
@@ -148,6 +149,9 @@ export default function RootLayout() {
         startHeartbeat();
       } else {
         stopHeartbeat();
+        if (state === 'background') {
+          clearPresence();
+        }
       }
     });
 
