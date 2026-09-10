@@ -17,6 +17,7 @@ const copy = {
   en: {
     fillAll: 'Please fill in all fields.',
     ageRequirement: 'SipMate is for adults only. You must be at least 18 years old.',
+    agreementRequired: 'Please accept the Terms of Use and Community Guidelines before creating your account.',
     welcome: 'Welcome to SipMate 🍻 Your account and profile have been created!',
     failed: 'Registration failed.',
     tagline: 'Find someone. Grab a drink. CHEERS!',
@@ -31,7 +32,10 @@ const copy = {
     passwordPlaceholder: 'Create a password',
     creating: 'CREATING ACCOUNT...',
     create: 'CREATE ACCOUNT',
-    note: 'By creating an account, you confirm that you are 18+ and agree to the SipMate terms and community rules.',
+    agreePrefix: 'I confirm that I am 18+ and agree to the ',
+    terms: 'Terms of Use',
+    and: ' and ',
+    community: 'Community Guidelines',
     member: 'ALREADY A MEMBER?',
     login: 'LOG IN',
     footer: 'Ready for a drink? Your next Cheers could be nearby.',
@@ -39,6 +43,7 @@ const copy = {
   de: {
     fillAll: 'Bitte fülle alle Felder aus.',
     ageRequirement: 'SipMate ist nur für Erwachsene. Du musst mindestens 18 Jahre alt sein.',
+    agreementRequired: 'Bitte akzeptiere die Nutzungsbedingungen und Community-Richtlinien, bevor du dein Konto erstellst.',
     welcome: 'Willkommen bei SipMate 🍻 Dein Konto und Profil wurden erstellt!',
     failed: 'Registrierung fehlgeschlagen.',
     tagline: 'Finde jemanden. Trink etwas. CHEERS!',
@@ -53,7 +58,10 @@ const copy = {
     passwordPlaceholder: 'Passwort erstellen',
     creating: 'KONTO WIRD ERSTELLT...',
     create: 'KONTO ERSTELLEN',
-    note: 'Mit der Kontoerstellung bestätigst du, dass du 18+ bist, und stimmst den SipMate-Bedingungen und Community-Regeln zu.',
+    agreePrefix: 'Ich bestätige, dass ich 18+ bin, und akzeptiere die ',
+    terms: 'Nutzungsbedingungen',
+    and: ' und ',
+    community: 'Community-Richtlinien',
     member: 'SCHON DABEI?',
     login: 'ANMELDEN',
     footer: 'Bereit für einen Drink? Dein nächstes Cheers könnte ganz in der Nähe sein.',
@@ -61,6 +69,7 @@ const copy = {
   hr: {
     fillAll: 'Molimo ispuni sva polja.',
     ageRequirement: 'SipMate je samo za punoljetne osobe. Moraš imati najmanje 18 godina.',
+    agreementRequired: 'Prije kreiranja računa moraš prihvatiti Uvjete korištenja i Pravila zajednice.',
     welcome: 'Dobrodošao u SipMate 🍻 Tvoj račun i profil su kreirani!',
     failed: 'Registracija nije uspjela.',
     tagline: 'Pronađi nekoga. Popij nešto. CHEERS!',
@@ -75,7 +84,10 @@ const copy = {
     passwordPlaceholder: 'Kreiraj lozinku',
     creating: 'KREIRANJE RAČUNA...',
     create: 'KREIRAJ RAČUN',
-    note: 'Kreiranjem računa potvrđuješ da imaš 18+ godina i prihvaćaš SipMate uvjete i pravila zajednice.',
+    agreePrefix: 'Potvrđujem da imam 18+ godina i prihvaćam ',
+    terms: 'Uvjete korištenja',
+    and: ' i ',
+    community: 'Pravila zajednice',
     member: 'VEĆ IMAŠ RAČUN?',
     login: 'PRIJAVI SE',
     footer: 'Spreman za piće? Tvoj sljedeći Cheers možda je baš u blizini.',
@@ -91,6 +103,7 @@ export default function RegisterScreen() {
   const [age, setAge] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
@@ -102,6 +115,11 @@ export default function RegisterScreen() {
     const numericAge = Number(age);
     if (!Number.isFinite(numericAge) || numericAge < 18 || numericAge > 120) {
       showAlert(text.ageRequirement);
+      return;
+    }
+
+    if (!acceptedTerms) {
+      showAlert(text.agreementRequired);
       return;
     }
 
@@ -178,11 +196,31 @@ export default function RegisterScreen() {
           <Text style={styles.label}>{text.password}</Text>
           <TextInput value={password} onChangeText={setPassword} placeholder={text.passwordPlaceholder} placeholderTextColor="#52525B" secureTextEntry autoCapitalize="none" style={styles.input} />
 
-          <Pressable style={[styles.button, loading && styles.buttonDisabled]} onPress={handleRegister} disabled={loading}>
+          <View style={styles.agreementRow}>
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: acceptedTerms }}
+              onPress={() => setAcceptedTerms((value) => !value)}
+              style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}
+            >
+              <Text style={styles.checkboxMark}>{acceptedTerms ? '✓' : ''}</Text>
+            </Pressable>
+            <Text style={styles.agreementText}>
+              {text.agreePrefix}
+              <Text style={styles.linkText} onPress={() => router.push('/terms')}>{text.terms}</Text>
+              {text.and}
+              <Text style={styles.linkText} onPress={() => router.push('/community-guidelines')}>{text.community}</Text>.
+            </Text>
+          </View>
+
+          <Pressable
+            style={[styles.button, (loading || !acceptedTerms) && styles.buttonDisabled]}
+            onPress={handleRegister}
+            disabled={loading}
+          >
             {loading ? <Text style={styles.buttonText}>{text.creating}</Text> : <View style={styles.buttonContent}><Text style={styles.buttonEmoji}>🍻</Text><Text style={styles.buttonText}>{text.create}</Text></View>}
           </Pressable>
 
-          <Text style={styles.note}>{text.note}</Text>
           <View style={styles.dividerRow}><View style={styles.divider} /><Text style={styles.dividerText}>{text.member}</Text><View style={styles.divider} /></View>
           <Pressable style={styles.loginButton} onPress={() => router.push('/login')}><Text style={styles.loginButtonText}>{text.login}</Text></Pressable>
           <Text style={styles.footer}>{text.footer}</Text>
@@ -208,12 +246,17 @@ const styles = StyleSheet.create({
   subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 8, marginBottom: 28 },
   label: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginBottom: 8 },
   input: { backgroundColor: '#0B0B0E', color: '#FFFFFF', borderRadius: 18, paddingHorizontal: 16, paddingVertical: 15, marginBottom: 18, fontSize: 15, borderWidth: 1, borderColor: '#38383F', shadowColor: '#000000', shadowOpacity: 0.12, shadowRadius: 8, elevation: 1 },
+  agreementRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 2, marginBottom: 18 },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: '#52525B', backgroundColor: '#0B0B0E', alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  checkboxChecked: { backgroundColor: '#DC2626', borderColor: '#F87171' },
+  checkboxMark: { color: '#FFFFFF', fontSize: 14, fontWeight: '900', lineHeight: 16 },
+  agreementText: { flex: 1, color: '#71717A', fontSize: 11, lineHeight: 17 },
+  linkText: { color: '#EF4444', fontWeight: '900', textDecorationLine: 'underline' },
   button: { backgroundColor: '#DC2626', paddingVertical: 17, borderRadius: 18, alignItems: 'center', marginTop: 4, borderWidth: 1, borderColor: '#F87171', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.18, shadowRadius: 12, elevation: 4 },
   buttonDisabled: { opacity: 0.5 },
   buttonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   buttonEmoji: { fontSize: 17 },
   buttonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
-  note: { color: '#52525B', fontSize: 10, lineHeight: 16, textAlign: 'center', marginTop: 16 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 28, marginBottom: 18 },
   divider: { flex: 1, height: 1, backgroundColor: '#27272A' },
   dividerText: { color: '#52525B', fontSize: 9, fontWeight: '900', letterSpacing: 1.1, marginHorizontal: 12 },
