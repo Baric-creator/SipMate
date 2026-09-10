@@ -6,6 +6,7 @@ import { AppState, Image, Linking, Pressable, SafeAreaView, ScrollView, StyleShe
 import { showAlert } from '../lib/notify';
 import { FutureBackdrop } from '../components/FutureBackdrop';
 import { clearPresence } from '../lib/presence';
+import { unregisterCurrentDevicePushTokenAsync } from '../lib/push-notifications';
 import { supabase } from '../lib/supabase';
 
 type UserProfile = {
@@ -147,6 +148,7 @@ export default function UserProfileScreen() {
 
   async function handleLogout() {
     await clearPresence();
+    await unregisterCurrentDevicePushTokenAsync();
     const { error } = await supabase.auth.signOut();
     if (error) { console.log('LOGOUT ERROR:', error.message); return; }
     router.replace('/login');
