@@ -224,6 +224,13 @@ export default function ChatScreen() {
       >
         <View style={styles.chatBackdropShade} />
         <View style={styles.chatBackdropBrand}>
+          <View style={styles.chatBackdropLogoWrap}>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={styles.chatBackdropLogo}
+              resizeMode="contain"
+            />
+          </View>
           <Text style={styles.chatBackdropKicker}>SIPMATE</Text>
           <Text style={styles.chatBackdropCheers}>CHEERS</Text>
           <Text style={styles.chatBackdropSub}>🍻 GOOD PEOPLE. GOOD TIMES.</Text>
@@ -324,9 +331,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    top: '43%',
+    top: '39%',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  chatBackdropLogoWrap: {
+    width: 86,
+    height: 86,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    backgroundColor: 'rgba(8,9,11,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+  },
+  chatBackdropLogo: {
+    width: 70,
+    height: 70,
+    opacity: 0.28,
   },
   chatBackdropKicker: {
     color: 'rgba(255,255,255,0.24)',
