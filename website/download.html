@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080808">
+  <title>SipMate — Google Play</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    body{min-height:100vh;margin:0;background:radial-gradient(circle at 80% 10%,rgba(115,14,20,.34),transparent 30%),#080808;color:#fff;font-family:Inter,Arial,Helvetica,sans-serif;display:grid;place-items:center;padding:24px;box-sizing:border-box}
+    .download-card{width:min(620px,100%);background:linear-gradient(145deg,#151517,#0d0d0f);border:1px solid #29292d;border-radius:28px;padding:38px;box-sizing:border-box;box-shadow:0 28px 90px rgba(0,0,0,.45),0 0 35px rgba(239,27,36,.07)}
+    .brand{font-size:28px;font-weight:900;text-decoration:none;color:#fff}.brand span{color:#ef1b24}
+    .pill{display:inline-flex;margin-top:28px;padding:8px 12px;border:1px solid #492326;border-radius:999px;background:#201113;color:#ff777d;font-size:12px;font-weight:800;letter-spacing:.08em}
+    h1{font-size:clamp(36px,8vw,60px);line-height:1;margin:18px 0 14px;letter-spacing:-2px}
+    p{font-size:16px;line-height:1.65;color:#aaaab2;margin:0 0 22px}
+    .play-button{display:none;align-items:center;justify-content:center;width:100%;box-sizing:border-box;margin-top:8px;padding:16px 20px;border-radius:16px;background:#ef1b24;color:#fff;text-decoration:none;font-weight:900;box-shadow:0 12px 34px rgba(239,27,36,.22)}
+    .play-button.show{display:flex}.back{display:inline-block;margin-top:18px;color:#a8a8af;text-decoration:none;font-size:14px}.status{margin-top:18px;font-size:12px;color:#6f6f78}.lang{display:flex;gap:8px;margin-top:24px}.lang button{border:1px solid #303036;background:#101012;color:#a8a8af;border-radius:999px;padding:8px 11px;cursor:pointer}.lang button.active{color:#fff;border-color:#6b292d;background:#1b1113}
+  </style>
+</head>
+<body>
+  <main class="download-card">
+    <a class="brand" href="./index.html"><span>Sip</span>Mate 🍻</a>
+    <div class="lang"><button data-lang="en">EN</button><button data-lang="de">DE</button><button data-lang="hr">HR</button></div>
+    <div class="pill" id="phaseLabel">COMING SOON</div>
+    <h1 id="title">Your first CHEERS is getting closer.</h1>
+    <p id="copy">SipMate is preparing for Google Play. If you joined the waitlist, we’ll let you know as soon as the app is available.</p>
+    <a id="playButton" class="play-button" href="#" rel="noopener noreferrer">GET IT ON GOOGLE PLAY →</a>
+    <a class="back" href="./index.html" id="backLink">← Back to SipMate</a>
+    <div class="status" id="statusText">Checking launch status…</div>
+  </main>
+<script>
+const endpoint='https://poatmbsfglhrcdbosinb.supabase.co/functions/v1/public-launch-status';
+const copy={
+ en:{soon:'COMING SOON',pre:'PRE-REGISTER',live:'NOW LIVE',soonTitle:'Your first CHEERS is getting closer.',soonCopy:'SipMate is preparing for Google Play. If you joined the waitlist, we’ll let you know as soon as the app is available.',preTitle:'SipMate is open for pre-registration. 🍻',preCopy:'Reserve your spot on Google Play and get notified when SipMate goes live.',liveTitle:'SipMate is live. 🍻',liveCopy:'The wait is over. Download SipMate, go active and see who nearby is up for a drink.',preBtn:'PRE-REGISTER ON GOOGLE PLAY →',liveBtn:'GET IT ON GOOGLE PLAY →',back:'← Back to SipMate',checking:'Checking launch status…',waiting:'Google Play link is not public yet.'},
+ de:{soon:'BALD VERFÜGBAR',pre:'VORREGISTRIERUNG',live:'JETZT VERFÜGBAR',soonTitle:'Dein erster CHEERS rückt näher.',soonCopy:'SipMate bereitet sich auf Google Play vor. Wenn du auf der Warteliste bist, informieren wir dich, sobald die App verfügbar ist.',preTitle:'Die Vorregistrierung für SipMate ist offen. 🍻',preCopy:'Registriere dich bei Google Play vor und werde benachrichtigt, sobald SipMate live geht.',liveTitle:'SipMate ist live. 🍻',liveCopy:'Das Warten ist vorbei. Lade SipMate herunter, geh aktiv und sieh, wer in deiner Nähe Lust auf einen Drink hat.',preBtn:'BEI GOOGLE PLAY VORREGISTRIEREN →',liveBtn:'BEI GOOGLE PLAY HERUNTERLADEN →',back:'← Zurück zu SipMate',checking:'Launch-Status wird geprüft…',waiting:'Der Google-Play-Link ist noch nicht öffentlich.'},
+ hr:{soon:'USKORO',pre:'PREDREGISTRACIJA',live:'SADA DOSTUPNO',soonTitle:'Tvoj prvi CHEERS je sve bliže.',soonCopy:'SipMate se priprema za Google Play. Ako si na waitlisti, javit ćemo ti čim aplikacija bude dostupna.',preTitle:'SipMate predregistracija je otvorena. 🍻',preCopy:'Predregistriraj se na Google Playu i dobit ćeš obavijest čim SipMate bude dostupan.',liveTitle:'SipMate je stigao. 🍻',liveCopy:'Čekanje je gotovo. Preuzmi SipMate, uključi Active i vidi tko je u blizini za piće.',preBtn:'PREDREGISTRIRAJ SE NA GOOGLE PLAYU →',liveBtn:'PREUZMI NA GOOGLE PLAYU →',back:'← Natrag na SipMate',checking:'Provjeravam launch status…',waiting:'Google Play link još nije javan.'}
+};
+let locale='en';try{const saved=localStorage.getItem('sipmate-locale');if(copy[saved])locale=saved;else{const b=(navigator.language||'en').split('-')[0].toLowerCase();if(copy[b])locale=b}}catch{}
+let launch={phase:'waitlist',play_store_url:null};
+function render(){const t=copy[locale];document.documentElement.lang=locale;document.querySelectorAll('[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===locale));const p=launch.phase;const label=document.getElementById('phaseLabel'),title=document.getElementById('title'),body=document.getElementById('copy'),btn=document.getElementById('playButton'),status=document.getElementById('statusText');document.getElementById('backLink').textContent=t.back;if(p==='live'){label.textContent=t.live;title.textContent=t.liveTitle;body.textContent=t.liveCopy;btn.textContent=t.liveBtn}else if(p==='preregister'){label.textContent=t.pre;title.textContent=t.preTitle;body.textContent=t.preCopy;btn.textContent=t.preBtn}else{label.textContent=t.soon;title.textContent=t.soonTitle;body.textContent=t.soonCopy}if(launch.play_store_url&&(p==='live'||p==='preregister')){btn.href=launch.play_store_url;btn.classList.add('show');status.textContent=''}else{btn.classList.remove('show');status.textContent=t.waiting}}
+document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{locale=b.dataset.lang;try{localStorage.setItem('sipmate-locale',locale)}catch{}render()}));
+document.getElementById('statusText').textContent=copy[locale].checking;
+fetch(endpoint,{headers:{Accept:'application/json'}}).then(r=>r.ok?r.json():null).then(data=>{if(data?.launch)launch=data.launch;render()}).catch(()=>render());
+</script>
+</body>
+</html>
