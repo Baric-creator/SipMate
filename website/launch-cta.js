@@ -3,7 +3,7 @@
   const labels = {
     en: { preregister: "Pre-register on Google Play", live: "Download on Google Play", preregStatus: "PRE-REGISTRATION", liveStatus: "LIVE NOW" },
     de: { preregister: "Bei Google Play vorregistrieren", live: "Bei Google Play herunterladen", preregStatus: "VORREGISTRIERUNG", liveStatus: "JETZT LIVE" },
-    hr: { preregister: "Predregistriraj se na Google Playu", live: "Preuzmi na Google Playu", preregStatus: "PREDREGISTRACIJA", liveStatus: "APLIKACIJA JE VANi" }
+    hr: { preregister: "Predregistriraj se na Google Playu", live: "Preuzmi na Google Playu", preregStatus: "PREDREGISTRACIJA", liveStatus: "DOSTUPNO SADA" }
   };
 
   function getLocale() {
