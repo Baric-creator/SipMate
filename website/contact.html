@@ -1,1 +1,113 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="index,follow"><title>Contact — SipMate</title><link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./styles.css"></head><body><header class="nav shell"><a href="./index.html" class="brand"><span>Sip</span>Mate <b>🍻</b></a></header><main class="legal shell"><p class="eyebrow">CONTACT</p><h1>Contact SipMate</h1><p>SipMate is currently in pre-launch development. For public updates and launch news, follow the official social channels below.</p><h2>Official channels</h2><p><a href="https://www.instagram.com/officialsipmate" target="_blank" rel="noopener noreferrer">Instagram · @officialsipmate</a><br><a href="https://www.tiktok.com/@sipmateofficial" target="_blank" rel="noopener noreferrer">TikTok · @sipmateofficial</a></p><h2>Business and legal contact</h2><p>Final business contact details will be published here once the operating entity and official contact address are confirmed.</p><p><a href="./index.html">← Back to SipMate</a></p></main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="index,follow">
+  <title>Contact — SipMate</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="nav shell">
+    <a href="./index.html" class="brand"><span>Sip</span>Mate <b>🍻</b></a>
+    <div class="language-switch" aria-label="Language">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="de">DE</button>
+      <button type="button" data-lang="hr">HR</button>
+    </div>
+  </header>
+
+  <main class="legal shell">
+    <p class="eyebrow" data-i18n="eyebrow">CONTACT</p>
+    <h1 data-i18n="title">Contact SipMate</h1>
+    <p data-i18n="intro">SipMate is currently preparing for launch. Follow our official channels for updates, community news and release information.</p>
+
+    <h2 data-i18n="channels">Official channels</h2>
+    <p>
+      <a href="https://www.instagram.com/officialsipmate" target="_blank" rel="noopener noreferrer">Instagram · @officialsipmate</a><br>
+      <a href="https://www.tiktok.com/@sipmateofficial" target="_blank" rel="noopener noreferrer">TikTok · @sipmateofficial</a><br>
+      <a href="https://chat.whatsapp.com/FpMoaBczdHiBQeKpPbpLcr" target="_blank" rel="noopener noreferrer" data-i18n="whatsapp">WhatsApp Community · Join SipMate Community</a><br>
+      <a href="https://discord.com/channels/1545876541387440188/1545880341699493978" target="_blank" rel="noopener noreferrer" data-i18n="discord">Discord · Open SipMate Discord</a>
+    </p>
+
+    <h2 data-i18n="business">Business and legal contact</h2>
+    <p data-i18n="businessCopy">Official business contact details will be published here once the operating entity and official contact address are confirmed.</p>
+
+    <p><a href="./index.html" data-i18n="back">← Back to SipMate</a></p>
+  </main>
+
+  <script>
+    const copy = {
+      en: {
+        pageTitle: "Contact — SipMate",
+        eyebrow: "CONTACT",
+        title: "Contact SipMate",
+        intro: "SipMate is currently preparing for launch. Follow our official channels for updates, community news and release information.",
+        channels: "Official channels",
+        whatsapp: "WhatsApp Community · Join SipMate Community",
+        discord: "Discord · Open SipMate Discord",
+        business: "Business and legal contact",
+        businessCopy: "Official business contact details will be published here once the operating entity and official contact address are confirmed.",
+        back: "← Back to SipMate"
+      },
+      de: {
+        pageTitle: "Kontakt — SipMate",
+        eyebrow: "KONTAKT",
+        title: "SipMate kontaktieren",
+        intro: "SipMate bereitet sich derzeit auf den Start vor. Folge unseren offiziellen Kanälen für Updates, Community-News und Informationen zum Release.",
+        channels: "Offizielle Kanäle",
+        whatsapp: "WhatsApp Community · SipMate Community beitreten",
+        discord: "Discord · SipMate Discord öffnen",
+        business: "Geschäftlicher und rechtlicher Kontakt",
+        businessCopy: "Die offiziellen geschäftlichen Kontaktdaten werden hier veröffentlicht, sobald der Geschäftsträger und die offizielle Kontaktadresse bestätigt sind.",
+        back: "← Zurück zu SipMate"
+      },
+      hr: {
+        pageTitle: "Kontakt — SipMate",
+        eyebrow: "KONTAKT",
+        title: "Kontaktiraj SipMate",
+        intro: "SipMate se trenutno priprema za lansiranje. Prati naše službene kanale za novosti, informacije iz zajednice i obavijesti o izlasku aplikacije.",
+        channels: "Službeni kanali",
+        whatsapp: "WhatsApp zajednica · Pridruži se SipMate zajednici",
+        discord: "Discord · Otvori SipMate Discord",
+        business: "Poslovni i pravni kontakt",
+        businessCopy: "Službeni poslovni kontakt podaci bit će objavljeni ovdje nakon potvrde poslovnog subjekta i službene kontakt adrese.",
+        back: "← Natrag na SipMate"
+      }
+    };
+
+    let locale = "en";
+    try {
+      const saved = localStorage.getItem("sipmate-locale");
+      if (saved && copy[saved]) locale = saved;
+      else {
+        const browser = (navigator.language || "en").split("-")[0].toLowerCase();
+        if (copy[browser]) locale = browser;
+      }
+    } catch {}
+
+    function applyLocale(lang) {
+      locale = copy[lang] ? lang : "en";
+      try { localStorage.setItem("sipmate-locale", locale); } catch {}
+      document.documentElement.lang = locale;
+      document.title = copy[locale].pageTitle;
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const value = copy[locale][el.dataset.i18n];
+        if (value) el.textContent = value;
+      });
+      document.querySelectorAll("[data-lang]").forEach(btn => {
+        const active = btn.dataset.lang === locale;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-pressed", String(active));
+      });
+    }
+
+    document.querySelectorAll("[data-lang]").forEach(btn => {
+      btn.addEventListener("click", () => applyLocale(btn.dataset.lang));
+    });
+
+    applyLocale(locale);
+  </script>
+</body>
+</html>
