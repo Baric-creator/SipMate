@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#080808">
+  <title>SipMate Launch Admin</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 85% 10%,rgba(115,15,18,.28),transparent 28%),radial-gradient(circle at 10% 90%,rgba(85,10,15,.18),transparent 28%),#080808;color:#f5f5f3;font-family:Inter,Arial,sans-serif}.shell{width:min(860px,calc(100% - 30px));margin:auto}.top{min-height:84px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{color:#fff;text-decoration:none;font-size:25px;font-weight:900;letter-spacing:-1px}.brand span{color:#ff3b30}.badge{font-size:11px;font-weight:800;letter-spacing:1.4px;color:#ff736b;border:1px solid #4b2422;background:#17100f;padding:8px 11px;border-radius:999px}.wrap{padding:35px 0 90px}.card{border:1px solid #262626;border-radius:28px;background:linear-gradient(145deg,#151515,#0d0d0d);box-shadow:0 30px 90px rgba(0,0,0,.42);padding:30px}.eyebrow{font-size:11px;letter-spacing:1.8px;color:#ff5a52;font-weight:900}.card h1{font-size:clamp(38px,6vw,64px);line-height:.98;letter-spacing:-2.5px;margin:13px 0 12px}.muted{color:#96969d;line-height:1.65}.login-grid,.admin-grid{display:grid;gap:14px;margin-top:24px}.field{display:grid;gap:8px}.field label{font-size:12px;color:#a7a7ad;font-weight:700}.field input{width:100%;height:52px;border:1px solid #303036;border-radius:14px;background:#101012;color:#fff;padding:0 15px;font:500 14px Inter;outline:none}.field input:focus{border-color:#72312d;box-shadow:0 0 0 3px rgba(255,59,48,.08)}.btn{height:52px;border:0;border-radius:14px;background:#ff3b30;color:#fff;font:800 14px Inter;cursor:pointer;transition:.18s ease}.btn:hover{transform:translateY(-1px);filter:brightness(1.06)}.btn.secondary{background:#161616;border:1px solid #313131;color:#ddd}.phase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.phase{min-height:96px;border:1px solid #303036;border-radius:16px;background:#111113;color:#bbb;cursor:pointer;padding:15px;text-align:left;transition:.18s}.phase strong{display:block;color:#fff;margin-bottom:6px}.phase small{color:#777;line-height:1.4}.phase.active{border-color:#ff3b30;background:linear-gradient(145deg,#251210,#121212);box-shadow:0 0 0 3px rgba(255,59,48,.06)}.status-card{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;border:1px solid #28282d;background:#0f0f11;border-radius:18px;padding:18px;margin-top:20px}.status-card b{font-size:14px}.status-card span{display:block;color:#898990;font-size:12px;margin-top:5px}.pill{padding:8px 11px;border-radius:999px;background:#171717;border:1px solid #333;font-size:11px;font-weight:900;letter-spacing:.7px;text-transform:uppercase}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.msg{min-height:22px;margin-top:14px;font-size:13px;font-weight:700;color:#aaa}.msg.ok{color:#56d68a}.msg.err{color:#ff756d}.hidden{display:none!important}.logout-row{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:22px;padding-top:20px;border-top:1px solid #242428}.logout-row small{color:#777}.logout-row button{border:0;background:transparent;color:#ff6a62;font:800 12px Inter;cursor:pointer}.warning{margin-top:18px;border:1px solid #40301f;background:#17130d;color:#baa786;border-radius:14px;padding:14px;font-size:12px;line-height:1.55}.preview-link{display:inline-flex;margin-top:16px;color:#fff;text-decoration:none;font-weight:800;font-size:13px;border-bottom:1px solid #555;padding-bottom:2px}@media(max-width:650px){.card{padding:22px}.phase-grid{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.status-card{grid-template-columns:1fr}.top{min-height:72px}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="top">
+      <a class="brand" href="./index.html"><span>Sip</span>Mate 🍻</a>
+      <span class="badge">ADMIN</span>
+    </header>
+    <main class="wrap">
+      <section class="card" id="loginCard">
+        <p class="eyebrow">SECURE ACCESS</p>
+        <h1>Launch Control</h1>
+        <p class="muted">Only the SipMate admin account can change the public launch phase and Google Play link.</p>
+        <form id="loginForm" class="login-grid">
+          <div class="field"><label for="email">Admin email</label><input id="email" type="email" autocomplete="username" value="sipmate.app@gmail.com" required></div>
+          <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+          <button class="btn" type="submit">Sign in</button>
+        </form>
+        <div class="msg" id="loginMsg"></div>
+      </section>
+
+      <section class="card hidden" id="adminCard">
+        <p class="eyebrow">SIPMATE RELEASE CONTROL</p>
+        <h1>Launch phase</h1>
+        <p class="muted">Change this once Google Play pre-registration is available, then switch to Live on release day.</p>
+
+        <div class="status-card">
+          <div><b>Current public state</b><span id="currentMeta">Loading…</span></div>
+          <div class="pill" id="currentPhase">—</div>
+        </div>
+
+        <div class="admin-grid">
+          <div class="phase-grid" id="phaseGrid">
+            <button class="phase" type="button" data-phase="waitlist"><strong>Waitlist</strong><small>Website keeps the current Join waitlist buttons.</small></button>
+            <button class="phase" type="button" data-phase="preregister"><strong>Pre-registration</strong><small>CTA changes to Google Play pre-register.</small></button>
+            <button class="phase" type="button" data-phase="live"><strong>Live</strong><small>CTA changes to Download on Google Play.</small></button>
+          </div>
+          <div class="field">
+            <label for="playUrl">Google Play URL</label>
+            <input id="playUrl" type="url" inputmode="url" placeholder="https://play.google.com/store/apps/details?id=...">
+          </div>
+          <div class="warning">For <b>Pre-registration</b> and <b>Live</b>, a valid <b>play.google.com</b> HTTPS URL is required. Waitlist can be saved without one.</div>
+          <div class="actions">
+            <button class="btn" id="saveBtn" type="button">Save launch state</button>
+            <button class="btn secondary" id="refreshBtn" type="button">Refresh current state</button>
+          </div>
+          <div class="msg" id="adminMsg"></div>
+          <a class="preview-link" href="./download.html" target="_blank" rel="noopener">Open public download page ↗</a>
+        </div>
+
+        <div class="logout-row"><small id="signedInAs"></small><button id="logoutBtn" type="button">Sign out</button></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const SUPABASE_URL = 'https://poatmbsfglhrcdbosinb.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_VooWOnzPl1SCUA44rZDTow_Ee5XrMd3';
+    const ADMIN_ENDPOINT = `${SUPABASE_URL}/functions/v1/admin-launch-config`;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+
+    const loginCard = document.getElementById('loginCard');
+    const adminCard = document.getElementById('adminCard');
+    const loginForm = document.getElementById('loginForm');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const loginMsg = document.getElementById('loginMsg');
+    const adminMsg = document.getElementById('adminMsg');
+    const playUrl = document.getElementById('playUrl');
+    const currentPhase = document.getElementById('currentPhase');
+    const currentMeta = document.getElementById('currentMeta');
+    const signedInAs = document.getElementById('signedInAs');
+    let selectedPhase = 'waitlist';
+
+    function message(el, text, kind='') { el.className = `msg ${kind}`; el.textContent = text || ''; }
+    function setPhase(phase) {
+      selectedPhase = phase;
+      document.querySelectorAll('[data-phase]').forEach(btn => btn.classList.toggle('active', btn.dataset.phase === phase));
+    }
+    async function authHeaders() {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) throw new Error('not_signed_in');
+      return { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' };
+    }
+    async function loadState() {
+      message(adminMsg, 'Loading…');
+      try {
+        const headers = await authHeaders();
+        const r = await fetch(ADMIN_ENDPOINT, { method: 'GET', headers, cache: 'no-store' });
+        const data = await r.json();
+        if (!r.ok || data?.ok !== true) throw new Error(data?.error || 'request_failed');
+        const launch = data.launch || {};
+        setPhase(launch.phase || 'waitlist');
+        playUrl.value = launch.play_store_url || '';
+        currentPhase.textContent = launch.phase || 'waitlist';
+        currentMeta.textContent = launch.updated_at ? `Last changed ${new Date(launch.updated_at).toLocaleString()}` : 'No previous update';
+        message(adminMsg, 'Current state loaded.', 'ok');
+      } catch (err) {
+        message(adminMsg, `Could not load state: ${err.message}`, 'err');
+      }
+    }
+    async function showSession(session) {
+      if (!session) {
+        loginCard.classList.remove('hidden');
+        adminCard.classList.add('hidden');
+        return;
+      }
+      loginCard.classList.add('hidden');
+      adminCard.classList.remove('hidden');
+      signedInAs.textContent = `Signed in as ${session.user?.email || 'admin'}`;
+      await loadState();
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      message(loginMsg, 'Signing in…');
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.value.trim(), password: password.value });
+      if (error) { message(loginMsg, error.message, 'err'); return; }
+      password.value = '';
+      message(loginMsg, 'Signed in.', 'ok');
+      await showSession(data.session);
+    });
+
+    document.querySelectorAll('[data-phase]').forEach(btn => btn.addEventListener('click', () => setPhase(btn.dataset.phase)));
+    document.getElementById('refreshBtn').addEventListener('click', loadState);
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const rawUrl = playUrl.value.trim();
+      if (selectedPhase !== 'waitlist' && !rawUrl) { message(adminMsg, 'Google Play URL is required for this phase.', 'err'); return; }
+      if (!confirm(`Change SipMate public launch phase to “${selectedPhase}”?`)) return;
+      message(adminMsg, 'Saving…');
+      try {
+        const headers = await authHeaders();
+        const r = await fetch(ADMIN_ENDPOINT, { method: 'POST', headers, body: JSON.stringify({ phase: selectedPhase, play_store_url: rawUrl || null }) });
+        const data = await r.json();
+        if (!r.ok || data?.ok !== true) throw new Error(data?.error || 'request_failed');
+        currentPhase.textContent = data.launch.phase;
+        currentMeta.textContent = `Last changed ${new Date(data.launch.updated_at).toLocaleString()}`;
+        playUrl.value = data.launch.play_store_url || '';
+        message(adminMsg, 'Saved. Public website will update automatically within about a minute.', 'ok');
+      } catch (err) {
+        message(adminMsg, `Save failed: ${err.message}`, 'err');
+      }
+    });
+    document.getElementById('logoutBtn').addEventListener('click', async () => { await supabase.auth.signOut(); await showSession(null); });
+
+    const { data } = await supabase.auth.getSession();
+    await showSession(data.session);
+    supabase.auth.onAuthStateChange((_event, session) => { if (!session) showSession(null); });
+  </script>
+</body>
+</html>
