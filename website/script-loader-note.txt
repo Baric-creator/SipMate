@@ -1,0 +1,1 @@
+SipMate website script loader split: script-core.js preserves the original website logic; script.js loads core first and then launch-cta.js.
