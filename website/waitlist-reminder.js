@@ -3,23 +3,30 @@
 
   const copy = {
     en: {
-      title: 'Confirm your email',
-      body: 'We sent you a confirmation link. Check your inbox and confirm your email to secure your SipMate spot.',
-      note: 'This reminder will disappear automatically.'
+      preTitle: 'Remember to confirm your email',
+      preBody: 'After you join the waitlist, we’ll send you a confirmation link. Check your inbox and confirm it to secure your SipMate spot.',
+      sentTitle: 'Confirm your email',
+      sentBody: 'We sent you a confirmation link. Check your inbox and confirm your email to secure your SipMate spot.',
+      note: 'Just a quick reminder — this disappears automatically.'
     },
     de: {
-      title: 'Bestätige deine E-Mail',
-      body: 'Wir haben dir einen Bestätigungslink geschickt. Prüfe dein Postfach und bestätige deine E-Mail, um deinen SipMate-Platz zu sichern.',
-      note: 'Diese Erinnerung verschwindet automatisch.'
+      preTitle: 'E-Mail-Bestätigung nicht vergessen',
+      preBody: 'Nach deiner Anmeldung senden wir dir einen Bestätigungslink. Prüfe dein Postfach und bestätige deine E-Mail, um deinen SipMate-Platz zu sichern.',
+      sentTitle: 'Bestätige deine E-Mail',
+      sentBody: 'Wir haben dir einen Bestätigungslink geschickt. Prüfe dein Postfach und bestätige deine E-Mail, um deinen SipMate-Platz zu sichern.',
+      note: 'Nur eine kurze Erinnerung — sie verschwindet automatisch.'
     },
     hr: {
-      title: 'Potvrdi svoj e-mail',
-      body: 'Poslali smo ti link za potvrdu. Provjeri inbox i potvrdi e-mail kako bi osigurao/la svoje mjesto na SipMate waitlisti.',
-      note: 'Ovaj podsjetnik će nestati automatski.'
+      preTitle: 'Ne zaboravi potvrditi e-mail',
+      preBody: 'Nakon prijave poslat ćemo ti link za potvrdu. Provjeri inbox i potvrdi e-mail kako bi osigurao/la svoje mjesto na SipMate waitlisti.',
+      sentTitle: 'Potvrdi svoj e-mail',
+      sentBody: 'Poslali smo ti link za potvrdu. Provjeri inbox i potvrdi e-mail kako bi osigurao/la svoje mjesto na SipMate waitlisti.',
+      note: 'Samo kratki podsjetnik — nestat će automatski.'
     }
   };
 
   let hideTimer = null;
+  let typingReminderShown = false;
 
   function getLocale() {
     const lang = (document.documentElement.lang || 'en').toLowerCase().split('-')[0];
@@ -57,12 +64,15 @@
     setTimeout(() => el.remove(), 260);
   }
 
-  function showReminder() {
+  function showReminder(mode = 'pre') {
     ensureStyles();
     document.getElementById('sipmate-confirm-reminder')?.remove();
     clearTimeout(hideTimer);
 
     const t = copy[getLocale()];
+    const isSent = mode === 'sent';
+    const title = isSent ? t.sentTitle : t.preTitle;
+    const body = isSent ? t.sentBody : t.preBody;
     const wrap = document.createElement('div');
     wrap.id = 'sipmate-confirm-reminder';
     wrap.className = 'sipmate-confirm-reminder';
@@ -72,8 +82,8 @@
       <div class="sipmate-confirm-card">
         <div class="sipmate-confirm-icon" aria-hidden="true">📩</div>
         <div class="sipmate-confirm-copy">
-          <strong>${t.title}</strong>
-          <p>${t.body}</p>
+          <strong>${title}</strong>
+          <p>${body}</p>
           <small>${t.note}</small>
         </div>
         <button type="button" class="sipmate-confirm-close" aria-label="Close">×</button>
@@ -85,6 +95,27 @@
     hideTimer = setTimeout(hideReminder, 6000);
   }
 
+  function attachTypingReminder() {
+    const form = document.getElementById('waitlist-form');
+    if (!form) return;
+    const fields = form.querySelectorAll('input, textarea, select');
+    const trigger = () => {
+      if (typingReminderShown) return;
+      typingReminderShown = true;
+      showReminder('pre');
+    };
+    fields.forEach(field => {
+      field.addEventListener('input', trigger, { once: false });
+      field.addEventListener('change', trigger, { once: false });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachTypingReminder, { once: true });
+  } else {
+    attachTypingReminder();
+  }
+
   const originalFetch = window.fetch.bind(window);
   window.fetch = async (...args) => {
     const response = await originalFetch(...args);
@@ -94,7 +125,7 @@
       if (url === JOIN_ENDPOINT && response.ok) {
         const data = await response.clone().json();
         if (data?.ok === true && data?.email_sent === true && data?.confirmed !== true) {
-          showReminder();
+          showReminder('sent');
         }
       }
     } catch {}
