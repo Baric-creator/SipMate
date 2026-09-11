@@ -6,5 +6,5 @@
     if (done) s.onload = done;
     document.head.appendChild(s);
   }
-  load('./script-core.js', () => load('./launch-cta.js'));
+  load('./waitlist-reminder.js', () => load('./script-core.js', () => load('./launch-cta.js')));
 })();
