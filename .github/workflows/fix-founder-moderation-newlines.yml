@@ -1,0 +1,53 @@
+name: Fix Founder Moderation Newlines
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event.head_commit.message != 'Fix Founder dashboard moderation script syntax'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair literal newline escapes in founder moderation block
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('website/founder.html')
+          s = p.read_text(encoding='utf-8')
+          marker = r"\n  let moderationRows=[];"
+          start = s.find(marker)
+          if start == -1:
+              raise SystemExit('broken moderation marker not found')
+          end_marker = "\n  async function loadAll()"
+          end = s.find(end_marker, start)
+          if end == -1:
+              raise SystemExit('loadAll marker not found')
+          block = s[start:end]
+          block = block.replace(r"\n", "\n")
+          s = s[:start] + block + s[end:]
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify syntax markers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('website/founder.html').read_text(encoding='utf-8')
+          if r"\n  let moderationRows=[];" in s:
+              raise SystemExit('literal newline escape still present')
+          for needle in ["let moderationRows=[];","async function loadModeration()","async function setReportStatus(id,status)","async function loadAll()"]:
+              if needle not in s:
+                  raise SystemExit(f'missing {needle}')
+          print('Founder moderation script repaired')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add website/founder.html
+          git commit -m 'Fix Founder dashboard moderation script syntax'
+          git push origin master
