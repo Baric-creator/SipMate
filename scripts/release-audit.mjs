@@ -26,6 +26,8 @@ for (const required of [
   'src/app/cheers.tsx',
   'src/app/premium.android.tsx',
   'src/lib/push-notifications.ts',
+  'supabase/functions/admin-moderation/index.ts',
+  'website/founder.html',
   'website/privacy.html',
   'website/terms.html',
   'website/delete-account.html',
@@ -95,7 +97,7 @@ if (exists('src/app/user-profile.tsx')) {
   assert(s.includes("supabase.from('reports').insert"), 'In-app report submission is missing');
   assert(s.includes("supabase.from('blocks').insert"), 'In-app block action is missing');
   assert(s.includes("supabase.from('cheers').insert"), 'Cheers send action is missing');
-  assert(s.includes("supabase.rpc('is_blocked_between'" ) || s.includes("from('blocks')"), 'Profile safety flow no longer checks block state');
+  assert(s.includes("supabase.rpc('is_blocked_between'") || s.includes("from('blocks')"), 'Profile safety flow no longer checks block state');
   assert(s.includes("pathname: '/chat'"), 'Mutual Cheers no longer opens chat');
 }
 
@@ -136,6 +138,23 @@ if (exists('src/app/_layout.tsx')) {
   assert(s.includes('Notifications.addNotificationResponseReceivedListener'), 'Notification tap listener is missing');
   assert(s.includes("pathname: '/chat'"), 'Message notifications no longer deep-link into chat');
   assert(s.includes('clearPresence()'), 'Presence cleanup is missing from app lifecycle');
+}
+
+if (exists('supabase/functions/admin-moderation/index.ts')) {
+  const s = read('supabase/functions/admin-moderation/index.ts');
+  assert(s.includes('ADMIN_EMAILS'), 'Moderation endpoint no longer restricts founder access');
+  assert(s.includes('authClient.auth.getUser(token)'), 'Moderation endpoint no longer validates caller JWT');
+  assert(s.includes('reviewed_at'), 'Moderation endpoint no longer writes audit timestamps');
+  assert(s.includes('reviewed_by'), 'Moderation endpoint no longer records reviewer identity');
+  assert(s.includes('ALLOWED_STATUSES'), 'Moderation endpoint no longer constrains report statuses');
+}
+
+if (exists('website/founder.html')) {
+  const s = read('website/founder.html');
+  assert(s.includes('data-tab="moderation"'), 'Founder dashboard moderation tab is missing');
+  assert(s.includes('/functions/v1/admin-moderation'), 'Founder dashboard moderation backend is missing');
+  assert(s.includes('data-report-action="reviewed"'), 'Founder dashboard cannot mark reports reviewed');
+  assert(s.includes('data-report-action="dismissed"'), 'Founder dashboard cannot dismiss reports');
 }
 
 console.log(`Release audit completed with ${notes.length} note(s).`);
