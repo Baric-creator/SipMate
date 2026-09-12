@@ -17,5 +17,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Print npm audit report
-        run: npm audit --json || true
+      - name: Trace vulnerable package
+        run: |
+          npm ls js-yaml --all || true
+          npm audit fix --package-lock-only --dry-run || true
+          npm audit --json || true
