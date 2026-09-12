@@ -1,0 +1,35 @@
+name: Align React Native
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  align-react-native:
+    if: github.event.head_commit.message != 'Align React Native with Expo SDK 57'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Align React Native patch version
+        run: npm install react-native@0.86.3 --save-exact
+      - name: Run project checks
+        run: npm run check
+      - name: Commit dependency alignment
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo 'No dependency changes needed.'
+            exit 0
+          fi
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add package.json package-lock.json
+          git commit -m 'Align React Native with Expo SDK 57'
+          git push origin master
