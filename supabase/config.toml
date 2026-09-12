@@ -18,5 +18,10 @@ entrypoint = "./functions/create-customer-portal/index.ts"
 
 [functions.delete-account]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 entrypoint = "./functions/delete-account/index.ts"
+
+[functions.admin-moderation]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/admin-moderation/index.ts"
