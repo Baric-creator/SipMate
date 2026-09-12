@@ -1,0 +1,35 @@
+name: Patch Premium Web CTA
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-premium-cta:
+    if: github.event.head_commit.message != 'Add Premium checkout CTA to website'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Premium checkout CTA
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('website/index.html')
+          s=p.read_text(encoding='utf-8')
+          old='''  <div class="premium-benefits">\n    <div data-i18n="featureCheers">✓ See who sent you 🍻</div>\n    <div data-i18n="featureFilters">✓ Advanced filters</div>\n    <div data-i18n="featureRewind">✓ Revisit skipped profiles</div>\n    <div data-i18n="featureLocation">✓ Change your location</div>\n    <div data-i18n="featurePhotos">✓ More profile photos</div>\n    <div data-i18n="featureMessages">✓ Direct messaging features</div>\n  </div>\n</section>'''
+          new='''  <div class="premium-benefits">\n    <div data-i18n="featureCheers">✓ See who sent you 🍻</div>\n    <div data-i18n="featureFilters">✓ Advanced filters</div>\n    <div data-i18n="featureRewind">✓ Revisit skipped profiles</div>\n    <div data-i18n="featureLocation">✓ Change your location</div>\n    <div data-i18n="featurePhotos">✓ More profile photos</div>\n    <div data-i18n="featureMessages">✓ Direct messaging features</div>\n  </div>\n  <div style="display:flex;justify-content:center;margin-top:22px">\n    <a class="button primary" href="./premium.html">💎 Premium account & billing</a>\n  </div>\n</section>'''
+          if old not in s: raise SystemExit('premium anchor missing')
+          p.write_text(s.replace(old,new,1),encoding='utf-8',newline='\n')
+          PY
+      - name: Verify
+        run: grep -q 'href="./premium.html"' website/index.html
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add website/index.html
+          git commit -m 'Add Premium checkout CTA to website'
+          git push origin master
