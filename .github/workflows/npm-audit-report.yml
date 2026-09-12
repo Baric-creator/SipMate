@@ -1,14 +1,15 @@
-name: NPM Audit Report
+name: NPM Audit Fix
 
 on:
   push:
     branches: [master]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
+  audit-fix:
+    if: github.event.head_commit.message != 'Apply safe npm audit fix'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,8 +18,17 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Trace vulnerable package
+      - name: Apply non-breaking audit fixes
+        run: npm audit fix
+      - name: Verify project
+        run: npm run check
+      - name: Show remaining audit
+        run: npm audit || true
+      - name: Commit safe dependency fixes
         run: |
-          npm ls js-yaml --all || true
-          npm audit fix --package-lock-only --dry-run || true
-          npm audit --json || true
+          if git diff --quiet package-lock.json package.json; then exit 0; fi
+          git config user.name "SipMate Automation"
+          git config user.email "sipmate.app@gmail.com"
+          git add package-lock.json package.json
+          git commit -m "Apply safe npm audit fix"
+          git push
