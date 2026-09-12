@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /founder.html
+Disallow: /admin-launch.html
+Disallow: /forgot-password.html
+Disallow: /reset-password.html
 
 Sitemap: https://officialsipmate.com/sitemap.xml
