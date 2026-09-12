@@ -14,111 +14,147 @@ npm run preflight:android:production
 
 Then confirm:
 - CI on `master` is green.
-- Privacy Policy and Delete Account pages are live.
+- Privacy Policy, Terms, Imprint and Delete Account pages are live.
+- `premium.html` is live and uses the same SipMate account as the app.
 - Play Console identity/developer verification is complete.
 - Data Safety, App Access, Content Rating, Target Audience and account deletion declarations are complete.
-- Reviewer credentials work.
-- Google Play Billing/RevenueCat is either fully working or Android Premium purchase UI remains gated/disabled.
+- Reviewer credentials work without OTP/MFA.
+- Android Premium remains consumption-only: no Stripe checkout, no external payment link, no purchase CTA inside the Play-distributed app.
 - Final screenshots and store listing match the current app.
 
 ## 2. Build and upload to Google Play Internal Testing
 
-The prepared safe command is:
+Use the prepared safe command:
 
 ```bash
 npm run release:android:internal:ready
 ```
 
-This runs production preflight checks, builds the production Android App Bundle, then submits the newest production build using the existing EAS production submit profile.
+It runs production checks, builds the production AAB, then submits the newest production build using the existing production submit profile.
 
-The production submit profile remains intentionally safe:
+The first upload remains intentionally safe:
 - Track: `internal`
 - Release status: `draft`
 - Changes are not automatically sent for review
 
-Do not change this to production on the first upload.
+Do not promote directly to production on the first upload.
 
 ## 3. Internal testing smoke test
 
 Install the Play-delivered build, not a local debug APK, and verify on a physical Android device:
 
-1. Register / log in
-2. Terms + Community Guidelines acceptance
-3. Location permission and Nearby
-4. Discover profile cards
-5. Active/inactive presence behavior
-6. Send Cheers
-7. Mutual CHEERS state
-8. Open chat and exchange messages
-9. Push notification delivery and notification tap
-10. Change profile photo
-11. Report and Block
-12. Language switching EN / DE / HR
-13. Logout and login again
-14. Account deletion on a disposable account
-15. Premium screen does not bypass Google Play Billing on Android
+1. Register / log in.
+2. Confirm Terms + Community Guidelines acceptance.
+3. Grant location and verify Nearby.
+4. Verify Discover cards and profile photos.
+5. Verify Active/Inactive presence behavior.
+6. Send Cheers.
+7. Trigger mutual CHEERS.
+8. Open chat and exchange messages in realtime.
+9. Verify push delivery and notification-tap navigation.
+10. Change profile photo.
+11. Report and Block a test account.
+12. Confirm Founder → Moderation can see and action the report.
+13. Switch EN / DE / HR.
+14. Logout and login again.
+15. Delete a disposable account.
+16. Open Premium: existing Premium entitlement may unlock features, but Android must expose no payment link or purchase button.
 
-Stop the release if any core path crashes or shows stale/private data.
+Stop the release if any core path crashes, exposes stale/private data, or Android shows an external digital-purchase route.
 
-## 4. Play Console release progression
+## 4. Premium web billing smoke test
+
+Before public launch, complete one controlled Stripe test flow with a disposable/test SipMate account:
+
+1. Sign in on `officialsipmate.com/premium.html`.
+2. Verify Monthly and the currently active yearly stage.
+3. Start Stripe test checkout.
+4. Complete payment and confirm return to `premium.html?checkout=success`.
+5. Confirm `premium_subscriptions` becomes active and the account is Premium.
+6. Sign into the Android release candidate with the same account and confirm entitlement is recognized.
+7. Open Stripe Customer Portal from the website.
+8. Schedule cancellation and confirm access remains active until period end.
+9. Confirm webhook/state sync and Premium counters.
+
+Do not use a real customer payment merely to prove the flow; use the appropriate test path until launch configuration is intentionally live.
+
+## 5. Play Console release progression
 
 Recommended order:
 
 Internal Testing → Closed/Open testing if required by the account → Production
 
-Before promoting to production:
+Before production:
 - Review the exact AAB permissions in Play Console.
-- Confirm no unexpected photo/video, microphone, camera, background location or overlay permissions appear.
-- Confirm the package is `com.bariccreator.sipmate` and target SDK is 36.
-- Confirm store listing, privacy URL and deletion URL are still correct.
+- Confirm no unexpected camera, microphone, broad photo/video storage, background location or overlay permission appears.
+- Confirm package `com.bariccreator.sipmate` and target SDK 36.
+- Confirm store listing, privacy URL and deletion URL.
+- Confirm App Access reviewer instructions.
 - Confirm moderation/report handling is operational.
+- Confirm Android Premium still matches the declared consumption-only release architecture.
 
-## 5. Website launch switch
+## 6. Website launch switch
 
-The SipMate website already has a launch phase system. On release day, change the production launch configuration only after the Play Store URL is real and publicly reachable.
+Only change the production website launch state after the Play Store URL is real and publicly reachable.
 
-Recommended phase sequence:
-- `waitlist` — before Play listing is ready
-- `preregister` — when the Play pre-registration/listing URL is available
-- `live` — only when users can actually install SipMate
+Sequence:
+- `waitlist` — current/pre-approval state
+- `preregister` — listing/pre-registration URL exists but app is not installable
+- `live` — users can actually install SipMate
 
-For `live`, set the real Google Play Store URL first, then switch the launch phase. Verify the main CTA and download page from a private/incognito browser after the change.
+For `live`: set the real Google Play URL first, then switch the phase from Founder Dashboard. Check the homepage and download page in an incognito browser.
 
-## 6. Public launch verification
+## 7. Public launch verification
 
-Immediately after going live, test:
+Immediately after going live, check:
 - `officialsipmate.com`
-- privacy page
-- terms page
-- imprint page
-- contact page
-- account deletion page
-- download CTA / Play Store link
-- Instagram and TikTok links
-- WhatsApp/Discord community links
+- `premium.html`
+- privacy
+- terms
+- imprint
+- contact
+- account deletion
+- download / Play Store CTA
+- Founder Dashboard launch state
+- Founder Dashboard moderation queue
+- Instagram / TikTok
+- WhatsApp / Discord
 
-Then install from the public Play listing on a device that did not have the development build installed and run a short smoke test again.
+Then install from the public Play listing on a clean device and run the short core smoke test again.
 
-## 7. Rollback rule
+## 8. Rollback rule
 
-If a release-critical problem appears:
+If a release-critical issue appears:
 - Do not delete production data.
-- Pause promotion / halt rollout in Play Console.
-- Switch the website CTA back to a non-live phase if the public build should not receive new users.
-- Fix on `master`, run preflight, build a new AAB and test before resuming.
+- Halt or pause the Play rollout.
+- Switch the website away from `live` if new installs should stop.
+- Keep billing state intact; do not manually delete subscriptions to repair an app bug.
+- Fix on `master`, rerun preflight, build a new AAB, test, then resume.
 
 ## Current prepared state
 
-Already prepared in the repository:
-- Production AAB profile
+Prepared in the repository/backend:
+- Production AAB profile and API 36 setup
 - Internal draft submit profile
-- Production preflight command
+- Production preflight + release audit
 - One-command internal release helper
-- Android release manifest audit
+- Final merged release manifest audit
 - Data Safety draft
 - reviewer access instructions
 - content rating / target audience guidance
-- store listing copy
-- public privacy/account deletion pages
+- EN / DE / HR store listing copy
+- privacy / terms / imprint / account-deletion web pages
+- UGC report/block flow
+- Founder moderation queue with audit trail
+- Web Premium account/billing page
+- Stripe checkout + webhook + Customer Portal path
+- Automatic Premium entitlement/profile synchronization
+- Automatic Founders → Early Access → Standard yearly stage logic
+- Android consumption-only Premium gate
 
-The remaining blockers are external account/review/billing/store-console steps and final real-device release-candidate testing.
+Remaining release gates are intentionally external/manual:
+1. Google/Play account and identity approvals.
+2. Final Play Console declarations and reviewer credentials.
+3. One controlled Premium billing smoke test.
+4. Fresh production AAB creation and Play-delivered real-device smoke test.
+5. Production promotion and final website `live` switch.
