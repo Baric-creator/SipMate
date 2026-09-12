@@ -20,11 +20,24 @@ jobs:
       - run: npm ci
       - name: Prebuild Android project
         run: npx expo prebuild --platform android --no-install --clean
-      - name: Print Android permissions
+      - name: Generate merged release manifest
         run: |
-          echo '--- android/app/src/main/AndroidManifest.xml ---'
-          cat android/app/src/main/AndroidManifest.xml
-          echo '--- uses-permission summary ---'
-          grep -Rho '<uses-permission[^>]*>' android/app/src/main/AndroidManifest.xml android/app/src/*/AndroidManifest.xml 2>/dev/null | sort -u || true
+          cd android
+          chmod +x gradlew
+          ./gradlew :app:processReleaseMainManifest --no-daemon
+      - name: Print merged release permissions
+        run: |
+          echo '--- merged release manifest candidates ---'
+          find android/app/build/intermediates -type f -name AndroidManifest.xml | sort
+          echo '--- merged release permission summary ---'
+          MANIFEST=$(find android/app/build/intermediates -type f -name AndroidManifest.xml | grep -E '/merged_manifest/|/merged_manifests/' | grep -E '/release/' | head -n 1)
+          if [ -z "$MANIFEST" ]; then
+            MANIFEST=$(find android/app/build/intermediates -type f -name AndroidManifest.xml | grep -E '/release/' | head -n 1)
+          fi
+          echo "Using: $MANIFEST"
+          test -n "$MANIFEST"
+          cat "$MANIFEST"
+          echo '--- final uses-permission summary ---'
+          grep -o '<uses-permission[^>]*>' "$MANIFEST" | sort -u || true
           echo '--- package/application hints ---'
-          grep -R "package=\|applicationId\|namespace" android/app/src/main/AndroidManifest.xml android/app/build.gradle android/build.gradle 2>/dev/null || true
+          grep -E 'package=|applicationId|namespace' "$MANIFEST" android/app/build.gradle android/build.gradle 2>/dev/null || true
