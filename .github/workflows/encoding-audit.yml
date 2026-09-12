@@ -1,0 +1,43 @@
+name: Encoding Audit
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  encoding-audit:
+    if: github.event.head_commit.message != 'Remove one-time encoding audit'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan source text for mojibake
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          roots = [Path('src'), Path('website'), Path('docs')]
+          bad = ('Ã','Â','â€','âœ','ðŸ','Ä','Å','ï¸','â†','â—','âš','â˜')
+          hits=[]
+          for root in roots:
+              if not root.exists():
+                  continue
+              for p in root.rglob('*'):
+                  if not p.is_file() or p.suffix.lower() not in {'.ts','.tsx','.js','.mjs','.html','.css','.md','.json','.txt'}:
+                      continue
+                  try:
+                      text=p.read_text(encoding='utf-8')
+                  except Exception as e:
+                      print(f'READ_ERROR {p}: {e}')
+                      continue
+                  for i,line in enumerate(text.splitlines(),1):
+                      if any(token in line for token in bad):
+                          hits.append((str(p),i,line.strip()))
+          if hits:
+              print('MOJIBAKE_CANDIDATES')
+              for p,i,line in hits:
+                  print(f'{p}:{i}: {line[:300]}')
+              raise SystemExit(2)
+          print('Encoding audit clean: no common mojibake patterns found.')
+          PY
