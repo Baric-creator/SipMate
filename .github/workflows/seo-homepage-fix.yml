@@ -1,0 +1,39 @@
+name: Homepage SEO Fix
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-homepage:
+    if: github.event.head_commit.message != 'Apply static homepage SEO fixes'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch static homepage SEO
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('website/index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('<title data-i18n="pageTitle">SipMate — Ready for a drink?</title>', '<title data-i18n="pageTitle">SipMate — Meet Nearby People for Drinks & Hangouts</title>')
+          s = s.replace('content="SipMate helps you meet nearby people for a drink, coffee or spontaneous hangout. Send a Cheers — if it\'s mutual, it\'s CHEERS!"', 'content="SipMate helps you meet nearby people for drinks, coffee and spontaneous hangouts. Discover who is active, send a Cheers and chat when it is mutual."', 1)
+          s = s.replace('"url":"https://officialsipmate.com/",\n        "sameAs"', '"url":"https://officialsipmate.com/",\n        "logo":{"@type":"ImageObject","url":"https://officialsipmate.com/social-card.svg"},\n        "sameAs"', 1)
+          replacements = [
+            ('alt=""', 'alt="Illustrative SipMate demo profile photo"'),
+          ]
+          for old, new in replacements:
+              s = s.replace(old, new)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit static SEO fixes
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "SipMate Automation"
+          git config user.email "sipmate.app@gmail.com"
+          git add website/index.html
+          git commit -m "Apply static homepage SEO fixes"
+          git push
