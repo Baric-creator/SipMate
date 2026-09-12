@@ -63,7 +63,8 @@
     "submit:android:internal:latest": "npx eas-cli@latest submit --platform android --profile production --latest",
     "submit:android:internal:latest:ci": "npx eas-cli@latest submit --platform android --profile production --latest --non-interactive",
     "submit:android:latest": "npm run submit:android:internal:latest",
-    "submit:android:latest:ci": "npm run submit:android:internal:latest:ci"
+    "submit:android:latest:ci": "npm run submit:android:internal:latest:ci",
+    "release:android:internal:ready": "npm run build:android:production:ready && npm run submit:android:internal:latest"
   },
   "private": true
 }
