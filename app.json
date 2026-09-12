@@ -19,7 +19,12 @@
         "ACCESS_FINE_LOCATION"
       ],
       "blockedPermissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#09090B",
@@ -50,6 +55,14 @@
         }
       ],
       [
+        "expo-image-picker",
+        {
+          "cameraPermission": false,
+          "microphonePermission": false,
+          "photosPermission": "SipMate lets you choose profile photos from your photo library."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#09090B",
@@ -72,4 +85,3 @@
     "owner": "sipmate.app"
   }
 }
-
