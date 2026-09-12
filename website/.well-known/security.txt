@@ -1,0 +1,5 @@
+Contact: mailto:sipmate.app@gmail.com
+Canonical: https://officialsipmate.com/.well-known/security.txt
+Preferred-Languages: en, de, hr
+Policy: https://officialsipmate.com/contact.html
+Expires: 2027-09-12T23:59:59Z
