@@ -28,6 +28,10 @@ for (const required of [
   'src/lib/push-notifications.ts',
   'supabase/functions/admin-moderation/index.ts',
   'website/founder.html',
+  'website/premium.html',
+  'supabase/functions/create-checkout-session/index.ts',
+  'supabase/functions/create-customer-portal/index.ts',
+  'docs/PREMIUM_BILLING_RELEASE.md',
   'website/privacy.html',
   'website/terms.html',
   'website/delete-account.html',
@@ -122,7 +126,31 @@ if (exists('src/app/premium.android.tsx')) {
   const s = read('src/app/premium.android.tsx');
   assert(!s.includes('create-checkout-session'), 'Android Premium exposes Stripe checkout');
   assert(!s.includes('stripe.com'), 'Android Premium directly references Stripe');
-  note('Android Premium remains release-gated to pricing display only.');
+  assert(!s.includes('officialsipmate.com/premium'), 'Android Premium links to external web billing');
+  assert(s.includes('does not sell digital subscriptions inside the app') || s.includes('keine digitalen Abos innerhalb der App') || s.includes('ne prodaje digitalne pretplate unutar aplikacije'), 'Android Premium consumption-only disclosure is missing');
+  note('Android Premium remains consumption-only; purchases happen outside the Play-distributed app.');
+}
+
+if (exists('website/premium.html')) {
+  const s = read('website/premium.html');
+  assert(s.includes("signInWithPassword"), 'Premium website sign-in flow is missing');
+  assert(s.includes("create-checkout-session"), 'Premium website checkout call is missing');
+  assert(s.includes("create-customer-portal"), 'Premium website subscription management is missing');
+  assert(s.includes("premium_subscriptions"), 'Premium website entitlement status check is missing');
+}
+
+if (exists('supabase/functions/create-checkout-session/index.ts')) {
+  const s = read('supabase/functions/create-checkout-session/index.ts');
+  assert(s.includes('premium.html?checkout=success'), 'Checkout success return no longer targets Premium website');
+  assert(s.includes('premium.html?checkout=cancelled'), 'Checkout cancel return no longer targets Premium website');
+  assert(s.includes('allowedOrigins'), 'Checkout origin allowlist is missing');
+  assert(s.includes("eq('status', 'active')"), 'Checkout duplicate-active-subscription guard is missing');
+}
+
+if (exists('supabase/functions/create-customer-portal/index.ts')) {
+  const s = read('supabase/functions/create-customer-portal/index.ts');
+  assert(s.includes('/premium.html'), 'Customer Portal return no longer targets Premium website');
+  assert(s.includes('allowedOrigins'), 'Customer Portal origin allowlist is missing');
 }
 
 if (exists('src/lib/push-notifications.ts')) {
