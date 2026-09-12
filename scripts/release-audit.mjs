@@ -15,11 +15,15 @@ for (const required of [
   'app.json',
   'eas.json',
   'google-services.json',
+  'src/app/_layout.tsx',
   'src/app/login.tsx',
   'src/app/register.tsx',
   'src/app/forgot-password.tsx',
   'src/app/reset-password.tsx',
   'src/app/delete-account.tsx',
+  'src/app/user-profile.tsx',
+  'src/app/chat.tsx',
+  'src/app/cheers.tsx',
   'src/app/premium.android.tsx',
   'src/lib/push-notifications.ts',
   'website/privacy.html',
@@ -86,6 +90,32 @@ if (exists('src/app/delete-account.tsx')) {
   assert(s.includes('Authorization: `Bearer ${accessToken}`'), 'Delete-account request is not authenticated');
 }
 
+if (exists('src/app/user-profile.tsx')) {
+  const s = read('src/app/user-profile.tsx');
+  assert(s.includes("supabase.from('reports').insert"), 'In-app report submission is missing');
+  assert(s.includes("supabase.from('blocks').insert"), 'In-app block action is missing');
+  assert(s.includes("supabase.from('cheers').insert"), 'Cheers send action is missing');
+  assert(s.includes("supabase.rpc('is_blocked_between'" ) || s.includes("from('blocks')"), 'Profile safety flow no longer checks block state');
+  assert(s.includes("pathname: '/chat'"), 'Mutual Cheers no longer opens chat');
+}
+
+if (exists('src/app/chat.tsx')) {
+  const s = read('src/app/chat.tsx');
+  assert(s.includes("supabase.rpc('is_blocked_between'"), 'Chat no longer checks block state');
+  assert(s.includes(".update({ read_at: new Date().toISOString() })"), 'Chat read receipts are missing');
+  assert(s.includes("supabase.functions.invoke('send-message-notification'"), 'Chat push notification call is missing');
+  assert(s.includes("event: 'INSERT'"), 'Realtime message INSERT subscription is missing');
+  assert(s.includes("event: 'UPDATE'"), 'Realtime message UPDATE subscription is missing');
+  assert(s.includes("event: 'typing'"), 'Realtime typing indicator broadcast is missing');
+}
+
+if (exists('src/app/cheers.tsx')) {
+  const s = read('src/app/cheers.tsx');
+  assert(s.includes("status === 'Mutual Cheers'"), 'Mutual Cheers state is missing');
+  assert(s.includes("from('conversations')"), 'Cheers screen can no longer open/create chat conversations');
+  assert(s.includes("router.push('/premium')"), 'Received Cheers Premium reveal gate is missing');
+}
+
 if (exists('src/app/premium.android.tsx')) {
   const s = read('src/app/premium.android.tsx');
   assert(!s.includes('create-checkout-session'), 'Android Premium exposes Stripe checkout');
@@ -98,6 +128,7 @@ if (exists('src/lib/push-notifications.ts')) {
   assert(s.includes("Notifications.setNotificationChannelAsync('messages'"), 'Android message notification channel is missing');
   assert(s.includes('Notifications.requestPermissionsAsync()'), 'Push notification permission request is missing');
   assert(s.includes("supabase.functions.invoke('register-push-token'"), 'Push token registration backend call is missing');
+  assert(s.includes(".from('device_push_tokens')"), 'Push token logout cleanup is missing');
 }
 
 if (exists('src/app/_layout.tsx')) {
