@@ -1,10 +1,23 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+const PROD_ORIGIN = 'https://officialsipmate.com'
+const allowedOrigins = new Set([
+  PROD_ORIGIN,
+  'https://www.officialsipmate.com',
+  'http://localhost:8081',
+  'http://localhost:8082',
+  'http://localhost:19006',
+])
+
+function corsHeaders(req: Request) {
+  const origin = req.headers.get('origin')
+  const allowOrigin = origin && allowedOrigins.has(origin) ? origin : PROD_ORIGIN
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
 const MONTHLY_PRICE_ID = 'price_1UAAwKF9keqz65yeAB2gM6y1'
@@ -12,68 +25,50 @@ const FOUNDERS_YEARLY_PRICE_ID = 'price_1UAB3YF9keqz65yetpOin6EL'
 const EARLY_YEARLY_PRICE_ID = 'price_1UAYX3F9keqz65ye433hIOYb'
 const STANDARD_YEARLY_PRICE_ID = 'price_1UAYYNF9keqz65yeaT62ebxl'
 
-function jsonResponse(body: unknown, status = 200) {
+function jsonResponse(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'application/json',
-    },
+    headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
   })
 }
 
 function getCheckoutOrigin(req: Request) {
   const configuredOrigin = Deno.env.get('APP_WEB_URL')
-
   if (configuredOrigin) {
     try {
       const parsed = new URL(configuredOrigin)
-      if (parsed.protocol === 'https:' || parsed.hostname === 'localhost') {
+      if (parsed.protocol === 'https:' || parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
         return parsed.origin
       }
     } catch {
-      // Configuration error is handled below.
+      // Use the safe production origin below.
     }
   }
 
-  // Development-only fallback. Never trust an arbitrary remote Origin for
-  // payment return URLs because that could redirect a completed checkout to
-  // an attacker-controlled site.
   const requestOrigin = req.headers.get('origin')
-  if (requestOrigin) {
-    try {
-      const parsed = new URL(requestOrigin)
-      if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
-        return parsed.origin
-      }
-    } catch {
-      // Fall through to the configuration error below.
-    }
-  }
-
-  throw new Error('Checkout return URL is not configured')
+  if (requestOrigin && allowedOrigins.has(requestOrigin)) return new URL(requestOrigin).origin
+  return PROD_ORIGIN
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-
-  if (req.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405)
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) })
+  if (req.method !== 'POST') return jsonResponse(req, { error: 'Method not allowed' }, 405)
 
   try {
+    const originHeader = req.headers.get('origin')
+    if (originHeader && !allowedOrigins.has(originHeader)) {
+      return jsonResponse(req, { error: 'Origin not allowed' }, 403)
+    }
+
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return jsonResponse({ error: 'Not authenticated' }, 401)
+    if (!authHeader) return jsonResponse(req, { error: 'Not authenticated' }, 401)
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')
-
     if (!supabaseUrl || !supabaseAnonKey || !stripeSecretKey) {
       console.error('CHECKOUT FUNCTION CONFIGURATION ERROR')
-      return jsonResponse({ error: 'Premium checkout is temporarily unavailable.' }, 503)
+      return jsonResponse(req, { error: 'Premium checkout is temporarily unavailable.' }, 503)
     }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -81,14 +76,8 @@ Deno.serve(async (req) => {
       auth: { persistSession: false },
     })
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError || !user) {
-      return jsonResponse({ error: 'Invalid user session' }, 401)
-    }
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) return jsonResponse(req, { error: 'Invalid user session' }, 401)
 
     const { data: activeSubscription, error: subscriptionError } = await supabase
       .from('premium_subscriptions')
@@ -98,24 +87,13 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle()
 
-    if (subscriptionError) {
-      console.error('PREMIUM CHECK ERROR:', subscriptionError)
-      throw new Error('Could not verify Premium status')
-    }
-
+    if (subscriptionError) throw subscriptionError
     if (activeSubscription) {
-      return jsonResponse(
-        { error: 'You already have an active Premium subscription.' },
-        409
-      )
+      return jsonResponse(req, { error: 'You already have an active Premium subscription.' }, 409)
     }
 
     let body: { plan?: unknown }
-    try {
-      body = await req.json()
-    } catch {
-      return jsonResponse({ error: 'Invalid request body' }, 400)
-    }
+    try { body = await req.json() } catch { return jsonResponse(req, { error: 'Invalid request body' }, 400) }
 
     const plan = body.plan
     let priceId: string
@@ -125,31 +103,25 @@ Deno.serve(async (req) => {
     } else if (plan === 'yearly') {
       const { data: activeYearlyOffer, error: offerError } = await supabase
         .from('premium_offers')
-        .select('code')
+        .select('code,max_subscribers,subscriber_count')
         .eq('billing_period', 'yearly')
         .eq('is_active', true)
         .order('sort_order', { ascending: true })
         .limit(1)
         .maybeSingle()
 
-      if (offerError) {
-        console.error('ACTIVE OFFER ERROR:', offerError)
-        throw new Error('Could not load active yearly offer')
-      }
-
+      if (offerError) throw offerError
       if (!activeYearlyOffer) throw new Error('No active yearly Premium offer')
-
-      if (activeYearlyOffer.code === 'founders_yearly') {
-        priceId = FOUNDERS_YEARLY_PRICE_ID
-      } else if (activeYearlyOffer.code === 'early_yearly') {
-        priceId = EARLY_YEARLY_PRICE_ID
-      } else if (activeYearlyOffer.code === 'standard_yearly') {
-        priceId = STANDARD_YEARLY_PRICE_ID
-      } else {
-        throw new Error('Unknown yearly Premium offer')
+      if (activeYearlyOffer.max_subscribers != null && activeYearlyOffer.subscriber_count >= activeYearlyOffer.max_subscribers) {
+        return jsonResponse(req, { error: 'This Premium offer is sold out. Please refresh and choose the next available offer.' }, 409)
       }
+
+      if (activeYearlyOffer.code === 'founders_yearly') priceId = FOUNDERS_YEARLY_PRICE_ID
+      else if (activeYearlyOffer.code === 'early_yearly') priceId = EARLY_YEARLY_PRICE_ID
+      else if (activeYearlyOffer.code === 'standard_yearly') priceId = STANDARD_YEARLY_PRICE_ID
+      else throw new Error('Unknown yearly Premium offer')
     } else {
-      return jsonResponse({ error: 'Invalid Premium plan' }, 400)
+      return jsonResponse(req, { error: 'Invalid Premium plan' }, 400)
     }
 
     const origin = getCheckoutOrigin(req)
@@ -157,11 +129,10 @@ Deno.serve(async (req) => {
     formData.append('mode', 'subscription')
     formData.append('line_items[0][price]', priceId)
     formData.append('line_items[0][quantity]', '1')
-    formData.append('success_url', `${origin}/premium?checkout=success`)
-    formData.append('cancel_url', `${origin}/premium?checkout=cancelled`)
+    formData.append('success_url', `${origin}/premium.html?checkout=success`)
+    formData.append('cancel_url', `${origin}/premium.html?checkout=cancelled`)
     formData.append('client_reference_id', user.id)
     formData.append('subscription_data[metadata][supabase_user_id]', user.id)
-
     if (user.email) formData.append('customer_email', user.email)
 
     const stripeResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
@@ -174,19 +145,15 @@ Deno.serve(async (req) => {
     })
 
     const stripeData = await stripeResponse.json()
-
     if (!stripeResponse.ok) {
       console.error('STRIPE CHECKOUT ERROR', stripeResponse.status)
       throw new Error('Stripe Checkout failed')
     }
+    if (typeof stripeData?.url !== 'string') throw new Error('Stripe Checkout returned no URL')
 
-    if (typeof stripeData?.url !== 'string') {
-      throw new Error('Stripe Checkout returned no URL')
-    }
-
-    return jsonResponse({ url: stripeData.url })
+    return jsonResponse(req, { url: stripeData.url })
   } catch (error) {
     console.error('CHECKOUT ERROR:', error)
-    return jsonResponse({ error: 'Premium checkout failed. Please try again later.' }, 500)
+    return jsonResponse(req, { error: 'Premium checkout failed. Please try again later.' }, 500)
   }
 })
