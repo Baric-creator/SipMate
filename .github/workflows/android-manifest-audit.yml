@@ -1,0 +1,30 @@
+name: Android Manifest Audit
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  manifest-audit:
+    if: github.event.head_commit.message != 'Remove one-time Android manifest audit'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Prebuild Android project
+        run: npx expo prebuild --platform android --no-install --clean
+      - name: Print Android permissions
+        run: |
+          echo '--- android/app/src/main/AndroidManifest.xml ---'
+          cat android/app/src/main/AndroidManifest.xml
+          echo '--- uses-permission summary ---'
+          grep -Rho '<uses-permission[^>]*>' android/app/src/main/AndroidManifest.xml android/app/src/*/AndroidManifest.xml 2>/dev/null | sort -u || true
+          echo '--- package/application hints ---'
+          grep -R "package=\|applicationId\|namespace" android/app/src/main/AndroidManifest.xml android/app/build.gradle android/build.gradle 2>/dev/null || true
