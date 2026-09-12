@@ -27,3 +27,6 @@ jobs:
 
       - name: TypeScript and security checks
         run: npm run check
+
+      - name: Release readiness audit
+        run: npm run release:audit
