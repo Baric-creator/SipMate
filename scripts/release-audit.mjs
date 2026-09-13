@@ -24,6 +24,8 @@ for (const required of [
   'src/app/user-profile.tsx',
   'src/app/chat.tsx',
   'src/app/cheers.tsx',
+  'src/app/nearby.tsx',
+  'src/app/edit-profile.tsx',
   'src/app/premium.android.tsx',
   'src/lib/push-notifications.ts',
   'supabase/functions/admin-moderation/index.ts',
@@ -113,6 +115,8 @@ if (exists('src/app/chat.tsx')) {
   assert(s.includes("event: 'INSERT'"), 'Realtime message INSERT subscription is missing');
   assert(s.includes("event: 'UPDATE'"), 'Realtime message UPDATE subscription is missing');
   assert(s.includes("event: 'typing'"), 'Realtime typing indicator broadcast is missing');
+  assert(s.includes('maxLength={1000}'), 'Chat message length cap is missing');
+  assert(s.includes('useFocusEffect'), 'Chat block state is no longer refreshed on focus');
 }
 
 if (exists('src/app/cheers.tsx')) {
@@ -120,6 +124,20 @@ if (exists('src/app/cheers.tsx')) {
   assert(s.includes("status === 'Mutual Cheers'"), 'Mutual Cheers state is missing');
   assert(s.includes("from('conversations')"), 'Cheers screen can no longer open/create chat conversations');
   assert(s.includes("router.push('/premium')"), 'Received Cheers Premium reveal gate is missing');
+}
+
+if (exists('src/app/nearby.tsx')) {
+  const s = read('src/app/nearby.tsx');
+  assert(s.includes("supabase.rpc('get_nearby_profiles'"), 'Nearby no longer uses the privacy-safe server-side distance RPC');
+  assert(s.includes("supabase.rpc('get_my_profile_location'"), 'Nearby no longer uses the private own-location RPC');
+  assert(!/\.select\([^)]*latitude[^)]*longitude/i.test(s), 'Nearby directly selects precise profile coordinates');
+  assert(s.includes('distance_km'), 'Nearby no longer consumes server-calculated distance');
+}
+
+if (exists('src/app/edit-profile.tsx')) {
+  const s = read('src/app/edit-profile.tsx');
+  assert(s.includes("supabase.rpc('get_my_profile_location'"), 'Edit Profile no longer uses the private own-location RPC');
+  assert(!/from\('profiles'\)\.select\([^)]*latitude[^)]*longitude/i.test(s), 'Edit Profile directly selects coordinate columns from profiles');
 }
 
 if (exists('src/app/premium.android.tsx')) {

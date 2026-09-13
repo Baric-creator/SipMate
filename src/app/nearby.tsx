@@ -227,7 +227,7 @@ export default function NearbyScreen() {
         error: myError,
       } = await supabase
         .from('profiles')
-        .select('id, city, latitude, longitude, is_premium, premium_until')
+        .select('id, city, is_premium, premium_until')
         .eq('id', user.id)
         .single();
 
@@ -238,6 +238,13 @@ export default function NearbyScreen() {
         );
         return;
       }
+
+      const { data: locationRows, error: locationError } = await supabase.rpc('get_my_profile_location');
+      if (locationError) {
+        console.log('MY LOCATION LOAD ERROR:', locationError.message);
+        return;
+      }
+      const ownLocation = Array.isArray(locationRows) ? locationRows[0] : locationRows;
 
       const premiumActive =
         myProfile.is_premium === true &&
@@ -254,8 +261,8 @@ export default function NearbyScreen() {
       );
 
       if (
-        myProfile.latitude == null ||
-        myProfile.longitude == null
+        ownLocation?.latitude == null ||
+        ownLocation?.longitude == null
       ) {
         console.log(
           'MY LOCATION NOT SET'

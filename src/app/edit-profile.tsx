@@ -85,13 +85,22 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const { data, error } = await supabase.from('profiles').select('id, name, age, bio, city, latitude, longitude, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, share_cheers_discord').eq('id', session.user.id).single();
+      const { data, error } = await supabase.from('profiles').select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, share_cheers_discord').eq('id', session.user.id).single();
       if (error) {
         console.log('EDIT PROFILE LOAD ERROR:', error.message);
         return;
       }
 
-      const loadedProfile = data as Profile;
+      const { data: locationRows, error: locationError } = await supabase.rpc('get_my_profile_location');
+      if (locationError) {
+        console.log('EDIT PROFILE LOCATION LOAD ERROR:', locationError.message);
+      }
+      const ownLocation = Array.isArray(locationRows) ? locationRows[0] : locationRows;
+      const loadedProfile = {
+        ...data,
+        latitude: ownLocation?.latitude ?? null,
+        longitude: ownLocation?.longitude ?? null,
+      } as Profile;
       setProfile(loadedProfile);
       setName(loadedProfile.name ?? '');
       setAge(loadedProfile.age ? String(loadedProfile.age) : '');
