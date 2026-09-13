@@ -1,0 +1,50 @@
+name: Patch Auth Input Polish
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Polish auth input metadata and limits'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Polish auth inputs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('src/app/login.tsx')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("""            autoCorrect={false}\n            style={styles.input}\n""", """            autoCorrect={false}\n            autoComplete=\"email\"\n            textContentType=\"emailAddress\"\n            maxLength={254}\n            style={styles.input}\n""", 1)
+          s=s.replace("""            secureTextEntry\n            autoCapitalize=\"none\"\n            style={styles.input}\n""", """            secureTextEntry\n            autoCapitalize=\"none\"\n            autoCorrect={false}\n            autoComplete=\"current-password\"\n            textContentType=\"password\"\n            maxLength={128}\n            style={styles.input}\n""", 1)
+          p.write_text(s,encoding='utf-8',newline='\n')
+
+          p=Path('src/app/forgot-password.tsx')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("""          autoCorrect={false}\n          style={styles.input}\n""", """          autoCorrect={false}\n          autoComplete=\"email\"\n          textContentType=\"emailAddress\"\n          maxLength={254}\n          style={styles.input}\n""", 1)
+          p.write_text(s,encoding='utf-8',newline='\n')
+
+          p=Path('src/app/reset-password.tsx')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("""          secureTextEntry\n          autoCapitalize=\"none\"\n          style={styles.input}\n          editable={!linkError}\n""", """          secureTextEntry\n          autoCapitalize=\"none\"\n          autoCorrect={false}\n          autoComplete=\"new-password\"\n          textContentType=\"newPassword\"\n          maxLength={128}\n          style={styles.input}\n          editable={!linkError}\n""", 1)
+          s=s.replace("""          secureTextEntry\n          autoCapitalize=\"none\"\n          style={styles.input}\n          editable={!linkError}\n""", """          secureTextEntry\n          autoCapitalize=\"none\"\n          autoCorrect={false}\n          autoComplete=\"new-password\"\n          textContentType=\"newPassword\"\n          maxLength={128}\n          style={styles.input}\n          editable={!linkError}\n""", 1)
+          p.write_text(s,encoding='utf-8',newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/login.tsx src/app/forgot-password.tsx src/app/reset-password.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Polish auth input metadata and limits'
+          git push origin master
