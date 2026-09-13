@@ -113,7 +113,7 @@ export default function ChatsScreen() {
       const { data: conversations, error: conversationError } =
         await supabase
           .from('conversations')
-          .select('*')
+          .select('id, user_one, user_two, created_at')
           .or(`user_one.eq.${myId},user_two.eq.${myId}`)
           .order('created_at', { ascending: false });
 
@@ -168,7 +168,7 @@ export default function ChatsScreen() {
 
         const { count: unreadCount, error: unreadError } = await supabase
           .from('messages')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('conversation_id', conversation.id)
           .neq('sender_id', myId)
           .is('read_at', null);

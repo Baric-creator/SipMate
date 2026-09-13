@@ -83,7 +83,7 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      const { data, error } = await supabase.from('profiles').select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, share_cheers_discord').eq('id', session.user.id).single();
       if (error) {
         console.log('EDIT PROFILE LOAD ERROR:', error.message);
         return;
