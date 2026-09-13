@@ -280,11 +280,11 @@ export default function NearbyScreen() {
       } = await supabase.rpc('get_nearby_profiles', {
         max_distance_km: maxDistance,
         custom_origin_latitude:
-          isPremium && customLatitude !== null
+          premiumActive && customLatitude !== null
             ? customLatitude
             : null,
         custom_origin_longitude:
-          isPremium && customLongitude !== null
+          premiumActive && customLongitude !== null
             ? customLongitude
             : null,
       });
@@ -328,7 +328,7 @@ export default function NearbyScreen() {
           )
           .filter((p) => {
             if (
-              !isPremium ||
+              !premiumActive ||
               ageFilter === 'All'
             ) {
               return true;
@@ -346,7 +346,7 @@ export default function NearbyScreen() {
           })
           .filter((p) => {
             if (
-              !isPremium ||
+              !premiumActive ||
               genderFilter === 'All'
             ) {
               return true;
