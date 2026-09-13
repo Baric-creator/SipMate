@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
@@ -96,6 +96,21 @@ export default function ChatScreen() {
     }
     checkBlockStatus();
   }, [id, myUserId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!id || !myUserId) return;
+      let active = true;
+      supabase.rpc('is_blocked_between', { user_a: myUserId, user_b: String(id) }).then(({ data, error }) => {
+        if (error) {
+          console.log('BLOCK STATUS REFRESH ERROR:', error.message);
+          return;
+        }
+        if (active) setIsBlocked(Boolean(data));
+      });
+      return () => { active = false; };
+    }, [id, myUserId])
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -300,6 +315,7 @@ export default function ChatScreen() {
             }}
             placeholder={text.placeholder}
             placeholderTextColor="#71717A"
+            maxLength={1000}
             onSubmitEditing={sendMessage}
             returnKeyType="send"
           />
