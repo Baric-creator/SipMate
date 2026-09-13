@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
@@ -70,9 +70,11 @@ export default function ChatsScreen() {
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadChats();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      void loadChats();
+    }, [language])
+  );
 
   useEffect(() => {
     const channel = supabase
@@ -81,6 +83,17 @@ export default function ChatsScreen() {
         'postgres_changes',
         {
           event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        () => {
+          loadChats();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
           schema: 'public',
           table: 'messages',
         },
