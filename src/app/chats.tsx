@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
@@ -69,10 +69,11 @@ export default function ChatsScreen() {
 
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasLoadedChatsRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      void loadChats();
+      void loadChats(hasLoadedChatsRef.current);
     }, [language])
   );
 
@@ -87,7 +88,7 @@ export default function ChatsScreen() {
           table: 'messages',
         },
         () => {
-          loadChats();
+          void loadChats(true);
         }
       )
       .on(
@@ -98,7 +99,7 @@ export default function ChatsScreen() {
           table: 'messages',
         },
         () => {
-          loadChats();
+          void loadChats(true);
         }
       )
       .subscribe();
@@ -108,9 +109,9 @@ export default function ChatsScreen() {
     };
   }, []);
 
-  async function loadChats() {
+  async function loadChats(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const {
         data: { session },
@@ -215,7 +216,8 @@ export default function ChatsScreen() {
 
       setChats(items);
     } finally {
-      setLoading(false);
+      hasLoadedChatsRef.current = true;
+      if (!silent) setLoading(false);
     }
   }
 
@@ -332,7 +334,7 @@ export default function ChatsScreen() {
           ))
         )}
 
-        <Pressable style={styles.refreshButton} onPress={loadChats}>
+        <Pressable style={styles.refreshButton} onPress={() => void loadChats(false)}>
           <Text style={styles.refreshText}>↻ {text.refresh}</Text>
         </Pressable>
       </ScrollView>

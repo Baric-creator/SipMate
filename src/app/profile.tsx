@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, Image, Linking, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -34,26 +34,27 @@ const copy = {
 export default function UserProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasLoadedProfileRef = useRef(false);
   const { t, i18n } = useTranslation();
   const language = i18n.language?.split('-')[0] as keyof typeof copy;
   const text = copy[language] ?? copy.en;
 
   useFocusEffect(
     useCallback(() => {
-      loadUserProfile();
+      void loadUserProfile(hasLoadedProfileRef.current);
     }, [])
   );
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') loadUserProfile();
+      if (state === 'active') void loadUserProfile(true);
     });
     return () => subscription.remove();
   }, []);
 
-  async function loadUserProfile() {
+  async function loadUserProfile(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         setProfile(null);
@@ -96,7 +97,10 @@ export default function UserProfileScreen() {
       }
 
       setProfile(data as UserProfile);
-    } finally { setLoading(false); }
+    } finally {
+      hasLoadedProfileRef.current = true;
+      if (!silent) setLoading(false);
+    }
   }
 
   async function handleConnectDiscord() {
@@ -138,7 +142,7 @@ export default function UserProfileScreen() {
         return;
       }
 
-      await loadUserProfile();
+      await loadUserProfile(true);
       showAlert(text.discordDisconnected);
     } catch (error) {
       console.log('DISCORD DISCONNECT ERROR:', error);
