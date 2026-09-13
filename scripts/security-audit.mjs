@@ -151,10 +151,20 @@ if (exists('supabase/config.toml')) {
   assert(unreviewedManualAuthFunctions.length === 0, `Unreviewed verify_jwt=false function(s): ${unreviewedManualAuthFunctions.join(', ')}`);
 }
 
+// Browser dialogs are permitted only inside the reviewed cross-platform notification wrapper.
+assert(exists('src/lib/notify.ts'), 'Cross-platform notification wrapper is missing');
+if (exists('src/lib/notify.ts')) {
+  const notify = read('src/lib/notify.ts');
+  assert(notify.includes("Platform.OS === 'web'"), 'notify.ts browser dialogs are no longer platform-guarded');
+  assert(notify.includes('Alert.alert('), 'notify.ts no longer provides the React Native Alert fallback');
+}
+
 for (const file of clientFiles) {
   const relative = path.relative(root, file).replaceAll('\\', '/');
   const content = fs.readFileSync(file, 'utf8');
-  if (/\bwindow\.(?:alert|confirm)\s*\(/.test(content)) warn(`Browser-only alert/confirm still used in ${relative}`);
+  if (relative !== 'src/lib/notify.ts' && /\bwindow\.(?:alert|confirm)\s*\(/.test(content)) {
+    warn(`Browser-only alert/confirm used outside the reviewed wrapper in ${relative}`);
+  }
   if (/\.select\(\s*['"]\*['"]\s*\)/.test(content)) warn(`Broad select('*') found in ${relative}; confirm every returned column is intended for the client`);
 }
 
