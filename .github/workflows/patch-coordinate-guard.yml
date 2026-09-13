@@ -20,17 +20,7 @@ jobs:
           p=Path('scripts/security-audit.mjs')
           s=p.read_text(encoding='utf-8')
           anchor="\nconsole.log(`Security audit checked ${textFiles.length} repository text files.`);"
-          guard="""
-
-// Precise profile coordinates must stay behind authenticated, privacy-safe RPCs.
-for (const file of clientFiles) {
-  const relative = path.relative(root, file).replaceAll('\\\\', '/');
-  const content = fs.readFileSync(file, 'utf8');
-  if (/from\\(\\s*['\"]profiles['\"]\\s*\\)[\\s\\S]{0,260}?\\.select\\([^)]*\\b(?:latitude|longitude)\\b/i.test(content)) {
-    fail(`Client directly selects precise profile coordinates in ${relative}; use privacy-safe RPCs instead`);
-  }
-}
-"""
+          guard="\n// Precise profile coordinates must stay behind authenticated, privacy-safe RPCs.\nfor (const file of clientFiles) {\n  const relative = path.relative(root, file).replaceAll('\\\\', '/');\n  const content = fs.readFileSync(file, 'utf8');\n  if (/from\\(\\s*['\\\"]profiles['\\\"]\\s*\\)[\\s\\S]{0,260}?\\.select\\([^)]*\\b(?:latitude|longitude)\\b/i.test(content)) {\n    fail(`Client directly selects precise profile coordinates in ${relative}; use privacy-safe RPCs instead`);\n  }\n}\n"
           if anchor not in s:
               raise SystemExit('security audit footer anchor not found')
           if 'Client directly selects precise profile coordinates' not in s:
