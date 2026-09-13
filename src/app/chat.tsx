@@ -132,6 +132,16 @@ export default function ChatScreen() {
   }, [conversationId]);
 
   useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      void sendTypingStatus(false);
+    };
+  }, [conversationId, myUserId]);
+
+  useEffect(() => {
     if (!conversationId) return;
     const channel = supabase.channel(`chat-${conversationId}`)
       .on('postgres_changes', {
@@ -174,7 +184,7 @@ export default function ChatScreen() {
 
   async function sendMessage() {
     const content = messageText.trim();
-    if (!content || !conversationId || sendingMessage) return;
+    if (!content || !conversationId || sendingMessage || isBlocked) return;
 
     try {
       setSendingMessage(true);
@@ -316,9 +326,17 @@ export default function ChatScreen() {
             onFocus={() => setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 120)}
             onChangeText={(value) => {
               setMessageText(value);
-              sendTypingStatus(true);
               if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-              typingTimeoutRef.current = setTimeout(() => sendTypingStatus(false), 1200);
+              if (!value.trim()) {
+                void sendTypingStatus(false);
+                typingTimeoutRef.current = null;
+                return;
+              }
+              void sendTypingStatus(true);
+              typingTimeoutRef.current = setTimeout(() => {
+                void sendTypingStatus(false);
+                typingTimeoutRef.current = null;
+              }, 1200);
             }}
             placeholder={text.placeholder}
             placeholderTextColor="#71717A"
