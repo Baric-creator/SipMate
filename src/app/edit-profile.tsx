@@ -304,7 +304,10 @@ export default function EditProfileScreen() {
 
   async function handleAddGalleryPhoto() {
     if (!profile?.id) return;
-    if (!profile.is_premium) {
+    const premiumActive =
+      profile.is_premium === true &&
+      (!profile.premium_until || new Date(profile.premium_until) > new Date());
+    if (!premiumActive) {
       router.push('/premium');
       return;
     }
@@ -318,6 +321,10 @@ export default function EditProfileScreen() {
       if (result.canceled) return;
       const asset = result.assets[0];
       const response = await fetch(asset.uri);
+      if (!response.ok) {
+        showAlert(t('editProfileScreen.imageReadError'));
+        return;
+      }
       const blob = await response.blob();
       const extension = asset.fileName?.split('.').pop() || 'jpg';
       const filePath = `${profile.id}/gallery-${Date.now()}.${extension}`;
@@ -405,9 +412,17 @@ export default function EditProfileScreen() {
                 ))}
               </View>
             )}
-            <TouchableOpacity style={[styles.addPhotoButton, !profile?.is_premium && styles.addPhotoButtonLocked]} onPress={handleAddGalleryPhoto}>
+            <TouchableOpacity
+              style={[
+                styles.addPhotoButton,
+                !(profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date())) && styles.addPhotoButtonLocked,
+              ]}
+              onPress={handleAddGalleryPhoto}
+            >
               <Text style={styles.addPhotoButtonText}>
-                {profile?.is_premium ? `＋ ${t('editProfileScreen.addPhoto')}` : `🔒 ${t('editProfileScreen.addMorePhotos')}`}
+                {profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date())
+                  ? `＋ ${t('editProfileScreen.addPhoto')}`
+                  : `🔒 ${t('editProfileScreen.addMorePhotos')}`}
               </Text>
             </TouchableOpacity>
           </View>
@@ -420,9 +435,9 @@ export default function EditProfileScreen() {
         <View style={styles.formCard}>
           <Text style={styles.sectionTitle}>{t('editProfileScreen.profileDetails')}</Text>
           <Text style={styles.label}>{t('editProfileScreen.name')}</Text>
-          <TextInput value={name} onChangeText={setName} placeholder={t('editProfileScreen.namePlaceholder')} placeholderTextColor="#52525B" style={styles.input} />
+          <TextInput value={name} onChangeText={setName} maxLength={50} placeholder={t('editProfileScreen.namePlaceholder')} placeholderTextColor="#52525B" style={styles.input} />
           <Text style={styles.label}>{t('editProfileScreen.age')}</Text>
-          <TextInput value={age} onChangeText={setAge} placeholder={t('editProfileScreen.agePlaceholder')} placeholderTextColor="#52525B" keyboardType="numeric" style={styles.input} />
+          <TextInput value={age} onChangeText={(value) => setAge(value.replace(/\D/g, '').slice(0, 3))} maxLength={3} placeholder={t('editProfileScreen.agePlaceholder')} placeholderTextColor="#52525B" keyboardType="numeric" style={styles.input} />
           <Text style={styles.label}>{t('editProfileScreen.gender')}</Text>
           <View style={styles.genderRow}>
             {genders.map((item) => (
@@ -432,9 +447,9 @@ export default function EditProfileScreen() {
             ))}
           </View>
           <Text style={styles.label}>{t('editProfileScreen.city')}</Text>
-          <TextInput value={city} onChangeText={setCity} placeholder={t('editProfileScreen.cityPlaceholder')} placeholderTextColor="#52525B" style={styles.input} />
+          <TextInput value={city} onChangeText={setCity} maxLength={80} placeholder={t('editProfileScreen.cityPlaceholder')} placeholderTextColor="#52525B" style={styles.input} />
           <Text style={styles.label}>{t('editProfileScreen.aboutMe')}</Text>
-          <TextInput value={bio} onChangeText={setBio} placeholder={t('editProfileScreen.bioPlaceholder')} placeholderTextColor="#52525B" multiline style={[styles.input, styles.bioInput]} />
+          <TextInput value={bio} onChangeText={setBio} maxLength={300} placeholder={t('editProfileScreen.bioPlaceholder')} placeholderTextColor="#52525B" multiline style={[styles.input, styles.bioInput]} />
         </View>
 
         <View style={styles.formCard}>
