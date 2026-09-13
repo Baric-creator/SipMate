@@ -145,11 +145,11 @@ export default function ChatsScreen() {
         return;
       }
 
-      const otherUserIds = conversations.map((conversation) =>
+      const otherUserIds = Array.from(new Set(conversations.map((conversation) =>
         conversation.user_one === myId
           ? conversation.user_two
           : conversation.user_one
-      );
+      )));
 
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
@@ -161,9 +161,7 @@ export default function ChatsScreen() {
         return;
       }
 
-      const items: ChatItem[] = [];
-
-      for (const conversation of conversations) {
+      const items = await Promise.all(conversations.map(async (conversation): Promise<ChatItem> => {
         const otherUserId =
           conversation.user_one === myId
             ? conversation.user_two
@@ -173,37 +171,41 @@ export default function ChatsScreen() {
           (profile) => profile.id === otherUserId
         );
 
-        const { data: lastMessage } = await supabase
-          .from('messages')
-          .select('content, created_at')
-          .eq('conversation_id', conversation.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const [lastMessageResult, unreadResult] = await Promise.all([
+          supabase
+            .from('messages')
+            .select('content, created_at')
+            .eq('conversation_id', conversation.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from('messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('conversation_id', conversation.id)
+            .neq('sender_id', myId)
+            .is('read_at', null),
+        ]);
 
-        const { count: unreadCount, error: unreadError } = await supabase
-          .from('messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('conversation_id', conversation.id)
-          .neq('sender_id', myId)
-          .is('read_at', null);
-
-        if (unreadError) {
-          console.log('UNREAD COUNT ERROR:', unreadError.message);
+        if (lastMessageResult.error) {
+          console.log('LAST MESSAGE ERROR:', lastMessageResult.error.message);
+        }
+        if (unreadResult.error) {
+          console.log('UNREAD COUNT ERROR:', unreadResult.error.message);
         }
 
-        items.push({
-          unreadCount: unreadCount ?? 0,
+        return {
+          unreadCount: unreadResult.count ?? 0,
           conversationId: conversation.id,
           userId: otherUserId,
           name: otherProfile?.name ?? text.userFallback,
           age: otherProfile?.age ?? null,
           isActive: isProfileOnline(otherProfile ?? {}),
-          lastMessage: lastMessage?.content ?? text.noMessages,
-          lastMessageTime: lastMessage?.created_at ?? null,
+          lastMessage: lastMessageResult.data?.content ?? text.noMessages,
+          lastMessageTime: lastMessageResult.data?.created_at ?? null,
           avatar_url: otherProfile?.avatar_url ?? null,
-        });
-      }
+        };
+      }));
 
       items.sort((a, b) => {
         const aTime = a.lastMessageTime
