@@ -1,0 +1,102 @@
+name: Patch Chat List Parallel Load
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Parallelize chat list message lookups'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parallelize chat list message lookups
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/app/chats.tsx')
+          s = p.read_text(encoding='utf-8')
+
+          old = """      const otherUserIds = conversations.map((conversation) =>
+        conversation.user_one === myId
+          ? conversation.user_two
+          : conversation.user_one
+      );
+"""
+          new = """      const otherUserIds = Array.from(new Set(conversations.map((conversation) =>
+        conversation.user_one === myId
+          ? conversation.user_two
+          : conversation.user_one
+      )));
+"""
+          if old not in s:
+              raise SystemExit('otherUserIds anchor not found')
+          s = s.replace(old, new, 1)
+
+          start = s.index("      const items: ChatItem[] = [];\n")
+          end = s.index("\n      items.sort((a, b) => {", start)
+          replacement = """      const items = await Promise.all(conversations.map(async (conversation): Promise<ChatItem> => {
+        const otherUserId =
+          conversation.user_one === myId
+            ? conversation.user_two
+            : conversation.user_one;
+
+        const otherProfile = profiles?.find(
+          (profile) => profile.id === otherUserId
+        );
+
+        const [lastMessageResult, unreadResult] = await Promise.all([
+          supabase
+            .from('messages')
+            .select('content, created_at')
+            .eq('conversation_id', conversation.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from('messages')
+            .select('id', { count: 'exact', head: true })
+            .eq('conversation_id', conversation.id)
+            .neq('sender_id', myId)
+            .is('read_at', null),
+        ]);
+
+        if (lastMessageResult.error) {
+          console.log('LAST MESSAGE ERROR:', lastMessageResult.error.message);
+        }
+        if (unreadResult.error) {
+          console.log('UNREAD COUNT ERROR:', unreadResult.error.message);
+        }
+
+        return {
+          unreadCount: unreadResult.count ?? 0,
+          conversationId: conversation.id,
+          userId: otherUserId,
+          name: otherProfile?.name ?? text.userFallback,
+          age: otherProfile?.age ?? null,
+          isActive: isProfileOnline(otherProfile ?? {}),
+          lastMessage: lastMessageResult.data?.content ?? text.noMessages,
+          lastMessageTime: lastMessageResult.data?.created_at ?? null,
+          avatar_url: otherProfile?.avatar_url ?? null,
+        };
+      }));
+"""
+          s = s[:start] + replacement + s[end:]
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/chats.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Parallelize chat list message lookups'
+          git push origin master
