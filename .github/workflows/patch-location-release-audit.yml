@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Move own location read behind RPC and add release guards
+      - name: Move location reads behind RPC and add release guards
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -26,6 +26,16 @@ jobs:
               raise SystemExit('edit-profile location select anchor not found')
           s=s.replace(old,new,1)
           p.write_text(s,encoding='utf-8',newline='\n')
+
+          n=Path('src/app/nearby.tsx')
+          ns=n.read_text(encoding='utf-8')
+          old_nearby="""      const {\n        data: myProfile,\n        error: myError,\n      } = await supabase\n        .from('profiles')\n        .select('id, city, latitude, longitude, is_premium, premium_until')\n        .eq('id', user.id)\n        .single();\n\n      if (myError) {\n        console.log(\n          'MY PROFILE ERROR:',\n          myError.message\n        );\n        return;\n      }\n"""
+          new_nearby="""      const {\n        data: myProfile,\n        error: myError,\n      } = await supabase\n        .from('profiles')\n        .select('id, city, is_premium, premium_until')\n        .eq('id', user.id)\n        .single();\n\n      if (myError) {\n        console.log(\n          'MY PROFILE ERROR:',\n          myError.message\n        );\n        return;\n      }\n\n      const { data: locationRows, error: locationError } = await supabase.rpc('get_my_profile_location');\n      if (locationError) {\n        console.log('MY LOCATION LOAD ERROR:', locationError.message);\n        return;\n      }\n      const ownLocation = Array.isArray(locationRows) ? locationRows[0] : locationRows;\n"""
+          if old_nearby not in ns:
+              raise SystemExit('Nearby own-location select anchor not found')
+          ns=ns.replace(old_nearby,new_nearby,1)
+          ns=ns.replace("""        myProfile.latitude == null ||\n        myProfile.longitude == null\n""", """        ownLocation?.latitude == null ||\n        ownLocation?.longitude == null\n""", 1)
+          n.write_text(ns,encoding='utf-8',newline='\n')
 
           a=Path('scripts/release-audit.mjs')
           r=a.read_text(encoding='utf-8')
@@ -40,7 +50,7 @@ jobs:
           r=r.replace(chat_anchor,chat_new,1)
 
           cheers_anchor="""if (exists('src/app/cheers.tsx')) {\n  const s = read('src/app/cheers.tsx');\n  assert(s.includes(\"status === 'Mutual Cheers'\"), 'Mutual Cheers state is missing');\n  assert(s.includes(\"from('conversations')\"), 'Cheers screen can no longer open/create chat conversations');\n  assert(s.includes(\"router.push('/premium')\"), 'Received Cheers Premium reveal gate is missing');\n}\n"""
-          privacy_block=cheers_anchor+"""\nif (exists('src/app/nearby.tsx')) {\n  const s = read('src/app/nearby.tsx');\n  assert(s.includes(\"supabase.rpc('get_nearby_profiles'\"), 'Nearby no longer uses the privacy-safe server-side distance RPC');\n  assert(!/\\.select\\([^)]*latitude[^)]*longitude/i.test(s), 'Nearby directly selects precise profile coordinates');\n  assert(s.includes('distance_km'), 'Nearby no longer consumes server-calculated distance');\n}\n\nif (exists('src/app/edit-profile.tsx')) {\n  const s = read('src/app/edit-profile.tsx');\n  assert(s.includes(\"supabase.rpc('get_my_profile_location'\"), 'Edit Profile no longer uses the private own-location RPC');\n  assert(!/from\\('profiles'\\)\\.select\\([^)]*latitude[^)]*longitude/i.test(s), 'Edit Profile directly selects coordinate columns from profiles');\n}\n"""
+          privacy_block=cheers_anchor+"""\nif (exists('src/app/nearby.tsx')) {\n  const s = read('src/app/nearby.tsx');\n  assert(s.includes(\"supabase.rpc('get_nearby_profiles'\"), 'Nearby no longer uses the privacy-safe server-side distance RPC');\n  assert(s.includes(\"supabase.rpc('get_my_profile_location'\"), 'Nearby no longer uses the private own-location RPC');\n  assert(!/\\.select\\([^)]*latitude[^)]*longitude/i.test(s), 'Nearby directly selects precise profile coordinates');\n  assert(s.includes('distance_km'), 'Nearby no longer consumes server-calculated distance');\n}\n\nif (exists('src/app/edit-profile.tsx')) {\n  const s = read('src/app/edit-profile.tsx');\n  assert(s.includes(\"supabase.rpc('get_my_profile_location'\"), 'Edit Profile no longer uses the private own-location RPC');\n  assert(!/from\\('profiles'\\)\\.select\\([^)]*latitude[^)]*longitude/i.test(s), 'Edit Profile directly selects coordinate columns from profiles');\n}\n"""
           if cheers_anchor not in r:
               raise SystemExit('Cheers audit anchor not found')
           r=r.replace(cheers_anchor,privacy_block,1)
@@ -55,7 +65,7 @@ jobs:
         run: |
           git config user.name 'Baric-creator'
           git config user.email 'baric5555baric@gmail.com'
-          git add src/app/edit-profile.tsx scripts/release-audit.mjs
+          git add src/app/edit-profile.tsx src/app/nearby.tsx scripts/release-audit.mjs
           git diff --cached --quiet && exit 0
           git commit -m 'Finish location privacy release hardening'
           git push origin master
