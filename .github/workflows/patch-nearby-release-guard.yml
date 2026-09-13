@@ -1,0 +1,41 @@
+name: Patch Nearby Release Guard
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Guard Nearby Premium entitlement timing'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard Nearby entitlement timing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/release-audit.mjs')
+          s=p.read_text(encoding='utf-8')
+          anchor="""  assert(s.includes('distance_km'), 'Nearby no longer consumes server-calculated distance');\n}"""
+          replacement="""  assert(s.includes('distance_km'), 'Nearby no longer consumes server-calculated distance');\n  assert(s.includes('premiumActive && customLatitude !== null'), 'Nearby custom location uses stale Premium state instead of current entitlement');\n  assert(s.includes('premiumActive && customLongitude !== null'), 'Nearby custom longitude uses stale Premium state instead of current entitlement');\n  assert(!s.includes('isPremium && customLatitude !== null'), 'Nearby custom location still depends on stale React Premium state');\n  assert(!s.includes('isPremium && customLongitude !== null'), 'Nearby custom longitude still depends on stale React Premium state');\n}"""
+          if anchor not in s:
+              raise SystemExit('Nearby release audit anchor not found')
+          s=s.replace(anchor,replacement,1)
+          p.write_text(s,encoding='utf-8',newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add scripts/release-audit.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Guard Nearby Premium entitlement timing'
+          git push origin master
