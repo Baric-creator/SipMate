@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -31,8 +31,26 @@ export default function CheersScreen() {
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
 
+  useFocusEffect(
+    useCallback(() => {
+      void loadCheers();
+    }, [t])
+  );
+
   useEffect(() => {
-    loadCheers();
+    const channel = supabase
+      .channel('cheers-screen-updates')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {
+        void loadCheers();
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {
+        void loadCheers();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   async function loadCheers() {
