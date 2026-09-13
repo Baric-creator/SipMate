@@ -270,15 +270,17 @@ export default function NearbyScreen() {
       const {
         data: profiles,
         error,
-      } = await supabase
-        .from('profiles')
-        .select('id, name, age, city, latitude, longitude, avatar_url, currently_up_for, is_active, last_seen_at, gender')
-        .neq('id', user.id);
-
-      console.log(
-        'NEARBY PROFILES:',
-        profiles
-      );
+      } = await supabase.rpc('get_nearby_profiles', {
+        max_distance_km: maxDistance,
+        custom_origin_latitude:
+          isPremium && customLatitude !== null
+            ? customLatitude
+            : null,
+        custom_origin_longitude:
+          isPremium && customLongitude !== null
+            ? customLongitude
+            : null,
+      });
 
       if (error) {
         console.log(
@@ -288,100 +290,28 @@ export default function NearbyScreen() {
         return;
       }
 
-      const {
-        data: blocks,
-        error: blocksError,
-      } = await supabase
-        .from('blocks')
-        .select(
-          'blocker_id, blocked_id'
-        )
-        .or(
-          `blocker_id.eq.${user.id},blocked_id.eq.${user.id}`
-        );
+      type NearbyRpcProfile = {
+        id: string;
+        name: string | null;
+        age: number | null;
+        city: string | null;
+        avatar_url: string | null;
+        currently_up_for: string | null;
+        is_active: boolean;
+        gender: string | null;
+        distance_km: number | null;
+      };
 
-      if (blocksError) {
-        console.log(
-          'BLOCKS LOAD ERROR:',
-          blocksError.message
-        );
-      }
-
-      const blockedUserIds =
-        new Set(
-          (blocks ?? []).map(
-            (block) =>
-              block.blocker_id ===
-              user.id
-                ? block.blocked_id
-                : block.blocker_id
-          )
-        );
-
-      const {
-        data: skippedData,
-        error: skippedError,
-      } = await supabase
-        .from('skipped_profiles')
-        .select('skipped_user_id')
-        .eq('user_id', user.id);
-
-      if (skippedError) {
-        console.log(
-          'SKIPPED PROFILES ERROR:',
-          skippedError.message
-        );
-      }
-
-      const skippedUserIds =
-        new Set(
-          (skippedData ?? []).map(
-            (item) =>
-              item.skipped_user_id
-          )
-        );
-
-      const originLatitude =
-        isPremium &&
-        customLatitude !== null
-          ? customLatitude
-          : myProfile.latitude;
-
-      const originLongitude =
-        isPremium &&
-        customLongitude !== null
-          ? customLongitude
-          : myProfile.longitude;
-
+      const rpcProfiles = (profiles ?? []) as NearbyRpcProfile[];
       const profilesWithDistance =
-        (profiles ?? [])
-          .filter(
-            (p) =>
-              !blockedUserIds.has(
-                p.id
-              ) &&
-              !skippedUserIds.has(
-                p.id
-              ) &&
-              isProfileOnline(p) &&
-              p.latitude != null &&
-              p.longitude != null
-          )
+        rpcProfiles
           .map((p) => ({
             ...p,
             distance:
-              calculateDistance(
-                originLatitude,
-                originLongitude,
-                p.latitude,
-                p.longitude
-              ),
+              typeof p.distance_km === 'number'
+                ? p.distance_km
+                : Number(p.distance_km ?? 0),
           }))
-          .filter(
-            (p) =>
-              p.distance <=
-              maxDistance
-          )
           .filter(
             (p) =>
               drinkFilter ===
@@ -401,60 +331,22 @@ export default function NearbyScreen() {
               return false;
             }
 
-            if (
-              ageFilter === '18-25'
-            ) {
-              return (
-                p.age >= 18 &&
-                p.age <= 25
-              );
-            }
-
-            if (
-              ageFilter === '26-35'
-            ) {
-              return (
-                p.age >= 26 &&
-                p.age <= 35
-              );
-            }
-
-            if (
-              ageFilter === '36-45'
-            ) {
-              return (
-                p.age >= 36 &&
-                p.age <= 45
-              );
-            }
-
-            if (
-              ageFilter === '46+'
-            ) {
-              return p.age >= 46;
-            }
-
+            if (ageFilter === '18-25') return p.age >= 18 && p.age <= 25;
+            if (ageFilter === '26-35') return p.age >= 26 && p.age <= 35;
+            if (ageFilter === '36-45') return p.age >= 36 && p.age <= 45;
+            if (ageFilter === '46+') return p.age >= 46;
             return true;
           })
           .filter((p) => {
             if (
               !isPremium ||
-              genderFilter ===
-                'All'
+              genderFilter === 'All'
             ) {
               return true;
             }
-
-            return (
-              p.gender ===
-              genderFilter
-            );
+            return p.gender === genderFilter;
           })
-          .sort(
-            (a, b) =>
-              a.distance -
-              b.distance
-          );
+          .sort((a, b) => a.distance - b.distance);
 
       setNearbyProfiles(
         profilesWithDistance
