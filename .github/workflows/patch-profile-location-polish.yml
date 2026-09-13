@@ -1,0 +1,44 @@
+name: Patch Profile Location Polish
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Polish profile location save flow'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch profile location save flow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/app/edit-profile.tsx')
+          s=p.read_text(encoding='utf-8')
+
+          s=s.replace("  city: string | null;\n", "  city: string | null;\n  latitude: number | null;\n  longitude: number | null;\n", 1)
+          s=s.replace(".select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, share_cheers_discord')", ".select('id, name, age, bio, city, latitude, longitude, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, share_cheers_discord')", 1)
+
+          start=s.index("      const { status } = await Location.requestForegroundPermissionsAsync();")
+          end=s.index("      const numericAge = age.trim() ? Number(age) : null;", start)
+          replacement="""      const { status } = await Location.requestForegroundPermissionsAsync();\n\n      let latitude: number | null = profile.latitude ?? null;\n      let longitude: number | null = profile.longitude ?? null;\n      let detectedCity = city.trim() || null;\n\n      if (status !== 'granted') {\n        if (latitude == null || longitude == null) {\n          showAlert(t('editProfileScreen.locationPermissionRequired'));\n          return;\n        }\n        console.log('LOCATION PERMISSION DENIED: preserving existing saved coordinates');\n      } else {\n        try {\n          let resolvedLocation = await Location.getLastKnownPositionAsync({\n            maxAge: 120000,\n            requiredAccuracy: 5000,\n          });\n\n          if (!resolvedLocation) {\n            resolvedLocation = await Location.getCurrentPositionAsync({\n              accuracy: Location.Accuracy.Balanced,\n            });\n          }\n\n          latitude = resolvedLocation.coords.latitude;\n          longitude = resolvedLocation.coords.longitude;\n\n          try {\n            const reverseResponse = await fetch(\n              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,\n              { headers: { 'User-Agent': 'SipMate/1.0' } }\n            );\n            if (reverseResponse.ok) {\n              const reverseData = await reverseResponse.json();\n              detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ??\n                reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity;\n            }\n          } catch (reverseError) {\n            console.log('REVERSE GEOCODE ERROR:', reverseError);\n          }\n        } catch (locationError) {\n          console.log('LOCATION FIX UNAVAILABLE:', locationError);\n\n          if (detectedCity) {\n            try {\n              const searchResponse = await fetch(\n                `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,\n                { headers: { 'User-Agent': 'SipMate/1.0' } }\n              );\n              if (searchResponse.ok) {\n                const results = await searchResponse.json();\n                if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {\n                  latitude = Number(results[0].lat);\n                  longitude = Number(results[0].lon);\n                  console.log('LOCATION FALLBACK: using city coordinates for', detectedCity);\n                }\n              }\n            } catch (geocodeError) {\n              console.log('CITY GEOCODE FALLBACK ERROR:', geocodeError);\n            }\n          }\n\n          if (latitude == null || longitude == null) {\n            const lastKnown = await Location.getLastKnownPositionAsync().catch(() => null);\n            if (lastKnown) {\n              latitude = lastKnown.coords.latitude;\n              longitude = lastKnown.coords.longitude;\n              console.log('LOCATION FALLBACK: using last known coordinates');\n            }\n          }\n\n          if (latitude == null || longitude == null) {\n            showAlert(t('editProfileScreen.locationUnavailableCityFallback'));\n            return;\n          }\n        }\n      }\n\n"""
+          s=s[:start]+replacement+s[end:]
+          p.write_text(s,encoding='utf-8',newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/edit-profile.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Polish profile location save flow'
+          git push origin master
