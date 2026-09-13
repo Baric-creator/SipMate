@@ -1,29 +1,40 @@
 import {
+    Image,
     Pressable,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
 
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { supabase } from '../lib/supabase';
+
+type BlockedProfile = {
+  id: string;
+  name: string | null;
+  age: number | null;
+  city: string | null;
+  avatar_url: string | null;
+};
 
 export default function BlockedUsersScreen() {
   const router = useRouter();
   const { t } = useTranslation();
 
   const [blockedUsers, setBlockedUsers] =
-    useState<any[]>([]);
+    useState<BlockedProfile[]>([]);
 
   const [loading, setLoading] =
     useState(true);
 
-  useEffect(() => {
-    loadBlockedUsers();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      void loadBlockedUsers();
+    }, [])
+  );
 
   async function loadBlockedUsers() {
     try {
@@ -83,12 +94,7 @@ export default function BlockedUsersScreen() {
         return;
       }
 
-      setBlockedUsers(profiles ?? []);
-
-      console.log(
-        'BLOCKED USERS:',
-        profiles ?? []
-      );
+      setBlockedUsers((profiles ?? []) as BlockedProfile[]);
     } catch (error) {
       console.log(
         'LOAD BLOCKED USERS ERROR:',
@@ -133,11 +139,6 @@ export default function BlockedUsersScreen() {
         current.filter(
           (user) => user.id !== userId
         )
-      );
-
-      console.log(
-        'USER UNBLOCKED:',
-        userId
       );
     } catch (error) {
       console.log(
@@ -186,6 +187,16 @@ export default function BlockedUsersScreen() {
                 key={user.id}
                 style={styles.userCard}
               >
+                {user.avatar_url ? (
+                  <Image source={{ uri: user.avatar_url }} style={styles.avatar} resizeMode="cover" />
+                ) : (
+                  <View style={styles.avatarFallback}>
+                    <Text style={styles.avatarFallbackText}>
+                      {(user.name ?? 'S').charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+
                 <View
                   style={styles.userInfo}
                 >
@@ -315,6 +326,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    marginRight: 12,
+    backgroundColor: '#202024',
+  },
+
+  avatarFallback: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    marginRight: 12,
+    backgroundColor: '#211315',
+    borderWidth: 1,
+    borderColor: '#3A2020',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  avatarFallbackText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '900',
   },
 
   userInfo: {
