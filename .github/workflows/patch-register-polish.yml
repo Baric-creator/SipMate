@@ -1,0 +1,44 @@
+name: Patch Registration Polish
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Polish registration input hygiene'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Polish registration inputs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/app/register.tsx')
+          s=p.read_text(encoding='utf-8')
+
+          old="""          <TextInput value={name} onChangeText={setName} placeholder={text.namePlaceholder} placeholderTextColor=\"#52525B\" autoCapitalize=\"words\" style={styles.input} />\n          <Text style={styles.label}>{text.age}</Text>\n          <TextInput value={age} onChangeText={setAge} placeholder={text.agePlaceholder} placeholderTextColor=\"#52525B\" keyboardType=\"numeric\" style={styles.input} />\n          <Text style={styles.label}>{text.email}</Text>\n          <TextInput value={email} onChangeText={setEmail} placeholder=\"you@example.com\" placeholderTextColor=\"#52525B\" keyboardType=\"email-address\" autoCapitalize=\"none\" autoCorrect={false} style={styles.input} />\n          <Text style={styles.label}>{text.password}</Text>\n          <TextInput value={password} onChangeText={setPassword} placeholder={text.passwordPlaceholder} placeholderTextColor=\"#52525B\" secureTextEntry autoCapitalize=\"none\" style={styles.input} />\n"""
+          new="""          <TextInput value={name} onChangeText={setName} maxLength={50} placeholder={text.namePlaceholder} placeholderTextColor=\"#52525B\" autoCapitalize=\"words\" autoComplete=\"name\" textContentType=\"name\" style={styles.input} />\n          <Text style={styles.label}>{text.age}</Text>\n          <TextInput value={age} onChangeText={(value) => setAge(value.replace(/\\D/g, '').slice(0, 3))} maxLength={3} placeholder={text.agePlaceholder} placeholderTextColor=\"#52525B\" keyboardType=\"numeric\" inputMode=\"numeric\" style={styles.input} />\n          <Text style={styles.label}>{text.email}</Text>\n          <TextInput value={email} onChangeText={setEmail} maxLength={254} placeholder=\"you@example.com\" placeholderTextColor=\"#52525B\" keyboardType=\"email-address\" autoCapitalize=\"none\" autoCorrect={false} autoComplete=\"email\" textContentType=\"emailAddress\" style={styles.input} />\n          <Text style={styles.label}>{text.password}</Text>\n          <TextInput value={password} onChangeText={setPassword} maxLength={128} placeholder={text.passwordPlaceholder} placeholderTextColor=\"#52525B\" secureTextEntry autoCapitalize=\"none\" autoCorrect={false} autoComplete=\"new-password\" textContentType=\"newPassword\" style={styles.input} />\n"""
+          if old not in s:
+              raise SystemExit('registration input anchor not found')
+          s=s.replace(old,new,1)
+
+          s=s.replace("""            disabled={loading}\n""", """            disabled={loading || !acceptedTerms}\n""", 1)
+          p.write_text(s,encoding='utf-8',newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/register.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Polish registration input hygiene'
+          git push origin master
