@@ -1,0 +1,43 @@
+name: Patch Cheers Polish
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Keep Cheers screen fresh in realtime'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Cheers freshness
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/app/cheers.tsx')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("import { router } from 'expo-router';", "import { router, useFocusEffect } from 'expo-router';", 1)
+          s=s.replace("import { useEffect, useState } from 'react';", "import { useCallback, useEffect, useState } from 'react';", 1)
+          old="""  useEffect(() => {\n    loadCheers();\n  }, []);\n"""
+          new="""  useFocusEffect(\n    useCallback(() => {\n      void loadCheers();\n    }, [t])\n  );\n\n  useEffect(() => {\n    const channel = supabase\n      .channel('cheers-screen-updates')\n      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {\n        void loadCheers();\n      })\n      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {\n        void loadCheers();\n      })\n      .subscribe();\n\n    return () => {\n      supabase.removeChannel(channel);\n    };\n  }, []);\n"""
+          if old not in s:
+              raise SystemExit('Cheers initial load effect not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8',newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/cheers.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Keep Cheers screen fresh in realtime'
+          git push origin master
