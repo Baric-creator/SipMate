@@ -1,0 +1,42 @@
+name: Patch Activity Realtime
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Keep Activity screen fresh in realtime'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add Activity realtime refresh
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/app/activity.tsx')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("import { useCallback, useState } from 'react';", "import { useCallback, useEffect, useState } from 'react';", 1)
+          anchor="""  useFocusEffect(\n    useCallback(() => {\n      loadActivity();\n    }, [])\n  );\n\n"""
+          block="""  useFocusEffect(\n    useCallback(() => {\n      void loadActivity();\n    }, [])\n  );\n\n  useEffect(() => {\n    const channel = supabase\n      .channel('activity-screen-updates')\n      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {\n        void loadActivity();\n      })\n      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {\n        void loadActivity();\n      })\n      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {\n        void loadActivity();\n      })\n      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {\n        void loadActivity();\n      })\n      .subscribe();\n\n    return () => {\n      supabase.removeChannel(channel);\n    };\n  }, []);\n\n"""
+          if anchor not in s:
+              raise SystemExit('Activity focus effect anchor not found')
+          s=s.replace(anchor,block,1)
+          p.write_text(s,encoding='utf-8',newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/activity.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Keep Activity screen fresh in realtime'
+          git push origin master
