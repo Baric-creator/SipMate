@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { isProfileOnline } from '../lib/presence';
+import { showAlert } from '../lib/notify';
 import { supabase } from '../lib/supabase';
 import { ProfileCardSkeleton } from '../components/Skeleton';
 import { FutureBackdrop } from '../components/FutureBackdrop';
@@ -978,6 +979,7 @@ export default function NearbyScreen() {
                   onChangeText={
                     setCustomCity
                   }
+                  maxLength={80}
                   placeholder={t(
                     'nearbyScreen.cityPlaceholder'
                   )}
@@ -1008,6 +1010,10 @@ export default function NearbyScreen() {
                             )}`
                           );
 
+                        if (!response.ok) {
+                          throw new Error(`Geocoding request failed: ${response.status}`);
+                        }
+
                         const results =
                           await response.json();
 
@@ -1016,7 +1022,7 @@ export default function NearbyScreen() {
                           results.length ===
                             0
                         ) {
-                          alert(
+                          showAlert(
                             t(
                               'nearbyScreen.locationNotFound'
                             )
@@ -1051,7 +1057,7 @@ export default function NearbyScreen() {
                           error
                         );
 
-                        alert(
+                        showAlert(
                           t(
                             'nearbyScreen.locationError'
                           )
