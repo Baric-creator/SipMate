@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -70,9 +70,31 @@ export default function ActivityScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadActivity();
+      void loadActivity();
     }, [])
   );
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('activity-screen-updates')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+        void loadActivity();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
+        void loadActivity();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {
+        void loadActivity();
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {
+        void loadActivity();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   async function loadActivity() {
     try {
