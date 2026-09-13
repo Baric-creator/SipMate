@@ -403,7 +403,14 @@ export default function NearbyScreen() {
         channel
       );
     };
-  }, []);
+  }, [
+    maxDistance,
+    drinkFilter,
+    ageFilter,
+    genderFilter,
+    customLatitude,
+    customLongitude,
+  ]);
 
   async function handleSkipProfile(
     skippedUserId: string
