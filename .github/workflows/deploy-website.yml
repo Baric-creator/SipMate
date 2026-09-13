@@ -7,6 +7,7 @@ on:
       - 'website/**'
       - 'scripts/website-audit.mjs'
       - 'scripts/website-link-audit.mjs'
+      - 'scripts/website-seo-legal-audit.mjs'
       - '.github/workflows/deploy-website.yml'
   workflow_dispatch:
 
@@ -35,6 +36,7 @@ jobs:
         run: |
           node scripts/website-audit.mjs
           node scripts/website-link-audit.mjs
+          node scripts/website-seo-legal-audit.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
