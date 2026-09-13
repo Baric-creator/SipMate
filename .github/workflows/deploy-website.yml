@@ -6,6 +6,7 @@ on:
     paths:
       - 'website/**'
       - 'scripts/website-audit.mjs'
+      - 'scripts/website-link-audit.mjs'
       - '.github/workflows/deploy-website.yml'
   workflow_dispatch:
 
@@ -31,7 +32,9 @@ jobs:
         with:
           node-version: 22
       - name: Validate website before deploy
-        run: node scripts/website-audit.mjs
+        run: |
+          node scripts/website-audit.mjs
+          node scripts/website-link-audit.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
