@@ -120,6 +120,9 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            autoComplete="email"
+            textContentType="emailAddress"
+            maxLength={254}
             style={styles.input}
           />
 
@@ -131,6 +134,10 @@ export default function LoginScreen() {
             placeholderTextColor="#52525B"
             secureTextEntry
             autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="current-password"
+            textContentType="password"
+            maxLength={128}
             style={styles.input}
           />
 

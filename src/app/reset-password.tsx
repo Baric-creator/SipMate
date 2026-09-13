@@ -189,6 +189,10 @@ export default function ResetPasswordScreen() {
           placeholderTextColor="#52525B"
           secureTextEntry
           autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="new-password"
+          textContentType="newPassword"
+          maxLength={128}
           style={styles.input}
           editable={!linkError}
         />
@@ -201,6 +205,10 @@ export default function ResetPasswordScreen() {
           placeholderTextColor="#52525B"
           secureTextEntry
           autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="new-password"
+          textContentType="newPassword"
+          maxLength={128}
           style={styles.input}
           editable={!linkError}
         />
