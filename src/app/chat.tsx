@@ -67,6 +67,7 @@ export default function ChatScreen() {
   const [otherUserActive, setOtherUserActive] = useState(false);
   const [otherAvatar, setOtherAvatar] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -173,37 +174,43 @@ export default function ChatScreen() {
 
   async function sendMessage() {
     const content = messageText.trim();
-    if (!content || !conversationId) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-    const { data, error } = await supabase.from('messages').insert({
-      conversation_id: String(conversationId), sender_id: session.user.id, content,
-    }).select('id, conversation_id, sender_id, content, created_at, read_at').single();
-    if (error) {
-      console.log('MESSAGE SEND ERROR:', error.message);
-      const blocked = error.code === '42501' || error.message.toLowerCase().includes('row-level security');
-      showAlert(blocked ? text.blockedSend : `${text.sendError}: ${error.message}`);
-      return;
-    }
-    const sent = data as Message;
-    setMessages((prev) => prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]);
-    Vibration.vibrate(20);
-    setMessageText('');
+    if (!content || !conversationId || sendingMessage) return;
 
-    void supabase.functions.invoke('send-message-notification', {
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: { messageId: String(sent.id) },
-    }).then(({ error: notificationError }) => {
-      if (notificationError) {
-        console.log('MESSAGE PUSH ERROR:', notificationError.message);
+    try {
+      setSendingMessage(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const { data, error } = await supabase.from('messages').insert({
+        conversation_id: String(conversationId), sender_id: session.user.id, content,
+      }).select('id, conversation_id, sender_id, content, created_at, read_at').single();
+      if (error) {
+        console.log('MESSAGE SEND ERROR:', error.message);
+        const blocked = error.code === '42501' || error.message.toLowerCase().includes('row-level security');
+        showAlert(blocked ? text.blockedSend : `${text.sendError}: ${error.message}`);
+        return;
       }
-    }).catch((notificationError) => {
-      console.log('MESSAGE PUSH CRASH:', notificationError);
-    });
+      const sent = data as Message;
+      setMessages((prev) => prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]);
+      Vibration.vibrate(20);
+      setMessageText('');
 
-    await sendTypingStatus(false);
+      void supabase.functions.invoke('send-message-notification', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: { messageId: String(sent.id) },
+      }).then(({ error: notificationError }) => {
+        if (notificationError) {
+          console.log('MESSAGE PUSH ERROR:', notificationError.message);
+        }
+      }).catch((notificationError) => {
+        console.log('MESSAGE PUSH CRASH:', notificationError);
+      });
+
+      await sendTypingStatus(false);
+    } finally {
+      setSendingMessage(false);
+    }
   }
 
   async function sendTypingStatus(isTyping: boolean) {
@@ -319,7 +326,12 @@ export default function ChatScreen() {
             onSubmitEditing={sendMessage}
             returnKeyType="send"
           />
-          <TouchableOpacity style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]} onPress={sendMessage} disabled={!messageText.trim()} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={[styles.sendButton, (!messageText.trim() || sendingMessage) && styles.sendButtonDisabled]}
+            onPress={sendMessage}
+            disabled={!messageText.trim() || sendingMessage}
+            activeOpacity={0.8}
+          >
             <Text style={styles.sendText}>➤</Text>
           </TouchableOpacity>
         </View>
