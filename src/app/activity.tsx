@@ -70,7 +70,7 @@ export default function ActivityScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void loadActivity();
+      void loadActivity(false);
     }, [])
   );
 
@@ -78,16 +78,16 @@ export default function ActivityScreen() {
     const channel = supabase
       .channel('activity-screen-updates')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-        void loadActivity();
+        void loadActivity(true);
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
-        void loadActivity();
+        void loadActivity(true);
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {
-        void loadActivity();
+        void loadActivity(true);
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {
-        void loadActivity();
+        void loadActivity(true);
       })
       .subscribe();
 
@@ -96,9 +96,9 @@ export default function ActivityScreen() {
     };
   }, []);
 
-  async function loadActivity() {
+  async function loadActivity(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         router.replace('/login');
@@ -187,7 +187,7 @@ export default function ActivityScreen() {
       setItems(merged);
       await AsyncStorage.setItem('sipmate:activity-seen-at', new Date().toISOString());
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
