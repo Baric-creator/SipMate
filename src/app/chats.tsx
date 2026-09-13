@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 import { FutureBackdrop } from '../components/FutureBackdrop';
 import { ChatCardSkeleton } from '../components/Skeleton';
@@ -152,7 +153,7 @@ export default function ChatsScreen() {
 
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('id, name, age, is_active, avatar_url')
+        .select('id, name, age, is_active, last_seen_at, avatar_url')
         .in('id', otherUserIds);
 
       if (profileError) {
@@ -197,7 +198,7 @@ export default function ChatsScreen() {
           userId: otherUserId,
           name: otherProfile?.name ?? text.userFallback,
           age: otherProfile?.age ?? null,
-          isActive: otherProfile?.is_active ?? false,
+          isActive: isProfileOnline(otherProfile ?? {}),
           lastMessage: lastMessage?.content ?? text.noMessages,
           lastMessageTime: lastMessage?.created_at ?? null,
           avatar_url: otherProfile?.avatar_url ?? null,
