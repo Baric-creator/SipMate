@@ -1,0 +1,48 @@
+name: Patch Chat List Polish
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Keep chat list fresh on focus and read updates'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch chat list freshness
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/app/chats.tsx')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("import { router } from 'expo-router';", "import { router, useFocusEffect } from 'expo-router';", 1)
+          s=s.replace("import { useEffect, useState } from 'react';", "import { useCallback, useEffect, useState } from 'react';", 1)
+          old="""  useEffect(() => {\n    loadChats();\n  }, []);\n"""
+          new="""  useFocusEffect(\n    useCallback(() => {\n      void loadChats();\n    }, [language])\n  );\n"""
+          if old not in s:
+              raise SystemExit('initial chat load effect not found')
+          s=s.replace(old,new,1)
+          anchor="""      .on(\n        'postgres_changes',\n        {\n          event: 'INSERT',\n          schema: 'public',\n          table: 'messages',\n        },\n        () => {\n          loadChats();\n        }\n      )\n      .subscribe();\n"""
+          replacement="""      .on(\n        'postgres_changes',\n        {\n          event: 'INSERT',\n          schema: 'public',\n          table: 'messages',\n        },\n        () => {\n          loadChats();\n        }\n      )\n      .on(\n        'postgres_changes',\n        {\n          event: 'UPDATE',\n          schema: 'public',\n          table: 'messages',\n        },\n        () => {\n          loadChats();\n        }\n      )\n      .subscribe();\n"""
+          if anchor not in s:
+              raise SystemExit('chat realtime anchor not found')
+          s=s.replace(anchor,replacement,1)
+          p.write_text(s,encoding='utf-8',newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/chats.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Keep chat list fresh on focus and read updates'
+          git push origin master
