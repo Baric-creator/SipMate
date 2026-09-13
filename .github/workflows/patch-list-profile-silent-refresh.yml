@@ -25,6 +25,7 @@ jobs:
           s = s.replace("""        () => {\n          loadChats();\n        }\n""", """        () => {\n          void loadChats(true);\n        }\n""", 2)
           s = s.replace("""  async function loadChats() {\n    try {\n      setLoading(true);\n""", """  async function loadChats(silent = false) {\n    try {\n      if (!silent) setLoading(true);\n""", 1)
           s = s.replace("""    } finally {\n      setLoading(false);\n    }\n  }\n""", """    } finally {\n      hasLoadedChatsRef.current = true;\n      if (!silent) setLoading(false);\n    }\n  }\n""", 1)
+          s = s.replace("<Pressable style={styles.refreshButton} onPress={loadChats}>", "<Pressable style={styles.refreshButton} onPress={() => void loadChats(false)}>", 1)
           chats.write_text(s, encoding='utf-8', newline='\n')
 
           profile = Path('src/app/profile.tsx')
