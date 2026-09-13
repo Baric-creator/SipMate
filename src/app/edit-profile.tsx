@@ -24,6 +24,8 @@ type Profile = {
   age: number | null;
   bio: string | null;
   city: string | null;
+  latitude: number | null;
+  longitude: number | null;
   currently_up_for: string | null;
   gender: string | null;
   is_premium: boolean | null;
@@ -83,7 +85,7 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const { data, error } = await supabase.from('profiles').select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, share_cheers_discord').eq('id', session.user.id).single();
+      const { data, error } = await supabase.from('profiles').select('id, name, age, bio, city, latitude, longitude, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, share_cheers_discord').eq('id', session.user.id).single();
       if (error) {
         console.log('EDIT PROFILE LOAD ERROR:', error.message);
         return;
@@ -127,77 +129,81 @@ export default function EditProfileScreen() {
       if (!session?.user) return;
 
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        showAlert(t('editProfileScreen.locationPermissionRequired'));
-        return;
-      }
 
-      let latitude: number | null = null;
-      let longitude: number | null = null;
+      let latitude: number | null = profile.latitude ?? null;
+      let longitude: number | null = profile.longitude ?? null;
       let detectedCity = city.trim() || null;
 
-      try {
-        let resolvedLocation = await Location.getLastKnownPositionAsync({
-          maxAge: 120000,
-          requiredAccuracy: 5000,
-        });
-
-        if (!resolvedLocation) {
-          resolvedLocation = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
+      if (status !== 'granted') {
+        if (latitude == null || longitude == null) {
+          showAlert(t('editProfileScreen.locationPermissionRequired'));
+          return;
         }
-
-        latitude = resolvedLocation.coords.latitude;
-        longitude = resolvedLocation.coords.longitude;
-
+        console.log('LOCATION PERMISSION DENIED: preserving existing saved coordinates');
+      } else {
         try {
-          const reverseResponse = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
-            { headers: { 'User-Agent': 'SipMate/1.0' } }
-          );
-          if (reverseResponse.ok) {
-            const reverseData = await reverseResponse.json();
-            detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ??
-              reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity;
-          }
-        } catch (reverseError) {
-          console.log('REVERSE GEOCODE ERROR:', reverseError);
-        }
-      } catch (locationError) {
-        console.log('LOCATION FIX UNAVAILABLE:', locationError);
+          let resolvedLocation = await Location.getLastKnownPositionAsync({
+            maxAge: 120000,
+            requiredAccuracy: 5000,
+          });
 
-        if (detectedCity) {
+          if (!resolvedLocation) {
+            resolvedLocation = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+          }
+
+          latitude = resolvedLocation.coords.latitude;
+          longitude = resolvedLocation.coords.longitude;
+
           try {
-            const searchResponse = await fetch(
-              `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,
+            const reverseResponse = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
               { headers: { 'User-Agent': 'SipMate/1.0' } }
             );
-            if (searchResponse.ok) {
-              const results = await searchResponse.json();
-              if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
-                latitude = Number(results[0].lat);
-                longitude = Number(results[0].lon);
-                console.log('LOCATION FALLBACK: using city coordinates for', detectedCity);
-              }
+            if (reverseResponse.ok) {
+              const reverseData = await reverseResponse.json();
+              detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ??
+                reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity;
             }
-          } catch (geocodeError) {
-            console.log('CITY GEOCODE FALLBACK ERROR:', geocodeError);
+          } catch (reverseError) {
+            console.log('REVERSE GEOCODE ERROR:', reverseError);
           }
-        }
+        } catch (locationError) {
+          console.log('LOCATION FIX UNAVAILABLE:', locationError);
 
-        if (latitude == null || longitude == null) {
-          const lastKnown = await Location.getLastKnownPositionAsync().catch(() => null);
-          if (lastKnown) {
-            latitude = lastKnown.coords.latitude;
-            longitude = lastKnown.coords.longitude;
-            console.log('LOCATION FALLBACK: using last known coordinates');
+          if (detectedCity) {
+            try {
+              const searchResponse = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,
+                { headers: { 'User-Agent': 'SipMate/1.0' } }
+              );
+              if (searchResponse.ok) {
+                const results = await searchResponse.json();
+                if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
+                  latitude = Number(results[0].lat);
+                  longitude = Number(results[0].lon);
+                  console.log('LOCATION FALLBACK: using city coordinates for', detectedCity);
+                }
+              }
+            } catch (geocodeError) {
+              console.log('CITY GEOCODE FALLBACK ERROR:', geocodeError);
+            }
           }
-        }
 
-        if (latitude == null || longitude == null) {
-          showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
-          return;
+          if (latitude == null || longitude == null) {
+            const lastKnown = await Location.getLastKnownPositionAsync().catch(() => null);
+            if (lastKnown) {
+              latitude = lastKnown.coords.latitude;
+              longitude = lastKnown.coords.longitude;
+              console.log('LOCATION FALLBACK: using last known coordinates');
+            }
+          }
+
+          if (latitude == null || longitude == null) {
+            showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
+            return;
+          }
         }
       }
 
