@@ -188,13 +188,13 @@ export default function RegisterScreen() {
           <Text style={styles.subtitle}>{text.subtitle}</Text>
 
           <Text style={styles.label}>{text.name}</Text>
-          <TextInput value={name} onChangeText={setName} placeholder={text.namePlaceholder} placeholderTextColor="#52525B" autoCapitalize="words" style={styles.input} />
+          <TextInput value={name} onChangeText={setName} maxLength={50} placeholder={text.namePlaceholder} placeholderTextColor="#52525B" autoCapitalize="words" autoComplete="name" textContentType="name" style={styles.input} />
           <Text style={styles.label}>{text.age}</Text>
-          <TextInput value={age} onChangeText={setAge} placeholder={text.agePlaceholder} placeholderTextColor="#52525B" keyboardType="numeric" style={styles.input} />
+          <TextInput value={age} onChangeText={(value) => setAge(value.replace(/\D/g, '').slice(0, 3))} maxLength={3} placeholder={text.agePlaceholder} placeholderTextColor="#52525B" keyboardType="numeric" inputMode="numeric" style={styles.input} />
           <Text style={styles.label}>{text.email}</Text>
-          <TextInput value={email} onChangeText={setEmail} placeholder="you@example.com" placeholderTextColor="#52525B" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} style={styles.input} />
+          <TextInput value={email} onChangeText={setEmail} maxLength={254} placeholder="you@example.com" placeholderTextColor="#52525B" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" style={styles.input} />
           <Text style={styles.label}>{text.password}</Text>
-          <TextInput value={password} onChangeText={setPassword} placeholder={text.passwordPlaceholder} placeholderTextColor="#52525B" secureTextEntry autoCapitalize="none" style={styles.input} />
+          <TextInput value={password} onChangeText={setPassword} maxLength={128} placeholder={text.passwordPlaceholder} placeholderTextColor="#52525B" secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="new-password" textContentType="newPassword" style={styles.input} />
 
           <View style={styles.agreementRow}>
             <Pressable
@@ -216,7 +216,7 @@ export default function RegisterScreen() {
           <Pressable
             style={[styles.button, (loading || !acceptedTerms) && styles.buttonDisabled]}
             onPress={handleRegister}
-            disabled={loading}
+            disabled={loading || !acceptedTerms}
           >
             {loading ? <Text style={styles.buttonText}>{text.creating}</Text> : <View style={styles.buttonContent}><Text style={styles.buttonEmoji}>🍻</Text><Text style={styles.buttonText}>{text.create}</Text></View>}
           </Pressable>
