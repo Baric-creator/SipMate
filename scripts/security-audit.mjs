@@ -124,6 +124,8 @@ for (const fn of ['create-checkout-session', 'create-customer-portal']) {
   const content = read(relative);
   assert(content.includes("Deno.env.get('APP_WEB_URL')"), `${fn} does not anchor production redirects to APP_WEB_URL`);
   assert(content.includes("parsed.hostname === 'localhost'") || content.includes("parsed.hostname === '127.0.0.1'"), `${fn} has no explicit local development-origin handling`);
+  assert(content.includes("req.headers.get('Authorization')"), `${fn} no longer requires an Authorization header`);
+  assert(/\.auth\.getUser\(\)/.test(content), `${fn} no longer validates the caller with Supabase Auth`);
 }
 
 assert(exists('supabase/functions/stripe-webhook/index.ts'), 'Stripe webhook Edge Function is missing');
@@ -144,7 +146,9 @@ if (exists('src/app/premium.android.tsx')) {
 if (exists('supabase/config.toml')) {
   const config = read('supabase/config.toml');
   const manualJwtFunctions = [...config.matchAll(/\[functions\.([^\]]+)\][\s\S]*?verify_jwt\s*=\s*false/g)].map((match) => match[1]);
-  if (manualJwtFunctions.length) warn(`Functions with verify_jwt=false require their own authentication/signature checks: ${manualJwtFunctions.join(', ')}`);
+  const reviewedManualAuthFunctions = new Set(['create-checkout-session', 'create-customer-portal', 'stripe-webhook']);
+  const unreviewedManualAuthFunctions = manualJwtFunctions.filter((fn) => !reviewedManualAuthFunctions.has(fn));
+  assert(unreviewedManualAuthFunctions.length === 0, `Unreviewed verify_jwt=false function(s): ${unreviewedManualAuthFunctions.join(', ')}`);
 }
 
 for (const file of clientFiles) {
