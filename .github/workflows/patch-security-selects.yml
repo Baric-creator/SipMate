@@ -1,0 +1,63 @@
+name: Patch Security Selects
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Narrow client Supabase select columns'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Narrow client Supabase selects
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+            'src/app/chats.tsx': [
+              (".select('*')\n          .or(`user_one.eq.${myId},user_two.eq.${myId}`)", ".select('id, user_one, user_two, created_at')\n          .or(`user_one.eq.${myId},user_two.eq.${myId}`)"),
+              (".select('*', { count: 'exact', head: true })", ".select('id', { count: 'exact', head: true })"),
+            ],
+            'src/app/edit-profile.tsx': [
+              ("supabase.from('profiles').select('*').eq('id', session.user.id).single()", "supabase.from('profiles').select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, share_cheers_discord').eq('id', session.user.id).single()"),
+            ],
+            'src/app/premium.tsx': [
+              ("supabase.from('premium_offers').select('*').eq('is_active', true).order('sort_order', { ascending: true })", "supabase.from('premium_offers').select('id, code, name, price_cents, billing_period, max_subscribers, subscriber_count, is_active, sort_order').eq('is_active', true).order('sort_order', { ascending: true })"),
+            ],
+          }
+
+          changed = False
+          for file, pairs in replacements.items():
+            p = Path(file)
+            s = p.read_text(encoding='utf-8')
+            original = s
+            for old, new in pairs:
+              if old not in s:
+                print(f'NOTE: pattern already changed or missing in {file}: {old[:80]}')
+                continue
+              s = s.replace(old, new)
+            if s != original:
+              p.write_text(s, encoding='utf-8', newline='\n')
+              changed = True
+              print(f'patched {file}')
+          if not changed:
+            print('No changes required')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/chats.tsx src/app/edit-profile.tsx src/app/premium.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Narrow client Supabase select columns'
+          git push origin master
