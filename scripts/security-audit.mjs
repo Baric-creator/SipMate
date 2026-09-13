@@ -168,6 +168,15 @@ for (const file of clientFiles) {
   if (/\.select\(\s*['"]\*['"]\s*\)/.test(content)) warn(`Broad select('*') found in ${relative}; confirm every returned column is intended for the client`);
 }
 
+// Precise profile coordinates must stay behind authenticated, privacy-safe RPCs.
+for (const file of clientFiles) {
+  const relative = path.relative(root, file).replaceAll('\\', '/');
+  const content = fs.readFileSync(file, 'utf8');
+  if (/from\(\s*['\"]profiles['\"]\s*\)[\s\S]{0,260}?\.select\([^)]*\b(?:latitude|longitude)\b/i.test(content)) {
+    fail(`Client directly selects precise profile coordinates in ${relative}; use privacy-safe RPCs instead`);
+  }
+}
+
 console.log(`Security audit checked ${textFiles.length} repository text files.`);
 for (const message of warnings) console.warn(`WARN: ${message}`);
 
