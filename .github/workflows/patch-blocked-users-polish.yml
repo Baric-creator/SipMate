@@ -20,6 +20,7 @@ jobs:
           p=Path('src/app/blocked-users.tsx')
           s=p.read_text(encoding='utf-8')
 
+          s=s.replace("import {\n    Pressable,", "import {\n    Image,\n    Pressable,", 1)
           s=s.replace("import { useRouter } from 'expo-router';", "import { useFocusEffect, useRouter } from 'expo-router';", 1)
           s=s.replace("import { useEffect, useState } from 'react';", "import { useCallback, useState } from 'react';", 1)
 
@@ -50,6 +51,8 @@ jobs:
           s=s.replace(style_anchor,style_block,1)
 
           s=s.replace("setBlockedUsers(profiles ?? []);", "setBlockedUsers((profiles ?? []) as BlockedProfile[]);", 1)
+          s=s.replace("""\n      console.log(\n        'BLOCKED USERS:',\n        profiles ?? []\n      );\n""", "", 1)
+          s=s.replace("""\n      console.log(\n        'USER UNBLOCKED:',\n        userId\n      );\n""", "", 1)
           p.write_text(s,encoding='utf-8',newline='\n')
           PY
       - name: Verify checks
