@@ -19,11 +19,22 @@ jobs:
           from pathlib import Path
           p=Path('scripts/security-audit.mjs')
           s=p.read_text(encoding='utf-8')
-          anchor="""for (const file of clientFiles) {\n  const relative = path.relative(root, file).replaceAll('\\\\', '/');\n  const content = fs.readFileSync(file, 'utf8');\n  if (relative !== 'src/lib/notify.ts' && /\\bwindow\\.(?:alert|confirm)\\s*\\(/.test(content)) warn(`Browser-only alert/confirm still used in ${relative}`);\n  if (/\\.select\\(\\s*['\"]\\*['\"]\\s*\\)/.test(content)) warn(`Broad select('*') found in ${relative}; confirm every returned column is intended for the client`);\n}\n"""
-          replacement="""for (const file of clientFiles) {\n  const relative = path.relative(root, file).replaceAll('\\\\', '/');\n  const content = fs.readFileSync(file, 'utf8');\n  if (relative !== 'src/lib/notify.ts' && /\\bwindow\\.(?:alert|confirm)\\s*\\(/.test(content)) warn(`Browser-only alert/confirm still used in ${relative}`);\n  if (/\\.select\\(\\s*['\"]\\*['\"]\\s*\\)/.test(content)) warn(`Broad select('*') found in ${relative}; confirm every returned column is intended for the client`);\n  if (/from\\(\\s*['\"]profiles['\"]\\s*\\)[\\s\\S]{0,240}?\\.select\\([^)]*\\b(?:latitude|longitude)\\b/i.test(content)) {\n    fail(`Client directly selects precise profile coordinates in ${relative}; use privacy-safe RPCs instead`);\n  }\n}\n"""
+          anchor="\nconsole.log(`Security audit checked ${textFiles.length} repository text files.`);"
+          guard="""
+
+// Precise profile coordinates must stay behind authenticated, privacy-safe RPCs.
+for (const file of clientFiles) {
+  const relative = path.relative(root, file).replaceAll('\\\\', '/');
+  const content = fs.readFileSync(file, 'utf8');
+  if (/from\\(\\s*['\"]profiles['\"]\\s*\\)[\\s\\S]{0,260}?\\.select\\([^)]*\\b(?:latitude|longitude)\\b/i.test(content)) {
+    fail(`Client directly selects precise profile coordinates in ${relative}; use privacy-safe RPCs instead`);
+  }
+}
+"""
           if anchor not in s:
-              raise SystemExit('security client scan anchor not found')
-          s=s.replace(anchor,replacement,1)
+              raise SystemExit('security audit footer anchor not found')
+          if 'Client directly selects precise profile coordinates' not in s:
+              s=s.replace(anchor,guard+anchor,1)
           p.write_text(s,encoding='utf-8',newline='\n')
           PY
       - name: Verify checks
