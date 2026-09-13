@@ -1,0 +1,51 @@
+name: Patch Profile Polish
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Polish profile limits and Premium gallery gating'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Polish profile editor
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/app/edit-profile.tsx')
+          s=p.read_text(encoding='utf-8')
+
+          s=s.replace("""  async function handleAddGalleryPhoto() {\n    if (!profile?.id) return;\n    if (!profile.is_premium) {\n      router.push('/premium');\n      return;\n    }\n""", """  async function handleAddGalleryPhoto() {\n    if (!profile?.id) return;\n    const premiumActive =\n      profile.is_premium === true &&\n      (!profile.premium_until || new Date(profile.premium_until) > new Date());\n    if (!premiumActive) {\n      router.push('/premium');\n      return;\n    }\n""", 1)
+
+          s=s.replace("""      const response = await fetch(asset.uri);\n      const blob = await response.blob();\n""", """      const response = await fetch(asset.uri);\n      if (!response.ok) {\n        showAlert(t('editProfileScreen.imageReadError'));\n        return;\n      }\n      const blob = await response.blob();\n""", 1)
+
+          old="""          <TextInput value={name} onChangeText={setName} placeholder={t('editProfileScreen.namePlaceholder')} placeholderTextColor=\"#52525B\" style={styles.input} />\n          <Text style={styles.label}>{t('editProfileScreen.age')}</Text>\n          <TextInput value={age} onChangeText={setAge} placeholder={t('editProfileScreen.agePlaceholder')} placeholderTextColor=\"#52525B\" keyboardType=\"numeric\" style={styles.input} />\n"""
+          new="""          <TextInput value={name} onChangeText={setName} maxLength={50} placeholder={t('editProfileScreen.namePlaceholder')} placeholderTextColor=\"#52525B\" style={styles.input} />\n          <Text style={styles.label}>{t('editProfileScreen.age')}</Text>\n          <TextInput value={age} onChangeText={(value) => setAge(value.replace(/\\D/g, '').slice(0, 3))} maxLength={3} placeholder={t('editProfileScreen.agePlaceholder')} placeholderTextColor=\"#52525B\" keyboardType=\"numeric\" style={styles.input} />\n"""
+          if old not in s:
+              raise SystemExit('name/age input anchor not found')
+          s=s.replace(old,new,1)
+
+          s=s.replace("""          <TextInput value={city} onChangeText={setCity} placeholder={t('editProfileScreen.cityPlaceholder')} placeholderTextColor=\"#52525B\" style={styles.input} />\n          <Text style={styles.label}>{t('editProfileScreen.aboutMe')}</Text>\n          <TextInput value={bio} onChangeText={setBio} placeholder={t('editProfileScreen.bioPlaceholder')} placeholderTextColor=\"#52525B\" multiline style={[styles.input, styles.bioInput]} />\n""", """          <TextInput value={city} onChangeText={setCity} maxLength={80} placeholder={t('editProfileScreen.cityPlaceholder')} placeholderTextColor=\"#52525B\" style={styles.input} />\n          <Text style={styles.label}>{t('editProfileScreen.aboutMe')}</Text>\n          <TextInput value={bio} onChangeText={setBio} maxLength={300} placeholder={t('editProfileScreen.bioPlaceholder')} placeholderTextColor=\"#52525B\" multiline style={[styles.input, styles.bioInput]} />\n""", 1)
+
+          s=s.replace("""            <TouchableOpacity style={[styles.addPhotoButton, !profile?.is_premium && styles.addPhotoButtonLocked]} onPress={handleAddGalleryPhoto}>\n              <Text style={styles.addPhotoButtonText}>\n                {profile?.is_premium ? `＋ ${t('editProfileScreen.addPhoto')}` : `🔒 ${t('editProfileScreen.addMorePhotos')}`}\n              </Text>\n            </TouchableOpacity>\n""", """            <TouchableOpacity\n              style={[\n                styles.addPhotoButton,\n                !(profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date())) && styles.addPhotoButtonLocked,\n              ]}\n              onPress={handleAddGalleryPhoto}\n            >\n              <Text style={styles.addPhotoButtonText}>\n                {profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date())\n                  ? `＋ ${t('editProfileScreen.addPhoto')}`\n                  : `🔒 ${t('editProfileScreen.addMorePhotos')}`}\n              </Text>\n            </TouchableOpacity>\n""", 1)
+
+          p.write_text(s,encoding='utf-8',newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/edit-profile.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Polish profile limits and Premium gallery gating'
+          git push origin master
