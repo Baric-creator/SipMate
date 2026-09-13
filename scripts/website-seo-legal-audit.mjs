@@ -43,7 +43,7 @@ for (const [file, expectedCanonical] of publicPages) {
   const c = canonical(html);
   if (c !== expectedCanonical) failures.push(`${file}: canonical mismatch (${c || 'missing'})`);
   if (!/<meta\s+name=["']description["']/i.test(html)) failures.push(`${file}: missing meta description`);
-  if (!/<title>[^<]+<\/title>/i.test(html)) failures.push(`${file}: missing page title`);
+  if (!/<title(?:\s[^>]*)?>\s*[^<]+\s*<\/title>/i.test(html)) failures.push(`${file}: missing page title`);
 }
 
 const privatePages = ['founder.html', 'admin-launch.html', 'forgot-password.html', 'reset-password.html', 'premium.html'];
