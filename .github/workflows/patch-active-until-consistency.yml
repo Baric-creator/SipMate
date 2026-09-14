@@ -1,0 +1,43 @@
+name: Patch Active Until Consistency
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Keep Active session timestamp consistent'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Active timestamp reuse
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/app/index.tsx')
+          s = p.read_text(encoding='utf-8')
+          old = "    statusUpdateRef.current = true;\n    const newStatus = !profile.is_active;\n\n    try {\n"
+          new = "    statusUpdateRef.current = true;\n    const newStatus = !profile.is_active;\n    const activeUntil = newStatus ? getActiveUntilIso() : null;\n\n    try {\n"
+          if old not in s:
+              raise SystemExit('toggle anchor missing')
+          s = s.replace(old, new, 1)
+          s = s.replace("          active_until: newStatus ? getActiveUntilIso() : null,", "          active_until: activeUntil,", 1)
+          s = s.replace("      setProfile({ ...profile, is_active: newStatus, active_until: newStatus ? getActiveUntilIso() : null });", "      setProfile({ ...profile, is_active: newStatus, active_until: activeUntil });", 1)
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/index.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Keep Active session timestamp consistent'
+          git push origin master
