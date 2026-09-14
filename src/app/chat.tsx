@@ -74,6 +74,7 @@ export default function ChatScreen() {
   const chatChannelRef = useRef<any>(null);
   const messageSendingRef = useRef(false);
   const messagesRequestIdRef = useRef(0);
+  const activeConversationIdRef = useRef('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setMyUserId(data.session?.user?.id ?? null));
@@ -128,6 +129,7 @@ export default function ChatScreen() {
   }, [id]);
 
   useEffect(() => {
+    activeConversationIdRef.current = conversationId ? String(conversationId) : '';
     const requestId = ++messagesRequestIdRef.current;
     setMessages([]);
     setOtherUserTyping(false);
@@ -160,6 +162,7 @@ export default function ChatScreen() {
         event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${String(conversationId)}`,
       }, (payload) => {
         const incoming = payload.new as Message;
+        if (incoming.conversation_id !== activeConversationIdRef.current) return;
         setMessages((prev) => prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]);
         if (incoming.sender_id !== myUserId) markMessagesAsRead();
       })
@@ -167,9 +170,11 @@ export default function ChatScreen() {
         event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${String(conversationId)}`,
       }, (payload) => {
         const updated = payload.new as Message;
+        if (updated.conversation_id !== activeConversationIdRef.current) return;
         setMessages((prev) => prev.map((m) => m.id === updated.id ? updated : m));
       })
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if (String(conversationId) !== activeConversationIdRef.current) return;
         if (payload && payload.userId !== myUserId) setOtherUserTyping(Boolean(payload.isTyping));
       }).subscribe();
     chatChannelRef.current = channel;
