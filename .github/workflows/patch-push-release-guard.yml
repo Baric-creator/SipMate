@@ -22,27 +22,28 @@ jobs:
           anchor = "  'supabase/functions/send-cheers-notification/index.ts',\n"
           addition = anchor + "  'supabase/functions/send-message-notification/index.ts',\n  'supabase/functions/register-push-token/index.ts',\n"
           if "supabase/functions/send-message-notification/index.ts" not in s:
-              if anchor not in s: raise SystemExit('required-files anchor missing')
+              if anchor not in s:
+                  raise SystemExit('required-files anchor missing')
               s = s.replace(anchor, addition, 1)
 
           insert_before = "if (exists('src/lib/push-notifications.ts')) {\n"
-          block = """if (exists('supabase/functions/send-message-notification/index.ts')) {
-  const s = read('supabase/functions/send-message-notification/index.ts');
-  assert(s.includes('auth.getUser(token)'), 'Message notification endpoint no longer validates caller JWT');
-  assert(s.includes('is_blocked_between'), 'Message notification endpoint no longer checks blocked users');
-  assert(s.includes('channelId: \"messages\"'), 'Message push no longer uses the messages channel');
-}
-
-if (exists('supabase/functions/register-push-token/index.ts')) {
-  const s = read('supabase/functions/register-push-token/index.ts');
-  assert(s.includes('auth.getUser(token)'), 'Push token endpoint no longer validates caller JWT');
-  assert(s.includes('invalid_push_token'), 'Push token validation is missing');
-  assert(s.includes('device_push_tokens'), 'Push token storage is missing');
-}
-
-"""
+          block = (
+              "if (exists('supabase/functions/send-message-notification/index.ts')) {\n"
+              "  const s = read('supabase/functions/send-message-notification/index.ts');\n"
+              "  assert(s.includes('auth.getUser(token)'), 'Message notification endpoint no longer validates caller JWT');\n"
+              "  assert(s.includes('is_blocked_between'), 'Message notification endpoint no longer checks blocked users');\n"
+              "  assert(s.includes('channelId: \\\"messages\\\"'), 'Message push no longer uses the messages channel');\n"
+              "}\n\n"
+              "if (exists('supabase/functions/register-push-token/index.ts')) {\n"
+              "  const s = read('supabase/functions/register-push-token/index.ts');\n"
+              "  assert(s.includes('auth.getUser(token)'), 'Push token endpoint no longer validates caller JWT');\n"
+              "  assert(s.includes('invalid_push_token'), 'Push token validation is missing');\n"
+              "  assert(s.includes('device_push_tokens'), 'Push token storage is missing');\n"
+              "}\n\n"
+          )
           if "Message notification endpoint no longer validates caller JWT" not in s:
-              if insert_before not in s: raise SystemExit('push audit anchor missing')
+              if insert_before not in s:
+                  raise SystemExit('push audit anchor missing')
               s = s.replace(insert_before, block + insert_before, 1)
           p.write_text(s, encoding='utf-8', newline='\n')
           PY
