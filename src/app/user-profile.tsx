@@ -220,6 +220,7 @@ export default function UserProfileScreen() {
   const [showCheersHint, setShowCheersHint] = useState(false);
 
   const cheersSubmittingRef = useRef(false);
+  const chatOpeningRef = useRef(false);
   const cheersScale = useRef(new Animated.Value(0)).current;
   const { width, height } = useWindowDimensions();
 
@@ -537,7 +538,10 @@ export default function UserProfileScreen() {
   }
 
   async function startChat() {
-    if (!profile) return;
+    if (!profile) || chatOpeningRef.current) return;
+    chatOpeningRef.current = true;
+
+    try {
 
     const {
       data: { session },
@@ -571,7 +575,11 @@ export default function UserProfileScreen() {
         name: profile.name ?? text.userFallback,
       },
     });
+    } finally {
+      chatOpeningRef.current = false;
+    }
   }
+
 
   if (loading) {
 
