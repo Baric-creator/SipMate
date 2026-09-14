@@ -5,6 +5,7 @@ import {
 
 import {
   useCallback,
+  useRef,
   useState,
 } from 'react';
 
@@ -71,10 +72,11 @@ export default function HomeScreen() {
 
   const [activityCount, setActivityCount] =
     useState(0);
+  const hasLoadedHomeRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      loadProfile();
+      void loadProfile(hasLoadedHomeRef.current);
     }, [])
   );
 
@@ -130,9 +132,9 @@ export default function HomeScreen() {
     );
   }
 
-  async function loadProfile() {
+  async function loadProfile(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const onboardingDone = await AsyncStorage.getItem('sipmate:onboarding:v1');
       if (!onboardingDone) {
@@ -201,7 +203,8 @@ export default function HomeScreen() {
       setProfile(data);
       await loadActivityCount(session.user.id);
     } finally {
-      setLoading(false);
+      hasLoadedHomeRef.current = true;
+      if (!silent) setLoading(false);
     }
   }
 
