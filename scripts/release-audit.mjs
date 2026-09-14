@@ -150,6 +150,9 @@ if (exists('src/app/cheers.tsx')) {
   assert(s.includes("status === 'Mutual Cheers'"), 'Mutual Cheers state is missing');
   assert(s.includes('findOrCreateConversation'), 'Cheers screen no longer uses race-safe conversation creation');
   assert(s.includes('chatOpeningRef.current'), 'Cheers can navigate to the same chat twice after rapid taps');
+  assert(s.includes('cheersRequestIdRef.current') && s.includes('isLatestRequest()'), 'Stale Cheers refreshes can overwrite the current account');
+  assert(s.includes('cheersUserIdRef.current') && s.includes('accountChanged'), 'Cheers Premium/list state can leak across account changes');
+  assert(s.includes('useFocusEffect') && s.includes('removeChannel(channel)'), 'Cheers realtime subscription is not scoped to the focused screen');
   assert(s.includes("router.push('/premium')"), 'Received Cheers Premium reveal gate is missing');
 }
 
