@@ -140,6 +140,8 @@ if (exists('src/app/chat.tsx')) {
   assert(s.includes("event: 'typing'"), 'Realtime typing indicator broadcast is missing');
   assert(s.includes('maxLength={1000}'), 'Chat message length cap is missing');
   assert(s.includes('useFocusEffect'), 'Chat block state is no longer refreshed on focus');
+  assert(s.includes('messageSendingRef.current'), 'Rapid taps can submit the same chat message concurrently');
+  assert(s.includes('messagesRequestIdRef.current'), 'A stale chat load can overwrite a newly opened conversation');
 }
 
 if (exists('src/app/cheers.tsx')) {
