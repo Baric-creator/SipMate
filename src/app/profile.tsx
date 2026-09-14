@@ -5,7 +5,7 @@ import { AppState, Image, Linking, Pressable, SafeAreaView, ScrollView, StyleShe
 
 import { showAlert } from '../lib/notify';
 import { FutureBackdrop } from '../components/FutureBackdrop';
-import { clearPresence, isProfileOnline } from '../lib/presence';
+import { clearPresence, isProfileOnline, stopActiveSession } from '../lib/presence';
 import { unregisterCurrentDevicePushTokenAsync } from '../lib/push-notifications';
 import { supabase } from '../lib/supabase';
 
@@ -152,13 +152,7 @@ export default function UserProfileScreen() {
   }
 
   async function handleLogout() {
-    if (profile?.id) {
-      const { error: activeCleanupError } = await supabase
-        .from('profiles')
-        .update({ is_active: false, active_until: null, last_seen_at: null })
-        .eq('id', profile.id);
-      if (activeCleanupError) console.log('LOGOUT ACTIVE CLEANUP ERROR:', activeCleanupError.message);
-    }
+    await stopActiveSession();
     await clearPresence();
     await unregisterCurrentDevicePushTokenAsync();
     const { error } = await supabase.auth.signOut();
