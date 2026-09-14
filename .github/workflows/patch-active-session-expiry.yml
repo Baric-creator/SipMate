@@ -1,0 +1,83 @@
+name: Patch Active Session Expiry
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Expire Nearby session live on Home'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expire active session live
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/app/index.tsx')
+          s = p.read_text(encoding='utf-8')
+          old = """  useEffect(() => {
+    if (!profile?.is_active || !profile.active_until) return;
+
+    const tick = () => setActiveClock(Date.now());
+    tick();
+    const timer = setInterval(tick, 30_000);
+    return () => clearInterval(timer);
+  }, [profile?.is_active, profile?.active_until]);
+"""
+          new = """  useEffect(() => {
+    if (!profile?.is_active || !profile.active_until) return;
+
+    const activeUntil = profile.active_until;
+    const expiresAt = new Date(activeUntil).getTime();
+    if (!Number.isFinite(expiresAt)) return;
+
+    const expireSession = () => {
+      setProfile((current) =>
+        current?.active_until === activeUntil
+          ? { ...current, is_active: false, active_until: null }
+          : current
+      );
+      void supabase
+        .from('profiles')
+        .update({ is_active: false, active_until: null, last_seen_at: null })
+        .eq('id', profile.id)
+        .eq('active_until', activeUntil);
+    };
+
+    const remainingMs = expiresAt - Date.now();
+    if (remainingMs <= 0) {
+      expireSession();
+      return;
+    }
+
+    setActiveClock(Date.now());
+    const clockTimer = setInterval(() => setActiveClock(Date.now()), 30_000);
+    const expiryTimer = setTimeout(expireSession, remainingMs);
+    return () => {
+      clearInterval(clockTimer);
+      clearTimeout(expiryTimer);
+    };
+  }, [profile?.id, profile?.is_active, profile?.active_until]);
+"""
+          if old not in s:
+              raise SystemExit('active session effect anchor missing')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/index.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Expire Nearby session live on Home'
+          git push origin master
