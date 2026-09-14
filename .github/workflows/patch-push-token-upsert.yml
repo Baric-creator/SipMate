@@ -1,0 +1,75 @@
+name: Patch Push Token Upsert
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Make push token registration idempotent'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch push token registration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('supabase/functions/register-push-token/index.ts')
+          s = p.read_text(encoding='utf-8')
+          old = '''    const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
+    await admin.from("device_push_tokens").delete().eq("token", pushToken);
+    const { error: insertError } = await admin.from("device_push_tokens").insert({
+      token: pushToken,
+      user_id: user.id,
+      platform,
+      updated_at: new Date().toISOString(),
+    });
+    if (insertError) {
+      console.error("PUSH TOKEN STORE ERROR", insertError);
+      return new Response(JSON.stringify({ error: "store_failed" }), { status: 500, headers });
+    }
+'''
+          new = '''    const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
+    const { error: upsertError } = await admin.from("device_push_tokens").upsert({
+      token: pushToken,
+      user_id: user.id,
+      platform,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "token" });
+    if (upsertError) {
+      console.error("PUSH TOKEN STORE ERROR", upsertError);
+      return new Response(JSON.stringify({ error: "store_failed" }), { status: 500, headers });
+    }
+'''
+          if old not in s:
+              raise SystemExit('push token storage anchor missing')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8', newline='\n')
+
+          p = Path('scripts/release-audit.mjs')
+          s = p.read_text(encoding='utf-8')
+          anchor = "  assert(s.includes('device_push_tokens'), 'Push token storage is missing');\n"
+          addition = anchor + "  assert(s.includes('.upsert({') && s.includes('onConflict: \\\"token\\\"'), 'Push token registration is no longer idempotent');\n"
+          if 'Push token registration is no longer idempotent' not in s:
+              if anchor not in s:
+                  raise SystemExit('release audit push token anchor missing')
+              s = s.replace(anchor, addition, 1)
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add supabase/functions/register-push-token/index.ts scripts/release-audit.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Make push token registration idempotent'
+          git push origin master
