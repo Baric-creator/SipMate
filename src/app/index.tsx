@@ -5,6 +5,7 @@ import {
 
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -73,12 +74,33 @@ export default function HomeScreen() {
   const [activityCount, setActivityCount] =
     useState(0);
   const hasLoadedHomeRef = useRef(false);
+  const currentUserIdRef = useRef<string | null>(null);
+  const statusUpdateRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       void loadProfile(hasLoadedHomeRef.current);
     }, [])
   );
+
+  useEffect(() => {
+    const refreshActivity = () => {
+      if (currentUserIdRef.current) {
+        void loadActivityCount(currentUserIdRef.current);
+      }
+    };
+
+    const channel = supabase
+      .channel('home-activity-updates')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, refreshActivity)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, refreshActivity)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, refreshActivity)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   function translateActivity(
     activity: string | null
@@ -148,9 +170,12 @@ export default function HomeScreen() {
         await supabase.auth.getSession();
 
       if (!session?.user) {
+        currentUserIdRef.current = null;
         router.replace('/login');
         return;
       }
+
+      currentUserIdRef.current = session.user.id;
 
       const { data, error } =
         await supabase
@@ -250,15 +275,15 @@ export default function HomeScreen() {
   }
 
   async function toggleActive() {
-    if (!profile) {
+    if (!profile || statusUpdateRef.current) {
       return;
     }
 
-    const newStatus =
-      !profile.is_active;
+    statusUpdateRef.current = true;
+    const newStatus = !profile.is_active;
 
-    const { error } =
-      await supabase
+    try {
+      const { error } = await supabase
         .from('profiles')
         .update({
           is_active: newStatus,
@@ -266,27 +291,16 @@ export default function HomeScreen() {
         })
         .eq('id', profile.id);
 
-    if (error) {
-      console.log(
-        'ACTIVE STATUS ERROR:',
-        error.message
-      );
-      return;
+      if (error) {
+        console.log('ACTIVE STATUS ERROR:', error.message);
+        return;
+      }
+
+      setProfile({ ...profile, is_active: newStatus });
+      Vibration.vibrate(35);
+    } finally {
+      statusUpdateRef.current = false;
     }
-
-    setProfile({
-      ...profile,
-      is_active: newStatus,
-    });
-
-    Vibration.vibrate(35);
-
-    console.log(
-      'ACTIVE STATUS:',
-      newStatus
-        ? 'ACTIVE'
-        : 'INACTIVE'
-    );
   }
 
   if (loading) {
