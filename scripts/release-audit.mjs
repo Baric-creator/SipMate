@@ -146,7 +146,7 @@ if (exists('src/app/chat.tsx')) {
   assert(s.includes('activeConversationIdRef.current'), 'Late realtime events can leak into a newly opened chat');
   assert(s.includes("select('user_one, user_two')") && s.includes('conversationVerified'), 'Chat identity is no longer verified from the conversation record');
   assert(!s.includes('const { conversationId, name, id }'), 'Chat trusts spoofable navigation identity parameters');
-  assert(s.includes('if (!conversationId || !conversationVerified)'), 'Messages can load before conversation membership is verified');
+  assert(s.includes('if (!conversationVerified)') && s.includes('setLoading(true)'), 'Messages can load before conversation membership is verified');
 }
 
 if (exists('src/app/cheers.tsx')) {
