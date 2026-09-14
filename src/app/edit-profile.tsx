@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 
 import { showAlert } from '../lib/notify';
+import { getActiveUntilIso, isProfileAvailable } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 
 type Profile = {
@@ -31,6 +32,7 @@ type Profile = {
   is_premium: boolean | null;
   premium_until: string | null;
   is_active: boolean | null;
+  active_until: string | null;
   avatar_url: string | null;
   share_cheers_discord: boolean | null;
 };
@@ -85,7 +87,7 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const { data, error } = await supabase.from('profiles').select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, avatar_url, share_cheers_discord').eq('id', session.user.id).single();
+      const { data, error } = await supabase.from('profiles').select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, active_until, avatar_url, share_cheers_discord').eq('id', session.user.id).single();
       if (error) {
         console.log('EDIT PROFILE LOAD ERROR:', error.message);
         return;
@@ -108,7 +110,14 @@ export default function EditProfileScreen() {
       setBio(loadedProfile.bio ?? '');
       setGender(loadedProfile.gender ?? '');
       setDrink(loadedProfile.currently_up_for ?? '🍺 Beer');
-      setIsActive(loadedProfile.is_active ?? true);
+      const activeSessionAvailable = isProfileAvailable(loadedProfile);
+      setIsActive(activeSessionAvailable);
+      if (loadedProfile.is_active && !activeSessionAvailable) {
+        void supabase
+          .from('profiles')
+          .update({ is_active: false, active_until: null, last_seen_at: null })
+          .eq('id', session.user.id);
+      }
       setAvatarUrl(loadedProfile.avatar_url ?? null);
       setShareCheersDiscord(loadedProfile.share_cheers_discord ?? false);
 
@@ -222,8 +231,14 @@ export default function EditProfileScreen() {
         return;
       }
 
+      const activeUntil = isActive
+        ? (isProfileAvailable(profile) ? profile.active_until : getActiveUntilIso())
+        : null;
+
       const { error } = await supabase.from('profiles').update({
         is_active: isActive,
+        active_until: activeUntil,
+        last_seen_at: isActive ? new Date().toISOString() : null,
         name: name.trim(),
         age: numericAge,
         city: detectedCity,
@@ -249,13 +264,25 @@ export default function EditProfileScreen() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
     const newValue = !isActive;
+    const activeUntil = newValue ? getActiveUntilIso() : null;
     setIsActive(newValue);
-    const { error } = await supabase.from('profiles').update({ is_active: newValue }).eq('id', session.user.id);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        is_active: newValue,
+        active_until: activeUntil,
+        last_seen_at: newValue ? new Date().toISOString() : null,
+      })
+      .eq('id', session.user.id);
     if (error) {
       console.log('ACTIVE STATUS ERROR:', error.message);
       setIsActive(!newValue);
       showAlert(error.message);
+      return;
     }
+    setProfile((current) => current
+      ? { ...current, is_active: newValue, active_until: activeUntil }
+      : current);
   }
 
   async function pickAndUploadAvatar() {
