@@ -1,0 +1,59 @@
+name: Patch Cheers Silent Refresh
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Polish Cheers refresh UX'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Polish Cheers refresh UX
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/app/cheers.tsx')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace(
+              "import { useCallback, useEffect, useState } from 'react';",
+              "import { useCallback, useEffect, useRef, useState } from 'react';",
+              1,
+          )
+          s = s.replace(
+              "  const [loading, setLoading] = useState(true);\n  const [isPremium, setIsPremium] = useState(false);\n\n  useFocusEffect(\n    useCallback(() => {\n      void loadCheers();\n",
+              "  const [loading, setLoading] = useState(true);\n  const [isPremium, setIsPremium] = useState(false);\n  const hasLoadedCheersRef = useRef(false);\n\n  useFocusEffect(\n    useCallback(() => {\n      void loadCheers(hasLoadedCheersRef.current);\n",
+              1,
+          )
+          s = s.replace("void loadCheers();", "void loadCheers(true);", 2)
+          s = s.replace(
+              "  async function loadCheers() {\n    try {\n      setLoading(true);\n",
+              "  async function loadCheers(silent = false) {\n    try {\n      if (!silent) setLoading(true);\n",
+              1,
+          )
+          s = s.replace(
+              "    } finally {\n      setLoading(false);\n    }\n  }\n",
+              "    } finally {\n      hasLoadedCheersRef.current = true;\n      if (!silent) setLoading(false);\n    }\n  }\n",
+              1,
+          )
+
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/cheers.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Polish Cheers refresh UX'
+          git push origin master
