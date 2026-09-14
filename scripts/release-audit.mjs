@@ -29,6 +29,7 @@ for (const required of [
   'src/app/edit-profile.tsx',
   'src/app/premium.android.tsx',
   'src/lib/push-notifications.ts',
+  'src/lib/conversations.ts',
   'src/lib/presence.ts',
   'supabase/functions/send-cheers-notification/index.ts',
   'supabase/functions/send-message-notification/index.ts',
@@ -118,6 +119,13 @@ if (exists('src/app/user-profile.tsx')) {
   assert(s.includes("supabase.functions.invoke('send-cheers-notification'"), 'Cheers push notification call is missing');
   assert(s.includes("supabase.rpc('is_blocked_between'") || s.includes("from('blocks')"), 'Profile safety flow no longer checks block state');
   assert(s.includes("pathname: '/chat'"), 'Mutual Cheers no longer opens chat');
+  assert(s.includes('findOrCreateConversation'), 'Profile chat opening no longer uses race-safe conversation creation');
+}
+
+if (exists('src/lib/conversations.ts')) {
+  const s = read('src/lib/conversations.ts');
+  assert(s.includes("createError?.code === '23505'"), 'Concurrent conversation creation is no longer recovered');
+  assert(s.includes("userOne = myId < otherId"), 'Conversation participant order is no longer canonical');
 }
 
 if (exists('src/app/chat.tsx')) {
@@ -135,7 +143,7 @@ if (exists('src/app/chat.tsx')) {
 if (exists('src/app/cheers.tsx')) {
   const s = read('src/app/cheers.tsx');
   assert(s.includes("status === 'Mutual Cheers'"), 'Mutual Cheers state is missing');
-  assert(s.includes("from('conversations')"), 'Cheers screen can no longer open/create chat conversations');
+  assert(s.includes('findOrCreateConversation'), 'Cheers screen no longer uses race-safe conversation creation');
   assert(s.includes("router.push('/premium')"), 'Received Cheers Premium reveal gate is missing');
 }
 
