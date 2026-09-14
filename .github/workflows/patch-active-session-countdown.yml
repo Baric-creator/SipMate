@@ -1,0 +1,55 @@
+name: Patch Active Session Countdown
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Show remaining Nearby active session time'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add active session countdown
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/app/index.tsx')
+          s = p.read_text(encoding='utf-8')
+
+          old = "  const [activityCount, setActivityCount] =\n    useState(0);\n"
+          new = "  const [activityCount, setActivityCount] =\n    useState(0);\n  const [activeClock, setActiveClock] = useState(Date.now());\n"
+          if old not in s:
+              raise SystemExit('activity state anchor not found')
+          s = s.replace(old, new, 1)
+
+          anchor = "  useEffect(() => {\n    const refreshActivity = () => {\n"
+          addition = "  useEffect(() => {\n    if (!profile?.is_active || !profile.active_until) return;\n\n    const tick = () => setActiveClock(Date.now());\n    tick();\n    const timer = setInterval(tick, 30_000);\n    return () => clearInterval(timer);\n  }, [profile?.is_active, profile?.active_until]);\n\n  function getActiveSessionLabel() {\n    if (!profile?.is_active || !profile.active_until) return null;\n    const remainingMs = new Date(profile.active_until).getTime() - activeClock;\n    if (!Number.isFinite(remainingMs) || remainingMs <= 0) return null;\n    const totalMinutes = Math.ceil(remainingMs / 60_000);\n    const hours = Math.floor(totalMinutes / 60);\n    const minutes = totalMinutes % 60;\n    const remaining = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;\n    return language === 'de'\n      ? `Noch ${remaining} auf Nearby sichtbar · Cheers-Benachrichtigungen an`\n      : language === 'hr'\n        ? `Još ${remaining} vidljiv na Nearbyu · Cheers obavijesti uključene`\n        : `${remaining} left on Nearby · Cheers notifications on`;\n  }\n\n" + anchor
+          if anchor not in s:
+              raise SystemExit('effect anchor not found')
+          s = s.replace(anchor, addition, 1)
+
+          old = "            {profile?.is_active\n              ? t(\n                  'discoverScreen.activeDescription'\n                )\n              : t(\n                  'discoverScreen.inactiveDescription'\n                )}\n"
+          new = "            {profile?.is_active\n              ? getActiveSessionLabel() ?? t(\n                  'discoverScreen.activeDescription'\n                )\n              : t(\n                  'discoverScreen.inactiveDescription'\n                )}\n"
+          if old not in s:
+              raise SystemExit('status description anchor not found')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/index.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Show remaining Nearby active session time'
+          git push origin master
