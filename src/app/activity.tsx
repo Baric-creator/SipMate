@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -67,10 +67,11 @@ export default function ActivityScreen() {
   const text = copy[language] ?? copy.en;
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasLoadedActivityRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      void loadActivity(false);
+      void loadActivity(hasLoadedActivityRef.current);
     }, [])
   );
 
@@ -187,6 +188,7 @@ export default function ActivityScreen() {
       setItems(merged);
       await AsyncStorage.setItem('sipmate:activity-seen-at', new Date().toISOString());
     } finally {
+      hasLoadedActivityRef.current = true;
       if (!silent) setLoading(false);
     }
   }
