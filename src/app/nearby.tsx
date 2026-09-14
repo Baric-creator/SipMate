@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -25,6 +25,8 @@ export default function NearbyScreen() {
 
   const [nearbyProfiles, setNearbyProfiles] =
     useState<any[]>([]);
+
+  const nearbyRequestIdRef = useRef(0);
 
   const [loading, setLoading] =
     useState(true);
@@ -207,6 +209,9 @@ export default function NearbyScreen() {
   }
 
   async function loadNearbyProfiles(silent = false) {
+    const requestId = ++nearbyRequestIdRef.current;
+    const isLatestRequest = () => requestId === nearbyRequestIdRef.current;
+
     try {
       if (!silent) setLoading(true);
 
@@ -215,7 +220,10 @@ export default function NearbyScreen() {
       } =
         await supabase.auth.getUser();
 
+      if (!isLatestRequest()) return;
+
       if (!user) {
+        setNearbyProfiles([]);
         console.log(
           'NEARBY: NO LOGGED USER'
         );
@@ -231,6 +239,8 @@ export default function NearbyScreen() {
         .eq('id', user.id)
         .single();
 
+      if (!isLatestRequest()) return;
+
       if (myError) {
         console.log(
           'MY PROFILE ERROR:',
@@ -240,6 +250,7 @@ export default function NearbyScreen() {
       }
 
       const { data: locationRows, error: locationError } = await supabase.rpc('get_my_profile_location');
+      if (!isLatestRequest()) return;
       if (locationError) {
         console.log('MY LOCATION LOAD ERROR:', locationError.message);
         return;
@@ -288,6 +299,8 @@ export default function NearbyScreen() {
             ? customLongitude
             : null,
       });
+
+      if (!isLatestRequest()) return;
 
       if (error) {
         console.log(
@@ -359,12 +372,13 @@ export default function NearbyScreen() {
         profilesWithDistance
       );
     } catch (error) {
+      if (!isLatestRequest()) return;
       console.log(
         'NEARBY CRASH:',
         error
       );
     } finally {
-      if (!silent) setLoading(false);
+      if (!silent && isLatestRequest()) setLoading(false);
     }
   }
 
@@ -375,7 +389,10 @@ export default function NearbyScreen() {
         void loadNearbyProfiles(true);
       }, 30_000);
 
-      return () => clearInterval(refreshInterval);
+      return () => {
+        clearInterval(refreshInterval);
+        nearbyRequestIdRef.current += 1;
+      };
     }, [
       maxDistance,
       drinkFilter,
