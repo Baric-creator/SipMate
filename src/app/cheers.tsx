@@ -27,6 +27,7 @@ type CheersItem = {
 };
 
 export default function CheersScreen() {
+  const chatOpeningRef = useRef(false);
   const { t } = useTranslation();
   const [cheers, setCheers] = useState<CheersItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,6 +138,10 @@ export default function CheersScreen() {
   }
 
   async function openChat(item: CheersItem) {
+    if (chatOpeningRef.current) return;
+    chatOpeningRef.current = true;
+
+    try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       router.push('/login');
@@ -156,7 +161,11 @@ export default function CheersScreen() {
     }
 
     router.push({ pathname: '/chat', params: { conversationId, id: item.userId, name: item.name } });
+    } finally {
+      chatOpeningRef.current = false;
+    }
   }
+
 
   const mutualCheers = cheers.filter((item) => item.status === 'Mutual Cheers');
   const receivedCheers = cheers.filter((item) => item.status === 'Received');
