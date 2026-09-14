@@ -538,7 +538,7 @@ export default function UserProfileScreen() {
   }
 
   async function startChat() {
-    if (!profile) || chatOpeningRef.current) return;
+    if (!profile || chatOpeningRef.current) return;
     chatOpeningRef.current = true;
 
     try {
