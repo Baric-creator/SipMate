@@ -155,6 +155,8 @@ if (exists('src/app/edit-profile.tsx')) {
   const s = read('src/app/edit-profile.tsx');
   assert(s.includes("supabase.rpc('get_my_profile_location'"), 'Edit Profile no longer uses the private own-location RPC');
   assert(!/from\('profiles'\)\.select\([^)]*latitude[^)]*longitude/i.test(s), 'Edit Profile directly selects coordinate columns from profiles');
+  assert(s.includes('getActiveUntilIso') && s.includes('active_until: activeUntil'), 'Edit Profile Active toggle no longer creates a valid timed Active session');
+  assert(s.includes('isProfileAvailable(loadedProfile)'), 'Edit Profile can display an expired Active session as enabled');
 }
 
 if (exists('src/app/premium.android.tsx')) {
