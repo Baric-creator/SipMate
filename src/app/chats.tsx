@@ -75,19 +75,21 @@ export default function ChatsScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      let isFocused = true;
       void loadChats(hasLoadedChatsRef.current);
 
       const channel = supabase
         .channel('chat-list-updates')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-          void loadChats(true);
+          if (isFocused) void loadChats(true);
         })
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
-          void loadChats(true);
+          if (isFocused) void loadChats(true);
         })
         .subscribe();
 
       return () => {
+        isFocused = false;
         chatsRequestIdRef.current += 1;
         void supabase.removeChannel(channel);
       };
@@ -144,10 +146,13 @@ export default function ChatsScreen() {
       }));
 
       setChats(items);
+    } catch (error) {
+      if (isLatestRequest()) console.log('CHAT LIST LOAD ERROR:', error);
     } finally {
       if (isLatestRequest()) {
         hasLoadedChatsRef.current = true;
-        if (!silent) setLoading(false);
+        // A silent refresh can supersede the initial visible load.
+        setLoading(false);
       }
     }
   }

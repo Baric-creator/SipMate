@@ -402,18 +402,21 @@ export default function NearbyScreen() {
         error
       );
     } finally {
-      if (!silent && isLatestRequest()) setLoading(false);
+      // The latest refresh owns the spinner, including a silent refresh.
+      if (isLatestRequest()) setLoading(false);
     }
   }
 
   useFocusEffect(
     useCallback(() => {
+      let isFocused = true;
       void loadNearbyProfiles();
       const refreshInterval = setInterval(() => {
-        void loadNearbyProfiles(true);
+        if (isFocused) void loadNearbyProfiles(true);
       }, 30_000);
 
       return () => {
+        isFocused = false;
         clearInterval(refreshInterval);
         nearbyRequestIdRef.current += 1;
       };

@@ -38,19 +38,21 @@ export default function CheersScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      let isFocused = true;
       void loadCheers(hasLoadedCheersRef.current);
 
       const channel = supabase
         .channel('cheers-screen-updates')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {
-          void loadCheers(true);
+          if (isFocused) void loadCheers(true);
         })
         .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {
-          void loadCheers(true);
+          if (isFocused) void loadCheers(true);
         })
         .subscribe();
 
       return () => {
+        isFocused = false;
         cheersRequestIdRef.current += 1;
         void supabase.removeChannel(channel);
       };
@@ -152,10 +154,13 @@ export default function CheersScreen() {
       const order = { 'Mutual Cheers': 0, Received: 1, Sent: 2 } as const;
       items.sort((a, b) => order[a.status] - order[b.status]);
       setCheers(items);
+    } catch (error) {
+      if (isLatestRequest()) console.log('CHEERS LOAD ERROR:', error);
     } finally {
       if (isLatestRequest()) {
         hasLoadedCheersRef.current = true;
-        if (!silent) setLoading(false);
+        // A silent refresh can supersede the initial visible load.
+        setLoading(false);
       }
     }
   }
