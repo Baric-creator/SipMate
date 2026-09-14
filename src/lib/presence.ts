@@ -19,7 +19,8 @@ export async function touchPresence() {
   const { error } = await supabase
     .from('profiles')
     .update({ last_seen_at: new Date().toISOString() })
-    .eq('id', session.user.id);
+    .eq('id', session.user.id)
+    .eq('is_active', true);
 
   if (error) console.log('PRESENCE UPDATE ERROR:', error.message);
 }

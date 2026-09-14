@@ -259,6 +259,7 @@ export default function HomeScreen() {
         .from('profiles')
         .update({
           is_active: newStatus,
+          last_seen_at: newStatus ? new Date().toISOString() : null,
         })
         .eq('id', profile.id);
 
