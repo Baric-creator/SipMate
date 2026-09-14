@@ -206,9 +206,9 @@ export default function NearbyScreen() {
     return R * c;
   }
 
-  async function loadNearbyProfiles() {
+  async function loadNearbyProfiles(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const {
         data: { user },
@@ -364,7 +364,7 @@ export default function NearbyScreen() {
         error
       );
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -372,7 +372,7 @@ export default function NearbyScreen() {
     useCallback(() => {
       void loadNearbyProfiles();
       const refreshInterval = setInterval(() => {
-        void loadNearbyProfiles();
+        void loadNearbyProfiles(true);
       }, 30_000);
 
       return () => clearInterval(refreshInterval);
