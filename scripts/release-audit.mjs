@@ -24,6 +24,7 @@ for (const required of [
   'src/app/user-profile.tsx',
   'src/app/profile.tsx',
   'src/app/chat.tsx',
+  'src/app/chats.tsx',
   'src/app/cheers.tsx',
   'src/app/nearby.tsx',
   'src/app/edit-profile.tsx',
@@ -147,6 +148,14 @@ if (exists('src/app/chat.tsx')) {
   assert(s.includes("select('user_one, user_two')") && s.includes('conversationVerified'), 'Chat identity is no longer verified from the conversation record');
   assert(!s.includes('const { conversationId, name, id }'), 'Chat trusts spoofable navigation identity parameters');
   assert(s.includes('if (!conversationVerified)') && s.includes('setLoading(true)'), 'Messages can load before conversation membership is verified');
+}
+
+if (exists('src/app/chats.tsx')) {
+  const s = read('src/app/chats.tsx');
+  assert(s.includes('chatsRequestIdRef.current') && s.includes('isLatestRequest()'), 'Stale chat-list refreshes can overwrite the current account');
+  assert(s.includes('chatsUserIdRef.current') && s.includes('accountChanged'), 'Chat-list state can leak across account changes');
+  assert(s.includes('useFocusEffect') && s.includes('removeChannel(channel)'), 'Chat-list realtime subscription is not scoped to the focused screen');
+  assert(!s.includes('&id=') && !s.includes('&name='), 'Chat list still passes spoofable identity parameters');
 }
 
 if (exists('src/app/cheers.tsx')) {
