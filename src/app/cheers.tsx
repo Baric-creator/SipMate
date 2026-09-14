@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -33,46 +33,64 @@ export default function CheersScreen() {
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const hasLoadedCheersRef = useRef(false);
+  const cheersRequestIdRef = useRef(0);
+  const cheersUserIdRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       void loadCheers(hasLoadedCheersRef.current);
+
+      const channel = supabase
+        .channel('cheers-screen-updates')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {
+          void loadCheers(true);
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {
+          void loadCheers(true);
+        })
+        .subscribe();
+
+      return () => {
+        cheersRequestIdRef.current += 1;
+        void supabase.removeChannel(channel);
+      };
     }, [t])
   );
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('cheers-screen-updates')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {
-        void loadCheers(true);
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {
-        void loadCheers(true);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
   async function loadCheers(silent = false) {
+    const requestId = ++cheersRequestIdRef.current;
+    const isLatestRequest = () => requestId === cheersRequestIdRef.current;
+
     try {
       if (!silent) setLoading(true);
 
       const { data: { session } } = await supabase.auth.getSession();
+      if (!isLatestRequest()) return;
       if (!session?.user) {
+        cheersUserIdRef.current = null;
         setCheers([]);
+        setIsPremium(false);
         return;
       }
 
       const myId = session.user.id;
+      const accountChanged =
+        cheersUserIdRef.current !== null &&
+        cheersUserIdRef.current !== myId;
+      cheersUserIdRef.current = myId;
+      if (accountChanged) {
+        setCheers([]);
+        setIsPremium(false);
+        hasLoadedCheersRef.current = false;
+      }
+
       const { data: myProfile, error: premiumError } = await supabase
         .from('profiles')
         .select('is_premium, premium_until')
         .eq('id', myId)
         .maybeSingle();
 
+      if (!isLatestRequest()) return;
       if (premiumError) console.log('PREMIUM STATUS ERROR:', premiumError.message);
 
       const premiumActive = myProfile?.is_premium === true &&
@@ -83,6 +101,7 @@ export default function CheersScreen() {
         .from('cheers')
         .select('id, sender_id, receiver_id, created_at')
         .eq('sender_id', myId);
+      if (!isLatestRequest()) return;
       if (sentError) {
         console.log('CHEERS SENT LOAD ERROR:', sentError.message);
         return;
@@ -92,6 +111,7 @@ export default function CheersScreen() {
         .from('cheers')
         .select('id, sender_id, receiver_id, created_at')
         .eq('receiver_id', myId);
+      if (!isLatestRequest()) return;
       if (receivedError) {
         console.log('CHEERS RECEIVED LOAD ERROR:', receivedError.message);
         return;
@@ -110,6 +130,7 @@ export default function CheersScreen() {
         .from('profiles')
         .select('id, name, age')
         .in('id', allUserIds);
+      if (!isLatestRequest()) return;
       if (profileError) {
         console.log('CHEERS PROFILE ERROR:', profileError.message);
         return;
@@ -132,8 +153,10 @@ export default function CheersScreen() {
       items.sort((a, b) => order[a.status] - order[b.status]);
       setCheers(items);
     } finally {
-      hasLoadedCheersRef.current = true;
-      if (!silent) setLoading(false);
+      if (isLatestRequest()) {
+        hasLoadedCheersRef.current = true;
+        if (!silent) setLoading(false);
+      }
     }
   }
 
