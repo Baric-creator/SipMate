@@ -389,7 +389,7 @@ export default function ChatScreen() {
         })}
       </ScrollView>
 
-      {otherUserTyping && <View style={styles.typingContainer}><Text style={styles.typingText}>{String(name || 'SipMate')} {text.typing}</Text></View>}
+      {otherUserTyping && <View style={styles.typingContainer}><Text style={styles.typingText}>{otherUserName} {text.typing}</Text></View>}
 
       {isBlocked ? (
         <View style={styles.blockedBar}><Text style={styles.blockedText}>{text.blocked}</Text></View>
