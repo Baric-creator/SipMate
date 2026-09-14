@@ -1,0 +1,51 @@
+name: Patch Activity Focus Refresh
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Polish activity focus refresh UX'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Polish activity focus refresh UX
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/app/activity.tsx')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace(
+              "import { useCallback, useEffect, useState } from 'react';",
+              "import { useCallback, useEffect, useRef, useState } from 'react';",
+              1,
+          )
+          s = s.replace(
+              "  const [items, setItems] = useState<ActivityItem[]>([]);\n  const [loading, setLoading] = useState(true);\n\n  useFocusEffect(\n    useCallback(() => {\n      void loadActivity(false);\n",
+              "  const [items, setItems] = useState<ActivityItem[]>([]);\n  const [loading, setLoading] = useState(true);\n  const hasLoadedActivityRef = useRef(false);\n\n  useFocusEffect(\n    useCallback(() => {\n      void loadActivity(hasLoadedActivityRef.current);\n",
+              1,
+          )
+          s = s.replace(
+              "    } finally {\n      if (!silent) setLoading(false);\n    }\n  }\n",
+              "    } finally {\n      hasLoadedActivityRef.current = true;\n      if (!silent) setLoading(false);\n    }\n  }\n",
+              1,
+          )
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/activity.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Polish activity focus refresh UX'
+          git push origin master
