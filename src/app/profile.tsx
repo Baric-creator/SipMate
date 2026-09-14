@@ -5,7 +5,7 @@ import { AppState, Image, Linking, Pressable, SafeAreaView, ScrollView, StyleShe
 
 import { showAlert } from '../lib/notify';
 import { FutureBackdrop } from '../components/FutureBackdrop';
-import { clearPresence } from '../lib/presence';
+import { clearPresence, isProfileOnline } from '../lib/presence';
 import { unregisterCurrentDevicePushTokenAsync } from '../lib/push-notifications';
 import { supabase } from '../lib/supabase';
 
@@ -18,6 +18,7 @@ type UserProfile = {
   bio: string | null;
   currently_up_for: string | null;
   is_active: boolean | null;
+  last_seen_at: string | null;
   is_premium: boolean;
   premium_until: string | null;
   discord_user_id: string | null;
@@ -63,7 +64,7 @@ export default function UserProfileScreen() {
       }
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, age, city, bio, currently_up_for, is_active, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
+        .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
         .eq('id', session.user.id)
         .maybeSingle();
       if (error) { console.log('PROFILE LOAD ERROR:', error.message); setProfile(null); return; }
@@ -83,7 +84,7 @@ export default function UserProfileScreen() {
             is_active: false,
             is_premium: false,
           }, { onConflict: 'id' })
-          .select('id, name, age, city, bio, currently_up_for, is_active, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
+          .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
           .single();
 
         if (createError) {
@@ -161,6 +162,8 @@ export default function UserProfileScreen() {
   if (loading) return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.loading}</Text></SafeAreaView>;
   if (!profile) return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.notFound}</Text></SafeAreaView>;
 
+  const profileOnline = isProfileOnline(profile);
+
   const premiumActive = profile.is_premium === true &&
     (!profile.premium_until || new Date(profile.premium_until) > new Date());
 
@@ -204,16 +207,16 @@ export default function UserProfileScreen() {
                 <Text style={styles.profileAvatarFallbackText}>{profile.name?.charAt(0).toUpperCase() || '?'}</Text>
               </View>
             )}
-            <View style={[styles.presenceDot, profile.is_active ? styles.presenceDotActive : styles.presenceDotInactive]} />
+            <View style={[styles.presenceDot, profileOnline ? styles.presenceDotActive : styles.presenceDotInactive]} />
           </View>
 
           <Text style={styles.name}>{profile.name ?? text.user}{profile.age ? `, ${profile.age}` : ''}</Text>
           <Text style={styles.city}>📍 {profile.city ?? text.location}</Text>
 
           <View style={styles.badgeRow}>
-            <View style={[styles.statusPill, profile.is_active ? styles.statusPillActive : styles.statusPillInactive]}>
-              <Text style={[styles.statusPillText, profile.is_active ? styles.statusTextActive : styles.statusTextInactive]}>
-                {profile.is_active ? t('profileScreen.active') : t('profileScreen.inactive')}
+            <View style={[styles.statusPill, profileOnline ? styles.statusPillActive : styles.statusPillInactive]}>
+              <Text style={[styles.statusPillText, profileOnline ? styles.statusTextActive : styles.statusTextInactive]}>
+                {profileOnline ? t('profileScreen.active') : t('profileScreen.inactive')}
               </Text>
             </View>
             {premiumActive && (
