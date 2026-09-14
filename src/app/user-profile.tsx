@@ -219,6 +219,7 @@ export default function UserProfileScreen() {
   const [cheersStatus, setCheersStatus] = useState<CheersStatus>('none');
   const [showCheersHint, setShowCheersHint] = useState(false);
 
+  const cheersSubmittingRef = useRef(false);
   const cheersScale = useRef(new Animated.Value(0)).current;
   const { width, height } = useWindowDimensions();
 
@@ -380,8 +381,10 @@ export default function UserProfileScreen() {
   }
 
   async function handleCheers() {
-    if (!profile) return;
+    if (!profile || cheersSubmittingRef.current) return;
+    cheersSubmittingRef.current = true;
 
+    try {
     if (showCheersHint) {
       setShowCheersHint(false);
       AsyncStorage.setItem('sipmate:cheers-hint:v1', 'seen');
@@ -454,6 +457,9 @@ export default function UserProfileScreen() {
     }
 
     showAlert(`🍻 ${text.cheersSentTo} ${profile.name ?? text.userFallback}!`);
+    } finally {
+      cheersSubmittingRef.current = false;
+    }
   }
 
   async function handleSubmitReport() {
