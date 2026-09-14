@@ -28,6 +28,9 @@ for (const required of [
   'src/app/edit-profile.tsx',
   'src/app/premium.android.tsx',
   'src/lib/push-notifications.ts',
+  'src/lib/presence.ts',
+  'supabase/functions/send-cheers-notification/index.ts',
+  'supabase/migrations/20260914142559_add_active_session_window.sql',
   'supabase/functions/admin-moderation/index.ts',
   'website/founder.html',
   'website/premium.html',
@@ -103,6 +106,7 @@ if (exists('src/app/user-profile.tsx')) {
   assert(s.includes("supabase.from('reports').insert"), 'In-app report submission is missing');
   assert(s.includes("supabase.from('blocks').insert"), 'In-app block action is missing');
   assert(s.includes("supabase.from('cheers').insert"), 'Cheers send action is missing');
+  assert(s.includes("supabase.functions.invoke('send-cheers-notification'"), 'Cheers push notification call is missing');
   assert(s.includes("supabase.rpc('is_blocked_between'") || s.includes("from('blocks')"), 'Profile safety flow no longer checks block state');
   assert(s.includes("pathname: '/chat'"), 'Mutual Cheers no longer opens chat');
 }
@@ -178,6 +182,7 @@ if (exists('supabase/functions/create-customer-portal/index.ts')) {
 if (exists('src/lib/push-notifications.ts')) {
   const s = read('src/lib/push-notifications.ts');
   assert(s.includes("Notifications.setNotificationChannelAsync('messages'"), 'Android message notification channel is missing');
+  assert(s.includes("Notifications.setNotificationChannelAsync('cheers'"), 'Android Cheers notification channel is missing');
   assert(s.includes('Notifications.requestPermissionsAsync()'), 'Push notification permission request is missing');
   assert(s.includes("supabase.functions.invoke('register-push-token'"), 'Push token registration backend call is missing');
   assert(s.includes(".from('device_push_tokens')"), 'Push token logout cleanup is missing');
@@ -187,7 +192,29 @@ if (exists('src/app/_layout.tsx')) {
   const s = read('src/app/_layout.tsx');
   assert(s.includes('Notifications.addNotificationResponseReceivedListener'), 'Notification tap listener is missing');
   assert(s.includes("pathname: '/chat'"), 'Message notifications no longer deep-link into chat');
+  assert(s.includes("pathname: '/user-profile'"), 'Cheers notifications no longer deep-link into sender profile');
   assert(s.includes('clearPresence()'), 'Presence cleanup is missing from app lifecycle');
+}
+
+if (exists('src/lib/presence.ts')) {
+  const s = read('src/lib/presence.ts');
+  assert(s.includes('ACTIVE_SESSION_DURATION_MS = 3 * 60 * 60 * 1000'), 'Nearby Active session duration changed unexpectedly');
+  assert(s.includes('isProfileAvailable'), 'Active session availability helper is missing');
+}
+
+if (exists('supabase/functions/send-cheers-notification/index.ts')) {
+  const s = read('supabase/functions/send-cheers-notification/index.ts');
+  assert(s.includes('auth.getUser(token)'), 'Cheers notification endpoint no longer validates caller JWT');
+  assert(s.includes('active_until'), 'Cheers notification endpoint no longer checks Active session expiry');
+  assert(s.includes('recipient_inactive'), 'Cheers notification endpoint no longer skips inactive recipients');
+  assert(s.includes('channelId: \"cheers\"'), 'Cheers push no longer uses the dedicated notification channel');
+}
+
+if (exists('supabase/migrations/20260914142559_add_active_session_window.sql')) {
+  const s = read('supabase/migrations/20260914142559_add_active_session_window.sql');
+  assert(s.includes('add column if not exists active_until timestamptz'), 'Active session database column migration is missing');
+  assert(s.includes('p.active_until > now()'), 'Nearby RPC no longer honors Active session expiry');
+  assert(!s.includes("p.last_seen_at >= now() - interval '90 seconds'"), 'Nearby RPC still expires users when the app goes to background');
 }
 
 if (exists('supabase/functions/admin-moderation/index.ts')) {
