@@ -339,13 +339,14 @@ export default function HomeScreen() {
 
     statusUpdateRef.current = true;
     const newStatus = !profile.is_active;
+    const activeUntil = newStatus ? getActiveUntilIso() : null;
 
     try {
       const { error } = await supabase
         .from('profiles')
         .update({
           is_active: newStatus,
-          active_until: newStatus ? getActiveUntilIso() : null,
+          active_until: activeUntil,
           last_seen_at: newStatus ? new Date().toISOString() : null,
         })
         .eq('id', profile.id);
@@ -355,7 +356,7 @@ export default function HomeScreen() {
         return;
       }
 
-      setProfile({ ...profile, is_active: newStatus, active_until: newStatus ? getActiveUntilIso() : null });
+      setProfile({ ...profile, is_active: newStatus, active_until: activeUntil });
       Vibration.vibrate(35);
       if (newStatus) {
         showAlert(language === 'de' ? '🍻 Du bist jetzt 3 Stunden auf Nearby sichtbar. Wir benachrichtigen dich, wenn dir jemand Cheers sendet.' : language === 'hr' ? '🍻 Sada si 3 sata vidljiv na Nearbyu. Obavijestit ćemo te kad ti netko pošalje Cheers.' : '🍻 You are now visible on Nearby for 3 hours. We will notify you when someone sends you Cheers.');
