@@ -208,6 +208,7 @@ if (exists('src/lib/push-notifications.ts')) {
 if (exists('src/app/_layout.tsx')) {
   const s = read('src/app/_layout.tsx');
   assert(s.includes('Notifications.addNotificationResponseReceivedListener'), 'Notification tap listener is missing');
+  assert(s.includes('Notifications.clearLastNotificationResponseAsync'), 'Consumed cold-start notification response is not cleared');
   assert(s.includes("pathname: '/chat'"), 'Message notifications no longer deep-link into chat');
   assert(s.includes("pathname: '/user-profile'"), 'Cheers notifications no longer deep-link into sender profile');
   assert(s.includes('clearPresence()'), 'Presence cleanup is missing from app lifecycle');

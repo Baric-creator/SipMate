@@ -106,8 +106,11 @@ export default function RootLayout() {
       }
     };
 
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (mounted && response) openFromNotification(response);
+    Notifications.getLastNotificationResponseAsync().then(async (response) => {
+      if (mounted && response) {
+        openFromNotification(response);
+        await Notifications.clearLastNotificationResponseAsync();
+      }
     });
 
     const notificationSubscription =
