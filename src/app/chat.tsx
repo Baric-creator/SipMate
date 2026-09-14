@@ -53,7 +53,7 @@ const copy = {
 } as const;
 
 export default function ChatScreen() {
-  const { conversationId, name, id } = useLocalSearchParams<{ conversationId?: string; name?: string; id?: string }>();
+  const { conversationId } = useLocalSearchParams<{ conversationId?: string }>();
   const router = useRouter();
   const { i18n } = useTranslation();
   const lang = i18n.language?.split('-')[0] as keyof typeof copy;
@@ -62,6 +62,9 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [otherUserId, setOtherUserId] = useState<string | null>(null);
+  const [otherUserName, setOtherUserName] = useState('SipMate');
+  const [conversationVerified, setConversationVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [otherUserActive, setOtherUserActive] = useState(false);
@@ -77,35 +80,83 @@ export default function ChatScreen() {
   const activeConversationIdRef = useRef('');
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setMyUserId(data.session?.user?.id ?? null));
-  }, []);
+    let active = true;
+    setConversationVerified(false);
+    setMyUserId(null);
+    setOtherUserId(null);
+    setOtherUserName('SipMate');
+
+    async function verifyConversation() {
+      if (!conversationId || !conversationVerified) {
+        if (active) setLoading(false);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!active) return;
+      if (!session?.user) {
+        router.replace('/login');
+        return;
+      }
+
+      const { data: conversation, error } = await supabase
+        .from('conversations')
+        .select('user_one, user_two')
+        .eq('id', String(conversationId))
+        .maybeSingle();
+
+      if (!active) return;
+      if (error || !conversation) {
+        if (error) console.log('CONVERSATION VERIFY ERROR:', error.message);
+        router.replace('/chats');
+        return;
+      }
+
+      const myId = session.user.id;
+      if (conversation.user_one !== myId && conversation.user_two !== myId) {
+        router.replace('/chats');
+        return;
+      }
+
+      setMyUserId(myId);
+      setOtherUserId(conversation.user_one === myId ? conversation.user_two : conversation.user_one);
+      setConversationVerified(true);
+    }
+
+    void verifyConversation();
+    return () => { active = false; };
+  }, [conversationId, router]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!otherUserId) return;
+    let active = true;
     async function loadOtherUser() {
-      const { data, error } = await supabase.from('profiles').select('is_active, last_seen_at, avatar_url').eq('id', String(id)).maybeSingle();
+      const { data, error } = await supabase.from('profiles').select('name, is_active, last_seen_at, avatar_url').eq('id', otherUserId).maybeSingle();
+      if (!active) return;
       if (error) return console.log('OTHER USER PROFILE ERROR:', error.message);
+      setOtherUserName(data?.name ?? 'SipMate');
       setOtherUserActive(isProfileOnline(data ?? {}));
       setOtherAvatar(data?.avatar_url ?? null);
     }
-    loadOtherUser();
-  }, [id]);
+    void loadOtherUser();
+    return () => { active = false; };
+  }, [otherUserId]);
 
   useEffect(() => {
-    if (!id || !myUserId) return;
+    if (!otherUserId || !myUserId) return;
     async function checkBlockStatus() {
-      const { data, error } = await supabase.rpc('is_blocked_between', { user_a: myUserId, user_b: String(id) });
+      const { data, error } = await supabase.rpc('is_blocked_between', { user_a: myUserId, user_b: otherUserId });
       if (error) return console.log('BLOCK STATUS ERROR:', error.message);
       setIsBlocked(Boolean(data));
     }
     checkBlockStatus();
-  }, [id, myUserId]);
+  }, [otherUserId, myUserId]);
 
   useFocusEffect(
     useCallback(() => {
-      if (!id || !myUserId) return;
+      if (!otherUserId || !myUserId) return;
       let active = true;
-      supabase.rpc('is_blocked_between', { user_a: myUserId, user_b: String(id) }).then(({ data, error }) => {
+      supabase.rpc('is_blocked_between', { user_a: myUserId, user_b: otherUserId }).then(({ data, error }) => {
         if (error) {
           console.log('BLOCK STATUS REFRESH ERROR:', error.message);
           return;
@@ -113,20 +164,20 @@ export default function ChatScreen() {
         if (active) setIsBlocked(Boolean(data));
       });
       return () => { active = false; };
-    }, [id, myUserId])
+    }, [otherUserId, myUserId])
   );
 
   useEffect(() => {
-    if (!id) return;
-    const channel = supabase.channel(`profile-status-${id}`).on('postgres_changes', {
-      event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${String(id)}`,
+    if (!otherUserId) return;
+    const channel = supabase.channel(`profile-status-${otherUserId}`).on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${otherUserId}`,
     }, (payload) => {
       const profile = payload.new as { is_active?: boolean | null; last_seen_at?: string | null; avatar_url?: string | null };
       setOtherUserActive(isProfileOnline(profile));
       if (typeof profile.avatar_url !== 'undefined') setOtherAvatar(profile.avatar_url ?? null);
     }).subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [id]);
+  }, [otherUserId]);
 
   useEffect(() => {
     activeConversationIdRef.current = conversationId ? String(conversationId) : '';
@@ -143,7 +194,7 @@ export default function ChatScreen() {
     void markMessagesAsRead();
 
     return () => { messagesRequestIdRef.current += 1; };
-  }, [conversationId]);
+  }, [conversationId, conversationVerified]);
 
   useEffect(() => {
     return () => {
@@ -153,10 +204,10 @@ export default function ChatScreen() {
       }
       void sendTypingStatus(false);
     };
-  }, [conversationId, myUserId]);
+  }, [conversationId, myUserId, conversationVerified]);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !conversationVerified) return;
     const channel = supabase.channel(`chat-${conversationId}`)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${String(conversationId)}`,
@@ -202,7 +253,7 @@ export default function ChatScreen() {
 
   async function sendMessage() {
     const content = messageText.trim();
-    if (!content || !conversationId || messageSendingRef.current || sendingMessage || isBlocked) return;
+    if (!content || !conversationId || !conversationVerified || messageSendingRef.current || sendingMessage || isBlocked) return;
 
     messageSendingRef.current = true;
     try {
@@ -290,15 +341,15 @@ export default function ChatScreen() {
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.chatHeaderUser} activeOpacity={0.8} onPress={() => {
-          if (id) router.push({ pathname: '/user-profile', params: { id: String(id) } });
+          if (otherUserId) router.push({ pathname: '/user-profile', params: { id: otherUserId } });
         }}>
           {otherAvatar ? (
             <Image source={{ uri: `${otherAvatar}${otherAvatar.includes('?') ? '&' : '?'}refresh=${Date.now()}` }} style={styles.headerAvatar} resizeMode="cover" />
           ) : (
-            <View style={styles.headerAvatarFallback}><Text style={styles.headerAvatarFallbackText}>{String(name || '?').charAt(0).toUpperCase()}</Text></View>
+            <View style={styles.headerAvatarFallback}><Text style={styles.headerAvatarFallbackText}>{otherUserName.charAt(0).toUpperCase()}</Text></View>
           )}
           <View style={styles.headerInfo}>
-            <Text style={styles.headerName}>{String(name || 'SipMate')}</Text>
+            <Text style={styles.headerName}>{otherUserName}</Text>
             <Text style={[styles.status, { color: otherUserActive ? '#22C55E' : '#71717A' }]}>● {otherUserActive ? text.active : text.inactive}</Text>
             <View style={styles.connectedRow}><Text style={styles.connectedEmoji}>🍻</Text><Text style={styles.connectedText}>{text.connected}</Text></View>
           </View>
