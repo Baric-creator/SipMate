@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -367,17 +367,6 @@ export default function NearbyScreen() {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    loadNearbyProfiles();
-  }, [
-    maxDistance,
-    drinkFilter,
-    ageFilter,
-    genderFilter,
-    customLatitude,
-    customLongitude,
-  ]);
 
   useFocusEffect(
     useCallback(() => {
