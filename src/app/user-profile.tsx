@@ -289,19 +289,20 @@ export default function UserProfileScreen() {
       return;
     }
 
-    const { data: sentCheers } = await supabase
-      .from('cheers')
-      .select('id')
-      .eq('sender_id', myId)
-      .eq('receiver_id', targetUserId)
-      .maybeSingle();
-
-    const { data: receivedCheers } = await supabase
-      .from('cheers')
-      .select('id')
-      .eq('sender_id', targetUserId)
-      .eq('receiver_id', myId)
-      .maybeSingle();
+    const [{ data: sentCheers }, { data: receivedCheers }] = await Promise.all([
+      supabase
+        .from('cheers')
+        .select('id')
+        .eq('sender_id', myId)
+        .eq('receiver_id', targetUserId)
+        .maybeSingle(),
+      supabase
+        .from('cheers')
+        .select('id')
+        .eq('sender_id', targetUserId)
+        .eq('receiver_id', myId)
+        .maybeSingle(),
+    ]);
 
     if (sentCheers && receivedCheers) setCheersStatus('mutual');
     else if (sentCheers) setCheersStatus('sent');
@@ -323,48 +324,31 @@ export default function UserProfileScreen() {
 
       const targetId = typeof id === 'string' && id ? id : session.user.id;
 
-      const { data: myProfile, error: premiumError } = await supabase
-        .from('profiles')
-        .select('is_premium, premium_until')
-        .eq('id', session.user.id)
-        .maybeSingle();
+      const [premiumResult, profileResult, photosResult] = await Promise.all([
+        supabase.from('profiles').select('is_premium, premium_until').eq('id', session.user.id).maybeSingle(),
+        supabase.from('profiles').select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url').eq('id', targetId).maybeSingle(),
+        supabase.from('profile_photos').select('id, photo_url, sort_order').eq('user_id', targetId).order('sort_order', { ascending: true }),
+      ]);
 
-      if (premiumError) {
-        console.log('PREMIUM STATUS ERROR:', premiumError.message);
-      }
-
-      const premiumActive =
-        myProfile?.is_premium === true &&
-        (!myProfile.premium_until ||
-          new Date(myProfile.premium_until) > new Date());
+      if (premiumResult.error) console.log('PREMIUM STATUS ERROR:', premiumResult.error.message);
+      const premiumActive = premiumResult.data?.is_premium === true && (!premiumResult.data.premium_until || new Date(premiumResult.data.premium_until) > new Date());
       setIsPremium(premiumActive);
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url')
-        .eq('id', targetId)
-        .maybeSingle();
-
-      const { data: photosData, error: photosError } = await supabase
-        .from('profile_photos')
-        .select('id, photo_url, sort_order')
-        .eq('user_id', targetId)
-        .order('sort_order', { ascending: true });
-
-      if (photosError) {
-        console.log('USER PROFILE PHOTOS ERROR:', photosError.message);
+      if (photosResult.error) {
+        console.log('USER PROFILE PHOTOS ERROR:', photosResult.error.message);
+        setProfilePhotos([]);
       } else {
-        setProfilePhotos((photosData ?? []) as ProfilePhoto[]);
+        setProfilePhotos((photosResult.data ?? []) as ProfilePhoto[]);
       }
 
-      if (error) {
-        console.log('PROFILE LOAD ERROR:', error.message);
+      if (profileResult.error) {
+        console.log('PROFILE LOAD ERROR:', profileResult.error.message);
         setProfile(null);
         return;
       }
 
-      setProfile(data as UserProfile | null);
-      if (data?.id) await checkCheersStatus(data.id);
+      setProfile(profileResult.data as UserProfile | null);
+      if (profileResult.data?.id) await checkCheersStatus(profileResult.data.id);
     } finally {
       setLoading(false);
     }
