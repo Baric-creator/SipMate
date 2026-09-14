@@ -33,15 +33,14 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
-    await admin.from("device_push_tokens").delete().eq("token", pushToken);
-    const { error: insertError } = await admin.from("device_push_tokens").insert({
+    const { error: upsertError } = await admin.from("device_push_tokens").upsert({
       token: pushToken,
       user_id: user.id,
       platform,
       updated_at: new Date().toISOString(),
-    });
-    if (insertError) {
-      console.error("PUSH TOKEN STORE ERROR", insertError);
+    }, { onConflict: "token" });
+    if (upsertError) {
+      console.error("PUSH TOKEN STORE ERROR", upsertError);
       return new Response(JSON.stringify({ error: "store_failed" }), { status: 500, headers });
     }
 

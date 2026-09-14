@@ -194,6 +194,7 @@ if (exists('supabase/functions/register-push-token/index.ts')) {
   assert(s.includes('auth.getUser(token)'), 'Push token endpoint no longer validates caller JWT');
   assert(s.includes('invalid_push_token'), 'Push token validation is missing');
   assert(s.includes('device_push_tokens'), 'Push token storage is missing');
+  assert(s.includes('.upsert({') && s.includes('onConflict: \"token\"'), 'Push token registration is no longer idempotent');
 }
 
 if (exists('src/lib/push-notifications.ts')) {
