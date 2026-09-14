@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 
 import { askConfirmation, showAlert } from '../lib/notify';
-import { isProfileOnline } from '../lib/presence';
+import { isProfileAvailable } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 
 type CheersStatus = 'none' | 'sent' | 'mutual';
@@ -32,6 +32,7 @@ type UserProfile = {
   currently_up_for: string | null;
   is_active: boolean | null;
   last_seen_at: string | null;
+  active_until: string | null;
 };
 
 type ProfilePhoto = {
@@ -326,7 +327,7 @@ export default function UserProfileScreen() {
 
       const [premiumResult, profileResult, photosResult] = await Promise.all([
         supabase.from('profiles').select('is_premium, premium_until').eq('id', session.user.id).maybeSingle(),
-        supabase.from('profiles').select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url').eq('id', targetId).maybeSingle(),
+        supabase.from('profiles').select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, active_until, avatar_url').eq('id', targetId).maybeSingle(),
         supabase.from('profile_photos').select('id, photo_url, sort_order').eq('user_id', targetId).order('sort_order', { ascending: true }),
       ]);
 
@@ -406,16 +407,22 @@ export default function UserProfileScreen() {
     setCheersStatus('sent');
     Vibration.vibrate(35);
 
-    const { error: sendError } = await supabase.from('cheers').insert({
+    const { data: sentCheersRow, error: sendError } = await supabase.from('cheers').insert({
       sender_id: senderId,
       receiver_id: receiverId,
-    });
+    }).select('id').maybeSingle();
 
     if (sendError && sendError.code !== '23505') {
       console.log('CHEERS SEND ERROR:', sendError.message);
       showAlert(`${text.cheersError}: ${sendError.message}`);
       setCheersStatus('none');
       return;
+    }
+
+    if (!sendError && sentCheersRow?.id) {
+      supabase.functions.invoke('send-cheers-notification', { body: { cheersId: sentCheersRow.id } }).then(({ error }) => {
+        if (error) console.log('CHEERS PUSH ERROR:', error.message);
+      });
     }
 
     const { data: mutualCheers, error: mutualError } = await supabase
@@ -601,7 +608,7 @@ export default function UserProfileScreen() {
     );
   }
 
-  const online = isProfileOnline(profile);
+  const online = isProfileAvailable(profile);
 
   const reportReasons = [
     ['inappropriate_behavior', text.inappropriate],

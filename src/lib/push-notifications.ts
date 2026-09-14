@@ -35,6 +35,14 @@ export async function registerForPushNotificationsAsync() {
       lightColor: '#EF4444',
       sound: 'default',
     });
+
+    await Notifications.setNotificationChannelAsync('cheers', {
+      name: 'Cheers',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 180, 100, 280],
+      lightColor: '#EF4444',
+      sound: 'default',
+    });
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();

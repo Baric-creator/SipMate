@@ -95,25 +95,23 @@ export default function RootLayout() {
       }
     });
 
-    const openChatFromNotification = (response: Notifications.NotificationResponse) => {
+    const openFromNotification = (response: Notifications.NotificationResponse) => {
       const data = response.notification.request.content.data as Record<string, unknown>;
-      if (data?.type !== 'message' || !data?.conversationId) return;
-      router.push({
-        pathname: '/chat',
-        params: {
-          conversationId: String(data.conversationId),
-          name: String(data.name ?? 'SipMate'),
-          id: String(data.id ?? ''),
-        },
-      });
+      if (data?.type === 'message' && data?.conversationId) {
+        router.push({ pathname: '/chat', params: { conversationId: String(data.conversationId), name: String(data.name ?? 'SipMate'), id: String(data.id ?? '') } });
+        return;
+      }
+      if (data?.type === 'cheers' && data?.id) {
+        router.push({ pathname: '/user-profile', params: { id: String(data.id) } });
+      }
     };
 
     Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (mounted && response) openChatFromNotification(response);
+      if (mounted && response) openFromNotification(response);
     });
 
     const notificationSubscription =
-      Notifications.addNotificationResponseReceivedListener(openChatFromNotification);
+      Notifications.addNotificationResponseReceivedListener(openFromNotification);
 
     return () => {
       mounted = false;

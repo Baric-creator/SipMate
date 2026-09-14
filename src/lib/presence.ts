@@ -1,6 +1,20 @@
 import { supabase } from './supabase';
 
 export const PRESENCE_TIMEOUT_MS = 90_000;
+export const ACTIVE_SESSION_DURATION_MS = 3 * 60 * 60 * 1000;
+
+export function getActiveUntilIso() {
+  return new Date(Date.now() + ACTIVE_SESSION_DURATION_MS).toISOString();
+}
+
+export function isProfileAvailable(profile: {
+  is_active?: boolean | null;
+  active_until?: string | null;
+}) {
+  if (profile.is_active !== true || !profile.active_until) return false;
+  const activeUntil = new Date(profile.active_until).getTime();
+  return Number.isFinite(activeUntil) && activeUntil > Date.now();
+}
 
 export function isProfileOnline(profile: {
   is_active?: boolean | null;

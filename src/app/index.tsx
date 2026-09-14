@@ -23,6 +23,8 @@ import {
 } from 'react-native';
 
 import { useTranslation } from 'react-i18next';
+import { getActiveUntilIso, isProfileAvailable } from '../lib/presence';
+import { showAlert } from '../lib/notify';
 import { supabase } from '../lib/supabase';
 import { Skeleton } from '../components/Skeleton';
 import { FutureBackdrop } from '../components/FutureBackdrop';
@@ -33,6 +35,7 @@ type UserProfile = {
   city: string | null;
   currently_up_for: string | null;
   is_active: boolean;
+  active_until: string | null;
 };
 
 export default function HomeScreen() {
@@ -181,7 +184,7 @@ export default function HomeScreen() {
         await supabase
           .from('profiles')
           .select(
-            'id, name, city, currently_up_for, is_active'
+            'id, name, city, currently_up_for, is_active, active_until'
           )
           .eq(
             'id',
@@ -212,7 +215,7 @@ export default function HomeScreen() {
             is_active: false,
             is_premium: false,
           }, { onConflict: 'id' })
-          .select('id, name, city, currently_up_for, is_active')
+          .select('id, name, city, currently_up_for, is_active, active_until')
           .single();
 
         if (createError) {
@@ -225,7 +228,11 @@ export default function HomeScreen() {
         return;
       }
 
-      setProfile(data);
+      const sessionActive = isProfileAvailable(data);
+      if (data.is_active && !sessionActive) {
+        void supabase.from('profiles').update({ is_active: false, active_until: null, last_seen_at: null }).eq('id', session.user.id);
+      }
+      setProfile({ ...data, is_active: sessionActive });
       await loadActivityCount(session.user.id);
     } finally {
       hasLoadedHomeRef.current = true;
@@ -287,6 +294,7 @@ export default function HomeScreen() {
         .from('profiles')
         .update({
           is_active: newStatus,
+          active_until: newStatus ? getActiveUntilIso() : null,
           last_seen_at: newStatus ? new Date().toISOString() : null,
         })
         .eq('id', profile.id);
@@ -296,8 +304,11 @@ export default function HomeScreen() {
         return;
       }
 
-      setProfile({ ...profile, is_active: newStatus });
+      setProfile({ ...profile, is_active: newStatus, active_until: newStatus ? getActiveUntilIso() : null });
       Vibration.vibrate(35);
+      if (newStatus) {
+        showAlert(language === 'de' ? '🍻 Du bist jetzt 3 Stunden auf Nearby sichtbar. Wir benachrichtigen dich, wenn dir jemand Cheers sendet.' : language === 'hr' ? '🍻 Sada si 3 sata vidljiv na Nearbyu. Obavijestit ćemo te kad ti netko pošalje Cheers.' : '🍻 You are now visible on Nearby for 3 hours. We will notify you when someone sends you Cheers.');
+      }
     } finally {
       statusUpdateRef.current = false;
     }
