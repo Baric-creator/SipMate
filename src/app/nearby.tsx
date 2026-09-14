@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 
-import { isProfileOnline } from '../lib/presence';
 import { showAlert } from '../lib/notify';
 import { supabase } from '../lib/supabase';
 import { ProfileCardSkeleton } from '../components/Skeleton';
@@ -380,37 +379,23 @@ export default function NearbyScreen() {
     customLongitude,
   ]);
 
-  useEffect(() => {
-    const channel = supabase
-      .channel(
-        'nearby-profile-status'
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-        },
-        () => {
-          loadNearbyProfiles();
-        }
-      )
-      .subscribe();
+  useFocusEffect(
+    useCallback(() => {
+      void loadNearbyProfiles();
+      const refreshInterval = setInterval(() => {
+        void loadNearbyProfiles();
+      }, 30_000);
 
-    return () => {
-      supabase.removeChannel(
-        channel
-      );
-    };
-  }, [
-    maxDistance,
-    drinkFilter,
-    ageFilter,
-    genderFilter,
-    customLatitude,
-    customLongitude,
-  ]);
+      return () => clearInterval(refreshInterval);
+    }, [
+      maxDistance,
+      drinkFilter,
+      ageFilter,
+      genderFilter,
+      customLatitude,
+      customLongitude,
+    ])
+  );
 
   async function handleSkipProfile(
     skippedUserId: string
