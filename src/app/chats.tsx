@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image,
@@ -71,46 +71,34 @@ export default function ChatsScreen() {
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(true);
   const hasLoadedChatsRef = useRef(false);
+  const chatsRequestIdRef = useRef(0);
+  const chatsUserIdRef = useRef<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       void loadChats(hasLoadedChatsRef.current);
+
+      const channel = supabase
+        .channel('chat-list-updates')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+          void loadChats(true);
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
+          void loadChats(true);
+        })
+        .subscribe();
+
+      return () => {
+        chatsRequestIdRef.current += 1;
+        void supabase.removeChannel(channel);
+      };
     }, [language])
   );
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('chat-list-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-        },
-        () => {
-          void loadChats(true);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-        },
-        () => {
-          void loadChats(true);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
   async function loadChats(silent = false) {
+    const requestId = ++chatsRequestIdRef.current;
+    const isLatestRequest = () => requestId === chatsRequestIdRef.current;
+
     try {
       if (!silent) setLoading(true);
 
@@ -118,12 +106,23 @@ export default function ChatsScreen() {
         data: { session },
       } = await supabase.auth.getSession();
 
+      if (!isLatestRequest()) return;
       if (!session?.user) {
+        chatsUserIdRef.current = null;
+        setChats([]);
         router.replace('/login');
         return;
       }
 
       const myId = session.user.id;
+      const accountChanged =
+        chatsUserIdRef.current !== null &&
+        chatsUserIdRef.current !== myId;
+      chatsUserIdRef.current = myId;
+      if (accountChanged) {
+        setChats([]);
+        hasLoadedChatsRef.current = false;
+      }
 
       const { data: conversations, error: conversationError } =
         await supabase
@@ -132,6 +131,7 @@ export default function ChatsScreen() {
           .or(`user_one.eq.${myId},user_two.eq.${myId}`)
           .order('created_at', { ascending: false });
 
+      if (!isLatestRequest()) return;
       if (conversationError) {
         console.log(
           'CHATS CONVERSATIONS ERROR:',
@@ -156,6 +156,7 @@ export default function ChatsScreen() {
         .select('id, name, age, is_active, last_seen_at, avatar_url')
         .in('id', otherUserIds);
 
+      if (!isLatestRequest()) return;
       if (profileError) {
         console.log('CHATS PROFILES ERROR:', profileError.message);
         return;
@@ -207,6 +208,7 @@ export default function ChatsScreen() {
         };
       }));
 
+      if (!isLatestRequest()) return;
       items.sort((a, b) => {
         const aTime = a.lastMessageTime
           ? new Date(a.lastMessageTime).getTime()
@@ -219,18 +221,18 @@ export default function ChatsScreen() {
 
       setChats(items);
     } finally {
-      hasLoadedChatsRef.current = true;
-      if (!silent) setLoading(false);
+      if (isLatestRequest()) {
+        hasLoadedChatsRef.current = true;
+        if (!silent) setLoading(false);
+      }
     }
   }
 
   function openChat(item: ChatItem) {
-    const url =
-      `/chat?conversationId=${encodeURIComponent(item.conversationId)}` +
-      `&id=${encodeURIComponent(item.userId)}` +
-      `&name=${encodeURIComponent(item.name)}`;
-
-    router.push(url as any);
+    router.push({
+      pathname: '/chat',
+      params: { conversationId: item.conversationId },
+    });
   }
 
   function formatTime(value: string | null) {
