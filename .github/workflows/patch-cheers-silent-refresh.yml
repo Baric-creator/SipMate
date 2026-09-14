@@ -41,6 +41,11 @@ jobs:
               "    } finally {\n      hasLoadedCheersRef.current = true;\n      if (!silent) setLoading(false);\n    }\n  }\n",
               1,
           )
+          s = s.replace(
+              "<TouchableOpacity style={styles.refreshButton} onPress={loadCheers}>",
+              "<TouchableOpacity style={styles.refreshButton} onPress={() => void loadCheers(false)}>",
+              1,
+          )
 
           p.write_text(s, encoding='utf-8', newline='\n')
           PY
