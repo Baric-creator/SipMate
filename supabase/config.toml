@@ -30,3 +30,13 @@ entrypoint = "./functions/admin-moderation/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/send-cheers-notification/index.ts"
+
+[functions.send-message-notification]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/send-message-notification/index.ts"
+
+[functions.register-push-token]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/register-push-token/index.ts"
