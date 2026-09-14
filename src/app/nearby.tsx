@@ -27,6 +27,7 @@ export default function NearbyScreen() {
     useState<any[]>([]);
 
   const nearbyRequestIdRef = useRef(0);
+  const nearbyUserIdRef = useRef<string | null>(null);
 
   const [loading, setLoading] =
     useState(true);
@@ -223,12 +224,35 @@ export default function NearbyScreen() {
       if (!isLatestRequest()) return;
 
       if (!user) {
+        nearbyUserIdRef.current = null;
         setNearbyProfiles([]);
+        setSkippedProfiles([]);
+        setIsPremium(false);
+        setCustomCity('');
+        setCustomLatitude(null);
+        setCustomLongitude(null);
         console.log(
           'NEARBY: NO LOGGED USER'
         );
         return;
       }
+
+      const accountChanged =
+        nearbyUserIdRef.current !== null &&
+        nearbyUserIdRef.current !== user.id;
+      nearbyUserIdRef.current = user.id;
+
+      if (accountChanged) {
+        setNearbyProfiles([]);
+        setSkippedProfiles([]);
+        setIsPremium(false);
+        setCustomCity('');
+        setCustomLatitude(null);
+        setCustomLongitude(null);
+      }
+
+      const requestCustomLatitude = accountChanged ? null : customLatitude;
+      const requestCustomLongitude = accountChanged ? null : customLongitude;
 
       const {
         data: myProfile,
@@ -291,12 +315,12 @@ export default function NearbyScreen() {
       } = await supabase.rpc('get_nearby_profiles', {
         max_distance_km: maxDistance,
         custom_origin_latitude:
-          premiumActive && customLatitude !== null
-            ? customLatitude
+          premiumActive && requestCustomLatitude !== null
+            ? requestCustomLatitude
             : null,
         custom_origin_longitude:
-          premiumActive && customLongitude !== null
-            ? customLongitude
+          premiumActive && requestCustomLongitude !== null
+            ? requestCustomLongitude
             : null,
       });
 
