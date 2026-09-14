@@ -149,6 +149,8 @@ if (exists('src/app/nearby.tsx')) {
   assert(s.includes('premiumActive && customLongitude !== null'), 'Nearby custom longitude uses stale Premium state instead of current entitlement');
   assert(!s.includes('isPremium && customLatitude !== null'), 'Nearby custom location still depends on stale React Premium state');
   assert(!s.includes('isPremium && customLongitude !== null'), 'Nearby custom longitude still depends on stale React Premium state');
+  assert(s.includes('useFocusEffect') && s.includes('30_000'), 'Nearby no longer refreshes safely while focused');
+  assert(!s.includes(".channel(\n        'nearby-profile-status'"), 'Nearby subscribes to every profile heartbeat and can trigger refresh storms');
 }
 
 if (exists('src/app/edit-profile.tsx')) {
