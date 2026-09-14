@@ -30,3 +30,6 @@ jobs:
 
       - name: Release readiness audit
         run: npm run release:audit
+
+      - name: Dependency vulnerability audit
+        run: npm audit --audit-level=high --json
