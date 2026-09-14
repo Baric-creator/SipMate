@@ -1,0 +1,58 @@
+name: Patch Logout Active Session
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Stop Active session on logout'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch logout Active cleanup
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/app/profile.tsx')
+          s = p.read_text(encoding='utf-8')
+          old = "  async function handleLogout() {\n    await clearPresence();\n    await unregisterCurrentDevicePushTokenAsync();\n    const { error } = await supabase.auth.signOut();\n"
+          new = "  async function handleLogout() {\n    if (profile?.id) {\n      const { error: activeCleanupError } = await supabase\n        .from('profiles')\n        .update({ is_active: false, active_until: null, last_seen_at: null })\n        .eq('id', profile.id);\n      if (activeCleanupError) console.log('LOGOUT ACTIVE CLEANUP ERROR:', activeCleanupError.message);\n    }\n    await clearPresence();\n    await unregisterCurrentDevicePushTokenAsync();\n    const { error } = await supabase.auth.signOut();\n"
+          if old not in s:
+              raise SystemExit('logout anchor missing')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8', newline='\n')
+
+          p = Path('scripts/release-audit.mjs')
+          s = p.read_text(encoding='utf-8')
+          req_anchor = "  'src/app/user-profile.tsx',\n"
+          if "  'src/app/profile.tsx',\n" not in s:
+              if req_anchor not in s:
+                  raise SystemExit('release required file anchor missing')
+              s = s.replace(req_anchor, req_anchor + "  'src/app/profile.tsx',\n", 1)
+
+          audit_anchor = "if (exists('src/app/user-profile.tsx')) {\n"
+          block = "if (exists('src/app/profile.tsx')) {\n  const s = read('src/app/profile.tsx');\n  assert(s.includes('active_until: null') && s.includes('is_active: false'), 'Logout no longer stops the Active Nearby session');\n  assert(s.includes('unregisterCurrentDevicePushTokenAsync'), 'Logout no longer unregisters the current device push token');\n}\n\n"
+          if 'Logout no longer stops the Active Nearby session' not in s:
+              if audit_anchor not in s:
+                  raise SystemExit('release profile audit anchor missing')
+              s = s.replace(audit_anchor, block + audit_anchor, 1)
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/profile.tsx scripts/release-audit.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Stop Active session on logout'
+          git push origin master
