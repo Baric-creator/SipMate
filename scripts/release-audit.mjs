@@ -145,13 +145,14 @@ if (exists('src/app/nearby.tsx')) {
   assert(s.includes("supabase.rpc('get_my_profile_location'"), 'Nearby no longer uses the private own-location RPC');
   assert(!/\.select\([^)]*latitude[^)]*longitude/i.test(s), 'Nearby directly selects precise profile coordinates');
   assert(s.includes('distance_km'), 'Nearby no longer consumes server-calculated distance');
-  assert(s.includes('premiumActive && customLatitude !== null'), 'Nearby custom location uses stale Premium state instead of current entitlement');
-  assert(s.includes('premiumActive && customLongitude !== null'), 'Nearby custom longitude uses stale Premium state instead of current entitlement');
+  assert(s.includes('premiumActive && requestCustomLatitude !== null'), 'Nearby custom location uses stale Premium state instead of current entitlement');
+  assert(s.includes('premiumActive && requestCustomLongitude !== null'), 'Nearby custom longitude uses stale Premium state instead of current entitlement');
   assert(!s.includes('isPremium && customLatitude !== null'), 'Nearby custom location still depends on stale React Premium state');
   assert(!s.includes('isPremium && customLongitude !== null'), 'Nearby custom longitude still depends on stale React Premium state');
   assert(s.includes('useFocusEffect') && s.includes('30_000'), 'Nearby no longer refreshes safely while focused');
   assert(!s.includes(".channel(\n        'nearby-profile-status'"), 'Nearby subscribes to every profile heartbeat and can trigger refresh storms');
   assert(s.includes('nearbyRequestIdRef') && s.includes('isLatestRequest()'), 'Nearby can apply stale results after account or filter changes');
+  assert(s.includes('nearbyUserIdRef') && s.includes('accountChanged'), 'Nearby can leak session-scoped state across account changes');
 }
 
 if (exists('src/app/edit-profile.tsx')) {
