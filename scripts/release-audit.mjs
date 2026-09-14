@@ -185,6 +185,7 @@ if (exists('supabase/functions/send-message-notification/index.ts')) {
   const s = read('supabase/functions/send-message-notification/index.ts');
   assert(s.includes('auth.getUser(token)'), 'Message notification endpoint no longer validates caller JWT');
   assert(s.includes('is_blocked_between'), 'Message notification endpoint no longer checks blocked users');
+  assert(s.includes('already_read'), 'Message notification endpoint no longer skips already-read messages');
   assert(s.includes('channelId: \"messages\"'), 'Message push no longer uses the messages channel');
 }
 

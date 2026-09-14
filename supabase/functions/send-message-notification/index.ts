@@ -37,11 +37,13 @@ Deno.serve(async (req) => {
 
     const { data: message, error: messageError } = await admin
       .from("messages")
-      .select("id, conversation_id, sender_id, content")
+      .select("id, conversation_id, sender_id, content, read_at")
       .eq("id", messageId)
       .single();
     if (messageError || !message) return new Response(JSON.stringify({ error: "message_not_found" }), { status: 404, headers });
     if (message.sender_id !== caller.id) return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers });
+
+    if (message.read_at) return new Response(JSON.stringify({ ok: true, skipped: "already_read" }), { status: 200, headers });
 
     const { data: conversation } = await admin
       .from("conversations")
