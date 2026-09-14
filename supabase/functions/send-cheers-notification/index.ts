@@ -69,6 +69,21 @@ Deno.serve(async (req) => {
       body: JSON.stringify(payload),
     });
     const result = await pushResponse.json().catch(() => ({}));
+    const tickets = Array.isArray(result?.data) ? result.data : [];
+    const staleTokens = tickets
+      .map((ticket: any, index: number) =>
+        ticket?.status === "error" && ticket?.details?.error === "DeviceNotRegistered"
+          ? tokens[index]
+          : null
+      )
+      .filter((value: string | null): value is string => Boolean(value));
+    if (staleTokens.length) {
+      const { error: cleanupError } = await admin
+        .from("device_push_tokens")
+        .delete()
+        .in("token", staleTokens);
+      if (cleanupError) console.error("STALE PUSH TOKEN CLEANUP ERROR", cleanupError);
+    }
     if (!pushResponse.ok) return new Response(JSON.stringify({ error: "push_failed" }), { status: 502, headers });
     return new Response(JSON.stringify({ ok: true, mutual, result }), { status: 200, headers });
   } catch (error) {
