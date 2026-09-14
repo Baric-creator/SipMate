@@ -189,8 +189,12 @@ export default function ChatScreen() {
     setMessages([]);
     setOtherUserTyping(false);
 
-    if (!conversationId || !conversationVerified) {
+    if (!conversationId) {
       setLoading(false);
+      return () => { messagesRequestIdRef.current += 1; };
+    }
+    if (!conversationVerified) {
+      setLoading(true);
       return () => { messagesRequestIdRef.current += 1; };
     }
 
