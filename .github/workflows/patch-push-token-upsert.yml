@@ -20,31 +20,8 @@ jobs:
 
           p = Path('supabase/functions/register-push-token/index.ts')
           s = p.read_text(encoding='utf-8')
-          old = '''    const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
-    await admin.from("device_push_tokens").delete().eq("token", pushToken);
-    const { error: insertError } = await admin.from("device_push_tokens").insert({
-      token: pushToken,
-      user_id: user.id,
-      platform,
-      updated_at: new Date().toISOString(),
-    });
-    if (insertError) {
-      console.error("PUSH TOKEN STORE ERROR", insertError);
-      return new Response(JSON.stringify({ error: "store_failed" }), { status: 500, headers });
-    }
-'''
-          new = '''    const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
-    const { error: upsertError } = await admin.from("device_push_tokens").upsert({
-      token: pushToken,
-      user_id: user.id,
-      platform,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "token" });
-    if (upsertError) {
-      console.error("PUSH TOKEN STORE ERROR", upsertError);
-      return new Response(JSON.stringify({ error: "store_failed" }), { status: 500, headers });
-    }
-'''
+          old = '    const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });\n    await admin.from("device_push_tokens").delete().eq("token", pushToken);\n    const { error: insertError } = await admin.from("device_push_tokens").insert({\n      token: pushToken,\n      user_id: user.id,\n      platform,\n      updated_at: new Date().toISOString(),\n    });\n    if (insertError) {\n      console.error("PUSH TOKEN STORE ERROR", insertError);\n      return new Response(JSON.stringify({ error: "store_failed" }), { status: 500, headers });\n    }\n'
+          new = '    const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });\n    const { error: upsertError } = await admin.from("device_push_tokens").upsert({\n      token: pushToken,\n      user_id: user.id,\n      platform,\n      updated_at: new Date().toISOString(),\n    }, { onConflict: "token" });\n    if (upsertError) {\n      console.error("PUSH TOKEN STORE ERROR", upsertError);\n      return new Response(JSON.stringify({ error: "store_failed" }), { status: 500, headers });\n    }\n'
           if old not in s:
               raise SystemExit('push token storage anchor missing')
           s = s.replace(old, new, 1)
