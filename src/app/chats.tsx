@@ -10,7 +10,6 @@ import {
   View,
 } from 'react-native';
 
-import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 import { FutureBackdrop } from '../components/FutureBackdrop';
 import { ChatCardSkeleton } from '../components/Skeleton';
@@ -124,100 +123,25 @@ export default function ChatsScreen() {
         hasLoadedChatsRef.current = false;
       }
 
-      const { data: conversations, error: conversationError } =
-        await supabase
-          .from('conversations')
-          .select('id, user_one, user_two, created_at')
-          .or(`user_one.eq.${myId},user_two.eq.${myId}`)
-          .order('created_at', { ascending: false });
+      const { data: chatRows, error: chatListError } = await supabase.rpc('get_chat_list');
 
       if (!isLatestRequest()) return;
-      if (conversationError) {
-        console.log(
-          'CHATS CONVERSATIONS ERROR:',
-          conversationError.message
-        );
+      if (chatListError) {
+        console.log('CHAT LIST ERROR:', chatListError.message);
         return;
       }
 
-      if (!conversations?.length) {
-        setChats([]);
-        return;
-      }
-
-      const otherUserIds = Array.from(new Set(conversations.map((conversation) =>
-        conversation.user_one === myId
-          ? conversation.user_two
-          : conversation.user_one
-      )));
-
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, name, age, is_active, last_seen_at, avatar_url')
-        .in('id', otherUserIds);
-
-      if (!isLatestRequest()) return;
-      if (profileError) {
-        console.log('CHATS PROFILES ERROR:', profileError.message);
-        return;
-      }
-
-      const items = await Promise.all(conversations.map(async (conversation): Promise<ChatItem> => {
-        const otherUserId =
-          conversation.user_one === myId
-            ? conversation.user_two
-            : conversation.user_one;
-
-        const otherProfile = profiles?.find(
-          (profile) => profile.id === otherUserId
-        );
-
-        const [lastMessageResult, unreadResult] = await Promise.all([
-          supabase
-            .from('messages')
-            .select('content, created_at')
-            .eq('conversation_id', conversation.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-          supabase
-            .from('messages')
-            .select('id', { count: 'exact', head: true })
-            .eq('conversation_id', conversation.id)
-            .neq('sender_id', myId)
-            .is('read_at', null),
-        ]);
-
-        if (lastMessageResult.error) {
-          console.log('LAST MESSAGE ERROR:', lastMessageResult.error.message);
-        }
-        if (unreadResult.error) {
-          console.log('UNREAD COUNT ERROR:', unreadResult.error.message);
-        }
-
-        return {
-          unreadCount: unreadResult.count ?? 0,
-          conversationId: conversation.id,
-          userId: otherUserId,
-          name: otherProfile?.name ?? text.userFallback,
-          age: otherProfile?.age ?? null,
-          isActive: isProfileOnline(otherProfile ?? {}),
-          lastMessage: lastMessageResult.data?.content ?? text.noMessages,
-          lastMessageTime: lastMessageResult.data?.created_at ?? null,
-          avatar_url: otherProfile?.avatar_url ?? null,
-        };
+      const items: ChatItem[] = (chatRows ?? []).map((row: any) => ({
+        conversationId: String(row.conversation_id),
+        userId: String(row.user_id),
+        name: row.name ?? text.userFallback,
+        age: row.age ?? null,
+        isActive: row.is_active === true,
+        lastMessage: row.last_message ?? text.noMessages,
+        lastMessageTime: row.last_message_time ?? null,
+        unreadCount: Number(row.unread_count ?? 0),
+        avatar_url: row.avatar_url ?? null,
       }));
-
-      if (!isLatestRequest()) return;
-      items.sort((a, b) => {
-        const aTime = a.lastMessageTime
-          ? new Date(a.lastMessageTime).getTime()
-          : 0;
-        const bTime = b.lastMessageTime
-          ? new Date(b.lastMessageTime).getTime()
-          : 0;
-        return bTime - aTime;
-      });
 
       setChats(items);
     } finally {
