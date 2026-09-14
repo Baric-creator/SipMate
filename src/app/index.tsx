@@ -90,11 +90,37 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!profile?.is_active || !profile.active_until) return;
 
-    const tick = () => setActiveClock(Date.now());
-    tick();
-    const timer = setInterval(tick, 30_000);
-    return () => clearInterval(timer);
-  }, [profile?.is_active, profile?.active_until]);
+    const activeUntil = profile.active_until;
+    const expiresAt = new Date(activeUntil).getTime();
+    if (!Number.isFinite(expiresAt)) return;
+
+    const expireSession = () => {
+      setProfile((current) =>
+        current?.active_until === activeUntil
+          ? { ...current, is_active: false, active_until: null }
+          : current
+      );
+      void supabase
+        .from('profiles')
+        .update({ is_active: false, active_until: null, last_seen_at: null })
+        .eq('id', profile.id)
+        .eq('active_until', activeUntil);
+    };
+
+    const remainingMs = expiresAt - Date.now();
+    if (remainingMs <= 0) {
+      expireSession();
+      return;
+    }
+
+    setActiveClock(Date.now());
+    const clockTimer = setInterval(() => setActiveClock(Date.now()), 30_000);
+    const expiryTimer = setTimeout(expireSession, remainingMs);
+    return () => {
+      clearInterval(clockTimer);
+      clearTimeout(expiryTimer);
+    };
+  }, [profile?.id, profile?.is_active, profile?.active_until]);
 
   function getActiveSessionLabel() {
     if (!profile?.is_active || !profile.active_until) return null;
