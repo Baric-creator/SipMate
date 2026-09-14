@@ -106,7 +106,7 @@ if (exists('src/app/delete-account.tsx')) {
 
 if (exists('src/app/profile.tsx')) {
   const s = read('src/app/profile.tsx');
-  assert(s.includes('active_until: null') && s.includes('is_active: false'), 'Logout no longer stops the Active Nearby session');
+  assert(s.includes('stopActiveSession()'), 'Logout no longer stops the Active Nearby session for the authenticated account');
   assert(s.includes('unregisterCurrentDevicePushTokenAsync'), 'Logout no longer unregisters the current device push token');
 }
 
@@ -226,6 +226,7 @@ if (exists('src/lib/presence.ts')) {
   const s = read('src/lib/presence.ts');
   assert(s.includes('ACTIVE_SESSION_DURATION_MS = 3 * 60 * 60 * 1000'), 'Nearby Active session duration changed unexpectedly');
   assert(s.includes('isProfileAvailable'), 'Active session availability helper is missing');
+  assert(s.includes('export async function stopActiveSession()') && s.includes(".eq('id', session.user.id)"), 'Authenticated Active session cleanup is missing');
 }
 
 if (exists('supabase/functions/send-cheers-notification/index.ts')) {
