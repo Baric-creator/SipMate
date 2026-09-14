@@ -120,6 +120,7 @@ if (exists('src/app/user-profile.tsx')) {
   assert(s.includes("supabase.rpc('is_blocked_between'") || s.includes("from('blocks')"), 'Profile safety flow no longer checks block state');
   assert(s.includes("pathname: '/chat'"), 'Mutual Cheers no longer opens chat');
   assert(s.includes('findOrCreateConversation'), 'Profile chat opening no longer uses race-safe conversation creation');
+  assert(s.includes('chatOpeningRef.current'), 'Profile can navigate to the same chat twice after rapid taps');
   assert(s.includes('cheersSubmittingRef.current') && s.includes('finally'), 'Rapid taps can submit Cheers concurrently');
 }
 
@@ -145,6 +146,7 @@ if (exists('src/app/cheers.tsx')) {
   const s = read('src/app/cheers.tsx');
   assert(s.includes("status === 'Mutual Cheers'"), 'Mutual Cheers state is missing');
   assert(s.includes('findOrCreateConversation'), 'Cheers screen no longer uses race-safe conversation creation');
+  assert(s.includes('chatOpeningRef.current'), 'Cheers can navigate to the same chat twice after rapid taps');
   assert(s.includes("router.push('/premium')"), 'Received Cheers Premium reveal gate is missing');
 }
 
