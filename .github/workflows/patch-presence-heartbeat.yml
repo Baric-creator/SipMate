@@ -20,17 +20,8 @@ jobs:
 
           presence = Path('src/lib/presence.ts')
           s = presence.read_text(encoding='utf-8')
-          old = """  const { error } = await supabase
-    .from('profiles')
-    .update({ last_seen_at: new Date().toISOString() })
-    .eq('id', session.user.id);
-"""
-          new = """  const { error } = await supabase
-    .from('profiles')
-    .update({ last_seen_at: new Date().toISOString() })
-    .eq('id', session.user.id)
-    .eq('is_active', true);
-"""
+          old = "  const { error } = await supabase\n    .from('profiles')\n    .update({ last_seen_at: new Date().toISOString() })\n    .eq('id', session.user.id);\n"
+          new = "  const { error } = await supabase\n    .from('profiles')\n    .update({ last_seen_at: new Date().toISOString() })\n    .eq('id', session.user.id)\n    .eq('is_active', true);\n"
           if old not in s:
               raise SystemExit('presence heartbeat anchor not found')
           s = s.replace(old, new, 1)
@@ -38,15 +29,8 @@ jobs:
 
           home = Path('src/app/index.tsx')
           s = home.read_text(encoding='utf-8')
-          old = """        .update({
-          is_active: newStatus,
-        })
-"""
-          new = """        .update({
-          is_active: newStatus,
-          last_seen_at: newStatus ? new Date().toISOString() : null,
-        })
-"""
+          old = "        .update({\n          is_active: newStatus,\n        })\n"
+          new = "        .update({\n          is_active: newStatus,\n          last_seen_at: newStatus ? new Date().toISOString() : null,\n        })\n"
           if old not in s:
               raise SystemExit('home active toggle anchor not found')
           s = s.replace(old, new, 1)
