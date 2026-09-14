@@ -1,0 +1,58 @@
+name: Patch Home Silent Refresh
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Polish home focus refresh UX'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Polish home focus refresh UX
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/app/index.tsx')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace(
+              "  useCallback,\n  useState,\n} from 'react';",
+              "  useCallback,\n  useRef,\n  useState,\n} from 'react';",
+              1,
+          )
+          s = s.replace(
+              "  const [activityCount, setActivityCount] =\n    useState(0);\n\n  useFocusEffect(\n    useCallback(() => {\n      loadProfile();\n",
+              "  const [activityCount, setActivityCount] =\n    useState(0);\n  const hasLoadedHomeRef = useRef(false);\n\n  useFocusEffect(\n    useCallback(() => {\n      void loadProfile(hasLoadedHomeRef.current);\n",
+              1,
+          )
+          s = s.replace(
+              "  async function loadProfile() {\n    try {\n      setLoading(true);\n",
+              "  async function loadProfile(silent = false) {\n    try {\n      if (!silent) setLoading(true);\n",
+              1,
+          )
+          s = s.replace(
+              "    } finally {\n      setLoading(false);\n    }\n  }\n",
+              "    } finally {\n      hasLoadedHomeRef.current = true;\n      if (!silent) setLoading(false);\n    }\n  }\n",
+              1,
+          )
+
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/index.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Polish home focus refresh UX'
+          git push origin master
