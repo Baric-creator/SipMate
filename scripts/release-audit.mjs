@@ -122,6 +122,7 @@ if (exists('src/app/user-profile.tsx')) {
   assert(s.includes('findOrCreateConversation'), 'Profile chat opening no longer uses race-safe conversation creation');
   assert(s.includes('chatOpeningRef.current'), 'Profile can navigate to the same chat twice after rapid taps');
   assert(s.includes('cheersSubmittingRef.current') && s.includes('finally'), 'Rapid taps can submit Cheers concurrently');
+  assert(s.includes('profileRequestIdRef.current') && s.includes('requestId'), 'Stale profile responses can overwrite a newly opened user profile');
 }
 
 if (exists('src/lib/conversations.ts')) {
