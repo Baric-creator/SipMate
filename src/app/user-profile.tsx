@@ -221,6 +221,7 @@ export default function UserProfileScreen() {
 
   const cheersSubmittingRef = useRef(false);
   const chatOpeningRef = useRef(false);
+  const profileRequestIdRef = useRef(0);
   const cheersScale = useRef(new Animated.Value(0)).current;
   const { width, height } = useWindowDimensions();
 
@@ -245,10 +246,30 @@ export default function UserProfileScreen() {
   ).current;
 
   useEffect(() => {
-    loadUserProfile();
+    const requestId = ++profileRequestIdRef.current;
+    let active = true;
+
+    setProfile(null);
+    setProfilePhotos([]);
+    setSelectedPhoto(null);
+    setCheersStatus('none');
+    setIsPremium(false);
+    setShowMutualCheers(false);
+    setShowUserMenu(false);
+    setShowReportModal(false);
+    setReportReason(null);
+
+    void loadUserProfile(requestId);
     AsyncStorage.getItem('sipmate:cheers-hint:v1').then((value) => {
-      setShowCheersHint(!value);
+      if (active && requestId === profileRequestIdRef.current) {
+        setShowCheersHint(!value);
+      }
     });
+
+    return () => {
+      active = false;
+      profileRequestIdRef.current += 1;
+    };
   }, [id]);
 
   function localizeCurrentUpFor(value: string | null) {
@@ -280,12 +301,14 @@ export default function UserProfileScreen() {
     return value;
   }
 
-  async function checkCheersStatus(targetUserId: string) {
+  async function checkCheersStatus(targetUserId: string, requestId: number) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
     if (!session?.user) return;
+
+    if (requestId !== profileRequestIdRef.current) return;
 
     const myId = session.user.id;
     if (myId === targetUserId) {
@@ -308,12 +331,13 @@ export default function UserProfileScreen() {
         .maybeSingle(),
     ]);
 
+    if (requestId !== profileRequestIdRef.current) return;
     if (sentCheers && receivedCheers) setCheersStatus('mutual');
     else if (sentCheers) setCheersStatus('sent');
     else setCheersStatus('none');
   }
 
-  async function loadUserProfile() {
+  async function loadUserProfile(requestId: number) {
     try {
       setLoading(true);
 
@@ -321,6 +345,7 @@ export default function UserProfileScreen() {
         data: { session },
       } = await supabase.auth.getSession();
 
+      if (requestId !== profileRequestIdRef.current) return;
       if (!session?.user) {
         setProfile(null);
         return;
@@ -334,6 +359,7 @@ export default function UserProfileScreen() {
         supabase.from('profile_photos').select('id, photo_url, sort_order').eq('user_id', targetId).order('sort_order', { ascending: true }),
       ]);
 
+      if (requestId !== profileRequestIdRef.current) return;
       if (premiumResult.error) console.log('PREMIUM STATUS ERROR:', premiumResult.error.message);
       const premiumActive = premiumResult.data?.is_premium === true && (!premiumResult.data.premium_until || new Date(premiumResult.data.premium_until) > new Date());
       setIsPremium(premiumActive);
@@ -352,9 +378,9 @@ export default function UserProfileScreen() {
       }
 
       setProfile(profileResult.data as UserProfile | null);
-      if (profileResult.data?.id) await checkCheersStatus(profileResult.data.id);
+      if (profileResult.data?.id) await checkCheersStatus(profileResult.data.id, requestId);
     } finally {
-      setLoading(false);
+      if (requestId === profileRequestIdRef.current) setLoading(false);
     }
   }
 
