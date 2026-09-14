@@ -1,0 +1,67 @@
+name: Patch Presence Heartbeat
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Keep presence heartbeat aligned with active status'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Polish presence heartbeat
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          presence = Path('src/lib/presence.ts')
+          s = presence.read_text(encoding='utf-8')
+          old = """  const { error } = await supabase
+    .from('profiles')
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq('id', session.user.id);
+"""
+          new = """  const { error } = await supabase
+    .from('profiles')
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq('id', session.user.id)
+    .eq('is_active', true);
+"""
+          if old not in s:
+              raise SystemExit('presence heartbeat anchor not found')
+          s = s.replace(old, new, 1)
+          presence.write_text(s, encoding='utf-8', newline='\n')
+
+          home = Path('src/app/index.tsx')
+          s = home.read_text(encoding='utf-8')
+          old = """        .update({
+          is_active: newStatus,
+        })
+"""
+          new = """        .update({
+          is_active: newStatus,
+          last_seen_at: newStatus ? new Date().toISOString() : null,
+        })
+"""
+          if old not in s:
+              raise SystemExit('home active toggle anchor not found')
+          s = s.replace(old, new, 1)
+          home.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/lib/presence.ts src/app/index.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Keep presence heartbeat aligned with active status'
+          git push origin master
