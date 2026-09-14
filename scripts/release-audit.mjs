@@ -22,6 +22,7 @@ for (const required of [
   'src/app/reset-password.tsx',
   'src/app/delete-account.tsx',
   'src/app/user-profile.tsx',
+  'src/app/profile.tsx',
   'src/app/chat.tsx',
   'src/app/cheers.tsx',
   'src/app/nearby.tsx',
@@ -101,6 +102,12 @@ if (exists('src/app/delete-account.tsx')) {
   const s = read('src/app/delete-account.tsx');
   assert(s.includes("supabase.functions.invoke('delete-account'"), 'In-app delete-account flow is missing');
   assert(s.includes('Authorization: `Bearer ${accessToken}`'), 'Delete-account request is not authenticated');
+}
+
+if (exists('src/app/profile.tsx')) {
+  const s = read('src/app/profile.tsx');
+  assert(s.includes('active_until: null') && s.includes('is_active: false'), 'Logout no longer stops the Active Nearby session');
+  assert(s.includes('unregisterCurrentDevicePushTokenAsync'), 'Logout no longer unregisters the current device push token');
 }
 
 if (exists('src/app/user-profile.tsx')) {

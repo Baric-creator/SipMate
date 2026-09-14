@@ -152,6 +152,13 @@ export default function UserProfileScreen() {
   }
 
   async function handleLogout() {
+    if (profile?.id) {
+      const { error: activeCleanupError } = await supabase
+        .from('profiles')
+        .update({ is_active: false, active_until: null, last_seen_at: null })
+        .eq('id', profile.id);
+      if (activeCleanupError) console.log('LOGOUT ACTIVE CLEANUP ERROR:', activeCleanupError.message);
+    }
     await clearPresence();
     await unregisterCurrentDevicePushTokenAsync();
     const { error } = await supabase.auth.signOut();
