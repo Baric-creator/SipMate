@@ -1,0 +1,46 @@
+name: Patch Profile Presence Accuracy
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Use presence timeout on profile status'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Align profile presence status
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/app/profile.tsx')
+          s = p.read_text(encoding='utf-8')
+
+          s = s.replace("import { clearPresence } from '../lib/presence';", "import { clearPresence, isProfileOnline } from '../lib/presence';", 1)
+          s = s.replace("  is_active: boolean | null;\n", "  is_active: boolean | null;\n  last_seen_at: string | null;\n", 1)
+          s = s.replace("currently_up_for, is_active, avatar_url", "currently_up_for, is_active, last_seen_at, avatar_url")
+          s = s.replace("  const premiumActive = profile.is_premium === true &&\n", "  const profileOnline = isProfileOnline(profile);\n\n  const premiumActive = profile.is_premium === true &&\n", 1)
+          s = s.replace("profile.is_active ? styles.presenceDotActive : styles.presenceDotInactive", "profileOnline ? styles.presenceDotActive : styles.presenceDotInactive")
+          s = s.replace("profile.is_active ? styles.statusPillActive : styles.statusPillInactive", "profileOnline ? styles.statusPillActive : styles.statusPillInactive")
+          s = s.replace("profile.is_active ? styles.statusTextActive : styles.statusTextInactive", "profileOnline ? styles.statusTextActive : styles.statusTextInactive")
+          s = s.replace("{profile.is_active ? t('profileScreen.active') : t('profileScreen.inactive')}", "{profileOnline ? t('profileScreen.active') : t('profileScreen.inactive')}")
+
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/profile.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Use presence timeout on profile status'
+          git push origin master
