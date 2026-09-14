@@ -1,0 +1,48 @@
+name: Patch Stale Push Token Cleanup
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Prune stale Expo push tokens'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch push senders
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          for rel in [
+              'supabase/functions/send-message-notification/index.ts',
+              'supabase/functions/send-cheers-notification/index.ts',
+          ]:
+              p = Path(rel)
+              s = p.read_text(encoding='utf-8')
+              old = '    const result = await pushResponse.json().catch(() => ({}));\n'
+              if old not in s:
+                  raise SystemExit(f'push response anchor missing in {rel}')
+              if 'DeviceNotRegistered' in s:
+                  continue
+              new = old + '''    const tickets = Array.isArray(result?.data) ? result.data : [];\n    const staleTokens = tickets\n      .map((ticket: any, index: number) =>\n        ticket?.status === "error" && ticket?.details?.error === "DeviceNotRegistered"\n          ? tokens[index]\n          : null\n      )\n      .filter((value: string | null): value is string => Boolean(value));\n    if (staleTokens.length) {\n      const { error: cleanupError } = await admin\n        .from("device_push_tokens")\n        .delete()\n        .in("token", staleTokens);\n      if (cleanupError) console.error("STALE PUSH TOKEN CLEANUP ERROR", cleanupError);\n    }\n'''
+              s = s.replace(old, new, 1)
+              p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add supabase/functions/send-message-notification/index.ts supabase/functions/send-cheers-notification/index.ts
+          git diff --cached --quiet && exit 0
+          git commit -m 'Prune stale Expo push tokens'
+          git push origin master
