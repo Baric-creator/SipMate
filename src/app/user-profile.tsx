@@ -18,6 +18,7 @@ import {
 
 import { askConfirmation, showAlert } from '../lib/notify';
 import { isProfileAvailable } from '../lib/presence';
+import { findOrCreateConversation } from '../lib/conversations';
 import { supabase } from '../lib/supabase';
 
 type CheersStatus = 'none' | 'sent' | 'mutual';
@@ -545,36 +546,14 @@ export default function UserProfileScreen() {
     const otherId = profile.id;
     if (myId === otherId) return;
 
-    const userOne = myId < otherId ? myId : otherId;
-    const userTwo = myId < otherId ? otherId : myId;
-
-    const { data: existingConversation, error: findError } = await supabase
-      .from('conversations')
-      .select('id')
-      .eq('user_one', userOne)
-      .eq('user_two', userTwo)
-      .maybeSingle();
-
-    if (findError) {
-      console.log('CONVERSATION FIND ERROR:', findError.message);
+    let conversationId: string;
+    try {
+      const resolvedConversationId = await findOrCreateConversation(myId, otherId);
+      if (!resolvedConversationId) return;
+      conversationId = resolvedConversationId;
+    } catch (error: any) {
+      console.log('CONVERSATION OPEN ERROR:', error?.message ?? error);
       return;
-    }
-
-    let conversationId = existingConversation?.id;
-
-    if (!conversationId) {
-      const { data: newConversation, error: createError } = await supabase
-        .from('conversations')
-        .insert({ user_one: userOne, user_two: userTwo })
-        .select('id')
-        .single();
-
-      if (createError) {
-        console.log('CONVERSATION CREATE ERROR:', createError.message);
-        return;
-      }
-
-      conversationId = newConversation.id;
     }
 
     setShowMutualCheers(false);
