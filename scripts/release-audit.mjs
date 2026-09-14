@@ -30,6 +30,8 @@ for (const required of [
   'src/lib/push-notifications.ts',
   'src/lib/presence.ts',
   'supabase/functions/send-cheers-notification/index.ts',
+  'supabase/functions/send-message-notification/index.ts',
+  'supabase/functions/register-push-token/index.ts',
   'supabase/migrations/20260914142559_add_active_session_window.sql',
   'supabase/functions/admin-moderation/index.ts',
   'website/founder.html',
@@ -177,6 +179,20 @@ if (exists('supabase/functions/create-customer-portal/index.ts')) {
   const s = read('supabase/functions/create-customer-portal/index.ts');
   assert(s.includes('/premium.html'), 'Customer Portal return no longer targets Premium website');
   assert(s.includes('allowedOrigins'), 'Customer Portal origin allowlist is missing');
+}
+
+if (exists('supabase/functions/send-message-notification/index.ts')) {
+  const s = read('supabase/functions/send-message-notification/index.ts');
+  assert(s.includes('auth.getUser(token)'), 'Message notification endpoint no longer validates caller JWT');
+  assert(s.includes('is_blocked_between'), 'Message notification endpoint no longer checks blocked users');
+  assert(s.includes('channelId: \"messages\"'), 'Message push no longer uses the messages channel');
+}
+
+if (exists('supabase/functions/register-push-token/index.ts')) {
+  const s = read('supabase/functions/register-push-token/index.ts');
+  assert(s.includes('auth.getUser(token)'), 'Push token endpoint no longer validates caller JWT');
+  assert(s.includes('invalid_push_token'), 'Push token validation is missing');
+  assert(s.includes('device_push_tokens'), 'Push token storage is missing');
 }
 
 if (exists('src/lib/push-notifications.ts')) {
