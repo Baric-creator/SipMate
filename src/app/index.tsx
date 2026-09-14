@@ -76,6 +76,7 @@ export default function HomeScreen() {
 
   const [activityCount, setActivityCount] =
     useState(0);
+  const [activeClock, setActiveClock] = useState(Date.now());
   const hasLoadedHomeRef = useRef(false);
   const currentUserIdRef = useRef<string | null>(null);
   const statusUpdateRef = useRef(false);
@@ -85,6 +86,30 @@ export default function HomeScreen() {
       void loadProfile(hasLoadedHomeRef.current);
     }, [])
   );
+
+  useEffect(() => {
+    if (!profile?.is_active || !profile.active_until) return;
+
+    const tick = () => setActiveClock(Date.now());
+    tick();
+    const timer = setInterval(tick, 30_000);
+    return () => clearInterval(timer);
+  }, [profile?.is_active, profile?.active_until]);
+
+  function getActiveSessionLabel() {
+    if (!profile?.is_active || !profile.active_until) return null;
+    const remainingMs = new Date(profile.active_until).getTime() - activeClock;
+    if (!Number.isFinite(remainingMs) || remainingMs <= 0) return null;
+    const totalMinutes = Math.ceil(remainingMs / 60_000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const remaining = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+    return language === 'de'
+      ? `Noch ${remaining} auf Nearby sichtbar · Cheers-Benachrichtigungen an`
+      : language === 'hr'
+        ? `Još ${remaining} vidljiv na Nearbyu · Cheers obavijesti uključene`
+        : `${remaining} left on Nearby · Cheers notifications on`;
+  }
 
   useEffect(() => {
     const refreshActivity = () => {
@@ -518,7 +543,7 @@ export default function HomeScreen() {
             }
           >
             {profile?.is_active
-              ? t(
+              ? getActiveSessionLabel() ?? t(
                   'discoverScreen.activeDescription'
                 )
               : t(
