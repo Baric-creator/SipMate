@@ -1,0 +1,52 @@
+name: Patch Notification Response Cleanup
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Clear consumed notification response'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch notification response lifecycle
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/app/_layout.tsx')
+          s = p.read_text(encoding='utf-8')
+          old = "    Notifications.getLastNotificationResponseAsync().then((response) => {\n      if (mounted && response) openFromNotification(response);\n    });\n"
+          new = "    Notifications.getLastNotificationResponseAsync().then(async (response) => {\n      if (mounted && response) {\n        openFromNotification(response);\n        await Notifications.clearLastNotificationResponseAsync();\n      }\n    });\n"
+          if old not in s:
+              raise SystemExit('last notification response anchor missing')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8', newline='\n')
+
+          p = Path('scripts/release-audit.mjs')
+          s = p.read_text(encoding='utf-8')
+          anchor = "  assert(s.includes('Notifications.addNotificationResponseReceivedListener'), 'Notification tap listener is missing');\n"
+          addition = anchor + "  assert(s.includes('Notifications.clearLastNotificationResponseAsync'), 'Consumed cold-start notification response is not cleared');\n"
+          if 'Consumed cold-start notification response is not cleared' not in s:
+              if anchor not in s:
+                  raise SystemExit('notification audit anchor missing')
+              s = s.replace(anchor, addition, 1)
+          p.write_text(s, encoding='utf-8', newline='\n')
+          PY
+      - name: Verify checks
+        run: |
+          npm ci
+          npm run check
+          npm run release:audit
+      - name: Commit patch
+        run: |
+          git config user.name 'Baric-creator'
+          git config user.email 'baric5555baric@gmail.com'
+          git add src/app/_layout.tsx scripts/release-audit.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Clear consumed notification response'
+          git push origin master
