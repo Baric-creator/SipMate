@@ -36,6 +36,7 @@ for (const required of [
   'supabase/functions/send-message-notification/index.ts',
   'supabase/functions/register-push-token/index.ts',
   'supabase/migrations/20260914142559_add_active_session_window.sql',
+  'supabase/migrations/20260914190000_optimize_chat_list_rpc.sql',
   'supabase/functions/admin-moderation/index.ts',
   'website/founder.html',
   'website/premium.html',
@@ -156,6 +157,8 @@ if (exists('src/app/chats.tsx')) {
   assert(s.includes('chatsUserIdRef.current') && s.includes('accountChanged'), 'Chat-list state can leak across account changes');
   assert(s.includes('useFocusEffect') && s.includes('removeChannel(channel)'), 'Chat-list realtime subscription is not scoped to the focused screen');
   assert(!s.includes('&id=') && !s.includes('&name='), 'Chat list still passes spoofable identity parameters');
+  assert(s.includes("supabase.rpc('get_chat_list')"), 'Chat list regressed to per-conversation N+1 queries');
+  assert(!s.includes('LAST MESSAGE ERROR') && !s.includes('UNREAD COUNT ERROR'), 'Chat list still performs per-conversation message queries');
 }
 
 if (exists('src/app/cheers.tsx')) {
@@ -183,6 +186,13 @@ if (exists('src/app/nearby.tsx')) {
   assert(!s.includes(".channel(\n        'nearby-profile-status'"), 'Nearby subscribes to every profile heartbeat and can trigger refresh storms');
   assert(s.includes('nearbyRequestIdRef') && s.includes('isLatestRequest()'), 'Nearby can apply stale results after account or filter changes');
   assert(s.includes('nearbyUserIdRef') && s.includes('accountChanged'), 'Nearby can leak session-scoped state across account changes');
+}
+
+if (exists('supabase/migrations/20260914190000_optimize_chat_list_rpc.sql')) {
+  const s = read('supabase/migrations/20260914190000_optimize_chat_list_rpc.sql');
+  assert(s.includes('security definer') && s.includes('auth.uid()'), 'Chat-list RPC no longer scopes results to the authenticated user');
+  assert(s.includes("last_seen_at >= now() - interval '90 seconds'"), 'Chat-list Active indicator no longer honors online presence');
+  assert(s.includes('grant execute on function public.get_chat_list() to authenticated'), 'Authenticated users cannot execute the chat-list RPC');
 }
 
 if (exists('src/app/edit-profile.tsx')) {
