@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { findOrCreateConversation } from '../lib/conversations';
 import { supabase } from '../lib/supabase';
 import { FutureBackdrop } from '../components/FutureBackdrop';
 import { ChatCardSkeleton, Skeleton } from '../components/Skeleton';
@@ -144,32 +145,14 @@ export default function CheersScreen() {
 
     const myId = session.user.id;
     const otherId = item.userId;
-    const userOne = myId < otherId ? myId : otherId;
-    const userTwo = myId < otherId ? otherId : myId;
-
-    const { data: existingConversation, error: findError } = await supabase
-      .from('conversations')
-      .select('id')
-      .eq('user_one', userOne)
-      .eq('user_two', userTwo)
-      .maybeSingle();
-    if (findError) {
-      console.log('CHEERS CONVERSATION FIND ERROR:', findError.message);
+    let conversationId: string;
+    try {
+      const resolvedConversationId = await findOrCreateConversation(myId, otherId);
+      if (!resolvedConversationId) return;
+      conversationId = resolvedConversationId;
+    } catch (error: any) {
+      console.log('CHEERS CONVERSATION OPEN ERROR:', error?.message ?? error);
       return;
-    }
-
-    let conversationId = existingConversation?.id;
-    if (!conversationId) {
-      const { data: newConversation, error: createError } = await supabase
-        .from('conversations')
-        .insert({ user_one: userOne, user_two: userTwo })
-        .select('id')
-        .single();
-      if (createError) {
-        console.log('CHEERS CONVERSATION CREATE ERROR:', createError.message);
-        return;
-      }
-      conversationId = newConversation.id;
     }
 
     router.push({ pathname: '/chat', params: { conversationId, id: item.userId, name: item.name } });
