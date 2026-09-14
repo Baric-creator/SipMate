@@ -50,3 +50,15 @@ export async function clearPresence() {
 
   if (error) console.log('PRESENCE CLEAR ERROR:', error.message);
 }
+
+export async function stopActiveSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ is_active: false, active_until: null, last_seen_at: null })
+    .eq('id', session.user.id);
+
+  if (error) console.log('ACTIVE SESSION STOP ERROR:', error.message);
+}
