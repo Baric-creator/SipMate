@@ -72,6 +72,8 @@ export default function ChatScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chatChannelRef = useRef<any>(null);
+  const messageSendingRef = useRef(false);
+  const messagesRequestIdRef = useRef(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setMyUserId(data.session?.user?.id ?? null));
@@ -126,9 +128,19 @@ export default function ChatScreen() {
   }, [id]);
 
   useEffect(() => {
-    if (!conversationId) { setLoading(false); return; }
-    loadMessages();
-    markMessagesAsRead();
+    const requestId = ++messagesRequestIdRef.current;
+    setMessages([]);
+    setOtherUserTyping(false);
+
+    if (!conversationId) {
+      setLoading(false);
+      return () => { messagesRequestIdRef.current += 1; };
+    }
+
+    void loadMessages(requestId);
+    void markMessagesAsRead();
+
+    return () => { messagesRequestIdRef.current += 1; };
   }, [conversationId]);
 
   useEffect(() => {
@@ -164,10 +176,11 @@ export default function ChatScreen() {
     return () => { chatChannelRef.current = null; supabase.removeChannel(channel); };
   }, [conversationId, myUserId]);
 
-  async function loadMessages() {
+  async function loadMessages(requestId: number) {
     if (!conversationId) return;
     setLoading(true);
     const { data, error } = await supabase.from('messages').select('id, conversation_id, sender_id, content, created_at, read_at').eq('conversation_id', String(conversationId)).order('created_at', { ascending: true });
+    if (requestId !== messagesRequestIdRef.current) return;
     if (error) console.log('MESSAGES LOAD ERROR:', error.message);
     else setMessages((data ?? []) as Message[]);
     setLoading(false);
@@ -184,8 +197,9 @@ export default function ChatScreen() {
 
   async function sendMessage() {
     const content = messageText.trim();
-    if (!content || !conversationId || sendingMessage || isBlocked) return;
+    if (!content || !conversationId || messageSendingRef.current || sendingMessage || isBlocked) return;
 
+    messageSendingRef.current = true;
     try {
       setSendingMessage(true);
       const { data: { session } } = await supabase.auth.getSession();
@@ -219,6 +233,7 @@ export default function ChatScreen() {
 
       await sendTypingStatus(false);
     } finally {
+      messageSendingRef.current = false;
       setSendingMessage(false);
     }
   }
