@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -30,10 +30,11 @@ export default function CheersScreen() {
   const [cheers, setCheers] = useState<CheersItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
+  const hasLoadedCheersRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      void loadCheers();
+      void loadCheers(hasLoadedCheersRef.current);
     }, [t])
   );
 
@@ -41,10 +42,10 @@ export default function CheersScreen() {
     const channel = supabase
       .channel('cheers-screen-updates')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {
-        void loadCheers();
+        void loadCheers(true);
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {
-        void loadCheers();
+        void loadCheers(true);
       })
       .subscribe();
 
@@ -53,9 +54,9 @@ export default function CheersScreen() {
     };
   }, []);
 
-  async function loadCheers() {
+  async function loadCheers(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -129,7 +130,8 @@ export default function CheersScreen() {
       items.sort((a, b) => order[a.status] - order[b.status]);
       setCheers(items);
     } finally {
-      setLoading(false);
+      hasLoadedCheersRef.current = true;
+      if (!silent) setLoading(false);
     }
   }
 
@@ -292,7 +294,7 @@ export default function CheersScreen() {
           </>
         )}
 
-        <TouchableOpacity style={styles.refreshButton} onPress={loadCheers}><Text style={styles.refreshText}>↻ {t('cheersScreen.refresh')}</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.refreshButton} onPress={() => void loadCheers(false)}><Text style={styles.refreshText}>↻ {t('cheersScreen.refresh')}</Text></TouchableOpacity>
         <Text style={styles.footer}>{t('cheersScreen.footer')}</Text>
       </ScrollView>
     </View>
