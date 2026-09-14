@@ -85,9 +85,13 @@ export default function ChatScreen() {
     setMyUserId(null);
     setOtherUserId(null);
     setOtherUserName('SipMate');
+    setOtherAvatar(null);
+    setOtherUserActive(false);
+    setOtherUserTyping(false);
+    setIsBlocked(false);
 
     async function verifyConversation() {
-      if (!conversationId || !conversationVerified) {
+      if (!conversationId) {
         if (active) setLoading(false);
         return;
       }
@@ -185,7 +189,7 @@ export default function ChatScreen() {
     setMessages([]);
     setOtherUserTyping(false);
 
-    if (!conversationId) {
+    if (!conversationId || !conversationVerified) {
       setLoading(false);
       return () => { messagesRequestIdRef.current += 1; };
     }
@@ -230,7 +234,7 @@ export default function ChatScreen() {
       }).subscribe();
     chatChannelRef.current = channel;
     return () => { chatChannelRef.current = null; supabase.removeChannel(channel); };
-  }, [conversationId, myUserId]);
+  }, [conversationId, myUserId, conversationVerified]);
 
   async function loadMessages(requestId: number) {
     if (!conversationId) return;
