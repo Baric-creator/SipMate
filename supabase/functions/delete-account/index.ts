@@ -1,19 +1,39 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import Stripe from 'npm:stripe@18.5.0'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+const PROD_ORIGIN = 'https://officialsipmate.com'
+const allowedOrigins = new Set([
+  PROD_ORIGIN,
+  'https://www.officialsipmate.com',
+  'http://localhost:8081',
+  'http://localhost:8082',
+  'http://localhost:19006',
+])
+
+function corsHeaders(req: Request) {
+  const origin = req.headers.get('origin')
+  const allowOrigin = origin && allowedOrigins.has(origin) ? origin : PROD_ORIGIN
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
-  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders })
+  const headers = corsHeaders(req)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers })
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers })
+
+  const origin = req.headers.get('origin')
+  if (origin && !allowedOrigins.has(origin)) {
+    return new Response('Origin not allowed', { status: 403, headers })
+  }
 
   try {
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+    if (!authHeader) return new Response('Unauthorized', { status: 401, headers })
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
@@ -22,7 +42,7 @@ Deno.serve(async (req) => {
 
     if (!supabaseUrl || !anonKey || !serviceRoleKey) {
       console.error('DELETE ACCOUNT FUNCTION CONFIGURATION ERROR')
-      return new Response('Account deletion is temporarily unavailable.', { status: 503, headers: corsHeaders })
+      return new Response('Account deletion is temporarily unavailable.', { status: 503, headers })
     }
 
     const userClient = createClient(supabaseUrl, anonKey, {
@@ -31,7 +51,7 @@ Deno.serve(async (req) => {
     })
 
     const { data: { user }, error: userError } = await userClient.auth.getUser()
-    if (userError || !user) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+    if (userError || !user) return new Response('Unauthorized', { status: 401, headers })
 
     const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } })
     const uid = user.id
@@ -49,7 +69,7 @@ Deno.serve(async (req) => {
     if (stripeIds.length) {
       if (!stripeSecretKey) {
         console.error('DELETE ACCOUNT STRIPE CONFIGURATION ERROR')
-        return new Response('Account deletion is temporarily unavailable.', { status: 503, headers: corsHeaders })
+        return new Response('Account deletion is temporarily unavailable.', { status: 503, headers })
       }
 
       const stripe = new Stripe(stripeSecretKey)
@@ -124,9 +144,9 @@ Deno.serve(async (req) => {
     const { error: deleteError } = await admin.auth.admin.deleteUser(uid)
     if (deleteError) throw deleteError
 
-    return Response.json({ deleted: true }, { headers: corsHeaders })
+    return Response.json({ deleted: true }, { headers })
   } catch (error) {
     console.error('DELETE ACCOUNT FUNCTION ERROR:', error)
-    return new Response('Account deletion failed. Please try again later.', { status: 500, headers: corsHeaders })
+    return new Response('Account deletion failed. Please try again later.', { status: 500, headers })
   }
 })
