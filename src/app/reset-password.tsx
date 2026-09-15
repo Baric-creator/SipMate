@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -80,6 +80,8 @@ export default function ResetPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [linkError, setLinkError] = useState(false);
+  const recoveryReadyRef = useRef(false);
+  const saveInFlightRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -89,6 +91,8 @@ export default function ResetPasswordScreen() {
 
       const { accessToken, refreshToken, type } = readTokens(url);
       if (!accessToken || !refreshToken || (type && type !== 'recovery')) {
+        recoveryReadyRef.current = false;
+        setReady(false);
         setLinkError(true);
         return;
       }
@@ -102,40 +106,43 @@ export default function ResetPasswordScreen() {
 
       if (error) {
         console.log('PASSWORD RECOVERY SESSION ERROR:', error.message);
+        recoveryReadyRef.current = false;
+        setReady(false);
         setLinkError(true);
         return;
       }
 
+      recoveryReadyRef.current = true;
       setLinkError(false);
       setReady(true);
     }
 
-    Linking.getInitialURL().then(applyRecoveryUrl);
+    void Linking.getInitialURL().then(applyRecoveryUrl);
 
     const subscription = Linking.addEventListener('url', ({ url }) => {
-      applyRecoveryUrl(url);
+      void applyRecoveryUrl(url);
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (!active) return;
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+      if (event === 'PASSWORD_RECOVERY') {
+        recoveryReadyRef.current = true;
         setLinkError(false);
         setReady(true);
       }
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) setReady(true);
-    });
-
     return () => {
       active = false;
+      recoveryReadyRef.current = false;
       subscription.remove();
       authListener.subscription.unsubscribe();
     };
   }, []);
 
   async function savePassword() {
+    if (saveInFlightRef.current) return;
+
     if (password.length < 8) {
       showAlert(text.short);
       return;
@@ -146,13 +153,25 @@ export default function ResetPasswordScreen() {
       return;
     }
 
-    if (!ready) {
+    if (!ready || !recoveryReadyRef.current) {
       showAlert(text.invalidLink);
       return;
     }
 
+    saveInFlightRef.current = true;
+
     try {
       setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const expectedUserId = session?.user?.id;
+      if (!expectedUserId) {
+        recoveryReadyRef.current = false;
+        setReady(false);
+        setLinkError(true);
+        showAlert(text.invalidLink);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
@@ -161,6 +180,11 @@ export default function ResetPasswordScreen() {
         return;
       }
 
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession?.user?.id !== expectedUserId) return;
+
+      recoveryReadyRef.current = false;
+      setReady(false);
       await supabase.auth.signOut();
       showAlert(text.success);
       router.replace('/login');
@@ -168,6 +192,7 @@ export default function ResetPasswordScreen() {
       console.log('PASSWORD UPDATE CRASH:', error);
       showAlert(text.failed);
     } finally {
+      saveInFlightRef.current = false;
       setLoading(false);
     }
   }
@@ -194,7 +219,7 @@ export default function ResetPasswordScreen() {
           textContentType="newPassword"
           maxLength={128}
           style={styles.input}
-          editable={!linkError}
+          editable={!linkError && !loading}
         />
 
         <Text style={styles.label}>{text.confirm}</Text>
@@ -210,18 +235,18 @@ export default function ResetPasswordScreen() {
           textContentType="newPassword"
           maxLength={128}
           style={styles.input}
-          editable={!linkError}
+          editable={!linkError && !loading}
         />
 
         <Pressable
-          style={[styles.button, (loading || linkError) && styles.disabled]}
+          style={[styles.button, (loading || linkError || !ready) && styles.disabled]}
           onPress={savePassword}
-          disabled={loading || linkError}
+          disabled={loading || linkError || !ready}
         >
           <Text style={styles.buttonText}>{loading ? text.saving : text.save}</Text>
         </Pressable>
 
-        <Pressable style={styles.backButton} onPress={() => router.replace('/login')}>
+        <Pressable style={styles.backButton} onPress={() => router.replace('/login')} disabled={loading}>
           <Text style={styles.backText}>{text.login}</Text>
         </Pressable>
       </View>
