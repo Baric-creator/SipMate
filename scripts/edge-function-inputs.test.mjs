@@ -80,6 +80,17 @@ test('push notification provider calls have a bounded external-request timeout',
   }
 });
 
+test('stale push cleanup stays scoped to the intended recipient', () => {
+  for (const [name, source] of [
+    ['message', sendMessageNotification],
+    ['Cheers', sendCheersNotification],
+  ]) {
+    const cleanupAt = source.indexOf('.delete()\n        .eq("user_id", recipientId)');
+    const staleFilterAt = source.indexOf('.in("token", staleTokens)', cleanupAt);
+    assert.ok(cleanupAt >= 0 && staleFilterAt > cleanupAt, `${name} stale-token cleanup must be recipient-scoped`);
+  }
+});
+
 test('admin moderation validates report UUID before updating reports', () => {
   assert.match(adminModeration, /const UUID_PATTERN =/);
   assert.match(adminModeration, /!UUID_PATTERN\.test\(reportId\)/);
