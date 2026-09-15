@@ -7,6 +7,7 @@ const photoWrites = fs.readFileSync('supabase/migrations/20260915202000_restrict
 const activeSessionWrites = fs.readFileSync('supabase/migrations/20260915205000_enforce_active_session_window.sql', 'utf8');
 const activeSessionSafety = fs.readFileSync('supabase/migrations/20260915205100_safe_active_session_insert_trigger.sql', 'utf8');
 const profileBounds = fs.readFileSync('supabase/migrations/20260915205200_bound_profile_text_fields.sql', 'utf8');
+const presenceClear = fs.readFileSync('supabase/migrations/20260915205300_preserve_presence_clear.sql', 'utf8');
 
 test('authenticated profile writes remain owner-scoped and cannot change Premium state', () => {
   assert.match(profileWrites, /caller_id uuid := auth\.uid\(\)/);
@@ -57,4 +58,11 @@ test('profile text fields keep app input limits at the database boundary', () =>
   assert.match(profileBounds, /profiles_gender_value_check/);
   assert.match(profileBounds, /gender in \('male', 'female', 'other'\)/);
   assert.equal((profileBounds.match(/not valid/g) ?? []).length, 4);
+});
+
+test('background presence clearing remains possible while Active session bounds stay server-authored', () => {
+  assert.match(presenceClear, /if new\.last_seen_at is not null then\s*new\.last_seen_at := now\(\);\s*end if;/s);
+  assert.match(presenceClear, /least\(coalesce\(new\.active_until, old\.active_until\), old\.active_until\)/);
+  assert.match(presenceClear, /new\.active_until := null;\s*new\.last_seen_at := null;/s);
+  assert.doesNotMatch(presenceClear, /if new\.is_active = true then[\s\S]*?new\.last_seen_at := now\(\);[\s\S]*?else/s, 'Active branch must not force a cleared presence timestamp back online');
 });
