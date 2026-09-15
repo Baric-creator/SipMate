@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const DISCORD_CHANNEL_ID = "1546569676346359878";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -35,15 +36,15 @@ Deno.serve(async (req) => {
 
   if (userError || !caller) return json({ error: "Unauthorized" }, 401);
 
-  let body: { other_user_id?: string } = {};
+  let body: { other_user_id?: unknown } = {};
   try {
     body = await req.json();
   } catch {
     return json({ error: "Invalid JSON" }, 400);
   }
 
-  const otherUserId = body.other_user_id;
-  if (!otherUserId || otherUserId === caller.id) {
+  const otherUserId = typeof body.other_user_id === "string" ? body.other_user_id.trim() : "";
+  if (!UUID_PATTERN.test(otherUserId) || otherUserId === caller.id) {
     return json({ error: "Invalid other_user_id" }, 400);
   }
 
