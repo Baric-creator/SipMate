@@ -20,6 +20,9 @@ Pay particular attention to the latest security and runtime migrations:
 - `20260915150500_chat_list_respects_active_until.sql`
 - `20260915193000_harden_device_push_tokens.sql`
 - `20260915195000_enforce_premium_gallery_limit.sql`
+- `20260915200000_enforce_adult_profile_age.sql`
+- `20260915201000_restrict_profile_write_columns.sql`
+- `20260915202000_restrict_profile_photo_writes.sql`
 
 The existing Discord OAuth/feed migrations already lock their internal bookkeeping tables away from app clients; the database contract audit checks those original migrations directly.
 
@@ -58,13 +61,18 @@ Use at least two normal accounts and one Premium account. Verify:
 - Blocks prevent contact in both directions.
 - A Free account cannot insert Premium gallery photos.
 - A Premium account cannot exceed six gallery photos, including rapid/concurrent insert attempts.
+- An authenticated client cannot set `is_premium`, `premium_until` or Discord linkage fields through direct profile writes.
+- An authenticated client cannot write another user's profile or delete another user's gallery row.
+- New profile writes cannot persist an age below 18 or above 120.
 - App clients cannot read `device_push_tokens`, `discord_oauth_states`, or `discord_cheers_announcements`.
 - Logout removes the current device token; account deletion removes remaining tokens.
-- Account deletion removes the user only after subscription/storage/database cleanup succeeds.
+- Account deletion removes profile Storage files and the user only after subscription/storage/database cleanup succeeds.
 
 ## 6. Edge Functions
 
 Database migrations do not deploy Edge Function source. Confirm the release-required functions have been deployed from the same reviewed commit and that their required environment secrets are configured. Do not print or commit secret values while verifying them.
+
+Specifically retest Discord connect/disconnect after deploying `discord-oauth`: linkage must not be cleared if Premium-role revocation fails, so the operation can be retried safely.
 
 ## 7. Evidence
 
