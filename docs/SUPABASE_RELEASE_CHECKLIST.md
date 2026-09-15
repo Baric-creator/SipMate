@@ -27,6 +27,8 @@ Pay particular attention to the latest security and runtime migrations:
 - `20260915204000_bound_device_push_token_length.sql`
 - `20260915205000_enforce_active_session_window.sql`
 - `20260915205100_safe_active_session_insert_trigger.sql`
+- `20260915205200_bound_profile_text_fields.sql`
+- `20260915205300_preserve_presence_clear.sql`
 
 The existing Discord OAuth/feed migrations already lock their internal bookkeeping tables away from app clients; the database contract audit checks those original migrations directly. The migration-version audit also blocks duplicate 14-digit migration versions before release checks can pass.
 
@@ -63,7 +65,9 @@ Use at least two normal accounts and one Premium account. Verify:
 - Active status expires and expired users disappear from Nearby/Active indicators.
 - Starting a new Active session gets a server-authored three-hour window; direct client writes cannot extend an existing session into the future.
 - Setting a profile inactive clears `active_until` and `last_seen_at` at the database boundary.
+- Sending the app to background can still clear `last_seen_at` without the Active-session trigger forcing the user back online.
 - Creating a new profile with Active enabled succeeds and the trigger does not attempt to read `OLD` during INSERT.
+- Direct profile writes cannot exceed the app limits for name (50), city (80), bio (300), or unsupported gender values.
 - Chat list and chat membership stay account-scoped after logout/login switching.
 - Blocks prevent contact in both directions.
 - A Free account cannot insert Premium gallery photos.
@@ -84,6 +88,10 @@ Use at least two normal accounts and one Premium account. Verify:
 Database migrations do not deploy Edge Function source. Confirm the release-required functions have been deployed from the same reviewed commit and that their required environment secrets are configured. Do not print or commit secret values while verifying them.
 
 Specifically retest `register-push-token` register/unregister behavior after deploying it, retest Discord connect/disconnect after deploying `discord-oauth`, verify malformed Discord identity payloads fail closed, and verify repeated Premium checkout taps within the idempotency window reuse one Stripe Checkout request. Discord linkage must not be cleared if Premium-role revocation fails, so the operation can be retried safely.
+
+Deploy and smoke-test `send-welcome-email` from repository source as well. It requires `RESEND_API_KEY` and `RESEND_FROM_EMAIL`, must send only to the authenticated user's Supabase email, and must not trust an arbitrary email address supplied in the request body. Confirm one disposable signup receives the expected EN/DE/HR welcome message and that repeated/manual calls cannot target another address.
+
+Verify provider-failure behavior too: Expo/Discord/Resend calls are timeout-bounded, Discord Cheers announcement reservations roll back after a failed provider call, and stale push-token cleanup stays scoped to the intended recipient.
 
 ## 7. Evidence
 
