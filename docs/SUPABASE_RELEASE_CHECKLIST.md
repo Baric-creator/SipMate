@@ -29,6 +29,7 @@ Pay particular attention to the latest security and runtime migrations:
 - `20260915205100_safe_active_session_insert_trigger.sql`
 - `20260915205200_bound_profile_text_fields.sql`
 - `20260915205300_preserve_presence_clear.sql`
+- `20260915205400_add_premium_reward_grants.sql`
 
 The existing Discord OAuth/feed migrations already lock their internal bookkeeping tables away from app clients; the database contract audit checks those original migrations directly. The migration-version audit also blocks duplicate 14-digit migration versions before release checks can pass.
 
@@ -82,6 +83,12 @@ Use at least two normal accounts and one Premium account. Verify:
 - App clients cannot access `discord_oauth_states` or `discord_cheers_announcements` directly.
 - Logout removes the current device token; account deletion removes remaining tokens.
 - Account deletion removes profile Storage files and the user only after subscription/storage/database cleanup succeeds.
+- `premium_reward_grants` cannot be read or mutated by normal app clients.
+- `grant_premium_reward` cannot be executed by anon/authenticated roles and succeeds through a trusted service-role path only.
+- Reusing the same reward `source` + `external_reference` is idempotent and does not add Premium twice.
+- A 365-day Discord reward extends an existing finite Premium entitlement instead of replacing or shortening it.
+- A legacy lifetime Premium entitlement (`is_premium=true`, `premium_until=null`) is never converted into a finite promotional expiry.
+- A Discord giveaway reward is granted only after the qualifying Discord identity has been mapped to the intended SipMate account.
 
 ## 6. Edge Functions
 
