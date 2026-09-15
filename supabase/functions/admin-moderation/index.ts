@@ -7,6 +7,7 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 const ADMIN_EMAILS = new Set(["sipmate.app@gmail.com"]);
 const ALLOWED_STATUSES = new Set(["pending", "reviewed", "dismissed"]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function cors(origin: string | null) {
   const allow = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://officialsipmate.com";
@@ -51,7 +52,7 @@ Deno.serve(async (req: Request) => {
       const body = await req.json().catch(() => ({}));
       const reportId = String(body?.report_id || "").trim();
       const status = String(body?.status || "").trim();
-      if (!reportId || !ALLOWED_STATUSES.has(status)) {
+      if (!UUID_PATTERN.test(reportId) || !ALLOWED_STATUSES.has(status)) {
         return new Response(JSON.stringify({ ok: false, error: "invalid_request" }), { status: 400, headers });
       }
 
