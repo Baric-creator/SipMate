@@ -7,6 +7,7 @@ const discordOauth = fs.readFileSync('supabase/functions/discord-oauth/index.ts'
 const registerPushToken = fs.readFileSync('supabase/functions/register-push-token/index.ts', 'utf8');
 const sendMessageNotification = fs.readFileSync('supabase/functions/send-message-notification/index.ts', 'utf8');
 const sendCheersNotification = fs.readFileSync('supabase/functions/send-cheers-notification/index.ts', 'utf8');
+const adminModeration = fs.readFileSync('supabase/functions/admin-moderation/index.ts', 'utf8');
 
 test('Discord Cheers feed validates other_user_id before interpolated PostgREST filters', () => {
   assert.match(announceCheers, /const UUID_PATTERN =/);
@@ -55,4 +56,12 @@ test('Cheers notification validates UUID input before querying Cheers', () => {
   const validationAt = sendCheersNotification.indexOf('UUID_PATTERN.test(cheersId)');
   const queryAt = sendCheersNotification.indexOf('.from("cheers")');
   assert.ok(validationAt >= 0 && queryAt > validationAt, 'cheersId must be validated before the Cheers query');
+});
+
+test('admin moderation validates report UUID before updating reports', () => {
+  assert.match(adminModeration, /const UUID_PATTERN =/);
+  assert.match(adminModeration, /!UUID_PATTERN\.test\(reportId\)/);
+  const validationAt = adminModeration.indexOf('!UUID_PATTERN.test(reportId)');
+  const updateAt = adminModeration.indexOf('.from("reports")');
+  assert.ok(validationAt >= 0 && updateAt > validationAt, 'reportId must be validated before report mutation');
 });
