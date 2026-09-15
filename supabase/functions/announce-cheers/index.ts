@@ -3,6 +3,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const DISCORD_CHANNEL_ID = "1546569676346359878";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const DISCORD_TIMEOUT_MS = 8_000;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -104,6 +105,14 @@ Deno.serve(async (req) => {
     return json({ error: "Could not reserve announcement" }, 500);
   }
 
+  const rollbackReservation = async () => {
+    const { error } = await admin
+      .from("discord_cheers_announcements")
+      .delete()
+      .eq("pair_key", pairKey);
+    if (error) console.error("ANNOUNCEMENT ROLLBACK ERROR", error);
+  };
+
   const profileA = profiles.find((p) => p.id === ids[0])!;
   const profileB = profiles.find((p) => p.id === ids[1])!;
   const cities = Array.from(
@@ -133,32 +142,35 @@ Deno.serve(async (req) => {
     });
   }
 
-  const discordResponse = await fetch(
-    `https://discord.com/api/v10/channels/${DISCORD_CHANNEL_ID}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bot ${discordToken}`,
-        "Content-Type": "application/json",
-        "User-Agent": "SipMate-Discord-Bot/1.0",
+  let discordResponse: Response;
+  try {
+    discordResponse = await fetch(
+      `https://discord.com/api/v10/channels/${DISCORD_CHANNEL_ID}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bot ${discordToken}`,
+          "Content-Type": "application/json",
+          "User-Agent": "SipMate-Discord-Bot/1.0",
+        },
+        body: JSON.stringify({
+          content: "CHEERS! 🍻",
+          embeds,
+          allowed_mentions: { parse: [] },
+        }),
+        signal: AbortSignal.timeout(DISCORD_TIMEOUT_MS),
       },
-      body: JSON.stringify({
-        content: "CHEERS! 🍻",
-        embeds,
-        allowed_mentions: { parse: [] },
-      }),
-    },
-  );
+    );
+  } catch (error) {
+    console.error("DISCORD POST REQUEST ERROR", error);
+    await rollbackReservation();
+    return json({ error: "Discord post failed" }, 502);
+  }
 
   if (!discordResponse.ok) {
     const bodyText = await discordResponse.text();
     console.error("DISCORD POST ERROR", discordResponse.status, bodyText);
-
-    await admin
-      .from("discord_cheers_announcements")
-      .delete()
-      .eq("pair_key", pairKey);
-
+    await rollbackReservation();
     return json({ error: "Discord post failed" }, 502);
   }
 
