@@ -26,7 +26,11 @@ Deno.serve(async (req) => {
     if (userError || !user) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers });
 
     const body = await req.json();
-    const action = body?.action === "unregister" ? "unregister" : "register";
+    const action = body?.action ?? "register";
+    if (action !== "register" && action !== "unregister") {
+      return new Response(JSON.stringify({ error: "invalid_action" }), { status: 400, headers });
+    }
+
     const pushToken = String(body?.token ?? "").trim();
     if (!/^(Expo|Exponent)PushToken\[[^\]]+\]$/.test(pushToken)) {
       return new Response(JSON.stringify({ error: "invalid_push_token" }), { status: 400, headers });
