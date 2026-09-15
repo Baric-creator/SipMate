@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
       channelId: "cheers",
       title: mutual ? "🍻 CHEERS!" : "🍻 New Cheers!",
       body: mutual ? `You and ${senderName} are both up for a drink.` : `${senderName} sent you a Cheers.`,
-      data: { type: "cheers", id: caller.id, name: senderName, mutual },
+      data: { type: "cheers", id: caller.id, mutual },
       priority: "high",
     }));
 
