@@ -40,3 +40,12 @@ test('account deletion still removes user-owned social and profile data', () => 
   }
   assert.match(source, /from\('profiles'\)\.delete\(\)\.eq\('id', uid\)/);
 });
+
+test('account deletion uses an explicit browser origin allowlist instead of wildcard CORS', () => {
+  assert.match(source, /const allowedOrigins = new Set\(/);
+  assert.match(source, /https:\/\/officialsipmate\.com/);
+  assert.match(source, /https:\/\/www\.officialsipmate\.com/);
+  assert.match(source, /origin && !allowedOrigins\.has\(origin\)/);
+  assert.match(source, /status: 403/);
+  assert.doesNotMatch(source, /'Access-Control-Allow-Origin': '\*'/);
+});
