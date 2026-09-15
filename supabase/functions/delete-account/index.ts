@@ -85,6 +85,7 @@ Deno.serve(async (req) => {
     }
 
     const operations = [
+      admin.from('device_push_tokens').delete().eq('user_id', uid),
       admin.from('premium_subscriptions').delete().eq('user_id', uid),
       admin.from('reports').delete().or(`reporter_id.eq.${uid},reported_id.eq.${uid}`),
       admin.from('blocks').delete().or(`blocker_id.eq.${uid},blocked_id.eq.${uid}`),
