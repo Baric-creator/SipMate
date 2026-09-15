@@ -46,9 +46,9 @@ function getCheckoutOrigin(req: Request) {
   return PROD_ORIGIN
 }
 
-function checkoutIdempotencyKey(userId: string, plan: string) {
+function checkoutIdempotencyKey(userId: string, priceId: string) {
   const bucket = Math.floor(Date.now() / CHECKOUT_IDEMPOTENCY_WINDOW_MS)
-  return `sipmate-checkout-${userId}-${plan}-${bucket}`
+  return `sipmate-checkout-${userId}-${priceId}-${bucket}`
 }
 
 const MONTHLY_PRICE_ID = 'price_1UAAwKF9keqz65yeAB2gM6y1'
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       headers: {
         Authorization: `Bearer ${stripeSecretKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Idempotency-Key': checkoutIdempotencyKey(user.id, String(plan)),
+        'Idempotency-Key': checkoutIdempotencyKey(user.id, priceId),
       },
       body: formData.toString(),
     })
