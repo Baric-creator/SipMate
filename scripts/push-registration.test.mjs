@@ -31,7 +31,9 @@ test('push unregistration goes through the authenticated Edge Function, not dire
 });
 
 test('push token Edge Function scopes unregister to the authenticated user and token', () => {
-  assert.match(edgeSource, /body\?\.action === "unregister"/);
+  assert.match(edgeSource, /const action = body\?\.action \?\? "register";/);
+  assert.match(edgeSource, /action !== "register" && action !== "unregister"/);
+  assert.match(edgeSource, /if \(action === "unregister"\)/);
   assert.match(edgeSource, /\.from\("device_push_tokens"\)\s*\.delete\(\)\s*\.eq\("user_id", user\.id\)\s*\.eq\("token", pushToken\)/s);
   assert.match(edgeSource, /auth\.getUser\(token\)/);
 });
