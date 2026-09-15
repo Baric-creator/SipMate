@@ -34,6 +34,20 @@ revoke insert on table public.profiles from authenticated;
 revoke update on table public.profiles from authenticated;
 revoke delete on table public.profiles from authenticated;
 
+revoke insert (
+  premium_until,
+  discord_user_id,
+  discord_username,
+  discord_connected_at
+) on table public.profiles from authenticated;
+
+revoke update (
+  premium_until,
+  discord_user_id,
+  discord_username,
+  discord_connected_at
+) on table public.profiles from authenticated;
+
 grant insert (
   id,
   name,
