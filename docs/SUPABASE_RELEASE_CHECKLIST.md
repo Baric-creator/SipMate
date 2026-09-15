@@ -23,6 +23,7 @@ Pay particular attention to the latest security and runtime migrations:
 - `20260915200000_enforce_adult_profile_age.sql`
 - `20260915201000_restrict_profile_write_columns.sql`
 - `20260915202000_restrict_profile_photo_writes.sql`
+- `20260915203000_harden_profile_signup_trigger.sql`
 
 The existing Discord OAuth/feed migrations already lock their internal bookkeeping tables away from app clients; the database contract audit checks those original migrations directly.
 
@@ -63,7 +64,8 @@ Use at least two normal accounts and one Premium account. Verify:
 - A Premium account cannot exceed six gallery photos, including rapid/concurrent insert attempts.
 - An authenticated client cannot set `is_premium`, `premium_until` or Discord linkage fields through direct profile writes.
 - An authenticated client cannot write another user's profile or delete another user's gallery row.
-- New profile writes cannot persist an age below 18 or above 120.
+- Direct Auth signup without a valid age, below 18, or above 120 is rejected by the database signup trigger.
+- Existing profile writes cannot persist an age below 18 or above 120.
 - App clients cannot SELECT/INSERT/UPDATE/DELETE `device_push_tokens` directly.
 - `register-push-token` can register/unregister only the caller's exact Expo token after JWT validation.
 - App clients cannot access `discord_oauth_states` or `discord_cheers_announcements` directly.
