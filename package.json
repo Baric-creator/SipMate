@@ -50,7 +50,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test:regression": "node --test scripts/list-refresh.test.mjs scripts/presence-expiry.test.mjs scripts/chat-list-presence.test.mjs scripts/avatar-cache.test.mjs scripts/notification-routing.test.mjs scripts/notification-payload.test.mjs scripts/push-registration.test.mjs",
+    "test:regression": "node --test scripts/list-refresh.test.mjs scripts/presence-expiry.test.mjs scripts/chat-list-presence.test.mjs scripts/avatar-cache.test.mjs scripts/notification-routing.test.mjs scripts/notification-payload.test.mjs scripts/push-registration.test.mjs scripts/profile-session-race.test.mjs",
     "security:audit": "node ./scripts/security-audit.mjs",
     "dependency:audit": "node ./scripts/dependency-audit.mjs",
     "workflow:audit": "node ./scripts/workflow-audit.mjs",
