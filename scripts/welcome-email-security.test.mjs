@@ -16,7 +16,7 @@ test('welcome email uses bounded provider latency and fail-closed server configu
   assert.match(source, /signal: AbortSignal\.timeout\(EMAIL_PROVIDER_TIMEOUT_MS\)/);
   assert.match(source, /!resendApiKey \|\| !fromEmail/);
   assert.match(source, /temporarily_unavailable/);
-  assert.match(source, /status: 503/);
+  assert.match(source, /temporarily_unavailable["']?\s*\}\s*,\s*503/);
 });
 
 test('welcome email browser access uses an explicit origin allowlist', () => {
