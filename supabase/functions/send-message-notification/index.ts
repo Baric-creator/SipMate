@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_PUSH_TOKENS_PER_USER = 10;
 
 Deno.serve(async (req) => {
   const headers = { "Content-Type": "application/json" };
@@ -31,11 +32,14 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers });
     }
 
-    const body = await req.json();
-    const messageId = String(body?.messageId ?? "").trim();
-    if (!UUID_PATTERN.test(messageId)) {
-      return new Response(JSON.stringify({ error: "invalid_message_id" }), { status: 400, headers });
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "invalid_json" }), { status: 400, headers });
     }
+    const messageId = String(body?.messageId ?? "");
+    if (!UUID_PATTERN.test(messageId)) return new Response(JSON.stringify({ error: "invalid_message_id" }), { status: 400, headers });
 
     const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
 
@@ -65,7 +69,12 @@ Deno.serve(async (req) => {
 
     const [{ data: senderProfile }, { data: pushTokens }] = await Promise.all([
       admin.from("profiles").select("name").eq("id", caller.id).maybeSingle(),
-      admin.from("device_push_tokens").select("token").eq("user_id", recipientId),
+      admin
+        .from("device_push_tokens")
+        .select("token")
+        .eq("user_id", recipientId)
+        .order("updated_at", { ascending: false })
+        .limit(MAX_PUSH_TOKENS_PER_USER),
     ]);
 
     const tokens = (pushTokens ?? []).map((row: any) => row.token).filter((v: unknown) => typeof v === "string");
