@@ -207,11 +207,7 @@ export default function ChatsScreen() {
             >
               {item.avatar_url ? (
                 <Image
-                  source={{
-                    uri: `${item.avatar_url}${
-                      item.avatar_url.includes('?') ? '&' : '?'
-                    }refresh=${Date.now()}`,
-                  }}
+                  source={{ uri: item.avatar_url }}
                   style={styles.chatAvatar}
                   resizeMode="cover"
                 />
