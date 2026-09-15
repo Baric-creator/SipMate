@@ -214,7 +214,11 @@ Deno.serve(async (req) => {
     if (error) return json({ error: "profile_lookup_failed" }, 500);
 
     if (profile.discord_user_id) {
-      await updateDiscordRole(profile.discord_user_id, false);
+      const roleResult = await updateDiscordRole(profile.discord_user_id, false);
+      if (!roleResult.ok) {
+        console.log("DISCORD PREMIUM ROLE UNLINK ERROR:", roleResult);
+        return json({ error: "discord_role_revoke_failed" }, 502);
+      }
     }
 
     const { error: clearError } = await admin
