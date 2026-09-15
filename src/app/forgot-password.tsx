@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -48,13 +48,18 @@ export default function ForgotPasswordScreen() {
   const text = copy[language] ?? copy.en;
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const resetInFlightRef = useRef(false);
 
   async function sendReset() {
+    if (resetInFlightRef.current) return;
+
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail) {
       showAlert(text.invalid);
       return;
     }
+
+    resetInFlightRef.current = true;
 
     try {
       setLoading(true);
@@ -73,6 +78,7 @@ export default function ForgotPasswordScreen() {
       console.log('PASSWORD RESET EMAIL CRASH:', error);
       showAlert(text.failed);
     } finally {
+      resetInFlightRef.current = false;
       setLoading(false);
     }
   }
@@ -99,6 +105,7 @@ export default function ForgotPasswordScreen() {
           textContentType="emailAddress"
           maxLength={254}
           style={styles.input}
+          editable={!loading}
         />
 
         <Pressable style={[styles.button, loading && styles.disabled]} onPress={sendReset} disabled={loading}>
