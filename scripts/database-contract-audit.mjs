@@ -80,6 +80,15 @@ if (exists(galleryLimitMigration)) {
   assert(sql.includes('revoke all on function public.enforce_profile_photo_insert() from public'), 'Premium gallery trigger function became directly executable by public');
 }
 
+const adultAgeMigration = 'supabase/migrations/20260915200000_enforce_adult_profile_age.sql';
+assert(exists(adultAgeMigration), `Missing migration: ${adultAgeMigration}`);
+if (exists(adultAgeMigration)) {
+  const sql = read(adultAgeMigration);
+  assert(sql.includes('profiles_age_adult_check'), 'Adult profile age constraint is missing');
+  assert(sql.includes('age is null or (age >= 18 and age <= 120)'), 'Adult profile age bounds changed unexpectedly');
+  assert(sql.includes('not valid'), 'Adult age migration may unexpectedly fail on historical/test rows');
+}
+
 if (failures.length) {
   failures.forEach((message) => console.error(`FAIL: ${message}`));
   console.error(`Database contract audit failed with ${failures.length} blocking issue(s).`);
