@@ -1,6 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 Deno.serve(async (req) => {
   const headers = { "Content-Type": "application/json" };
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "method_not_allowed" }), { status: 405, headers });
@@ -24,8 +26,10 @@ Deno.serve(async (req) => {
     if (userError || !caller) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers });
 
     const body = await req.json();
-    const cheersId = String(body?.cheersId ?? "");
-    if (!cheersId) return new Response(JSON.stringify({ error: "cheers_id_required" }), { status: 400, headers });
+    const cheersId = String(body?.cheersId ?? "").trim();
+    if (!UUID_PATTERN.test(cheersId)) {
+      return new Response(JSON.stringify({ error: "invalid_cheers_id" }), { status: 400, headers });
+    }
 
     const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
     const { data: cheers, error: cheersError } = await admin.from("cheers").select("id, sender_id, receiver_id").eq("id", cheersId).single();
