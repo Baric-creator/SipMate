@@ -2,7 +2,8 @@
 -- policy allows a user to write their own profile row. Remove broad write grants
 -- and grant only intended client fields. `is_premium` remains in the narrow grant
 -- only because the legacy missing-profile fallback upsert sends `false`; a trigger
--- below makes that column immutable for authenticated clients.
+-- below makes that column immutable for authenticated clients and independently
+-- enforces row ownership for client writes.
 
 create or replace function public.protect_profile_authoritative_fields()
 returns trigger
@@ -10,11 +11,23 @@ language plpgsql
 security definer
 set search_path = pg_catalog, public
 as $$
+declare
+  caller_id uuid := auth.uid();
 begin
   if auth.role() = 'authenticated' then
+    if caller_id is null then
+      raise exception 'Authentication required';
+    end if;
+
     if tg_op = 'INSERT' then
+      if new.id <> caller_id then
+        raise exception 'Cannot create another user''s profile';
+      end if;
       new.is_premium := false;
     else
+      if old.id <> caller_id or new.id <> old.id then
+        raise exception 'Cannot update another user''s profile';
+      end if;
       new.is_premium := old.is_premium;
     end if;
   end if;
