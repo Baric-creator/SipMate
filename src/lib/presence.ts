@@ -19,8 +19,16 @@ export function isProfileAvailable(profile: {
 export function isProfileOnline(profile: {
   is_active?: boolean | null;
   last_seen_at?: string | null;
+  active_until?: string | null;
 }) {
   if (profile.is_active !== true || !profile.last_seen_at) return false;
+
+  if (typeof profile.active_until !== 'undefined') {
+    if (!profile.active_until) return false;
+    const activeUntil = new Date(profile.active_until).getTime();
+    if (!Number.isFinite(activeUntil) || activeUntil <= Date.now()) return false;
+  }
+
   const seenAt = new Date(profile.last_seen_at).getTime();
   if (!Number.isFinite(seenAt)) return false;
   return Date.now() - seenAt <= PRESENCE_TIMEOUT_MS;
