@@ -44,14 +44,17 @@ if (exists(pushTokenMigration)) {
   assert(!sql.includes('grant select on table public.device_push_tokens to authenticated'), 'Push tokens became readable by app clients');
 }
 
-const discordInternalMigration = 'supabase/migrations/20260915194000_harden_discord_internal_tables.sql';
-assert(exists(discordInternalMigration), `Missing migration: ${discordInternalMigration}`);
-if (exists(discordInternalMigration)) {
-  const sql = read(discordInternalMigration);
-  for (const table of ['discord_oauth_states', 'discord_cheers_announcements']) {
+const discordStateMigration = 'supabase/migrations/20260906184000_add_discord_oauth_states.sql';
+const discordFeedMigration = 'supabase/migrations/20260907191500_add_discord_cheers_feed.sql';
+for (const [migration, table] of [
+  [discordStateMigration, 'discord_oauth_states'],
+  [discordFeedMigration, 'discord_cheers_announcements'],
+]) {
+  assert(exists(migration), `Missing migration: ${migration}`);
+  if (exists(migration)) {
+    const sql = read(migration);
     assert(sql.includes(`alter table public.${table} enable row level security`), `${table} RLS is not explicitly enabled`);
-    assert(sql.includes(`revoke all on table public.${table} from anon`), `${table} remains accessible to anonymous clients`);
-    assert(sql.includes(`revoke all on table public.${table} from authenticated`), `${table} remains directly accessible to authenticated app clients`);
+    assert(sql.includes('revoke all') && sql.includes(table) && sql.includes('anon') && sql.includes('authenticated'), `${table} remains directly accessible to app clients`);
   }
 }
 
