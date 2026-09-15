@@ -97,8 +97,14 @@ if (exists(profileWriteMigration)) {
   assert(sql.includes('revoke update on table public.profiles from authenticated'), 'Broad authenticated profile UPDATE privilege is not revoked');
   assert(sql.includes('revoke delete on table public.profiles from authenticated'), 'Authenticated clients can directly delete profile rows');
   assert(sql.includes('grant insert (') && sql.includes('grant update ('), 'Profile client write allowlist is missing');
-  for (const protectedColumn of ['is_premium', 'premium_until', 'discord_user_id', 'discord_username', 'discord_connected_at']) {
-    const grants = sql.match(/grant (?:insert|update) \([\s\S]*?\) on table public\.profiles to authenticated;/gi) ?? [];
+  assert(sql.includes('create or replace function public.protect_profile_authoritative_fields()'), 'Profile authoritative-field trigger function is missing');
+  assert(sql.includes("if auth.role() = 'authenticated'"), 'Profile authoritative-field trigger no longer targets app clients');
+  assert(sql.includes('new.is_premium := false') && sql.includes('new.is_premium := old.is_premium'), 'Authenticated clients can alter Premium entitlement through profile writes');
+  assert(sql.includes('before insert or update on public.profiles'), 'Profile authoritative-field guard trigger is missing');
+  assert(sql.includes('revoke all on function public.protect_profile_authoritative_fields() from public'), 'Profile authoritative-field trigger function became publicly executable');
+
+  const grants = sql.match(/grant (?:insert|update) \([\s\S]*?\) on table public\.profiles to authenticated;/gi) ?? [];
+  for (const protectedColumn of ['premium_until', 'discord_user_id', 'discord_username', 'discord_connected_at']) {
     assert(grants.every((grant) => !grant.includes(protectedColumn)), `Backend-authoritative profile column ${protectedColumn} became client-writable`);
   }
 }
