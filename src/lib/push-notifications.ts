@@ -14,7 +14,12 @@ Notifications.setNotificationHandler({
   }),
 });
 
-let registrationInFlight: Promise<string | null> | null = null;
+type PushRegistrationTask = {
+  userId: string;
+  promise: Promise<string | null>;
+};
+
+let registrationInFlight: PushRegistrationTask | null = null;
 
 function getProjectId() {
   return (
@@ -24,7 +29,7 @@ function getProjectId() {
   );
 }
 
-async function registerForPushNotificationsInternal() {
+async function registerForPushNotificationsInternal(expectedUserId: string) {
   if (Platform.OS === 'web' || !Device.isDevice) {
     return null;
   }
@@ -74,8 +79,12 @@ async function registerForPushNotificationsInternal() {
       data: { session },
     } = await supabase.auth.getSession();
 
-    if (!session?.access_token) {
-      return pushToken;
+    if (
+      !session?.access_token ||
+      !session.user ||
+      session.user.id !== expectedUserId
+    ) {
+      return null;
     }
 
     const { error } = await supabase.functions.invoke('register-push-token', {
@@ -102,13 +111,33 @@ async function registerForPushNotificationsInternal() {
 }
 
 export async function registerForPushNotificationsAsync() {
-  if (registrationInFlight) return registrationInFlight;
+  if (Platform.OS === 'web' || !Device.isDevice) {
+    return null;
+  }
 
-  registrationInFlight = registerForPushNotificationsInternal();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return null;
+  }
+
+  if (registrationInFlight?.userId === userId) {
+    return registrationInFlight.promise;
+  }
+
+  const promise = registerForPushNotificationsInternal(userId);
+  const task: PushRegistrationTask = { userId, promise };
+  registrationInFlight = task;
+
   try {
-    return await registrationInFlight;
+    return await promise;
   } finally {
-    registrationInFlight = null;
+    if (registrationInFlight === task) {
+      registrationInFlight = null;
+    }
   }
 }
 
@@ -118,18 +147,19 @@ export async function unregisterCurrentDevicePushTokenAsync() {
   }
 
   try {
-    if (registrationInFlight) {
-      await registrationInFlight.catch(() => null);
-    }
-
-    const projectId = getProjectId();
-    if (!projectId) return;
-
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
-    if (!session?.user) return;
+    const userId = session?.user?.id;
+    if (!userId) return;
+
+    if (registrationInFlight?.userId === userId) {
+      await registrationInFlight.promise.catch(() => null);
+    }
+
+    const projectId = getProjectId();
+    if (!projectId) return;
 
     const pushToken = (
       await Notifications.getExpoPushTokenAsync({ projectId })
@@ -138,7 +168,7 @@ export async function unregisterCurrentDevicePushTokenAsync() {
     const { error } = await supabase
       .from('device_push_tokens')
       .delete()
-      .eq('user_id', session.user.id)
+      .eq('user_id', userId)
       .eq('token', pushToken);
 
     if (error) {
