@@ -1,8 +1,8 @@
 # SipMate — Supabase policy contract
 
-Status snapshot: 3 September 2026
+Status snapshot: 15 September 2026
 
-This document defines the minimum backend behavior SipMate expects before public release. It is not a claim about the live Supabase project. The production project must be exported, reviewed and tested against this contract.
+This document defines the minimum backend behavior SipMate expects before public release. It is not a claim about the live Supabase project. The production project must be exported, reviewed and tested against this contract, and repository migrations must be confirmed as applied remotely before release.
 
 ## General rules
 
@@ -11,6 +11,7 @@ This document defines the minimum backend behavior SipMate expects before public
 - Premium entitlement fields are server-authoritative and must not be writable by ordinary clients.
 - Realtime visibility must never expose rows that ordinary SELECT policies would hide.
 - Blocking must be enforced by backend rules for contact actions; hiding buttons in React is not sufficient.
+- Internal security material such as device push tokens and one-time OAuth state rows must not be readable by normal app clients.
 
 ## profiles
 
@@ -18,14 +19,17 @@ Required behavior:
 - authenticated users may read only intentionally public profile fields;
 - a user may update only their own row;
 - clients must not update authoritative Premium fields;
-- location columns require explicit privacy review because Nearby currently calculates distance on the client.
+- precise latitude/longitude columns are not directly selectable by normal app clients;
+- Nearby distance is calculated server-side by `get_nearby_profiles`, and own coordinates are obtained only through the private `get_my_profile_location` RPC.
 
 ## profile_photos
 
 Required behavior:
 - users may insert and delete only rows where `user_id = auth.uid()`;
 - profile photo visibility must follow the intended profile visibility model;
-- Premium gallery limits should have server-side enforcement if they are business-critical.
+- gallery insertion requires a current Premium entitlement;
+- no account may exceed six gallery photos, including under concurrent uploads;
+- the server-side gallery trigger is authoritative; React checks are UX only.
 
 ## cheers
 
@@ -94,6 +98,25 @@ Required behavior:
 - ordinary client writes are denied;
 - subscriber counters and eligibility logic are backend-authoritative.
 
+## device_push_tokens
+
+Required behavior:
+- anonymous clients have no table privileges;
+- authenticated app clients cannot SELECT push tokens;
+- token registration/upsert is performed by the authenticated Edge Function using service-role access;
+- the app may DELETE only tokens owned by `auth.uid()` so logout can unregister the current device;
+- stale tokens are removed when Expo reports `DeviceNotRegistered`;
+- account deletion removes all remaining device tokens for that user before deleting Auth identity.
+
+## Discord internal tables
+
+`discord_oauth_states` and `discord_cheers_announcements` are server-side bookkeeping tables.
+
+Required behavior:
+- RLS is enabled;
+- anon and authenticated clients have no direct privileges;
+- only trusted service-role Edge Functions create, read or remove these rows.
+
 ## avatars Storage bucket
 
 Required behavior:
@@ -111,12 +134,12 @@ Any SECURITY DEFINER helper must pin a safe `search_path`, avoid dynamic SQL unl
 
 ## Account deletion transaction order
 
-Before enabling `ACCOUNT_DELETION_ENABLED=true`, prove this order with disposable accounts:
+Before public release, prove this order with disposable accounts:
 
 1. authenticate and resolve the exact user;
 2. determine active paid subscription state;
 3. terminate or safely schedule provider subscription cleanup according to product policy;
-4. remove user-owned Storage objects;
+4. remove device push tokens and user-owned Storage objects;
 5. remove or anonymize database rows according to verified cascades/retention rules;
 6. verify moderation/report retention matches policy;
 7. delete the Supabase Auth identity last;
@@ -132,6 +155,9 @@ Use at least two normal users plus one Premium user and test attempts to:
 - message or Cheers across a block;
 - query hidden received-Cheers identity as a Free user if identity secrecy is part of Premium access control;
 - update `is_premium`, `premium_until`, provider IDs or subscription state from the client;
+- read another user's device push token;
+- create or read Discord OAuth state rows directly;
+- insert gallery photos as Free, as another user, or beyond six photos using concurrent requests;
 - upload/delete files under another user's Storage prefix;
 - access stale deep links after a block;
 - continue using realtime channels after access should have been removed.
