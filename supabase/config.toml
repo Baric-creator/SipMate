@@ -36,6 +36,11 @@ enabled = true
 verify_jwt = true
 entrypoint = "./functions/admin-moderation/index.ts"
 
+[functions.admin-premium-reward]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/admin-premium-reward/index.ts"
+
 [functions.send-cheers-notification]
 enabled = true
 verify_jwt = true
