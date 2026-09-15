@@ -64,7 +64,9 @@ Use at least two normal accounts and one Premium account. Verify:
 - An authenticated client cannot set `is_premium`, `premium_until` or Discord linkage fields through direct profile writes.
 - An authenticated client cannot write another user's profile or delete another user's gallery row.
 - New profile writes cannot persist an age below 18 or above 120.
-- App clients cannot read `device_push_tokens`, `discord_oauth_states`, or `discord_cheers_announcements`.
+- App clients cannot SELECT/INSERT/UPDATE/DELETE `device_push_tokens` directly.
+- `register-push-token` can register/unregister only the caller's exact Expo token after JWT validation.
+- App clients cannot access `discord_oauth_states` or `discord_cheers_announcements` directly.
 - Logout removes the current device token; account deletion removes remaining tokens.
 - Account deletion removes profile Storage files and the user only after subscription/storage/database cleanup succeeds.
 
@@ -72,7 +74,7 @@ Use at least two normal accounts and one Premium account. Verify:
 
 Database migrations do not deploy Edge Function source. Confirm the release-required functions have been deployed from the same reviewed commit and that their required environment secrets are configured. Do not print or commit secret values while verifying them.
 
-Specifically retest Discord connect/disconnect after deploying `discord-oauth`: linkage must not be cleared if Premium-role revocation fails, so the operation can be retried safely.
+Specifically retest `register-push-token` register/unregister behavior after deploying it, and retest Discord connect/disconnect after deploying `discord-oauth`: linkage must not be cleared if Premium-role revocation fails, so the operation can be retried safely.
 
 ## 7. Evidence
 
