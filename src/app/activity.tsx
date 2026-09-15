@@ -68,28 +68,28 @@ export default function ActivityScreen() {
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const hasLoadedActivityRef = useRef(false);
+  const activityLoadIdRef = useRef(0);
 
   useFocusEffect(
     useCallback(() => {
       void loadActivity(hasLoadedActivityRef.current);
+      return () => {
+        activityLoadIdRef.current += 1;
+      };
     }, [])
   );
 
   useEffect(() => {
+    const refresh = () => {
+      void loadActivity(true);
+    };
+
     const channel = supabase
       .channel('activity-screen-updates')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-        void loadActivity(true);
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
-        void loadActivity(true);
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, () => {
-        void loadActivity(true);
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, () => {
-        void loadActivity(true);
-      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, refresh)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, refresh)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cheers' }, refresh)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'cheers' }, refresh)
       .subscribe();
 
     return () => {
@@ -98,40 +98,54 @@ export default function ActivityScreen() {
   }, []);
 
   async function loadActivity(silent = false) {
+    const requestId = ++activityLoadIdRef.current;
+
     try {
       if (!silent) setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
+      if (requestId !== activityLoadIdRef.current) return;
       if (!session?.user) {
+        setItems([]);
         router.replace('/login');
         return;
       }
 
       const myId = session.user.id;
 
-      const [{ data: receivedCheers }, { data: sentCheers }, { data: conversations }] =
-        await Promise.all([
-          supabase
-            .from('cheers')
-            .select('id, sender_id, receiver_id, created_at')
-            .eq('receiver_id', myId)
-            .order('created_at', { ascending: false })
-            .limit(30),
-          supabase
-            .from('cheers')
-            .select('sender_id, receiver_id')
-            .eq('sender_id', myId),
-          supabase
-            .from('conversations')
-            .select('id, user_one, user_two')
-            .or(`user_one.eq.${myId},user_two.eq.${myId}`),
-        ]);
+      const [receivedResult, sentResult, conversationsResult] = await Promise.all([
+        supabase
+          .from('cheers')
+          .select('id, sender_id, receiver_id, created_at')
+          .eq('receiver_id', myId)
+          .order('created_at', { ascending: false })
+          .limit(30),
+        supabase
+          .from('cheers')
+          .select('sender_id, receiver_id')
+          .eq('sender_id', myId),
+        supabase
+          .from('conversations')
+          .select('id, user_one, user_two')
+          .or(`user_one.eq.${myId},user_two.eq.${myId}`),
+      ]);
 
-      const sentTo = new Set((sentCheers ?? []).map((item) => item.receiver_id));
-      const conversationIds = (conversations ?? []).map((item) => item.id);
+      if (requestId !== activityLoadIdRef.current) return;
+      const { data: { session: sessionAfterBaseQueries } } = await supabase.auth.getSession();
+      if (sessionAfterBaseQueries?.user?.id !== myId) return;
+
+      if (receivedResult.error) console.log('ACTIVITY CHEERS LOAD ERROR:', receivedResult.error.message);
+      if (sentResult.error) console.log('ACTIVITY SENT CHEERS LOAD ERROR:', sentResult.error.message);
+      if (conversationsResult.error) console.log('ACTIVITY CONVERSATIONS LOAD ERROR:', conversationsResult.error.message);
+
+      const receivedCheers = receivedResult.data ?? [];
+      const sentCheers = sentResult.data ?? [];
+      const conversations = conversationsResult.data ?? [];
+      const sentTo = new Set(sentCheers.map((item) => item.receiver_id));
+      const conversationIds = conversations.map((item) => item.id);
 
       let unreadMessages: any[] = [];
       if (conversationIds.length) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('messages')
           .select('id, conversation_id, sender_id, created_at')
           .in('conversation_id', conversationIds)
@@ -139,24 +153,34 @@ export default function ActivityScreen() {
           .is('read_at', null)
           .order('created_at', { ascending: false })
           .limit(30);
+        if (error) console.log('ACTIVITY MESSAGES LOAD ERROR:', error.message);
         unreadMessages = data ?? [];
       }
 
+      if (requestId !== activityLoadIdRef.current) return;
+      const { data: { session: sessionAfterMessages } } = await supabase.auth.getSession();
+      if (sessionAfterMessages?.user?.id !== myId) return;
+
       const userIds = Array.from(new Set([
-        ...(receivedCheers ?? []).map((item) => item.sender_id),
+        ...receivedCheers.map((item) => item.sender_id),
         ...unreadMessages.map((item) => item.sender_id),
       ]));
 
-      const { data: profiles } = userIds.length
+      const profilesResult = userIds.length
         ? await supabase
             .from('profiles')
             .select('id, name, avatar_url')
             .in('id', userIds)
-        : { data: [] as any[] };
+        : { data: [] as any[], error: null };
 
-      const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+      if (requestId !== activityLoadIdRef.current) return;
+      const { data: { session: finalSession } } = await supabase.auth.getSession();
+      if (finalSession?.user?.id !== myId) return;
 
-      const cheersItems: ActivityItem[] = (receivedCheers ?? []).map((item) => {
+      if (profilesResult.error) console.log('ACTIVITY PROFILES LOAD ERROR:', profilesResult.error.message);
+      const profileMap = new Map((profilesResult.data ?? []).map((p) => [p.id, p]));
+
+      const cheersItems: ActivityItem[] = receivedCheers.map((item) => {
         const profile = profileMap.get(item.sender_id);
         return {
           id: `cheers:${item.id}`,
@@ -188,8 +212,10 @@ export default function ActivityScreen() {
       setItems(merged);
       await AsyncStorage.setItem('sipmate:activity-seen-at', new Date().toISOString());
     } finally {
-      hasLoadedActivityRef.current = true;
-      if (!silent) setLoading(false);
+      if (requestId === activityLoadIdRef.current) {
+        hasLoadedActivityRef.current = true;
+        if (!silent) setLoading(false);
+      }
     }
   }
 
@@ -197,11 +223,7 @@ export default function ActivityScreen() {
     if (item.kind === 'message' && item.conversationId) {
       router.push({
         pathname: '/chat',
-        params: {
-          conversationId: item.conversationId,
-          id: item.userId,
-          name: item.name,
-        },
+        params: { conversationId: item.conversationId },
       });
       return;
     }
