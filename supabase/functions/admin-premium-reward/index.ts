@@ -7,6 +7,7 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 const ADMIN_EMAILS = new Set(["sipmate.app@gmail.com"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const DISCORD_ID_PATTERN = /^\d{17,20}$/;
 const ALLOWED_SOURCES = new Set(["discord_25_crew", "giveaway", "manual", "founder", "ambassador", "bug_bounty"]);
 const MAX_BODY_BYTES = 8_192;
 
@@ -61,17 +62,47 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ ok: false, error: "invalid_json" }), { status: 400, headers });
     }
 
-    const userId = String(body.user_id ?? "").trim();
+    const requestedUserId = String(body.user_id ?? "").trim();
+    const discordUserId = String(body.discord_user_id ?? "").trim();
     const source = String(body.source ?? "").trim();
     const externalReference = String(body.external_reference ?? "").trim();
     const durationDays = Number(body.duration_days ?? 365);
 
-    if (!UUID_PATTERN.test(userId)) return new Response(JSON.stringify({ ok: false, error: "invalid_user_id" }), { status: 400, headers });
+    if (requestedUserId && !UUID_PATTERN.test(requestedUserId)) {
+      return new Response(JSON.stringify({ ok: false, error: "invalid_user_id" }), { status: 400, headers });
+    }
+    if (discordUserId && !DISCORD_ID_PATTERN.test(discordUserId)) {
+      return new Response(JSON.stringify({ ok: false, error: "invalid_discord_user_id" }), { status: 400, headers });
+    }
+    if (!requestedUserId && !discordUserId) {
+      return new Response(JSON.stringify({ ok: false, error: "target_required" }), { status: 400, headers });
+    }
+    if (requestedUserId && discordUserId) {
+      return new Response(JSON.stringify({ ok: false, error: "one_target_only" }), { status: 400, headers });
+    }
     if (!ALLOWED_SOURCES.has(source)) return new Response(JSON.stringify({ ok: false, error: "invalid_source" }), { status: 400, headers });
     if (externalReference.length < 1 || externalReference.length > 160) return new Response(JSON.stringify({ ok: false, error: "invalid_external_reference" }), { status: 400, headers });
     if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 3650) return new Response(JSON.stringify({ ok: false, error: "invalid_duration_days" }), { status: 400, headers });
 
     const sb = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+    let userId = requestedUserId;
+    let targetProfile: { id: string; name: string | null; discord_username: string | null } | null = null;
+
+    if (discordUserId) {
+      const { data: profile, error: profileError } = await sb
+        .from("profiles")
+        .select("id,name,discord_username")
+        .eq("discord_user_id", discordUserId)
+        .maybeSingle();
+      if (profileError) {
+        console.error("ADMIN PREMIUM TARGET LOOKUP ERROR", profileError);
+        return new Response(JSON.stringify({ ok: false, error: "target_lookup_failed" }), { status: 500, headers });
+      }
+      if (!profile) return new Response(JSON.stringify({ ok: false, error: "discord_not_linked" }), { status: 404, headers });
+      userId = profile.id;
+      targetProfile = profile;
+    }
+
     const { data, error } = await sb.rpc("grant_premium_reward", {
       p_user_id: userId,
       p_source: source,
@@ -80,6 +111,7 @@ Deno.serve(async (req: Request) => {
       p_metadata: {
         ...(body.metadata && typeof body.metadata === "object" && !Array.isArray(body.metadata) ? body.metadata as Record<string, unknown> : {}),
         granted_by_user_id: adminUser.id,
+        ...(discordUserId ? { discord_user_id: discordUserId } : {}),
       },
     });
 
@@ -93,6 +125,8 @@ Deno.serve(async (req: Request) => {
       ok: true,
       granted: Boolean(result?.granted),
       premium_until: result?.premium_until ?? null,
+      user_id: userId,
+      target: targetProfile ? { name: targetProfile.name, discord_username: targetProfile.discord_username } : null,
     }), { status: 200, headers });
   } catch (error) {
     console.error("ADMIN PREMIUM REWARD ERROR", error);
