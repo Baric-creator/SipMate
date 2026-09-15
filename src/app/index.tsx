@@ -80,10 +80,15 @@ export default function HomeScreen() {
   const hasLoadedHomeRef = useRef(false);
   const currentUserIdRef = useRef<string | null>(null);
   const statusUpdateRef = useRef(false);
+  const homeLoadIdRef = useRef(0);
 
   useFocusEffect(
     useCallback(() => {
-      void loadProfile(hasLoadedHomeRef.current);
+      const requestId = ++homeLoadIdRef.current;
+      void loadProfile(requestId, hasLoadedHomeRef.current);
+      return () => {
+        homeLoadIdRef.current += 1;
+      };
     }, [])
   );
 
@@ -139,8 +144,9 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const refreshActivity = () => {
-      if (currentUserIdRef.current) {
-        void loadActivityCount(currentUserIdRef.current);
+      const userId = currentUserIdRef.current;
+      if (userId) {
+        void loadActivityCount(userId);
       }
     };
 
@@ -152,7 +158,7 @@ export default function HomeScreen() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
   }, []);
 
@@ -208,11 +214,12 @@ export default function HomeScreen() {
     );
   }
 
-  async function loadProfile(silent = false) {
+  async function loadProfile(requestId: number, silent = false) {
     try {
       if (!silent) setLoading(true);
 
       const onboardingDone = await AsyncStorage.getItem('sipmate:onboarding:v1');
+      if (requestId !== homeLoadIdRef.current) return;
       if (!onboardingDone) {
         router.replace('/onboarding');
         return;
@@ -220,34 +227,36 @@ export default function HomeScreen() {
 
       const {
         data: { session },
-      } =
-        await supabase.auth.getSession();
+      } = await supabase.auth.getSession();
 
+      if (requestId !== homeLoadIdRef.current) return;
       if (!session?.user) {
         currentUserIdRef.current = null;
+        setProfile(null);
+        setActivityCount(0);
         router.replace('/login');
         return;
       }
 
-      currentUserIdRef.current = session.user.id;
+      const expectedUserId = session.user.id;
+      currentUserIdRef.current = expectedUserId;
 
-      const { data, error } =
-        await supabase
-          .from('profiles')
-          .select(
-            'id, name, city, currently_up_for, is_active, active_until'
-          )
-          .eq(
-            'id',
-            session.user.id
-          )
-          .maybeSingle();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, city, currently_up_for, is_active, active_until')
+        .eq('id', expectedUserId)
+        .maybeSingle();
+
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (
+        requestId !== homeLoadIdRef.current ||
+        currentSession?.user?.id !== expectedUserId
+      ) {
+        return;
+      }
 
       if (error) {
-        console.log(
-          'HOME PROFILE ERROR:',
-          error.message
-        );
+        console.log('HOME PROFILE ERROR:', error.message);
         return;
       }
 
@@ -261,7 +270,7 @@ export default function HomeScreen() {
         const { data: created, error: createError } = await supabase
           .from('profiles')
           .upsert({
-            id: session.user.id,
+            id: expectedUserId,
             name: fallbackName,
             is_active: false,
             is_premium: false,
@@ -269,31 +278,46 @@ export default function HomeScreen() {
           .select('id, name, city, currently_up_for, is_active, active_until')
           .single();
 
+        const { data: { session: sessionAfterCreate } } = await supabase.auth.getSession();
+        if (
+          requestId !== homeLoadIdRef.current ||
+          sessionAfterCreate?.user?.id !== expectedUserId
+        ) {
+          return;
+        }
+
         if (createError) {
           console.log('HOME PROFILE CREATE ERROR:', createError.message);
           return;
         }
 
         setProfile(created);
-        await loadActivityCount(session.user.id);
+        await loadActivityCount(expectedUserId, requestId);
         return;
       }
 
       const sessionActive = isProfileAvailable(data);
       if (data.is_active && !sessionActive) {
-        void supabase.from('profiles').update({ is_active: false, active_until: null, last_seen_at: null }).eq('id', session.user.id);
+        void supabase.from('profiles').update({ is_active: false, active_until: null, last_seen_at: null }).eq('id', expectedUserId);
       }
       setProfile({ ...data, is_active: sessionActive });
-      await loadActivityCount(session.user.id);
+      await loadActivityCount(expectedUserId, requestId);
     } finally {
-      hasLoadedHomeRef.current = true;
-      if (!silent) setLoading(false);
+      if (requestId === homeLoadIdRef.current) {
+        hasLoadedHomeRef.current = true;
+        if (!silent) setLoading(false);
+      }
     }
   }
 
-  async function loadActivityCount(myId: string) {
+  async function loadActivityCount(myId: string, requestId?: number) {
+    const isCurrent = () =>
+      currentUserIdRef.current === myId &&
+      (typeof requestId === 'undefined' || requestId === homeLoadIdRef.current);
+
     try {
       const seenAt = await AsyncStorage.getItem('sipmate:activity-seen-at');
+      if (!isCurrent()) return;
 
       const [{ data: conversations }, cheersResult] = await Promise.all([
         supabase
@@ -311,6 +335,8 @@ export default function HomeScreen() {
         })(),
       ]);
 
+      if (!isCurrent()) return;
+
       const conversationIds = (conversations ?? []).map((item) => item.id);
       let unreadMessages = 0;
 
@@ -322,11 +348,14 @@ export default function HomeScreen() {
           .neq('sender_id', myId)
           .is('read_at', null);
 
+        if (!isCurrent()) return;
         unreadMessages = count ?? 0;
       }
 
       const cheersCount = cheersResult.count ?? 0;
-      setActivityCount(Math.min(99, unreadMessages + cheersCount));
+      if (isCurrent()) {
+        setActivityCount(Math.min(99, unreadMessages + cheersCount));
+      }
     } catch (error) {
       console.log('ACTIVITY COUNT ERROR:', error);
     }
@@ -338,10 +367,16 @@ export default function HomeScreen() {
     }
 
     statusUpdateRef.current = true;
+    const profileId = profile.id;
     const newStatus = !profile.is_active;
     const activeUntil = newStatus ? getActiveUntilIso() : null;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user || session.user.id !== profileId) {
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -349,14 +384,18 @@ export default function HomeScreen() {
           active_until: activeUntil,
           last_seen_at: newStatus ? new Date().toISOString() : null,
         })
-        .eq('id', profile.id);
+        .eq('id', profileId);
 
       if (error) {
         console.log('ACTIVE STATUS ERROR:', error.message);
         return;
       }
 
-      setProfile({ ...profile, is_active: newStatus, active_until: activeUntil });
+      setProfile((current) =>
+        current?.id === profileId
+          ? { ...current, is_active: newStatus, active_until: activeUntil }
+          : current
+      );
       Vibration.vibrate(35);
       if (newStatus) {
         showAlert(language === 'de' ? '🍻 Du bist jetzt 3 Stunden auf Nearby sichtbar. Wir benachrichtigen dich, wenn dir jemand Cheers sendet.' : language === 'hr' ? '🍻 Sada si 3 sata vidljiv na Nearbyu. Obavijestit ćemo te kad ti netko pošalje Cheers.' : '🍻 You are now visible on Nearby for 3 hours. We will notify you when someone sends you Cheers.');
