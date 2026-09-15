@@ -101,10 +101,10 @@ Required behavior:
 ## device_push_tokens
 
 Required behavior:
-- anonymous clients have no table privileges;
-- authenticated app clients cannot SELECT push tokens;
-- token registration/upsert is performed by the authenticated Edge Function using service-role access;
-- the app may DELETE only tokens owned by `auth.uid()` so logout can unregister the current device;
+- anon and authenticated clients have no direct table privileges;
+- token registration and unregistration both go through the authenticated `register-push-token` Edge Function;
+- the Edge Function validates the caller JWT and performs storage changes with service-role access;
+- unregister deletes only the calling user's exact Expo token;
 - stale tokens are removed when Expo reports `DeviceNotRegistered`;
 - account deletion removes all remaining device tokens for that user before deleting Auth identity.
 
@@ -155,7 +155,8 @@ Use at least two normal users plus one Premium user and test attempts to:
 - message or Cheers across a block;
 - query hidden received-Cheers identity as a Free user if identity secrecy is part of Premium access control;
 - update `is_premium`, `premium_until`, provider IDs or subscription state from the client;
-- read another user's device push token;
+- read, insert, update or delete `device_push_tokens` directly as an app client;
+- unregister a token that belongs to another user through the Edge Function;
 - create or read Discord OAuth state rows directly;
 - insert gallery photos as Free, as another user, or beyond six photos using concurrent requests;
 - upload/delete files under another user's Storage prefix;
