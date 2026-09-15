@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Pressable,
@@ -105,8 +105,11 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const registrationInFlightRef = useRef(false);
 
   async function handleRegister() {
+    if (registrationInFlightRef.current) return;
+
     if (!name.trim() || !age.trim() || !email.trim() || !password.trim()) {
       showAlert(text.fillAll);
       return;
@@ -123,16 +126,19 @@ export default function RegisterScreen() {
       return;
     }
 
+    registrationInFlightRef.current = true;
+
     try {
       setLoading(true);
       const cleanEmail = email.trim().toLowerCase();
+      const cleanName = name.trim();
 
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
         options: {
           data: {
-            name: name.trim(),
+            name: cleanName,
             age: numericAge,
           },
         },
@@ -150,7 +156,7 @@ export default function RegisterScreen() {
           },
           body: {
             email: cleanEmail,
-            name: name.trim(),
+            name: cleanName,
             language: ['en', 'de', 'hr'].includes(language) ? language : 'en',
           },
         });
@@ -170,6 +176,7 @@ export default function RegisterScreen() {
       console.log('REGISTER CATCH ERROR:', error);
       showAlert(text.failed);
     } finally {
+      registrationInFlightRef.current = false;
       setLoading(false);
     }
   }
@@ -188,13 +195,13 @@ export default function RegisterScreen() {
           <Text style={styles.subtitle}>{text.subtitle}</Text>
 
           <Text style={styles.label}>{text.name}</Text>
-          <TextInput value={name} onChangeText={setName} maxLength={50} placeholder={text.namePlaceholder} placeholderTextColor="#52525B" autoCapitalize="words" autoComplete="name" textContentType="name" style={styles.input} />
+          <TextInput value={name} onChangeText={setName} maxLength={50} placeholder={text.namePlaceholder} placeholderTextColor="#52525B" autoCapitalize="words" autoComplete="name" textContentType="name" style={styles.input} editable={!loading} />
           <Text style={styles.label}>{text.age}</Text>
-          <TextInput value={age} onChangeText={(value) => setAge(value.replace(/\D/g, '').slice(0, 3))} maxLength={3} placeholder={text.agePlaceholder} placeholderTextColor="#52525B" keyboardType="numeric" inputMode="numeric" style={styles.input} />
+          <TextInput value={age} onChangeText={(value) => setAge(value.replace(/\D/g, '').slice(0, 3))} maxLength={3} placeholder={text.agePlaceholder} placeholderTextColor="#52525B" keyboardType="numeric" inputMode="numeric" style={styles.input} editable={!loading} />
           <Text style={styles.label}>{text.email}</Text>
-          <TextInput value={email} onChangeText={setEmail} maxLength={254} placeholder="you@example.com" placeholderTextColor="#52525B" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" style={styles.input} />
+          <TextInput value={email} onChangeText={setEmail} maxLength={254} placeholder="you@example.com" placeholderTextColor="#52525B" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" style={styles.input} editable={!loading} />
           <Text style={styles.label}>{text.password}</Text>
-          <TextInput value={password} onChangeText={setPassword} maxLength={128} placeholder={text.passwordPlaceholder} placeholderTextColor="#52525B" secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="new-password" textContentType="newPassword" style={styles.input} />
+          <TextInput value={password} onChangeText={setPassword} maxLength={128} placeholder={text.passwordPlaceholder} placeholderTextColor="#52525B" secureTextEntry autoCapitalize="none" autoCorrect={false} autoComplete="new-password" textContentType="newPassword" style={styles.input} editable={!loading} />
 
           <View style={styles.agreementRow}>
             <Pressable
@@ -202,14 +209,15 @@ export default function RegisterScreen() {
               accessibilityState={{ checked: acceptedTerms }}
               onPress={() => setAcceptedTerms((value) => !value)}
               style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}
+              disabled={loading}
             >
               <Text style={styles.checkboxMark}>{acceptedTerms ? '✓' : ''}</Text>
             </Pressable>
             <Text style={styles.agreementText}>
               {text.agreePrefix}
-              <Text style={styles.linkText} onPress={() => router.push('/terms')}>{text.terms}</Text>
+              <Text style={styles.linkText} onPress={() => { if (!loading) router.push('/terms'); }}>{text.terms}</Text>
               {text.and}
-              <Text style={styles.linkText} onPress={() => router.push('/community-guidelines')}>{text.community}</Text>.
+              <Text style={styles.linkText} onPress={() => { if (!loading) router.push('/community-guidelines'); }}>{text.community}</Text>.
             </Text>
           </View>
 
@@ -222,7 +230,7 @@ export default function RegisterScreen() {
           </Pressable>
 
           <View style={styles.dividerRow}><View style={styles.divider} /><Text style={styles.dividerText}>{text.member}</Text><View style={styles.divider} /></View>
-          <Pressable style={styles.loginButton} onPress={() => router.push('/login')}><Text style={styles.loginButtonText}>{text.login}</Text></Pressable>
+          <Pressable style={styles.loginButton} onPress={() => router.push('/login')} disabled={loading}><Text style={styles.loginButtonText}>{text.login}</Text></Pressable>
           <Text style={styles.footer}>{text.footer}</Text>
         </View>
       </ScrollView>
