@@ -40,3 +40,19 @@ test('Cheers notification validates sender, block state and recipient Active win
   assert.match(cheersSource, /recipientProfile\?\.is_active !== true/);
   assert.match(cheersSource, /activeUntil <= Date\.now\(\)/);
 });
+
+test('notification endpoints reject malformed JSON and malformed identifiers before table lookup', () => {
+  assert.match(messageSource, /error: "invalid_json"/);
+  assert.match(cheersSource, /error: "invalid_json"/);
+  assert.match(messageSource, /UUID_PATTERN\.test\(messageId\)/);
+  assert.match(cheersSource, /UUID_PATTERN\.test\(cheersId\)/);
+  assert.ok(messageSource.indexOf('UUID_PATTERN.test(messageId)') < messageSource.indexOf('.from("messages")'));
+  assert.ok(cheersSource.indexOf('UUID_PATTERN.test(cheersId)') < cheersSource.indexOf('.from("cheers")'));
+});
+
+test('notification fanout is bounded to the newest device tokens', () => {
+  for (const source of [messageSource, cheersSource]) {
+    assert.match(source, /const MAX_PUSH_TOKENS_PER_USER = 10;/);
+    assert.match(source, /\.from\("device_push_tokens"\)[\s\S]*?\.eq\("user_id", recipientId\)[\s\S]*?\.order\("updated_at", \{ ascending: false \}\)[\s\S]*?\.limit\(MAX_PUSH_TOKENS_PER_USER\)/);
+  }
+});
