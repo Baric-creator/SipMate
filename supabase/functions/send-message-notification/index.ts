@@ -3,6 +3,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_PUSH_TOKENS_PER_USER = 10;
+const PUSH_TIMEOUT_MS = 8_000;
 
 Deno.serve(async (req) => {
   const headers = { "Content-Type": "application/json" };
@@ -103,6 +104,7 @@ Deno.serve(async (req) => {
         "Accept-Encoding": "gzip, deflate",
       },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(PUSH_TIMEOUT_MS),
     });
 
     const result = await pushResponse.json().catch(() => ({}));
