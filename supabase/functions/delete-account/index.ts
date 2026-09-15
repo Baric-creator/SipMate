@@ -75,12 +75,23 @@ Deno.serve(async (req) => {
       if (error) throw error
     }
 
-    const { data: objects, error: listError } = await admin.storage.from('avatars').list(uid, { limit: 1000 })
-    if (listError) throw listError
+    const avatarBucket = admin.storage.from('avatars')
+    const [rootList, galleryList] = await Promise.all([
+      avatarBucket.list(uid, { limit: 1000 }),
+      avatarBucket.list(`${uid}/gallery`, { limit: 1000 }),
+    ])
+    if (rootList.error) throw rootList.error
+    if (galleryList.error) throw galleryList.error
 
-    const paths = (objects ?? []).map((object) => `${uid}/${object.name}`)
-    if (paths.length) {
-      const { error } = await admin.storage.from('avatars').remove(paths)
+    const rootPaths = (rootList.data ?? [])
+      .filter((object) => object.name !== 'gallery')
+      .map((object) => `${uid}/${object.name}`)
+    const galleryPaths = (galleryList.data ?? [])
+      .map((object) => `${uid}/gallery/${object.name}`)
+    const storagePaths = [...rootPaths, ...galleryPaths]
+
+    if (storagePaths.length) {
+      const { error } = await avatarBucket.remove(storagePaths)
       if (error) throw error
     }
 
