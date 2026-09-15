@@ -40,3 +40,13 @@ entrypoint = "./functions/send-message-notification/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/register-push-token/index.ts"
+
+[functions.announce-cheers]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/announce-cheers/index.ts"
+
+[functions.send-welcome-email]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/send-welcome-email/index.ts"
