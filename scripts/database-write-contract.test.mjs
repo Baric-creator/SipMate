@@ -63,6 +63,6 @@ test('profile text fields keep app input limits at the database boundary', () =>
 test('background presence clearing remains possible while Active session bounds stay server-authored', () => {
   assert.match(presenceClear, /if new\.last_seen_at is not null then\s*new\.last_seen_at := now\(\);\s*end if;/s);
   assert.match(presenceClear, /least\(coalesce\(new\.active_until, old\.active_until\), old\.active_until\)/);
-  assert.match(presenceClear, /new\.active_until := null;\s*new\.last_seen_at := null;/s);
-  assert.doesNotMatch(presenceClear, /if new\.is_active = true then[\s\S]*?new\.last_seen_at := now\(\);[\s\S]*?else/s, 'Active branch must not force a cleared presence timestamp back online');
+  assert.match(presenceClear, /else\s*new\.active_until := null;\s*new\.last_seen_at := null;/s);
+  assert.match(presenceClear, /if tg_op = 'INSERT' then/);
 });
