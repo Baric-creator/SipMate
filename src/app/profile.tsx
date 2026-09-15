@@ -36,6 +36,7 @@ export default function UserProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const hasLoadedProfileRef = useRef(false);
+  const profileLoadIdRef = useRef(0);
   const { t, i18n } = useTranslation();
   const language = i18n.language?.split('-')[0] as keyof typeof copy;
   const text = copy[language] ?? copy.en;
@@ -43,6 +44,9 @@ export default function UserProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       void loadUserProfile(hasLoadedProfileRef.current);
+      return () => {
+        profileLoadIdRef.current += 1;
+      };
     }, [])
   );
 
@@ -54,20 +58,40 @@ export default function UserProfileScreen() {
   }, []);
 
   async function loadUserProfile(silent = false) {
+    const requestId = ++profileLoadIdRef.current;
+
     try {
       if (!silent) setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
+
+      if (requestId !== profileLoadIdRef.current) return;
+
       if (!session?.user) {
         setProfile(null);
         router.replace('/login');
         return;
       }
+
+      const expectedUserId = session.user.id;
       const { data, error } = await supabase
         .from('profiles')
         .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
-        .eq('id', session.user.id)
+        .eq('id', expectedUserId)
         .maybeSingle();
-      if (error) { console.log('PROFILE LOAD ERROR:', error.message); setProfile(null); return; }
+
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (
+        requestId !== profileLoadIdRef.current ||
+        currentSession?.user?.id !== expectedUserId
+      ) {
+        return;
+      }
+
+      if (error) {
+        console.log('PROFILE LOAD ERROR:', error.message);
+        setProfile(null);
+        return;
+      }
 
       if (!data) {
         const fallbackName =
@@ -79,13 +103,21 @@ export default function UserProfileScreen() {
         const { data: created, error: createError } = await supabase
           .from('profiles')
           .upsert({
-            id: session.user.id,
+            id: expectedUserId,
             name: fallbackName,
             is_active: false,
             is_premium: false,
           }, { onConflict: 'id' })
           .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
           .single();
+
+        const { data: { session: sessionAfterCreate } } = await supabase.auth.getSession();
+        if (
+          requestId !== profileLoadIdRef.current ||
+          sessionAfterCreate?.user?.id !== expectedUserId
+        ) {
+          return;
+        }
 
         if (createError) {
           console.log('PROFILE CREATE ERROR:', createError.message);
@@ -99,8 +131,10 @@ export default function UserProfileScreen() {
 
       setProfile(data as UserProfile);
     } finally {
-      hasLoadedProfileRef.current = true;
-      if (!silent) setLoading(false);
+      if (requestId === profileLoadIdRef.current) {
+        hasLoadedProfileRef.current = true;
+        if (!silent) setLoading(false);
+      }
     }
   }
 
@@ -152,10 +186,12 @@ export default function UserProfileScreen() {
   }
 
   async function handleLogout() {
+    profileLoadIdRef.current += 1;
     await stopActiveSession();
     await unregisterCurrentDevicePushTokenAsync();
     const { error } = await supabase.auth.signOut();
     if (error) { console.log('LOGOUT ERROR:', error.message); return; }
+    setProfile(null);
     router.replace('/login');
   }
 
