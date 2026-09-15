@@ -8,6 +8,7 @@ const registerPushToken = fs.readFileSync('supabase/functions/register-push-toke
 const sendMessageNotification = fs.readFileSync('supabase/functions/send-message-notification/index.ts', 'utf8');
 const sendCheersNotification = fs.readFileSync('supabase/functions/send-cheers-notification/index.ts', 'utf8');
 const adminModeration = fs.readFileSync('supabase/functions/admin-moderation/index.ts', 'utf8');
+const joinWaitlist = fs.readFileSync('supabase/functions/join-waitlist/index.ts', 'utf8');
 
 test('Discord Cheers feed validates other_user_id before interpolated PostgREST filters', () => {
   assert.match(announceCheers, /const UUID_PATTERN =/);
@@ -64,4 +65,20 @@ test('admin moderation validates report UUID before updating reports', () => {
   const validationAt = adminModeration.indexOf('!UUID_PATTERN.test(reportId)');
   const updateAt = adminModeration.indexOf('.from("reports")');
   assert.ok(validationAt >= 0 && updateAt > validationAt, 'reportId must be validated before report mutation');
+});
+
+test('public waitlist endpoint rejects malformed and oversized request bodies before database access', () => {
+  assert.match(joinWaitlist, /const MAX_BODY_BYTES = 8_192/);
+  assert.match(joinWaitlist, /request_too_large/);
+  assert.match(joinWaitlist, /invalid_json/);
+  assert.match(joinWaitlist, /new TextEncoder\(\)\.encode\(rawBody\)\.byteLength > MAX_BODY_BYTES/);
+  const sizeGuardAt = joinWaitlist.indexOf('byteLength > MAX_BODY_BYTES');
+  const tableAt = joinWaitlist.indexOf('.from("waitlist")');
+  assert.ok(sizeGuardAt >= 0 && tableAt > sizeGuardAt, 'waitlist body must be bounded before database access');
+});
+
+test('public waitlist endpoint fails closed when Supabase configuration is missing', () => {
+  assert.match(joinWaitlist, /if \(!supabaseUrl \|\| !anonKey\)/);
+  assert.match(joinWaitlist, /temporarily_unavailable/);
+  assert.match(joinWaitlist, /status: 503/);
 });
