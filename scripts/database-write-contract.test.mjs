@@ -6,6 +6,7 @@ const profileWrites = fs.readFileSync('supabase/migrations/20260915201000_restri
 const photoWrites = fs.readFileSync('supabase/migrations/20260915202000_restrict_profile_photo_writes.sql', 'utf8');
 const activeSessionWrites = fs.readFileSync('supabase/migrations/20260915205000_enforce_active_session_window.sql', 'utf8');
 const activeSessionSafety = fs.readFileSync('supabase/migrations/20260915205100_safe_active_session_insert_trigger.sql', 'utf8');
+const profileBounds = fs.readFileSync('supabase/migrations/20260915205200_bound_profile_text_fields.sql', 'utf8');
 
 test('authenticated profile writes remain owner-scoped and cannot change Premium state', () => {
   assert.match(profileWrites, /caller_id uuid := auth\.uid\(\)/);
@@ -44,4 +45,16 @@ test('Active session trigger handles INSERT before reading OLD', () => {
   assert.ok(insertAt >= 0 && oldReadAt > insertAt, 'INSERT branch must be resolved before OLD fields are referenced');
   assert.match(activeSessionSafety, /new\.active_until := now\(\) \+ interval '3 hours'/);
   assert.match(activeSessionSafety, /revoke all on function public\.enforce_profile_active_session_window\(\) from public/);
+});
+
+test('profile text fields keep app input limits at the database boundary', () => {
+  assert.match(profileBounds, /profiles_name_length_check/);
+  assert.match(profileBounds, /between 1 and 50/);
+  assert.match(profileBounds, /profiles_city_length_check/);
+  assert.match(profileBounds, /char_length\(city\) <= 80/);
+  assert.match(profileBounds, /profiles_bio_length_check/);
+  assert.match(profileBounds, /char_length\(bio\) <= 300/);
+  assert.match(profileBounds, /profiles_gender_value_check/);
+  assert.match(profileBounds, /gender in \('male', 'female', 'other'\)/);
+  assert.equal((profileBounds.match(/not valid/g) ?? []).length, 4);
 });
