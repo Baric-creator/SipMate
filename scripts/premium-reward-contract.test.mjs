@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 
-const source = fs.readFileSync('supabase/migrations/20260915205300_add_premium_reward_grants.sql', 'utf8');
+const source = fs.readFileSync('supabase/migrations/20260915205400_add_premium_reward_grants.sql', 'utf8');
 
 test('Premium reward ledger is backend-only and idempotent', () => {
   assert.match(source, /create table if not exists public\.premium_reward_grants/);
