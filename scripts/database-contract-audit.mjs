@@ -36,6 +36,10 @@ const pushTokenMigration = 'supabase/migrations/20260915193000_harden_device_pus
 assert(exists(pushTokenMigration), `Missing migration: ${pushTokenMigration}`);
 if (exists(pushTokenMigration)) {
   const sql = read(pushTokenMigration);
+  assert(sql.includes('create table if not exists public.device_push_tokens'), 'Push-token table creation is not represented in migration history');
+  assert(sql.includes("platform in ('android', 'ios')"), 'Push-token platform constraint is missing');
+  assert(sql.includes('device_push_tokens_token_unique') && sql.includes('on public.device_push_tokens(token)'), 'Push-token uniqueness required by upsert is not guaranteed');
+  assert(sql.includes('device_push_tokens_user_id_idx'), 'Push-token owner lookup index is missing');
   assert(sql.includes('alter table public.device_push_tokens enable row level security'), 'device_push_tokens RLS is not explicitly enabled');
   assert(sql.includes('revoke all on table public.device_push_tokens from anon'), 'Anonymous push-token access is not revoked');
   assert(sql.includes('revoke all on table public.device_push_tokens from authenticated'), 'Authenticated push-token privileges are not reset before the narrow grant');
