@@ -26,13 +26,34 @@ Deno.serve(async (req) => {
     if (userError || !user) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers });
 
     const body = await req.json();
+    const action = body?.action === "unregister" ? "unregister" : "register";
     const pushToken = String(body?.token ?? "").trim();
-    const platform = body?.platform === "ios" ? "ios" : body?.platform === "android" ? "android" : null;
-    if (!platform || !/^(Expo|Exponent)PushToken\[[^\]]+\]$/.test(pushToken)) {
+    if (!/^(Expo|Exponent)PushToken\[[^\]]+\]$/.test(pushToken)) {
       return new Response(JSON.stringify({ error: "invalid_push_token" }), { status: 400, headers });
     }
 
     const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
+
+    if (action === "unregister") {
+      const { error: deleteError } = await admin
+        .from("device_push_tokens")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("token", pushToken);
+
+      if (deleteError) {
+        console.error("PUSH TOKEN DELETE ERROR", deleteError);
+        return new Response(JSON.stringify({ error: "delete_failed" }), { status: 500, headers });
+      }
+
+      return new Response(JSON.stringify({ ok: true, unregistered: true }), { status: 200, headers });
+    }
+
+    const platform = body?.platform === "ios" ? "ios" : body?.platform === "android" ? "android" : null;
+    if (!platform) {
+      return new Response(JSON.stringify({ error: "invalid_platform" }), { status: 400, headers });
+    }
+
     const { error: upsertError } = await admin.from("device_push_tokens").upsert({
       token: pushToken,
       user_id: user.id,
