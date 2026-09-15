@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { supabase } from '../lib/supabase';
@@ -30,13 +30,21 @@ export default function BlockedUsersScreen() {
   const [loading, setLoading] =
     useState(true);
 
+  const loadIdRef = useRef(0);
+  const unblockingRef = useRef(new Set<string>());
+
   useFocusEffect(
     useCallback(() => {
       void loadBlockedUsers();
+      return () => {
+        loadIdRef.current += 1;
+      };
     }, [])
   );
 
   async function loadBlockedUsers() {
+    const requestId = ++loadIdRef.current;
+
     try {
       setLoading(true);
 
@@ -44,8 +52,11 @@ export default function BlockedUsersScreen() {
         data: { session },
       } = await supabase.auth.getSession();
 
+      if (requestId !== loadIdRef.current) return;
+
       if (!session?.user) {
         setBlockedUsers([]);
+        router.replace('/login');
         return;
       }
 
@@ -58,6 +69,10 @@ export default function BlockedUsersScreen() {
         .from('blocks')
         .select('blocked_id')
         .eq('blocker_id', myId);
+
+      if (requestId !== loadIdRef.current) return;
+      const { data: { session: sessionAfterBlocks } } = await supabase.auth.getSession();
+      if (sessionAfterBlocks?.user?.id !== myId) return;
 
       if (blocksError) {
         console.log(
@@ -86,6 +101,10 @@ export default function BlockedUsersScreen() {
         )
         .in('id', blockedIds);
 
+      if (requestId !== loadIdRef.current) return;
+      const { data: { session: finalSession } } = await supabase.auth.getSession();
+      if (finalSession?.user?.id !== myId) return;
+
       if (profilesError) {
         console.log(
           'BLOCKED PROFILES ERROR:',
@@ -101,31 +120,39 @@ export default function BlockedUsersScreen() {
         error
       );
     } finally {
-      setLoading(false);
+      if (requestId === loadIdRef.current) setLoading(false);
     }
   }
 
   async function unblockUser(userId: string) {
+    if (unblockingRef.current.has(userId)) return;
+    unblockingRef.current.add(userId);
+
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
       if (!session?.user) {
+        router.replace('/login');
         return;
       }
 
+      const expectedUserId = session.user.id;
       const { error } = await supabase
         .from('blocks')
         .delete()
         .eq(
           'blocker_id',
-          session.user.id
+          expectedUserId
         )
         .eq(
           'blocked_id',
           userId
         );
+
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession?.user?.id !== expectedUserId) return;
 
       if (error) {
         console.log(
@@ -145,6 +172,8 @@ export default function BlockedUsersScreen() {
         'UNBLOCK USER ERROR:',
         error
       );
+    } finally {
+      unblockingRef.current.delete(userId);
     }
   }
 
