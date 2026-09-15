@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Pressable,
@@ -69,8 +69,12 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const loginInFlightRef = useRef(false);
 
   async function handleLogin() {
+    if (loginInFlightRef.current) return;
+    loginInFlightRef.current = true;
+
     try {
       setLoading(true);
 
@@ -90,6 +94,7 @@ export default function LoginScreen() {
       console.log('LOGIN CRASH:', error);
       showAlert(text.unexpectedError);
     } finally {
+      loginInFlightRef.current = false;
       setLoading(false);
     }
   }
@@ -141,7 +146,7 @@ export default function LoginScreen() {
             style={styles.input}
           />
 
-          <Pressable style={styles.forgotButton} onPress={() => router.push('/forgot-password')}>
+          <Pressable style={styles.forgotButton} onPress={() => router.push('/forgot-password')} disabled={loading}>
             <Text style={styles.forgotText}>{text.forgotPassword}</Text>
           </Pressable>
 
@@ -166,7 +171,7 @@ export default function LoginScreen() {
             <View style={styles.divider} />
           </View>
 
-          <Pressable style={styles.registerButton} onPress={() => router.push('/register')}>
+          <Pressable style={styles.registerButton} onPress={() => router.push('/register')} disabled={loading}>
             <Text style={styles.registerButtonText}>{text.createAccount}</Text>
           </Pressable>
 
