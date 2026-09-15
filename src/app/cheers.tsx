@@ -72,10 +72,17 @@ export default function CheersScreen() {
         cheersUserIdRef.current = null;
         setCheers([]);
         setIsPremium(false);
+        router.replace('/login');
         return;
       }
 
       const myId = session.user.id;
+      const isCurrentAccount = async () => {
+        if (!isLatestRequest()) return false;
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        return isLatestRequest() && currentSession?.user?.id === myId;
+      };
+
       const accountChanged =
         cheersUserIdRef.current !== null &&
         cheersUserIdRef.current !== myId;
@@ -92,7 +99,7 @@ export default function CheersScreen() {
         .eq('id', myId)
         .maybeSingle();
 
-      if (!isLatestRequest()) return;
+      if (!(await isCurrentAccount())) return;
       if (premiumError) console.log('PREMIUM STATUS ERROR:', premiumError.message);
 
       const premiumActive = myProfile?.is_premium === true &&
@@ -103,7 +110,7 @@ export default function CheersScreen() {
         .from('cheers')
         .select('id, sender_id, receiver_id, created_at')
         .eq('sender_id', myId);
-      if (!isLatestRequest()) return;
+      if (!(await isCurrentAccount())) return;
       if (sentError) {
         console.log('CHEERS SENT LOAD ERROR:', sentError.message);
         return;
@@ -113,7 +120,7 @@ export default function CheersScreen() {
         .from('cheers')
         .select('id, sender_id, receiver_id, created_at')
         .eq('receiver_id', myId);
-      if (!isLatestRequest()) return;
+      if (!(await isCurrentAccount())) return;
       if (receivedError) {
         console.log('CHEERS RECEIVED LOAD ERROR:', receivedError.message);
         return;
@@ -132,7 +139,7 @@ export default function CheersScreen() {
         .from('profiles')
         .select('id, name, age')
         .in('id', allUserIds);
-      if (!isLatestRequest()) return;
+      if (!(await isCurrentAccount())) return;
       if (profileError) {
         console.log('CHEERS PROFILE ERROR:', profileError.message);
         return;
@@ -170,30 +177,32 @@ export default function CheersScreen() {
     chatOpeningRef.current = true;
 
     try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      router.push('/login');
-      return;
-    }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        router.replace('/login');
+        return;
+      }
 
-    const myId = session.user.id;
-    const otherId = item.userId;
-    let conversationId: string;
-    try {
-      const resolvedConversationId = await findOrCreateConversation(myId, otherId);
-      if (!resolvedConversationId) return;
-      conversationId = resolvedConversationId;
-    } catch (error: any) {
-      console.log('CHEERS CONVERSATION OPEN ERROR:', error?.message ?? error);
-      return;
-    }
+      const myId = session.user.id;
+      const otherId = item.userId;
+      let conversationId: string;
+      try {
+        const resolvedConversationId = await findOrCreateConversation(myId, otherId);
+        if (!resolvedConversationId) return;
+        conversationId = resolvedConversationId;
+      } catch (error: any) {
+        console.log('CHEERS CONVERSATION OPEN ERROR:', error?.message ?? error);
+        return;
+      }
 
-    router.push({ pathname: '/chat', params: { conversationId, id: item.userId, name: item.name } });
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession?.user?.id !== myId) return;
+
+      router.push({ pathname: '/chat', params: { conversationId } });
     } finally {
       chatOpeningRef.current = false;
     }
   }
-
 
   const mutualCheers = cheers.filter((item) => item.status === 'Mutual Cheers');
   const receivedCheers = cheers.filter((item) => item.status === 'Received');
