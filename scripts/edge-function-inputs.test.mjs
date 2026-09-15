@@ -36,6 +36,16 @@ test('Discord disconnect keeps linkage if Premium role revocation fails', () => 
   assert.match(discordOauth.slice(roleRevokeAt, clearLinkAt), /discord_role_revoke_failed/);
 });
 
+test('Discord OAuth validates token and identity payloads before profile linkage', () => {
+  assert.match(discordOauth, /const DISCORD_ID_PATTERN = \/\^\\d\{17,20\}\$\//);
+  assert.match(discordOauth, /accessToken\.length > 4096/);
+  assert.match(discordOauth, /DISCORD_ID_PATTERN\.test\(discordUserId\)/);
+  assert.match(discordOauth, /DISCORD USER PAYLOAD INVALID/);
+  const validateAt = discordOauth.indexOf('!DISCORD_ID_PATTERN.test(discordUserId)');
+  const profileWriteAt = discordOauth.indexOf('.update({\n        discord_user_id: discordUserId');
+  assert.ok(validateAt >= 0 && profileWriteAt > validateAt, 'Discord identity must be validated before profile linkage');
+});
+
 test('push token registration bounds attacker-controlled token input before storage access', () => {
   assert.match(registerPushToken, /const MAX_PUSH_TOKEN_LENGTH = 256/);
   assert.match(registerPushToken, /pushToken\.length > MAX_PUSH_TOKEN_LENGTH/);
@@ -86,7 +96,7 @@ test('public waitlist endpoint fails closed when Supabase configuration is missi
 
 test('Premium checkout coalesces rapid duplicate requests through a bounded Stripe idempotency key', () => {
   assert.match(createCheckoutSession, /const CHECKOUT_IDEMPOTENCY_WINDOW_MS = 5 \* 60 \* 1000/);
-  assert.match(createCheckoutSession, /function checkoutIdempotencyKey\(userId: string, plan: string\)/);
+  assert.match(createCheckoutSession, /function checkoutIdempotencyKey\(userId: string, priceId: string\)/);
   assert.match(createCheckoutSession, /Math\.floor\(Date\.now\(\) \/ CHECKOUT_IDEMPOTENCY_WINDOW_MS\)/);
-  assert.match(createCheckoutSession, /'Idempotency-Key': checkoutIdempotencyKey\(user\.id, String\(plan\)\)/);
+  assert.match(createCheckoutSession, /'Idempotency-Key': checkoutIdempotencyKey\(user\.id, priceId\)/);
 });
