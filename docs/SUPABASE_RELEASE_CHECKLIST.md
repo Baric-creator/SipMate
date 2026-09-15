@@ -26,8 +26,9 @@ Pay particular attention to the latest security and runtime migrations:
 - `20260915203000_harden_profile_signup_trigger.sql`
 - `20260915204000_bound_device_push_token_length.sql`
 - `20260915205000_enforce_active_session_window.sql`
+- `20260915205100_safe_active_session_insert_trigger.sql`
 
-The existing Discord OAuth/feed migrations already lock their internal bookkeeping tables away from app clients; the database contract audit checks those original migrations directly.
+The existing Discord OAuth/feed migrations already lock their internal bookkeeping tables away from app clients; the database contract audit checks those original migrations directly. The migration-version audit also blocks duplicate 14-digit migration versions before release checks can pass.
 
 Run the repository checks before touching the remote database:
 
@@ -62,6 +63,7 @@ Use at least two normal accounts and one Premium account. Verify:
 - Active status expires and expired users disappear from Nearby/Active indicators.
 - Starting a new Active session gets a server-authored three-hour window; direct client writes cannot extend an existing session into the future.
 - Setting a profile inactive clears `active_until` and `last_seen_at` at the database boundary.
+- Creating a new profile with Active enabled succeeds and the trigger does not attempt to read `OLD` during INSERT.
 - Chat list and chat membership stay account-scoped after logout/login switching.
 - Blocks prevent contact in both directions.
 - A Free account cannot insert Premium gallery photos.
