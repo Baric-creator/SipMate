@@ -14,6 +14,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
+let registrationInFlight: Promise<string | null> | null = null;
+
 function getProjectId() {
   return (
     Constants.expoConfig?.extra?.eas?.projectId ??
@@ -22,7 +24,7 @@ function getProjectId() {
   );
 }
 
-export async function registerForPushNotificationsAsync() {
+async function registerForPushNotificationsInternal() {
   if (Platform.OS === 'web' || !Device.isDevice) {
     return null;
   }
@@ -99,12 +101,27 @@ export async function registerForPushNotificationsAsync() {
   }
 }
 
+export async function registerForPushNotificationsAsync() {
+  if (registrationInFlight) return registrationInFlight;
+
+  registrationInFlight = registerForPushNotificationsInternal();
+  try {
+    return await registrationInFlight;
+  } finally {
+    registrationInFlight = null;
+  }
+}
+
 export async function unregisterCurrentDevicePushTokenAsync() {
   if (Platform.OS === 'web' || !Device.isDevice) {
     return;
   }
 
   try {
+    if (registrationInFlight) {
+      await registrationInFlight.catch(() => null);
+    }
+
     const projectId = getProjectId();
     if (!projectId) return;
 
