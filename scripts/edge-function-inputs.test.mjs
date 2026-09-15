@@ -70,6 +70,16 @@ test('Cheers notification validates UUID input before querying Cheers', () => {
   assert.ok(validationAt >= 0 && queryAt > validationAt, 'cheersId must be validated before the Cheers query');
 });
 
+test('push notification provider calls have a bounded external-request timeout', () => {
+  for (const [name, source] of [
+    ['message', sendMessageNotification],
+    ['Cheers', sendCheersNotification],
+  ]) {
+    assert.match(source, /const PUSH_TIMEOUT_MS = 8_000/, `${name} push timeout constant is missing`);
+    assert.match(source, /signal: AbortSignal\.timeout\(PUSH_TIMEOUT_MS\)/, `${name} push provider request is unbounded`);
+  }
+});
+
 test('admin moderation validates report UUID before updating reports', () => {
   assert.match(adminModeration, /const UUID_PATTERN =/);
   assert.match(adminModeration, /!UUID_PATTERN\.test\(reportId\)/);
