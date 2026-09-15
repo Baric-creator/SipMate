@@ -78,8 +78,6 @@ Deno.serve(async (req) => {
       data: {
         type: "message",
         conversationId: message.conversation_id,
-        name: senderName,
-        id: caller.id,
       },
       priority: "high",
     }));
