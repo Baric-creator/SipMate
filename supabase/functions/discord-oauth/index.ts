@@ -10,6 +10,7 @@ const DISCORD_GUILD_ID = Deno.env.get("DISCORD_GUILD_ID") ?? "154587654138744018
 const DISCORD_PREMIUM_ROLE_ID = Deno.env.get("DISCORD_PREMIUM_ROLE_ID") ?? "1546177699662405786";
 const CALLBACK_URL = `${SUPABASE_URL}/functions/v1/discord-oauth`;
 const APP_RETURN_URL = "sipmate://profile?discord=connected";
+const DISCORD_ID_PATTERN = /^\d{17,20}$/;
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
@@ -53,6 +54,7 @@ async function getAuthenticatedUser(req: Request) {
 
 async function updateDiscordRole(discordUserId: string, active: boolean) {
   if (!DISCORD_BOT_TOKEN) return { ok: false, reason: "missing_bot_token" };
+  if (!DISCORD_ID_PATTERN.test(discordUserId)) return { ok: false, reason: "invalid_discord_user_id" };
 
   const response = await fetch(
     `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${discordUserId}/roles/${DISCORD_PREMIUM_ROLE_ID}`,
@@ -66,7 +68,7 @@ async function updateDiscordRole(discordUserId: string, active: boolean) {
 }
 
 async function addUserToGuild(discordUserId: string, accessToken: string) {
-  if (!DISCORD_BOT_TOKEN) return;
+  if (!DISCORD_BOT_TOKEN || !DISCORD_ID_PATTERN.test(discordUserId) || !accessToken) return;
 
   const response = await fetch(
     `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${discordUserId}`,
@@ -136,10 +138,15 @@ Deno.serve(async (req) => {
       return redirect("sipmate://profile?discord=error");
     }
 
-    const tokenData = await tokenResponse.json() as { access_token: string };
+    const tokenData = await tokenResponse.json() as { access_token?: unknown };
+    const accessToken = typeof tokenData.access_token === "string" ? tokenData.access_token.trim() : "";
+    if (!accessToken || accessToken.length > 4096) {
+      console.log("DISCORD TOKEN PAYLOAD INVALID");
+      return redirect("sipmate://profile?discord=error");
+    }
 
     const userResponse = await fetch("https://discord.com/api/v10/users/@me", {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     if (!userResponse.ok) {
@@ -148,15 +155,22 @@ Deno.serve(async (req) => {
     }
 
     const discordUser = await userResponse.json() as {
-      id: string;
-      username: string;
-      global_name?: string | null;
+      id?: unknown;
+      username?: unknown;
+      global_name?: unknown;
     };
+    const discordUserId = typeof discordUser.id === "string" ? discordUser.id.trim() : "";
+    const username = typeof discordUser.username === "string" ? discordUser.username.trim().slice(0, 80) : "";
+    const globalName = typeof discordUser.global_name === "string" ? discordUser.global_name.trim().slice(0, 80) : "";
+    if (!DISCORD_ID_PATTERN.test(discordUserId) || !username) {
+      console.log("DISCORD USER PAYLOAD INVALID");
+      return redirect("sipmate://profile?discord=error");
+    }
 
     const { data: existingOwner } = await admin
       .from("profiles")
       .select("id")
-      .eq("discord_user_id", discordUser.id)
+      .eq("discord_user_id", discordUserId)
       .neq("id", stateRow.user_id)
       .maybeSingle();
 
@@ -165,8 +179,8 @@ Deno.serve(async (req) => {
     const { data: profile, error: profileError } = await admin
       .from("profiles")
       .update({
-        discord_user_id: discordUser.id,
-        discord_username: discordUser.global_name || discordUser.username,
+        discord_user_id: discordUserId,
+        discord_username: globalName || username,
         discord_connected_at: new Date().toISOString(),
       })
       .eq("id", stateRow.user_id)
@@ -178,14 +192,14 @@ Deno.serve(async (req) => {
       return redirect("sipmate://profile?discord=error");
     }
 
-    await addUserToGuild(discordUser.id, tokenData.access_token);
+    await addUserToGuild(discordUserId, accessToken);
 
     const premiumActive =
       profile.is_premium === true &&
       (!profile.premium_until || new Date(profile.premium_until).getTime() > Date.now());
 
     if (premiumActive) {
-      const roleResult = await updateDiscordRole(discordUser.id, true);
+      const roleResult = await updateDiscordRole(discordUserId, true);
       if (!roleResult.ok) console.log("DISCORD PREMIUM ROLE LINK ERROR:", roleResult);
     }
 
