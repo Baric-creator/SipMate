@@ -65,7 +65,10 @@ if (exists(galleryLimitMigration)) {
   assert(sql.includes('create or replace function public.enforce_profile_photo_insert()'), 'Premium gallery insert guard function is missing');
   assert(sql.includes('security definer'), 'Premium gallery guard must remain SECURITY DEFINER');
   assert(sql.includes('set search_path = pg_catalog, public'), 'Premium gallery guard search_path hardening is missing');
-  assert(sql.includes('new.user_id <> auth.uid()'), 'Premium gallery guard no longer enforces photo ownership');
+  assert(sql.includes('caller_id uuid := auth.uid()'), 'Premium gallery guard no longer resolves the authenticated caller');
+  assert(sql.includes("caller_role = 'service_role'"), 'Premium gallery service-role bypass is not explicit');
+  assert(sql.includes("raise exception 'Authentication required'"), 'Unauthenticated gallery inserts are not rejected by the trigger');
+  assert(sql.includes('new.user_id <> caller_id'), 'Premium gallery guard no longer enforces photo ownership');
   assert(sql.includes('p.is_premium = true') && sql.includes('p.premium_until > now()'), 'Premium gallery guard no longer checks a current Premium entitlement');
   assert(sql.includes('for update'), 'Premium gallery inserts are no longer serialized against concurrent uploads');
   assert(sql.includes('current_photo_count >= 6'), 'Premium gallery six-photo limit is missing');
