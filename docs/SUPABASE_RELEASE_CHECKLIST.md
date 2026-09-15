@@ -24,6 +24,7 @@ Pay particular attention to the latest security and runtime migrations:
 - `20260915201000_restrict_profile_write_columns.sql`
 - `20260915202000_restrict_profile_photo_writes.sql`
 - `20260915203000_harden_profile_signup_trigger.sql`
+- `20260915204000_bound_device_push_token_length.sql`
 
 The existing Discord OAuth/feed migrations already lock their internal bookkeeping tables away from app clients; the database contract audit checks those original migrations directly.
 
@@ -67,7 +68,8 @@ Use at least two normal accounts and one Premium account. Verify:
 - Direct Auth signup without a valid age, below 18, or above 120 is rejected by the database signup trigger.
 - Existing profile writes cannot persist an age below 18 or above 120.
 - App clients cannot SELECT/INSERT/UPDATE/DELETE `device_push_tokens` directly.
-- `register-push-token` can register/unregister only the caller's exact Expo token after JWT validation.
+- `register-push-token` can register/unregister only the caller's exact Expo token after JWT validation and rejects oversized tokens.
+- Stored push tokens are constrained to 1–256 characters at the database boundary.
 - App clients cannot access `discord_oauth_states` or `discord_cheers_announcements` directly.
 - Logout removes the current device token; account deletion removes remaining tokens.
 - Account deletion removes profile Storage files and the user only after subscription/storage/database cleanup succeeds.
