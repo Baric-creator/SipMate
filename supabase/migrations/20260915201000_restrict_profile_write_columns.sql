@@ -1,6 +1,34 @@
 -- Premium and integration state must stay backend-authoritative even if an RLS
--- policy allows a user to update their own profile row. Remove broad write grants
--- and grant only fields that the app intentionally lets the user control.
+-- policy allows a user to write their own profile row. Remove broad write grants
+-- and grant only intended client fields. `is_premium` remains in the narrow grant
+-- only because the legacy missing-profile fallback upsert sends `false`; a trigger
+-- below makes that column immutable for authenticated clients.
+
+create or replace function public.protect_profile_authoritative_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+begin
+  if auth.role() = 'authenticated' then
+    if tg_op = 'INSERT' then
+      new.is_premium := false;
+    else
+      new.is_premium := old.is_premium;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.protect_profile_authoritative_fields() from public;
+
+drop trigger if exists protect_profile_authoritative_fields on public.profiles;
+create trigger protect_profile_authoritative_fields
+before insert or update on public.profiles
+for each row
+execute function public.protect_profile_authoritative_fields();
 
 revoke insert on table public.profiles from authenticated;
 revoke update on table public.profiles from authenticated;
@@ -20,7 +48,8 @@ grant insert (
   gender,
   latitude,
   longitude,
-  share_cheers_discord
+  share_cheers_discord,
+  is_premium
 ) on table public.profiles to authenticated;
 
 grant update (
@@ -36,5 +65,6 @@ grant update (
   gender,
   latitude,
   longitude,
-  share_cheers_discord
+  share_cheers_discord,
+  is_premium
 ) on table public.profiles to authenticated;
