@@ -19,8 +19,9 @@ Pay particular attention to the latest security and runtime migrations:
 
 - `20260915150500_chat_list_respects_active_until.sql`
 - `20260915193000_harden_device_push_tokens.sql`
-- `20260915194000_harden_discord_internal_tables.sql`
 - `20260915195000_enforce_premium_gallery_limit.sql`
+
+The existing Discord OAuth/feed migrations already lock their internal bookkeeping tables away from app clients; the database contract audit checks those original migrations directly.
 
 Run the repository checks before touching the remote database:
 
