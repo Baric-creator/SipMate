@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const MAX_PUSH_TOKEN_LENGTH = 256;
+const MAX_PUSH_TOKENS_PER_USER = 10;
 
 Deno.serve(async (req) => {
   const headers = { "Content-Type": "application/json" };
@@ -27,7 +28,13 @@ Deno.serve(async (req) => {
     const user = userData?.user;
     if (userError || !user) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers });
 
-    const body = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "invalid_json" }), { status: 400, headers });
+    }
+
     const action = body?.action ?? "register";
     if (action !== "register" && action !== "unregister") {
       return new Response(JSON.stringify({ error: "invalid_action" }), { status: 400, headers });
@@ -73,6 +80,29 @@ Deno.serve(async (req) => {
     if (upsertError) {
       console.error("PUSH TOKEN STORE ERROR", upsertError);
       return new Response(JSON.stringify({ error: "store_failed" }), { status: 500, headers });
+    }
+
+    const { data: excessTokens, error: excessError } = await admin
+      .from("device_push_tokens")
+      .select("token")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .range(MAX_PUSH_TOKENS_PER_USER, MAX_PUSH_TOKENS_PER_USER + 99);
+
+    if (excessError) {
+      console.error("PUSH TOKEN PRUNE LOOKUP ERROR", excessError);
+    } else {
+      const tokensToDelete = (excessTokens ?? [])
+        .map((row: any) => row.token)
+        .filter((value: unknown): value is string => typeof value === "string");
+      if (tokensToDelete.length) {
+        const { error: pruneError } = await admin
+          .from("device_push_tokens")
+          .delete()
+          .eq("user_id", user.id)
+          .in("token", tokensToDelete);
+        if (pruneError) console.error("PUSH TOKEN PRUNE ERROR", pruneError);
+      }
     }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
