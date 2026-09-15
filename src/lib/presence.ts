@@ -30,11 +30,13 @@ export async function touchPresence() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) return;
 
+  const now = new Date().toISOString();
   const { error } = await supabase
     .from('profiles')
-    .update({ last_seen_at: new Date().toISOString() })
+    .update({ last_seen_at: now })
     .eq('id', session.user.id)
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .gt('active_until', now);
 
   if (error) console.log('PRESENCE UPDATE ERROR:', error.message);
 }
