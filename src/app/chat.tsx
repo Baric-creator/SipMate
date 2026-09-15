@@ -103,6 +103,7 @@ export default function ChatScreen() {
         return;
       }
 
+      const expectedUserId = session.user.id;
       const { data: conversation, error } = await supabase
         .from('conversations')
         .select('user_one, user_two')
@@ -110,13 +111,21 @@ export default function ChatScreen() {
         .maybeSingle();
 
       if (!active) return;
+
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!active) return;
+      if (currentSession?.user?.id !== expectedUserId) {
+        setConversationVerified(false);
+        return;
+      }
+
       if (error || !conversation) {
         if (error) console.log('CONVERSATION VERIFY ERROR:', error.message);
         router.replace('/chats');
         return;
       }
 
-      const myId = session.user.id;
+      const myId = expectedUserId;
       if (conversation.user_one !== myId && conversation.user_two !== myId) {
         router.replace('/chats');
         return;
@@ -135,7 +144,7 @@ export default function ChatScreen() {
     if (!otherUserId) return;
     let active = true;
     async function loadOtherUser() {
-      const { data, error } = await supabase.from('profiles').select('name, is_active, last_seen_at, avatar_url').eq('id', otherUserId).maybeSingle();
+      const { data, error } = await supabase.from('profiles').select('name, is_active, last_seen_at, active_until, avatar_url').eq('id', otherUserId).maybeSingle();
       if (!active) return;
       if (error) return console.log('OTHER USER PROFILE ERROR:', error.message);
       setOtherUserName(data?.name ?? 'SipMate');
@@ -148,12 +157,15 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!otherUserId || !myUserId) return;
+    let active = true;
     async function checkBlockStatus() {
       const { data, error } = await supabase.rpc('is_blocked_between', { user_a: myUserId, user_b: otherUserId });
+      if (!active) return;
       if (error) return console.log('BLOCK STATUS ERROR:', error.message);
       setIsBlocked(Boolean(data));
     }
-    checkBlockStatus();
+    void checkBlockStatus();
+    return () => { active = false; };
   }, [otherUserId, myUserId]);
 
   useFocusEffect(
@@ -176,11 +188,11 @@ export default function ChatScreen() {
     const channel = supabase.channel(`profile-status-${otherUserId}`).on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${otherUserId}`,
     }, (payload) => {
-      const profile = payload.new as { is_active?: boolean | null; last_seen_at?: string | null; avatar_url?: string | null };
+      const profile = payload.new as { is_active?: boolean | null; last_seen_at?: string | null; active_until?: string | null; avatar_url?: string | null };
       setOtherUserActive(isProfileOnline(profile));
       if (typeof profile.avatar_url !== 'undefined') setOtherAvatar(profile.avatar_url ?? null);
     }).subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { void supabase.removeChannel(channel); };
   }, [otherUserId]);
 
   useEffect(() => {
@@ -223,7 +235,7 @@ export default function ChatScreen() {
         const incoming = payload.new as Message;
         if (incoming.conversation_id !== activeConversationIdRef.current) return;
         setMessages((prev) => prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]);
-        if (incoming.sender_id !== myUserId) markMessagesAsRead();
+        if (incoming.sender_id !== myUserId) void markMessagesAsRead();
       })
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${String(conversationId)}`,
@@ -237,7 +249,7 @@ export default function ChatScreen() {
         if (payload && payload.userId !== myUserId) setOtherUserTyping(Boolean(payload.isTyping));
       }).subscribe();
     chatChannelRef.current = channel;
-    return () => { chatChannelRef.current = null; supabase.removeChannel(channel); };
+    return () => { chatChannelRef.current = null; void supabase.removeChannel(channel); };
   }, [conversationId, myUserId, conversationVerified]);
 
   async function loadMessages(requestId: number) {
@@ -267,7 +279,10 @@ export default function ChatScreen() {
     try {
       setSendingMessage(true);
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!session?.user || session.user.id !== myUserId) {
+        setConversationVerified(false);
+        return;
+      }
       const { data, error } = await supabase.from('messages').insert({
         conversation_id: String(conversationId), sender_id: session.user.id, content,
       }).select('id, conversation_id, sender_id, content, created_at, read_at').single();
@@ -352,7 +367,7 @@ export default function ChatScreen() {
           if (otherUserId) router.push({ pathname: '/user-profile', params: { id: otherUserId } });
         }}>
           {otherAvatar ? (
-            <Image source={{ uri: `${otherAvatar}${otherAvatar.includes('?') ? '&' : '?'}refresh=${Date.now()}` }} style={styles.headerAvatar} resizeMode="cover" />
+            <Image source={{ uri: otherAvatar }} style={styles.headerAvatar} resizeMode="cover" />
           ) : (
             <View style={styles.headerAvatarFallback}><Text style={styles.headerAvatarFallbackText}>{otherUserName.charAt(0).toUpperCase()}</Text></View>
           )}
@@ -534,5 +549,4 @@ const styles = StyleSheet.create({
   blockedBar: { paddingHorizontal: 18, paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#27272A', backgroundColor: '#18181B' },
   blockedText: { color: '#EF4444', fontSize: 13, fontWeight: '800', textAlign: 'center', lineHeight: 18 },
 });
-
 
