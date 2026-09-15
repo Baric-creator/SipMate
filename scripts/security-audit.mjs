@@ -39,9 +39,6 @@ function walk(dir, files = []) {
 const repoFiles = walk(root);
 const textFiles = repoFiles.filter((file) => /\.(?:ts|tsx|js|mjs|json|md|toml|yml|yaml|env|txt)$/i.test(file));
 
-// High-confidence credential signatures. These should never exist in committed source.
-// The audit script itself contains signature regex literals, so exclude only this file
-// from the secret-content scan to avoid detecting its own test patterns.
 const secretPatterns = [
   { name: 'Stripe live secret key', regex: /sk_live_[A-Za-z0-9]{16,}/g },
   { name: 'Stripe webhook signing secret', regex: /whsec_[A-Za-z0-9]{16,}/g },
@@ -59,12 +56,18 @@ for (const file of textFiles) {
   }
 }
 
-// Server-only credentials must not be referenced by client bundle source.
 const clientFiles = walk(path.join(root, 'src')).filter((file) => /\.(?:ts|tsx|js|mjs)$/i.test(file));
 for (const file of clientFiles) {
   const relative = path.relative(root, file).replaceAll('\\', '/');
   const content = fs.readFileSync(file, 'utf8');
-  for (const forbidden of ['SUPABASE_SERVICE_ROLE_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_SUBSCRIPTION_WEBHOOK_SECRET']) {
+  for (const forbidden of [
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'STRIPE_SECRET_KEY',
+    'STRIPE_WEBHOOK_SECRET',
+    'STRIPE_SUBSCRIPTION_WEBHOOK_SECRET',
+    'RESEND_API_KEY',
+    'DISCORD_BOT_TOKEN',
+  ]) {
     if (content.includes(forbidden)) fail(`Server-only env name ${forbidden} referenced by client source ${relative}`);
   }
 }
@@ -136,6 +139,14 @@ if (exists('supabase/functions/stripe-webhook/index.ts')) {
   assert(webhook.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Webhook no longer uses server-side service role access');
 }
 
+assert(exists('supabase/functions/send-welcome-email/index.ts'), 'Welcome-email Edge Function source is missing');
+if (exists('supabase/functions/send-welcome-email/index.ts')) {
+  const welcome = read('supabase/functions/send-welcome-email/index.ts');
+  assert(welcome.includes('auth.getUser(token)'), 'Welcome-email function no longer validates the caller');
+  assert(welcome.includes('to: [user.email]'), 'Welcome-email recipient is no longer bound to the authenticated email');
+  assert(welcome.includes('RESEND_API_KEY') && welcome.includes('RESEND_FROM_EMAIL'), 'Welcome-email server configuration checks are missing');
+}
+
 assert(exists('src/app/premium.android.tsx'), 'Android Premium release-gate screen is missing');
 if (exists('src/app/premium.android.tsx')) {
   const premiumAndroid = read('src/app/premium.android.tsx');
@@ -145,13 +156,40 @@ if (exists('src/app/premium.android.tsx')) {
 
 if (exists('supabase/config.toml')) {
   const config = read('supabase/config.toml');
-  const manualJwtFunctions = [...config.matchAll(/\[functions\.([^\]]+)\][\s\S]*?verify_jwt\s*=\s*false/g)].map((match) => match[1]);
-  const reviewedManualAuthFunctions = new Set(['create-checkout-session', 'create-customer-portal', 'stripe-webhook']);
+  const sections = new Map();
+  for (const match of config.matchAll(/\[functions\.([^\]]+)\]([\s\S]*?)(?=\n\[functions\.|$)/g)) {
+    sections.set(match[1], match[2]);
+  }
+
+  for (const required of [
+    'create-checkout-session',
+    'create-customer-portal',
+    'stripe-webhook',
+    'delete-account',
+    'admin-moderation',
+    'send-cheers-notification',
+    'send-message-notification',
+    'register-push-token',
+    'announce-cheers',
+    'send-welcome-email',
+  ]) {
+    assert(sections.has(required), `Supabase function config is missing for ${required}`);
+  }
+
+  const manualJwtFunctions = [...sections.entries()]
+    .filter(([, body]) => /verify_jwt\s*=\s*false/.test(body))
+    .map(([name]) => name);
+  const reviewedManualAuthFunctions = new Set([
+    'create-checkout-session',
+    'create-customer-portal',
+    'stripe-webhook',
+    'discord-oauth',
+    'join-waitlist',
+  ]);
   const unreviewedManualAuthFunctions = manualJwtFunctions.filter((fn) => !reviewedManualAuthFunctions.has(fn));
   assert(unreviewedManualAuthFunctions.length === 0, `Unreviewed verify_jwt=false function(s): ${unreviewedManualAuthFunctions.join(', ')}`);
 }
 
-// Browser dialogs are permitted only inside the reviewed cross-platform notification wrapper.
 assert(exists('src/lib/notify.ts'), 'Cross-platform notification wrapper is missing');
 if (exists('src/lib/notify.ts')) {
   const notify = read('src/lib/notify.ts');
@@ -168,7 +206,6 @@ for (const file of clientFiles) {
   if (/\.select\(\s*['"]\*['"]\s*\)/.test(content)) warn(`Broad select('*') found in ${relative}; confirm every returned column is intended for the client`);
 }
 
-// Precise profile coordinates must stay behind authenticated, privacy-safe RPCs.
 for (const file of clientFiles) {
   const relative = path.relative(root, file).replaceAll('\\', '/');
   const content = fs.readFileSync(file, 'utf8');
