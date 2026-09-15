@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="color-scheme" content="dark">
+  <title>SipMate · Premium Rewards</title>
+  <style>
+    :root{color-scheme:dark;--bg:#09090b;--panel:#111114;--line:#29292f;--muted:#92929b;--text:#f7f7f8;--red:#ef4444;--green:#22c55e;--gold:#f6c65b}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,rgba(239,68,68,.11),transparent 28%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}.shell{width:min(900px,calc(100% - 28px));margin:auto}.top{display:flex;align-items:center;gap:14px;padding:24px 0;border-bottom:1px solid #1e1e22}.brand{font-size:22px;font-weight:900}.brand span{color:var(--red)}.badge{margin-left:auto;font-size:11px;color:#ffb0b0;border:1px solid rgba(239,68,68,.28);background:rgba(239,68,68,.08);padding:7px 10px;border-radius:999px}.back{color:#a8a8b0;text-decoration:none;font-size:12px;font-weight:700}
+    .login,.panel{margin:42px auto;padding:26px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#141417,#0e0e11);box-shadow:0 30px 90px rgba(0,0,0,.3)}.login{max-width:470px}.panel{display:none}.muted{color:var(--muted);line-height:1.6}h1{font-size:34px;letter-spacing:-1.5px;margin:0 0 8px}h2{font-size:18px;margin:0 0 8px}.reward-head{display:flex;gap:16px;align-items:center;margin-bottom:24px}.icon{width:58px;height:58px;display:grid;place-items:center;border-radius:18px;border:1px solid rgba(246,198,91,.26);background:rgba(246,198,91,.08);font-size:28px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}label{display:block;font-size:12px;color:#b9b9c0;margin:0 0 7px}input,select{width:100%;border:1px solid #303036;background:#0a0a0d;color:#fff;border-radius:13px;padding:13px;outline:none}input:focus,select:focus{border-color:#666}.btn{border:0;border-radius:13px;padding:13px 16px;font-weight:900;cursor:pointer}.primary{width:100%;background:var(--red);color:#fff;margin-top:18px}.ghost{background:#17171b;color:#ddd;border:1px solid #303036}.bar{display:flex;justify-content:flex-end;gap:10px;margin-bottom:18px}.status{margin-top:16px;min-height:56px;padding:14px;border:1px solid #28282e;background:#0c0c0f;border-radius:14px;color:#aaa;font-size:13px;line-height:1.5}.status.ok{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.07);color:#a7f3d0}.status.err{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.07);color:#fecaca}.hint{font-size:11px;color:#74747c;margin-top:7px;line-height:1.5}.warning{margin-top:18px;padding:14px;border-radius:14px;border:1px solid rgba(246,198,91,.25);background:rgba(246,198,91,.06);color:#d9c38b;font-size:12px;line-height:1.6}@media(max-width:650px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.reward-head{align-items:flex-start}.top{flex-wrap:wrap}.badge{margin-left:0}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="top"><a class="back" href="./admin.html">← Launch Dashboard</a><div class="brand"><span>Sip</span>Mate 🍻</div><span class="badge">PRIVATE · REWARDS</span></header>
+
+  <section id="login" class="login">
+    <h1>Premium Rewards</h1>
+    <p class="muted">Admin-only reward tool for Discord challenges, giveaways and manual promotions.</p>
+    <form id="loginForm">
+      <label>Email</label><input id="email" type="email" autocomplete="username" value="sipmate.app@gmail.com" required>
+      <label style="margin-top:14px">Password</label><input id="password" type="password" autocomplete="current-password" required>
+      <button class="btn primary" type="submit">Open reward console</button>
+      <div id="loginStatus" class="hint"></div>
+    </form>
+  </section>
+
+  <main id="app" class="panel">
+    <div class="bar"><button id="logout" class="btn ghost">Log out</button></div>
+    <div class="reward-head"><div class="icon">🏆</div><div><h1>Grant Premium</h1><p class="muted">For the 25 Crew challenge, paste the winner's Discord user ID. Their Discord must already be linked to SipMate.</p></div></div>
+
+    <form id="rewardForm">
+      <div class="grid">
+        <div class="full"><label>Discord user ID</label><input id="discordId" inputmode="numeric" maxlength="20" placeholder="e.g. 123456789012345678" required><div class="hint">Discord Developer Mode → right-click member → Copy User ID.</div></div>
+        <div><label>Reward source</label><select id="source"><option value="discord_25_crew">Discord 25 Crew</option><option value="giveaway">Giveaway</option><option value="ambassador">Ambassador</option><option value="bug_bounty">Bug bounty</option><option value="manual">Manual</option><option value="founder">Founder</option></select></div>
+        <div><label>Duration</label><select id="duration"><option value="365">1 year · 365 days</option><option value="180">6 months · 180 days</option><option value="90">3 months · 90 days</option><option value="30">1 month · 30 days</option></select></div>
+        <div class="full"><label>Unique campaign / ticket reference</label><input id="reference" maxlength="160" placeholder="e.g. discord-25crew-ticket-1842" required><div class="hint">Use a unique reference. Reusing the same source + reference cannot grant Premium twice.</div></div>
+      </div>
+      <button id="grant" class="btn primary" type="submit">🏆 Grant Premium Reward</button>
+      <div id="status" class="status">Ready. No reward has been granted yet.</div>
+    </form>
+    <div class="warning"><strong>Safety:</strong> this page never contains a service-role key. The browser sends the current admin JWT to the protected Edge Function, which verifies the allowlisted admin and performs the grant server-side.</div>
+  </main>
+</div>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const SUPABASE_URL="https://poatmbsfglhrcdbosinb.supabase.co";
+const SUPABASE_KEY="sb_publishable_VooWOnzPl1SCUA44rZDTow_Ee5XrMd3";
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const $=id=>document.getElementById(id);
+let submitting=false;
+
+async function showApp(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){$("login").style.display="block";$("app").style.display="none";return null;}
+  $("login").style.display="none";$("app").style.display="block";return session;
+}
+
+$("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginStatus").textContent="Signing in…";const {error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){$("loginStatus").textContent=error.message;return}$("loginStatus").textContent="";await showApp()});
+$("logout").addEventListener("click",async()=>{await sb.auth.signOut();location.reload()});
+
+$("rewardForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(submitting)return;submitting=true;$("grant").disabled=true;$("status").className="status";$("status").textContent="Verifying linked Discord account and granting reward…";
+  try{
+    const session=await showApp();if(!session)throw new Error("Admin session expired. Please sign in again.");
+    const discordId=$("discordId").value.trim();const externalReference=$("reference").value.trim();
+    if(!/^\d{17,20}$/.test(discordId))throw new Error("Enter a valid Discord user ID.");
+    if(!externalReference)throw new Error("Enter a unique campaign or ticket reference.");
+    const res=await fetch(SUPABASE_URL+"/functions/v1/admin-premium-reward",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,apikey:SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({discord_user_id:discordId,source:$("source").value,external_reference:externalReference,duration_days:Number($("duration").value)})});
+    const data=await res.json().catch(()=>({ok:false,error:"invalid_response"}));
+    if(res.status===401||res.status===403){await sb.auth.signOut();throw new Error("Admin authorization failed. Sign in again.");}
+    if(!res.ok||!data.ok){const messages={discord_not_linked:"That Discord account is not linked to a SipMate profile yet.",target_lookup_failed:"Could not look up the linked SipMate profile.",grant_failed:"The reward could not be granted.",invalid_discord_user_id:"Invalid Discord user ID."};throw new Error(messages[data.error]||data.error||"Reward request failed.");}
+    const until=data.premium_until?new Date(data.premium_until).toLocaleString():"Lifetime / no expiry";const name=data.target?.name||data.target?.discord_username||data.user_id;
+    $("status").className="status ok";$("status").textContent=data.granted?`✅ Premium granted to ${name}. Premium until: ${until}.`:`ℹ️ This campaign reference was already used. No duplicate reward was granted.`;
+    if(data.granted)$("reference").value="";
+  }catch(err){$("status").className="status err";$("status").textContent="❌ "+(err?.message||"Unexpected error");}
+  finally{submitting=false;$("grant").disabled=false;}
+});
+showApp();
+</script>
+</body>
+</html>
