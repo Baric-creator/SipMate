@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -41,25 +41,29 @@ export default function DeleteAccountScreen() {
   const language = i18n.language?.split('-')[0] as keyof typeof copy;
   const text = copy[language] ?? copy.en;
   const [loading, setLoading] = useState(false);
+  const deletionInFlightRef = useRef(false);
 
   async function deleteAccount() {
-    if (loading) return;
-
-    const confirmed = await askConfirmation(
-      text.confirmTitle,
-      text.confirmMessage,
-      text.confirmCancel,
-      text.confirmDelete
-    );
-    if (!confirmed) return;
+    if (deletionInFlightRef.current) return;
+    deletionInFlightRef.current = true;
 
     try {
+      const confirmed = await askConfirmation(
+        text.confirmTitle,
+        text.confirmMessage,
+        text.confirmCancel,
+        text.confirmDelete
+      );
+      if (!confirmed) return;
+
       setLoading(true);
 
       const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) {
-        showAlert(text.failed);
+      const session = sessionData.session;
+      const accessToken = session?.access_token;
+      const expectedUserId = session?.user?.id;
+      if (!accessToken || !expectedUserId) {
+        router.replace('/login');
         return;
       }
 
@@ -73,12 +77,18 @@ export default function DeleteAccountScreen() {
         return;
       }
 
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession?.user?.id !== expectedUserId) {
+        return;
+      }
+
       await supabase.auth.signOut();
       router.replace('/login');
     } catch (error) {
       console.log('DELETE ACCOUNT CRASH:', error);
       showAlert(text.failed);
     } finally {
+      deletionInFlightRef.current = false;
       setLoading(false);
     }
   }
