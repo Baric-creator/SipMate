@@ -1,6 +1,6 @@
--- Keep device push tokens private to the owning account.
--- Registration is performed by the service-role Edge Function; the app only needs
--- permission to remove its own token during logout.
+-- Keep device push tokens private to trusted backend functions.
+-- Registration and unregistration both go through the authenticated Edge Function,
+-- which performs storage changes with service-role access after validating the JWT.
 
 create table if not exists public.device_push_tokens (
   token text primary key,
@@ -19,11 +19,5 @@ alter table public.device_push_tokens enable row level security;
 
 revoke all on table public.device_push_tokens from anon;
 revoke all on table public.device_push_tokens from authenticated;
-grant delete on table public.device_push_tokens to authenticated;
 
 drop policy if exists "users can delete own device push tokens" on public.device_push_tokens;
-create policy "users can delete own device push tokens"
-on public.device_push_tokens
-for delete
-to authenticated
-using (auth.uid() = user_id);
