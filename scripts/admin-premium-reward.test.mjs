@@ -15,10 +15,19 @@ test('admin Premium rewards require an authenticated allowlisted administrator',
 test('admin Premium reward input is bounded and reward source is allowlisted', () => {
   assert.match(source, /const MAX_BODY_BYTES = 8_192/);
   assert.match(source, /request_too_large/);
-  assert.match(source, /UUID_PATTERN\.test\(userId\)/);
+  assert.match(source, /UUID_PATTERN\.test\(requestedUserId\)/);
+  assert.match(source, /DISCORD_ID_PATTERN\.test\(discordUserId\)/);
   assert.match(source, /ALLOWED_SOURCES\.has\(source\)/);
   assert.match(source, /durationDays < 1 \|\| durationDays > 3650/);
   assert.match(source, /externalReference\.length < 1 \|\| externalReference\.length > 160/);
+});
+
+test('Discord giveaway rewards resolve only a linked SipMate profile', () => {
+  assert.match(source, /\.from\("profiles"\)/);
+  assert.match(source, /\.eq\("discord_user_id", discordUserId\)/);
+  assert.match(source, /error: "discord_not_linked"/);
+  assert.match(source, /userId = profile\.id/);
+  assert.match(source, /discord_user_id: discordUserId/);
 });
 
 test('admin Premium reward delegates entitlement changes to the audited service-role RPC', () => {
