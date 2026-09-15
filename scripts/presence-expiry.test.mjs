@@ -12,3 +12,9 @@ test('presence heartbeat uses one timestamp for write and expiry guard', () => {
   assert.match(source, /const now = new Date\(\)\.toISOString\(\)/);
   assert.match(source, /update\(\{ last_seen_at: now \}\)/);
 });
+
+test('online status rejects an explicitly expired Active session', () => {
+  assert.match(source, /active_until\?: string \| null/);
+  assert.match(source, /if \(typeof profile\.active_until !== 'undefined'\)/);
+  assert.match(source, /activeUntil <= Date\.now\(\)/);
+});
