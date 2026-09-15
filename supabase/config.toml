@@ -16,6 +16,16 @@ verify_jwt = false
 import_map = "./functions/create-customer-portal/deno.json"
 entrypoint = "./functions/create-customer-portal/index.ts"
 
+[functions.discord-oauth]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/discord-oauth/index.ts"
+
+[functions.join-waitlist]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/join-waitlist/index.ts"
+
 [functions.delete-account]
 enabled = true
 verify_jwt = true
