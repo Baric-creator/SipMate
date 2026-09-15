@@ -42,10 +42,8 @@ if (exists(pushTokenMigration)) {
   assert(sql.includes('device_push_tokens_user_id_idx'), 'Push-token owner lookup index is missing');
   assert(sql.includes('alter table public.device_push_tokens enable row level security'), 'device_push_tokens RLS is not explicitly enabled');
   assert(sql.includes('revoke all on table public.device_push_tokens from anon'), 'Anonymous push-token access is not revoked');
-  assert(sql.includes('revoke all on table public.device_push_tokens from authenticated'), 'Authenticated push-token privileges are not reset before the narrow grant');
-  assert(sql.includes('grant delete on table public.device_push_tokens to authenticated'), 'Authenticated users cannot unregister their own push token');
-  assert(sql.includes('for delete') && sql.includes('auth.uid() = user_id'), 'Push-token DELETE policy is not scoped to the token owner');
-  assert(!sql.includes('grant select on table public.device_push_tokens to authenticated'), 'Push tokens became readable by app clients');
+  assert(sql.includes('revoke all on table public.device_push_tokens from authenticated'), 'Authenticated app clients still have direct push-token table privileges');
+  assert(!/grant\s+(?:select|insert|update|delete|all)[\s\S]*?device_push_tokens[\s\S]*?authenticated/i.test(sql), 'Push-token storage became directly accessible to authenticated app clients');
 }
 
 const discordStateMigration = 'supabase/migrations/20260906184000_add_discord_oauth_states.sql';
