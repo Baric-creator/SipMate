@@ -55,7 +55,7 @@
     "dependency:audit": "node ./scripts/dependency-audit.mjs",
     "workflow:audit": "node ./scripts/workflow-audit.mjs",
     "database:audit": "node ./scripts/database-contract-audit.mjs",
-    "release:audit": "node ./scripts/release-audit.mjs",
+    "release:audit": "node ./scripts/release-audit-wrapper.mjs",
     "website:audit": "node ./scripts/website-audit.mjs",
     "website:links": "node ./scripts/website-link-audit.mjs",
     "website:seo": "node ./scripts/website-seo-legal-audit.mjs",
