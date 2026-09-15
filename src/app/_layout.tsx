@@ -95,10 +95,20 @@ export default function RootLayout() {
       }
     });
 
-    const openFromNotification = (response: Notifications.NotificationResponse) => {
+    const openFromNotification = async (response: Notifications.NotificationResponse) => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!mounted) return;
+      if (!session?.user) {
+        router.replace('/login');
+        return;
+      }
+
       const data = response.notification.request.content.data as Record<string, unknown>;
       if (data?.type === 'message' && data?.conversationId) {
-        router.push({ pathname: '/chat', params: { conversationId: String(data.conversationId), name: String(data.name ?? 'SipMate'), id: String(data.id ?? '') } });
+        router.push({ pathname: '/chat', params: { conversationId: String(data.conversationId) } });
         return;
       }
       if (data?.type === 'cheers' && data?.id) {
@@ -108,13 +118,15 @@ export default function RootLayout() {
 
     Notifications.getLastNotificationResponseAsync().then(async (response) => {
       if (mounted && response) {
-        openFromNotification(response);
+        await openFromNotification(response);
         await Notifications.clearLastNotificationResponseAsync();
       }
     });
 
     const notificationSubscription =
-      Notifications.addNotificationResponseReceivedListener(openFromNotification);
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        void openFromNotification(response);
+      });
 
     return () => {
       mounted = false;
