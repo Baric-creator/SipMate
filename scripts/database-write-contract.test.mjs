@@ -4,7 +4,7 @@ import test from 'node:test';
 
 const profileWrites = fs.readFileSync('supabase/migrations/20260915201000_restrict_profile_write_columns.sql', 'utf8');
 const photoWrites = fs.readFileSync('supabase/migrations/20260915202000_restrict_profile_photo_writes.sql', 'utf8');
-const activeSessionWrites = fs.readFileSync('supabase/migrations/20260915204000_enforce_active_session_window.sql', 'utf8');
+const activeSessionWrites = fs.readFileSync('supabase/migrations/20260915205000_enforce_active_session_window.sql', 'utf8');
 
 test('authenticated profile writes remain owner-scoped and cannot change Premium state', () => {
   assert.match(profileWrites, /caller_id uuid := auth\.uid\(\)/);
