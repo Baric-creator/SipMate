@@ -8,6 +8,7 @@ const allowedOrigins = new Set([
   'http://localhost:8082',
   'http://localhost:19006',
 ])
+const CHECKOUT_IDEMPOTENCY_WINDOW_MS = 5 * 60 * 1000
 
 function corsHeaders(req: Request) {
   const origin = req.headers.get('origin')
@@ -19,11 +20,6 @@ function corsHeaders(req: Request) {
     'Vary': 'Origin',
   }
 }
-
-const MONTHLY_PRICE_ID = 'price_1UAAwKF9keqz65yeAB2gM6y1'
-const FOUNDERS_YEARLY_PRICE_ID = 'price_1UAB3YF9keqz65yetpOin6EL'
-const EARLY_YEARLY_PRICE_ID = 'price_1UAYX3F9keqz65ye433hIOYb'
-const STANDARD_YEARLY_PRICE_ID = 'price_1UAYYNF9keqz65yeaT62ebxl'
 
 function jsonResponse(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -49,6 +45,16 @@ function getCheckoutOrigin(req: Request) {
   if (requestOrigin && allowedOrigins.has(requestOrigin)) return new URL(requestOrigin).origin
   return PROD_ORIGIN
 }
+
+function checkoutIdempotencyKey(userId: string, plan: string) {
+  const bucket = Math.floor(Date.now() / CHECKOUT_IDEMPOTENCY_WINDOW_MS)
+  return `sipmate-checkout-${userId}-${plan}-${bucket}`
+}
+
+const MONTHLY_PRICE_ID = 'price_1UAAwKF9keqz65yeAB2gM6y1'
+const FOUNDERS_YEARLY_PRICE_ID = 'price_1UAB3YF9keqz65yetpOin6EL'
+const EARLY_YEARLY_PRICE_ID = 'price_1UAYX3F9keqz65ye433hIOYb'
+const STANDARD_YEARLY_PRICE_ID = 'price_1UAYYNF9keqz65yeaT62ebxl'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) })
@@ -140,6 +146,7 @@ Deno.serve(async (req) => {
       headers: {
         Authorization: `Bearer ${stripeSecretKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Idempotency-Key': checkoutIdempotencyKey(user.id, String(plan)),
       },
       body: formData.toString(),
     })
