@@ -37,3 +37,12 @@ test('push token Edge Function scopes unregister to the authenticated user and t
   assert.match(edgeSource, /\.from\("device_push_tokens"\)\s*\.delete\(\)\s*\.eq\("user_id", user\.id\)\s*\.eq\("token", pushToken\)/s);
   assert.match(edgeSource, /auth\.getUser\(token\)/);
 });
+
+test('push token Edge Function bounds input and per-user registrations', () => {
+  assert.match(edgeSource, /const MAX_PUSH_TOKEN_LENGTH = 256;/);
+  assert.match(edgeSource, /const MAX_PUSH_TOKENS_PER_USER = 10;/);
+  assert.match(edgeSource, /pushToken\.length > MAX_PUSH_TOKEN_LENGTH/);
+  assert.match(edgeSource, /return new Response\(JSON\.stringify\(\{ error: "invalid_json" \}\), \{ status: 400, headers \}\)/);
+  assert.match(edgeSource, /\.eq\("user_id", user\.id\)\s*\.order\("updated_at", \{ ascending: false \}\)\s*\.range\(MAX_PUSH_TOKENS_PER_USER,/s);
+  assert.match(edgeSource, /\.delete\(\)\s*\.eq\("user_id", user\.id\)\s*\.in\("token", tokensToDelete\)/s);
+});
