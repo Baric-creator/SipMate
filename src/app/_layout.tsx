@@ -137,40 +137,54 @@ export default function RootLayout() {
 
   useEffect(() => {
     let heartbeat: ReturnType<typeof setInterval> | null = null;
-
-    const startHeartbeat = async () => {
-      await touchPresence();
-      if (heartbeat) clearInterval(heartbeat);
-      heartbeat = setInterval(() => {
-        touchPresence();
-      }, 45_000);
-    };
+    let heartbeatGeneration = 0;
 
     const stopHeartbeat = () => {
+      heartbeatGeneration += 1;
       if (heartbeat) {
         clearInterval(heartbeat);
         heartbeat = null;
       }
     };
 
+    const startHeartbeat = async () => {
+      const generation = ++heartbeatGeneration;
+      await touchPresence();
+
+      if (
+        generation !== heartbeatGeneration ||
+        AppState.currentState !== 'active'
+      ) {
+        await clearPresence();
+        return;
+      }
+
+      if (heartbeat) clearInterval(heartbeat);
+      heartbeat = setInterval(() => {
+        if (AppState.currentState === 'active') {
+          void touchPresence();
+        }
+      }, 45_000);
+    };
+
     if (AppState.currentState === 'active') {
-      startHeartbeat();
+      void startHeartbeat();
     }
 
     const appStateSubscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        startHeartbeat();
+        void startHeartbeat();
       } else {
         stopHeartbeat();
         if (state === 'background') {
-          clearPresence();
+          void clearPresence();
         }
       }
     });
 
     const { data: authSubscription } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user && AppState.currentState === 'active') {
-        startHeartbeat();
+        void startHeartbeat();
       }
       if (event === 'SIGNED_OUT') {
         stopHeartbeat();
