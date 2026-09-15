@@ -8,15 +8,20 @@ security definer
 set search_path = pg_catalog, public
 as $$
 declare
+  caller_id uuid := auth.uid();
+  caller_role text := auth.role();
   premium_active boolean := false;
   current_photo_count integer := 0;
 begin
-  -- Service-role maintenance has no end-user auth.uid(); ordinary client inserts do.
-  if auth.uid() is null then
-    return new;
+  -- Trusted service-role maintenance may bypass end-user entitlement checks.
+  if caller_id is null then
+    if caller_role = 'service_role' then
+      return new;
+    end if;
+    raise exception 'Authentication required';
   end if;
 
-  if new.user_id <> auth.uid() then
+  if new.user_id <> caller_id then
     raise exception 'Cannot add photos to another profile';
   end if;
 
