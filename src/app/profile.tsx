@@ -5,7 +5,7 @@ import { AppState, Image, Linking, Pressable, SafeAreaView, ScrollView, StyleShe
 
 import { showAlert } from '../lib/notify';
 import { FutureBackdrop } from '../components/FutureBackdrop';
-import { isProfileOnline, stopActiveSession } from '../lib/presence';
+import { isProfileAvailable, isProfileOnline, stopActiveSession } from '../lib/presence';
 import { unregisterCurrentDevicePushTokenAsync } from '../lib/push-notifications';
 import { supabase } from '../lib/supabase';
 
@@ -19,6 +19,7 @@ type UserProfile = {
   currently_up_for: string | null;
   is_active: boolean | null;
   last_seen_at: string | null;
+  active_until: string | null;
   is_premium: boolean;
   premium_until: string | null;
   discord_user_id: string | null;
@@ -75,7 +76,7 @@ export default function UserProfileScreen() {
       const expectedUserId = session.user.id;
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
+        .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, active_until, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
         .eq('id', expectedUserId)
         .maybeSingle();
 
@@ -108,7 +109,7 @@ export default function UserProfileScreen() {
             is_active: false,
             is_premium: false,
           }, { onConflict: 'id' })
-          .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
+          .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, active_until, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
           .single();
 
         const { data: { session: sessionAfterCreate } } = await supabase.auth.getSession();
@@ -198,7 +199,7 @@ export default function UserProfileScreen() {
   if (loading) return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.loading}</Text></SafeAreaView>;
   if (!profile) return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.notFound}</Text></SafeAreaView>;
 
-  const profileOnline = isProfileOnline(profile);
+  const profileOnline = isProfileAvailable(profile) && isProfileOnline(profile);
 
   const premiumActive = profile.is_premium === true &&
     (!profile.premium_until || new Date(profile.premium_until) > new Date());
