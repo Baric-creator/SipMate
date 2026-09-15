@@ -44,6 +44,17 @@ if (exists(pushTokenMigration)) {
   assert(!sql.includes('grant select on table public.device_push_tokens to authenticated'), 'Push tokens became readable by app clients');
 }
 
+const discordInternalMigration = 'supabase/migrations/20260915194000_harden_discord_internal_tables.sql';
+assert(exists(discordInternalMigration), `Missing migration: ${discordInternalMigration}`);
+if (exists(discordInternalMigration)) {
+  const sql = read(discordInternalMigration);
+  for (const table of ['discord_oauth_states', 'discord_cheers_announcements']) {
+    assert(sql.includes(`alter table public.${table} enable row level security`), `${table} RLS is not explicitly enabled`);
+    assert(sql.includes(`revoke all on table public.${table} from anon`), `${table} remains accessible to anonymous clients`);
+    assert(sql.includes(`revoke all on table public.${table} from authenticated`), `${table} remains directly accessible to authenticated app clients`);
+  }
+}
+
 if (failures.length) {
   failures.forEach((message) => console.error(`FAIL: ${message}`));
   console.error(`Database contract audit failed with ${failures.length} blocking issue(s).`);
