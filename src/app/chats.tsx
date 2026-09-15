@@ -128,6 +128,10 @@ export default function ChatsScreen() {
       const { data: chatRows, error: chatListError } = await supabase.rpc('get_chat_list');
 
       if (!isLatestRequest()) return;
+
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!isLatestRequest() || currentSession?.user?.id !== myId) return;
+
       if (chatListError) {
         console.log('CHAT LIST ERROR:', chatListError.message);
         return;
