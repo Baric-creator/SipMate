@@ -55,6 +55,21 @@ if (exists(discordInternalMigration)) {
   }
 }
 
+const galleryLimitMigration = 'supabase/migrations/20260915195000_enforce_premium_gallery_limit.sql';
+assert(exists(galleryLimitMigration), `Missing migration: ${galleryLimitMigration}`);
+if (exists(galleryLimitMigration)) {
+  const sql = read(galleryLimitMigration);
+  assert(sql.includes('create or replace function public.enforce_profile_photo_insert()'), 'Premium gallery insert guard function is missing');
+  assert(sql.includes('security definer'), 'Premium gallery guard must remain SECURITY DEFINER');
+  assert(sql.includes('set search_path = pg_catalog, public'), 'Premium gallery guard search_path hardening is missing');
+  assert(sql.includes('new.user_id <> auth.uid()'), 'Premium gallery guard no longer enforces photo ownership');
+  assert(sql.includes('p.is_premium = true') && sql.includes('p.premium_until > now()'), 'Premium gallery guard no longer checks a current Premium entitlement');
+  assert(sql.includes('for update'), 'Premium gallery inserts are no longer serialized against concurrent uploads');
+  assert(sql.includes('current_photo_count >= 6'), 'Premium gallery six-photo limit is missing');
+  assert(sql.includes('before insert on public.profile_photos'), 'Premium gallery guard trigger no longer runs before INSERT');
+  assert(sql.includes('revoke all on function public.enforce_profile_photo_insert() from public'), 'Premium gallery trigger function became directly executable by public');
+}
+
 if (failures.length) {
   failures.forEach((message) => console.error(`FAIL: ${message}`));
   console.error(`Database contract audit failed with ${failures.length} blocking issue(s).`);
