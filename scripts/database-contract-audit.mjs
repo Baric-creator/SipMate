@@ -32,6 +32,18 @@ if (exists(nearbyMigration)) {
   assert(sql.includes('now()'), 'Nearby Active-session migration no longer enforces time-based expiry');
 }
 
+const pushTokenMigration = 'supabase/migrations/20260915193000_harden_device_push_tokens.sql';
+assert(exists(pushTokenMigration), `Missing migration: ${pushTokenMigration}`);
+if (exists(pushTokenMigration)) {
+  const sql = read(pushTokenMigration);
+  assert(sql.includes('alter table public.device_push_tokens enable row level security'), 'device_push_tokens RLS is not explicitly enabled');
+  assert(sql.includes('revoke all on table public.device_push_tokens from anon'), 'Anonymous push-token access is not revoked');
+  assert(sql.includes('revoke all on table public.device_push_tokens from authenticated'), 'Authenticated push-token privileges are not reset before the narrow grant');
+  assert(sql.includes('grant delete on table public.device_push_tokens to authenticated'), 'Authenticated users cannot unregister their own push token');
+  assert(sql.includes('for delete') && sql.includes('auth.uid() = user_id'), 'Push-token DELETE policy is not scoped to the token owner');
+  assert(!sql.includes('grant select on table public.device_push_tokens to authenticated'), 'Push tokens became readable by app clients');
+}
+
 if (failures.length) {
   failures.forEach((message) => console.error(`FAIL: ${message}`));
   console.error(`Database contract audit failed with ${failures.length} blocking issue(s).`);
