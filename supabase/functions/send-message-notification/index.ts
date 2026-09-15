@@ -120,6 +120,7 @@ Deno.serve(async (req) => {
       const { error: cleanupError } = await admin
         .from("device_push_tokens")
         .delete()
+        .eq("user_id", recipientId)
         .in("token", staleTokens);
       if (cleanupError) console.error("STALE PUSH TOKEN CLEANUP ERROR", cleanupError);
     }
