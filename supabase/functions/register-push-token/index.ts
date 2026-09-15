@@ -1,6 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+const MAX_PUSH_TOKEN_LENGTH = 256;
+
 Deno.serve(async (req) => {
   const headers = { "Content-Type": "application/json" };
   if (req.method !== "POST") return new Response(JSON.stringify({ error: "method_not_allowed" }), { status: 405, headers });
@@ -32,7 +34,11 @@ Deno.serve(async (req) => {
     }
 
     const pushToken = String(body?.token ?? "").trim();
-    if (!/^(Expo|Exponent)PushToken\[[^\]]+\]$/.test(pushToken)) {
+    if (
+      pushToken.length === 0 ||
+      pushToken.length > MAX_PUSH_TOKEN_LENGTH ||
+      !/^(Expo|Exponent)PushToken\[[^\]]+\]$/.test(pushToken)
+    ) {
       return new Response(JSON.stringify({ error: "invalid_push_token" }), { status: 400, headers });
     }
 
