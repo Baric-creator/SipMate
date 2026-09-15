@@ -9,6 +9,7 @@ const sendMessageNotification = fs.readFileSync('supabase/functions/send-message
 const sendCheersNotification = fs.readFileSync('supabase/functions/send-cheers-notification/index.ts', 'utf8');
 const adminModeration = fs.readFileSync('supabase/functions/admin-moderation/index.ts', 'utf8');
 const joinWaitlist = fs.readFileSync('supabase/functions/join-waitlist/index.ts', 'utf8');
+const createCheckoutSession = fs.readFileSync('supabase/functions/create-checkout-session/index.ts', 'utf8');
 
 test('Discord Cheers feed validates other_user_id before interpolated PostgREST filters', () => {
   assert.match(announceCheers, /const UUID_PATTERN =/);
@@ -81,4 +82,11 @@ test('public waitlist endpoint fails closed when Supabase configuration is missi
   assert.match(joinWaitlist, /if \(!supabaseUrl \|\| !anonKey\)/);
   assert.match(joinWaitlist, /temporarily_unavailable/);
   assert.match(joinWaitlist, /status: 503/);
+});
+
+test('Premium checkout coalesces rapid duplicate requests through a bounded Stripe idempotency key', () => {
+  assert.match(createCheckoutSession, /const CHECKOUT_IDEMPOTENCY_WINDOW_MS = 5 \* 60 \* 1000/);
+  assert.match(createCheckoutSession, /function checkoutIdempotencyKey\(userId: string, plan: string\)/);
+  assert.match(createCheckoutSession, /Math\.floor\(Date\.now\(\) \/ CHECKOUT_IDEMPOTENCY_WINDOW_MS\)/);
+  assert.match(createCheckoutSession, /'Idempotency-Key': checkoutIdempotencyKey\(user\.id, String\(plan\)\)/);
 });
