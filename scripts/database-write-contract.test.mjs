@@ -5,6 +5,7 @@ import test from 'node:test';
 const profileWrites = fs.readFileSync('supabase/migrations/20260915201000_restrict_profile_write_columns.sql', 'utf8');
 const photoWrites = fs.readFileSync('supabase/migrations/20260915202000_restrict_profile_photo_writes.sql', 'utf8');
 const activeSessionWrites = fs.readFileSync('supabase/migrations/20260915205000_enforce_active_session_window.sql', 'utf8');
+const activeSessionSafety = fs.readFileSync('supabase/migrations/20260915205100_safe_active_session_insert_trigger.sql', 'utf8');
 
 test('authenticated profile writes remain owner-scoped and cannot change Premium state', () => {
   assert.match(profileWrites, /caller_id uuid := auth\.uid\(\)/);
@@ -35,4 +36,12 @@ test('authenticated clients cannot extend an existing Active session beyond its 
   assert.match(activeSessionWrites, /new\.active_until := null/);
   assert.match(activeSessionWrites, /new\.last_seen_at := null/);
   assert.match(activeSessionWrites, /before insert or update of is_active, active_until, last_seen_at on public\.profiles/);
+});
+
+test('Active session trigger handles INSERT before reading OLD', () => {
+  const insertAt = activeSessionSafety.indexOf("if tg_op = 'INSERT' then");
+  const oldReadAt = activeSessionSafety.indexOf('old.is_active');
+  assert.ok(insertAt >= 0 && oldReadAt > insertAt, 'INSERT branch must be resolved before OLD fields are referenced');
+  assert.match(activeSessionSafety, /new\.active_until := now\(\) \+ interval '3 hours'/);
+  assert.match(activeSessionSafety, /revoke all on function public\.enforce_profile_active_session_window\(\) from public/);
 });
