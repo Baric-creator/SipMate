@@ -92,6 +92,7 @@ async function registerForPushNotificationsInternal(expectedUserId: string) {
         Authorization: `Bearer ${session.access_token}`,
       },
       body: {
+        action: 'register',
         token: pushToken,
         platform: Platform.OS,
       },
@@ -152,7 +153,8 @@ export async function unregisterCurrentDevicePushTokenAsync() {
     } = await supabase.auth.getSession();
 
     const userId = session?.user?.id;
-    if (!userId) return;
+    const accessToken = session?.access_token;
+    if (!userId || !accessToken) return;
 
     if (registrationInFlight?.userId === userId) {
       await registrationInFlight.promise.catch(() => null);
@@ -165,11 +167,15 @@ export async function unregisterCurrentDevicePushTokenAsync() {
       await Notifications.getExpoPushTokenAsync({ projectId })
     ).data;
 
-    const { error } = await supabase
-      .from('device_push_tokens')
-      .delete()
-      .eq('user_id', userId)
-      .eq('token', pushToken);
+    const { error } = await supabase.functions.invoke('register-push-token', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: {
+        action: 'unregister',
+        token: pushToken,
+      },
+    });
 
     if (error) {
       console.log('PUSH TOKEN UNREGISTER ERROR:', error.message);
