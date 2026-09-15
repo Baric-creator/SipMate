@@ -89,6 +89,20 @@ if (exists(adultAgeMigration)) {
   assert(sql.includes('not valid'), 'Adult age migration may unexpectedly fail on historical/test rows');
 }
 
+const profileWriteMigration = 'supabase/migrations/20260915201000_restrict_profile_write_columns.sql';
+assert(exists(profileWriteMigration), `Missing migration: ${profileWriteMigration}`);
+if (exists(profileWriteMigration)) {
+  const sql = read(profileWriteMigration);
+  assert(sql.includes('revoke insert on table public.profiles from authenticated'), 'Broad authenticated profile INSERT privilege is not revoked');
+  assert(sql.includes('revoke update on table public.profiles from authenticated'), 'Broad authenticated profile UPDATE privilege is not revoked');
+  assert(sql.includes('revoke delete on table public.profiles from authenticated'), 'Authenticated clients can directly delete profile rows');
+  assert(sql.includes('grant insert (') && sql.includes('grant update ('), 'Profile client write allowlist is missing');
+  for (const protectedColumn of ['is_premium', 'premium_until', 'discord_user_id', 'discord_username', 'discord_connected_at']) {
+    const grants = sql.match(/grant (?:insert|update) \([\s\S]*?\) on table public\.profiles to authenticated;/gi) ?? [];
+    assert(grants.every((grant) => !grant.includes(protectedColumn)), `Backend-authoritative profile column ${protectedColumn} became client-writable`);
+  }
+}
+
 if (failures.length) {
   failures.forEach((message) => console.error(`FAIL: ${message}`));
   console.error(`Database contract audit failed with ${failures.length} blocking issue(s).`);
