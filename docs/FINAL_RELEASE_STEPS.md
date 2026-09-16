@@ -7,103 +7,81 @@ This is the short path from the current repository to a testable Google Play bui
 - Android package: `com.bariccreator.sipmate`
 - Expo SDK 57 / Android API 36 line
 - EAS development, preview and production profiles
-- Development APK profile with `developmentClient: true`
 - Production Android App Bundle profile
-- Production submit profile restricted to Google Play internal track, draft status, and changes held for manual review
+- Production submit profile restricted to Google Play `internal` track, draft status, and changes held for manual review
 - EAS CLI requires a clean committed Git state before builds
-- Android Premium release gate prevents shipping the existing web Stripe purchase flow as the Android purchase UI
-- Billing implementation plan documented for Google Play / RevenueCat
+- Android uses `src/app/premium.android.tsx`, which is consumption-only: it does not expose Stripe checkout, an external Premium purchase link, or subscription management
+- Web Premium purchase and subscription management remain on `officialsipmate.com` and synchronize entitlement into Supabase
 - Privacy, community guidelines, account deletion UI, block/report and 18+ registration are present
-- Automated TypeScript checks run on pushes to `master`
+- EN / DE / HR Store listing copy and Play declaration guides are prepared
+- Automated TypeScript, regression, security, database, website and release checks run on pushes to `master`
 - Local environment files, Android signing files and common Google Play service-account JSON filenames are ignored by Git
 
-## Owner/account steps that cannot be completed from repository code
+## Google Play account status
 
-1. Sign in to an Expo account and link SipMate to EAS.
-2. Create/select the SipMate app in Google Play Console with package `com.bariccreator.sipmate`.
-3. Create the Google Play Premium subscription products and base plans.
-4. Create/configure the RevenueCat project and connect the Google Play app.
-5. Add the RevenueCat Android public SDK key through a production-safe environment configuration. Do not commit private/service credentials.
-6. Provide a real public support/privacy contact address.
-7. Publish a public privacy-policy URL and public account-deletion request URL.
-8. Upload the Google Play service-account key to EAS credentials when EAS Submit is ready. Keep the JSON outside the repository.
+- Developer-account identity verification: **confirmed by Google on 16 September 2026**
+- Play Console is available and currently shows no apps created yet
 
-## Billing implementation sequence
+## Owner / console steps that still require the account UI
 
-Do not install or wire a purchase SDK until the Play/RevenueCat project exists and the product identifiers are known.
+1. Create the SipMate app entry in Google Play Console.
+2. Fill App access, Data Safety, account deletion, Content Rating, Target Audience, Ads and Privacy Policy declarations from the prepared docs.
+3. Enter the dedicated reviewer credentials without committing the password to GitHub.
+4. Upload/confirm the 512×512 icon, 1024×500 feature graphic and current phone screenshots.
+5. Configure EAS/Google Play submission credentials when the first Internal Testing upload is ready.
 
-After those values exist:
+Native Google Play Billing / RevenueCat is **not required for the first release** because the Play-distributed Android build does not sell Premium in-app. If native Android purchasing is added later, treat it as a separate tested feature and do not enable a purchase CTA until the full Play Billing flow is ready.
 
-1. Install `expo-dev-client` and `react-native-purchases` using Expo-compatible installation commands.
-2. Configure RevenueCat only on Android with the public Android SDK key.
-3. Use the authenticated Supabase user UUID as RevenueCat `appUserID` so Premium ownership maps to the correct SipMate account.
-4. Fetch the current RevenueCat Offering instead of hardcoding localized store prices.
-5. Purchase the selected Google Play package from the Android Premium screen.
-6. Add Restore Purchases.
-7. Treat RevenueCat entitlement state as the source for Google Play purchase ownership and synchronize SipMate Premium entitlement server-side before relying on it for protected Premium features.
-8. Prevent a second subscription when the user already has an active Stripe or Google Play Premium entitlement.
-9. Test purchase, cancellation, renewal, expiration, reinstall and restore with Google Play test accounts.
+## Release build sequence
 
-## Build sequence
-
-After pulling the current `master` branch locally:
+On the release machine, use the exact current `master` commit:
 
 ```bash
-npm install
-npm run setup:dev-client
+npm ci
+npm run check
+npm run release:audit
 npm run doctor
 git status
-git diff -- package.json package-lock.json
 ```
 
-Commit and push the generated `expo-dev-client` dependency changes before starting an EAS build. Then link/authenticate EAS, verify the development environment variables, and build:
+Do not build from a dirty working tree.
+
+Verify the production EAS environment, then create the fresh Play bundle:
 
 ```bash
 npx eas-cli@latest login
 npx eas-cli@latest whoami
-npx eas-cli@latest build:configure
-npx eas-cli@latest env:list --environment development
-npm run build:android:development
-```
-
-Use the development APK for real-device native integration/testing. Do not move on merely because the cloud build succeeded.
-
-Then verify the preview environment and create the release-like preview APK:
-
-```bash
-npx eas-cli@latest env:list --environment preview
-npm run build:android:preview
-```
-
-After the release checklist, billing gate and native smoke tests are green, verify production variables and create the Play Store bundle:
-
-```bash
 npx eas-cli@latest env:list --environment production
-npm run build:android:production
+npm run build:android:production:ready
 ```
 
-For the first safe Play upload, keep the existing production submit profile unchanged and submit the latest production build to the internal draft release:
+Inspect the resulting AAB / merged Android manifest before upload. The release must not unexpectedly request camera, microphone, broad media/storage, overlay or background-location permissions.
+
+For the first Play upload, keep the existing submit profile unchanged and submit only to the Internal Testing draft track:
 
 ```bash
 npm run submit:android:latest
 ```
 
-For a non-interactive CI environment with the required Expo authentication already configured:
+Do not switch the submit track to Production or remove the draft/manual-review gates until the Play-delivered build has passed the final smoke test.
 
-```bash
-npm run submit:android:latest:ci
-```
+## Final smoke path
 
-Do not switch the submit track to production or remove the draft/manual-review gates until the Play Console release checklist is complete.
+Use a physical Android device and the Play-delivered Internal Testing build. Verify at minimum:
+
+Login / registration → location deny → location allow → Nearby → Profile → profile photo → Cheers → mutual chat → push notification → Report → Block → logout/login → Premium entitlement recognition → Privacy / Terms → Delete Account.
+
+Also verify that the Android Premium screen contains **no purchase CTA and no Stripe/external-payment link** while still recognizing an already-active Premium entitlement.
 
 ## Do not call the app production-ready until all are true
 
-- Real Android device smoke test passes
-- Google Play test purchase and restore pass
-- Existing web Stripe subscriber cannot be double-charged through Android
-- Account deletion safely handles active subscriptions, database rows and storage objects
-- Public privacy and deletion URLs are live
-- Play Console Data safety form matches actual app behavior
-- Content rating is completed for the 18+ social-drinking use case
-- Store screenshots, 512x512 icon and 1024x500 feature graphic are ready
-- Production AAB installs through a Play testing track and passes final smoke testing
+- Current CI and release audit are green on the exact release commit
+- Production Supabase migrations and release-required Edge Functions are verified/deployed from the reviewed commit
+- Play Console declarations are complete and accurate
+- Dedicated reviewer access works on a physical device
+- Public privacy-policy and account-deletion URLs are live
+- Store assets are accepted by Play Console
+- Fresh production AAB has been manifest-checked
+- Play-delivered Internal Testing build passes the real-device smoke checklist
+- Android Premium remains consumption-only in the Play build
+- No critical/high unexpected dependency or runtime issue is open
