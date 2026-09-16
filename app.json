@@ -8,7 +8,13 @@
     "scheme": "sipmate",
     "userInterfaceStyle": "dark",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "com.bariccreator.sipmate",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.bariccreator.sipmate",
