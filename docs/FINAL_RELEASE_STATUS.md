@@ -1,34 +1,38 @@
 # SipMate — Final release status
 
-Status date: 2026-09-12
+Status date: 2026-09-16
 
 ## Overall
 
 **Repository / backend readiness: GREEN**
 
-SipMate is prepared so that the remaining launch work is mostly external approval and controlled release-candidate testing rather than feature development.
+**Google Play developer-account verification: CONFIRMED**
+
+SipMate is now past the developer-account verification blocker. The remaining launch work is Play Console setup, controlled backend deployment verification, production AAB creation, Internal Testing and final real-device smoke testing.
 
 ## Green / prepared
 
+- Google confirmed the Play developer account on 16 September 2026.
 - Android package and API 36 configuration.
 - Production AAB and Internal Testing submit profiles.
 - Release manifest audit and blocked unnecessary Android permissions.
-- TypeScript, security and release-readiness CI.
+- TypeScript, regression, security, database, website and release-readiness checks.
 - Login, registration, 18+ gate, Terms and Community Guidelines.
-- EN / DE / HR app copy and UTF-8 audit.
-- Location / Nearby / presence lifecycle.
+- EN / DE / HR app copy.
+- Location / Nearby / timed presence lifecycle.
 - Cheers and mutual CHEERS flow.
 - Realtime chat, read receipts, typing and push notification path.
 - Report / Block user-safety flow.
-- Founder moderation queue and moderation audit trail.
+- Moderation backend and audit trail.
 - Account deletion in-app and public deletion page.
 - Privacy / Terms / Imprint / Contact web pages.
 - Play Store listing copy, Data Safety guide, Content Rating / Target Audience guide and reviewer-access instructions.
 - Web Premium billing page using the same SipMate account.
-- Stripe Checkout, signed webhook synchronization and Customer Portal.
+- Stripe Checkout, signed webhook synchronization and Customer Portal on the website.
 - Automatic Premium entitlement synchronization to profiles.
 - Founders / Early Access / Standard yearly stage logic.
-- Android Premium consumption-only release architecture: no external payment link or Stripe purchase inside the Play-distributed Android app.
+- Android Premium consumption-only release architecture via `premium.android.tsx`: no Stripe checkout or external purchase link inside the Play-distributed Android app.
+- Discord 25 Crew Giveaway website and backend reward ledger/source prepared in the repository.
 - Website launch phase controller: waitlist → preregister → live.
 
 ## Current Premium pricing configuration
@@ -38,21 +42,23 @@ SipMate is prepared so that the remaining launch work is mostly external approva
 - Early Access yearly: 17.99 EUR first year after Founders.
 - Standard yearly: 19.99 EUR per year after Early Access.
 
-The database is the source of truth for active offer stage and subscription-derived counters.
+The database is the source of truth for Premium entitlement and offer state.
 
-## Deliberately not executed yet
+## Remaining release-window work
 
-These actions are intentionally left for the release window because they involve external approval, payment testing or public distribution:
-
-1. Final Google Play account/developer confirmation.
-2. Completing all Play Console declarations in the console UI.
-3. Supplying reviewer credentials in Play Console.
-4. One controlled end-to-end Premium billing test using a test/disposable account.
-5. Creating the fresh production AAB after confirmations.
-6. Uploading/submitting it to Internal Testing and installing the Play-delivered build.
-7. Final real-device smoke test.
-8. Promotion to Production.
-9. Setting the real Play Store URL and switching the website launch phase to `live`.
+1. Create the SipMate app entry in Google Play Console.
+2. Complete Play Console declarations using the prepared repository docs.
+3. Add and verify dedicated reviewer credentials.
+4. Confirm/finish Play Store assets and screenshots in the Console.
+5. Deliberately verify/apply pending production Supabase migrations and deploy required Edge Functions from the reviewed commit; repository presence alone is not proof of production deployment.
+6. Run one controlled website Premium entitlement test with a disposable/test account and confirm the Android app only consumes the resulting entitlement.
+7. Run release preflight and Expo Doctor on the exact release commit.
+8. Create the fresh production AAB.
+9. Inspect final manifest/permissions.
+10. Upload/submit only to Internal Testing draft first.
+11. Install the Play-delivered build and perform the physical-device smoke checklist.
+12. Promote to Production only after those gates are green.
+13. Set the real Play Store URL and switch the website launch phase to `live` only when publication is actually ready.
 
 ## Release commands
 
@@ -68,21 +74,21 @@ Build production AAB after preflight:
 npm run build:android:production:ready
 ```
 
-Build and submit the newest production build to the configured Internal Testing draft track:
+Submit the newest production build to the configured Internal Testing draft track:
 
 ```bash
-npm run release:android:internal:ready
+npm run submit:android:latest
 ```
 
 ## GO / NO-GO rule
 
 GO only when:
-- current CI is green,
-- Google/Play approvals are complete,
+- current CI is green on the exact release commit,
 - Play Console declarations are complete,
 - reviewer access works,
-- Premium test flow is confirmed,
-- the Play-delivered release candidate passes the smoke checklist,
-- no unexpected final AAB permissions appear.
+- production backend state matches the reviewed repository state,
+- the fresh AAB has no unexpected permissions,
+- the Play-delivered release candidate passes the physical-device smoke checklist,
+- Android Premium remains consumption-only with no external purchase CTA/link.
 
 If any item fails, remain on waitlist/preregister and do not promote to Production.
