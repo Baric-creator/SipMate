@@ -342,7 +342,7 @@ export default function ChatScreen() {
       keyboardVerticalOffset={0}
     >
       <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1742890188375-9b5817172055?auto=format&fit=crop&fm=jpg&q=82&w=1800' }}
+        source={{ uri: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&fm=jpg&q=82&w=1800' }}
         style={styles.chatBackdrop}
         imageStyle={styles.chatBackdropImage}
         resizeMode="cover"
@@ -459,11 +459,11 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   chatBackdropImage: {
-    opacity: 0.24,
+    opacity: 0.28,
   },
   chatBackdropShade: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(8,9,11,0.64)',
+    backgroundColor: 'rgba(8,9,11,0.66)',
   },
   chatBackdropBrand: {
     position: 'absolute',
@@ -549,4 +549,3 @@ const styles = StyleSheet.create({
   blockedBar: { paddingHorizontal: 18, paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#27272A', backgroundColor: '#18181B' },
   blockedText: { color: '#EF4444', fontSize: 13, fontWeight: '800', textAlign: 'center', lineHeight: 18 },
 });
-
