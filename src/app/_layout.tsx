@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AppState, Linking, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -65,6 +65,7 @@ export default function RootLayout() {
   const segments = useSegments();
   const router = useRouter();
   const { i18n } = useTranslation();
+  const [supportExpanded, setSupportExpanded] = useState(false);
   const bottomInset = Math.max(insets.bottom, 10);
   const language = i18n.language?.split('-')[0];
   const supportLabel =
@@ -207,6 +208,10 @@ export default function RootLayout() {
     currentRoute === 'reset-password' ||
     currentRoute === 'chat';
 
+  useEffect(() => {
+    setSupportExpanded(false);
+  }, [currentRoute]);
+
   return (
     <>
       <StatusBar style="light" />
@@ -287,45 +292,85 @@ export default function RootLayout() {
         <Tabs.Screen name="language" options={{ href: null }} />
         <Tabs.Screen name="premium" options={{ href: null }} />
         <Tabs.Screen name="privacy" options={{ href: null }} />
+        <Tabs.Screen name="terms" options={{ href: null }} />
         <Tabs.Screen name="user-profile" options={{ href: null }} />
       </Tabs>
 
       {!hideSupport && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={supportLabel}
-          onPress={() => Linking.openURL(supportUrl)}
-          style={({ pressed }) => ({
+        <View
+          pointerEvents="box-none"
+          style={{
             position: 'absolute',
             right: 18,
-            bottom: 92 + bottomInset,
-            minHeight: 42,
-            maxWidth: 190,
-            paddingHorizontal: 14,
-            borderRadius: 21,
+            bottom: 94 + bottomInset,
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 7,
-            backgroundColor: pressed ? '#211315' : '#121215',
-            borderWidth: 1,
-            borderColor: pressed ? '#6B3036' : '#3D282C',
-            opacity: pressed ? 0.9 : 1,
-            transform: [{ scale: pressed ? 0.98 : 1 }],
-            shadowColor: '#EF4444',
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: pressed ? 0.16 : 0.08,
-            shadowRadius: 14,
-            elevation: 6,
-          })}
+            gap: 8,
+          }}
         >
-          <Text style={{ fontSize: 15 }}>💬</Text>
-          <Text
-            numberOfLines={1}
-            style={{ color: '#F4F4F5', fontSize: 11, fontWeight: '800', fontFamily: 'sans-serif' }}
+          {supportExpanded && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={supportLabel}
+              onPress={() => {
+                setSupportExpanded(false);
+                void Linking.openURL(supportUrl);
+              }}
+              style={({ pressed }) => ({
+                minHeight: 42,
+                maxWidth: 170,
+                paddingHorizontal: 14,
+                borderRadius: 21,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 7,
+                backgroundColor: pressed ? '#211315' : '#121215',
+                borderWidth: 1,
+                borderColor: pressed ? '#6B3036' : '#3D282C',
+                opacity: pressed ? 0.9 : 1,
+                transform: [{ scale: pressed ? 0.98 : 1 }],
+                shadowColor: '#EF4444',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: pressed ? 0.16 : 0.08,
+                shadowRadius: 14,
+                elevation: 6,
+              })}
+            >
+              <Text
+                numberOfLines={1}
+                style={{ color: '#F4F4F5', fontSize: 11, fontWeight: '800', fontFamily: 'sans-serif' }}
+              >
+                {supportLabel}
+              </Text>
+              <Text style={{ color: '#F87171', fontSize: 13, fontWeight: '900' }}>→</Text>
+            </Pressable>
+          )}
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={supportExpanded ? `${supportLabel} close` : supportLabel}
+            onPress={() => setSupportExpanded((current) => !current)}
+            style={({ pressed }) => ({
+              width: 46,
+              height: 46,
+              borderRadius: 23,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: pressed ? '#211315' : '#121215',
+              borderWidth: 1,
+              borderColor: pressed || supportExpanded ? '#6B3036' : '#3D282C',
+              opacity: pressed ? 0.9 : 1,
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+              shadowColor: '#EF4444',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: supportExpanded ? 0.18 : 0.08,
+              shadowRadius: 14,
+              elevation: 7,
+            })}
           >
-            {supportLabel}
-          </Text>
-        </Pressable>
+            <Text style={{ fontSize: 18 }}>{supportExpanded ? '×' : '💬'}</Text>
+          </Pressable>
+        </View>
       )}
     </>
   );
