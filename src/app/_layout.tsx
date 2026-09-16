@@ -68,6 +68,14 @@ export default function RootLayout() {
   const [supportExpanded, setSupportExpanded] = useState(false);
   const bottomInset = Math.max(insets.bottom, 10);
   const language = i18n.language?.split('-')[0];
+
+  const tabLabels =
+    language === 'de'
+      ? { discover: 'Entdecken', nearby: 'In der Nähe', profile: 'Profil' }
+      : language === 'hr'
+        ? { discover: 'Otkrivaj', nearby: 'U blizini', profile: 'Profil' }
+        : { discover: 'Discover', nearby: 'Nearby', profile: 'Profile' };
+
   const supportLabel =
     language === 'de' ? 'Brauchst du Hilfe?' :
     language === 'hr' ? 'Trebaš pomoć?' :
@@ -255,21 +263,21 @@ export default function RootLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Discover',
+            title: tabLabels.discover,
             tabBarIcon: ({ focused }) => <TabIcon icon="🍻" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="nearby"
           options={{
-            title: 'Nearby',
+            title: tabLabels.nearby,
             tabBarIcon: ({ focused }) => <TabIcon icon="📍" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Profile',
+            title: tabLabels.profile,
             tabBarIcon: ({ focused }) => <TabIcon icon="👤" focused={focused} />,
           }}
         />
