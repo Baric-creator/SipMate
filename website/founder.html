@@ -131,7 +131,7 @@
 
       <section class="section" data-section="moderation">
         <article class="card">
-          <div class="moderation-head"><div><p class="eyebrow">TRUST & SAFETY</p><h2 style="font-size:30px;margin-top:8px">Moderation queue</h2><p class="muted">Review user reports and keep an auditable moderation trail.</p></div><button class="btn secondary" id="refreshModeration" type="button">Refresh reports</button></div>
+          <div class="moderation-head"><div><p class="eyebrow">TRUST & SAFETY</p><h2 style="font-size:30px;margin-top:8px">Moderation queue</h2><p class="muted">Review user reports and keep an auditable moderation trail.</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tag ok" id="moderationLive">● LIVE · 60s</span><button class="btn secondary" id="refreshModeration" type="button">Refresh reports</button></div></div>
           <div class="mod-summary"><article class="stat"><small>Pending</small><strong id="modPending">—</strong><span>Needs action</span></article><article class="stat"><small>Reviewed</small><strong id="modReviewed">—</strong><span>Actioned reports</span></article><article class="stat"><small>Dismissed</small><strong id="modDismissed">—</strong><span>Closed without action</span></article></div>
           <div class="two-col" style="margin-bottom:16px">
             <article class="card"><h2>Oldest pending report</h2><strong style="font-size:32px" id="oldestPendingAge">—</strong><p class="muted" id="oldestPendingMeta">No pending reports.</p></article>
@@ -247,6 +247,7 @@
   let moderationFilter='pending';
   let severityFilter='all';
   let ageFilter='all';
+  let moderationAutoRefresh=null;
   function personLabel(p){const name=p?.name||'Unknown user';const extras=[p?.age,p?.city].filter(Boolean).join(' · ');return `${esc(name)}${extras?` <small>${esc(extras)}</small>`:''}`}
   function reportAgeMs(createdAt){const ts=new Date(createdAt||0).getTime();return Number.isFinite(ts)?Math.max(0,Date.now()-ts):0}
   function formatAge(ms){
@@ -338,11 +339,29 @@
     try{const h=await headers();const r=await fetch(MODERATION_ENDPOINT,{method:'PATCH',headers:h,body:JSON.stringify({report_id:id,action:'remove_image'})});const d=await r.json();if(!r.ok||d?.ok!==true)throw new Error(d?.error||'request_failed');msg(el,'Photo removed and report marked reviewed.','ok');await Promise.all([loadModeration(),loadStatus()])}catch(e){msg(el,`Remove failed: ${e.message}`,'err')}
   }
 
+  function startModerationAutoRefresh(){
+    if(moderationAutoRefresh)clearInterval(moderationAutoRefresh);
+    moderationAutoRefresh=setInterval(()=>{
+      if(document.visibilityState==='visible'&&!document.getElementById('dashboardView').classList.contains('hidden'))void loadModeration();
+    },60000);
+  }
+  document.addEventListener('visibilitychange',()=>{
+    const live=document.getElementById('moderationLive');
+    if(!live)return;
+    if(document.visibilityState==='visible'){
+      live.textContent='● LIVE · 60s';
+      live.className='tag ok';
+      if(!document.getElementById('dashboardView').classList.contains('hidden'))void loadModeration();
+    }else{
+      live.textContent='PAUSED · tab hidden';
+      live.className='tag';
+    }
+  });
   async function loadAll(){await Promise.all([loadStatus(),loadAnalytics(),loadLaunch(),loadModeration()])}
   document.getElementById('refreshAll').addEventListener('click',loadAll);document.getElementById('refreshLaunch').addEventListener('click',loadLaunch);document.getElementById('refreshModeration').addEventListener('click',loadModeration);document.querySelectorAll('[data-phase]').forEach(btn=>btn.addEventListener('click',()=>setPhase(btn.dataset.phase)));document.querySelectorAll('[data-mod-filter]').forEach(btn=>btn.addEventListener('click',()=>{moderationFilter=btn.dataset.modFilter;document.querySelectorAll('[data-mod-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.querySelectorAll('[data-severity-filter]').forEach(btn=>btn.addEventListener('click',()=>{severityFilter=btn.dataset.severityFilter;document.querySelectorAll('[data-severity-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.querySelectorAll('[data-age-filter]').forEach(btn=>btn.addEventListener('click',()=>{ageFilter=btn.dataset.ageFilter;document.querySelectorAll('[data-age-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.getElementById('moderationList').addEventListener('click',e=>{const removeBtn=e.target.closest('[data-remove-image]');if(removeBtn){removeReportedImage(removeBtn.dataset.reportId);return}const btn=e.target.closest('[data-report-action]');if(btn)setReportStatus(btn.dataset.reportId,btn.dataset.reportAction)});
   document.getElementById('saveLaunch').addEventListener('click',async()=>{const raw=playUrl.value.trim();if(selectedPhase!=='waitlist'&&!raw){msg(launchMsg,'Google Play URL is required for this phase.','err');return}if(!confirm(`Change SipMate public launch phase to “${selectedPhase}”?`))return;msg(launchMsg,'Saving…');try{const h=await headers();const r=await fetch(LAUNCH_ENDPOINT,{method:'POST',headers:h,body:JSON.stringify({phase:selectedPhase,play_store_url:raw||null})});const d=await r.json();if(!r.ok||d?.ok!==true)throw new Error(d?.error||'request_failed');document.getElementById('currentPhase').textContent=d.launch.phase;playUrl.value=d.launch.play_store_url||'';msg(launchMsg,'Saved. Public website will update automatically.','ok')}catch(e){msg(launchMsg,`Save failed: ${e.message}`,'err')}});
   document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabase.auth.signOut();showSession(null)});
-  const {data}=await supabase.auth.getSession();showSession(data.session);supabase.auth.onAuthStateChange((_event,session)=>{if(!session)showSession(null)});
+  const {data}=await supabase.auth.getSession();showSession(data.session);startModerationAutoRefresh();supabase.auth.onAuthStateChange((_event,session)=>{if(!session)showSession(null)});
 </script>
 </body>
 </html>
