@@ -16,7 +16,7 @@ import {
   Vibration,
 } from 'react-native';
 
-import { showAlert } from '../lib/notify';
+import { askConfirmation, showAlert } from '../lib/notify';
 import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 
@@ -51,6 +51,10 @@ const copy = {
     photoType: 'Use a JPG, PNG or WebP image.',
     photoError: 'Photo could not be sent.',
     verifiedPhoto: 'VERIFIED PHOTO',
+    reportPhoto: 'Report photo',
+    reportPhotoConfirm: 'Report this photo to SipMate moderation?',
+    reportPhotoSent: 'Photo reported. Thank you for helping keep SipMate safe.',
+    reportPhotoDuplicate: 'You already reported this photo.',
   },
   de: {
     active: 'AKTIV — Bereit für einen Drink', inactive: 'INAKTIV', connected: 'CHEERS verbunden',
@@ -69,6 +73,10 @@ const copy = {
     photoType: 'Bitte JPG, PNG oder WebP verwenden.',
     photoError: 'Foto konnte nicht gesendet werden.',
     verifiedPhoto: 'VERIFIZIERTES FOTO',
+    reportPhoto: 'Foto melden',
+    reportPhotoConfirm: 'Dieses Foto an die SipMate-Moderation melden?',
+    reportPhotoSent: 'Foto gemeldet. Danke, dass du SipMate sicher hältst.',
+    reportPhotoDuplicate: 'Du hast dieses Foto bereits gemeldet.',
   },
   hr: {
     active: 'AKTIVAN — Spreman za piće', inactive: 'NEAKTIVAN', connected: 'CHEERS povezani',
@@ -87,6 +95,10 @@ const copy = {
     photoType: 'Koristi JPG, PNG ili WebP sliku.',
     photoError: 'Slika nije mogla biti poslana.',
     verifiedPhoto: 'VERIFIED PHOTO',
+    reportPhoto: 'Prijavi sliku',
+    reportPhotoConfirm: 'Prijaviti ovu sliku SipMate moderaciji?',
+    reportPhotoSent: 'Slika je prijavljena. Hvala što pomažeš da SipMate ostane siguran.',
+    reportPhotoDuplicate: 'Ovu sliku si već prijavio.',
   },
 } as const;
 
@@ -510,6 +522,34 @@ export default function ChatScreen() {
     }
   }
 
+  async function reportChatImage(message: Message) {
+    if (!otherUserId || message.message_type !== 'image' || message.sender_id === myUserId) return;
+    const confirmed = await askConfirmation(
+      text.reportPhoto,
+      text.reportPhotoConfirm,
+      text.cancel ?? 'Cancel',
+      text.reportPhoto
+    );
+    if (!confirmed) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user || session.user.id !== myUserId) return;
+
+    const { error } = await supabase.from('reports').insert({
+      reporter_id: session.user.id,
+      reported_id: message.sender_id,
+      reason: 'inappropriate_image',
+      report_kind: 'chat_image',
+      reported_message_id: String(message.id),
+    });
+    if (error) {
+      if (error.code === '23505') showAlert(text.reportPhotoDuplicate);
+      else showAlert(`${text.photoError}: ${error.message}`);
+      return;
+    }
+    showAlert(text.reportPhotoSent);
+  }
+
   async function sendTypingStatus(isTyping: boolean) {
     if (!conversationId || !myUserId || !chatChannelRef.current) return;
     try {
@@ -600,7 +640,14 @@ export default function ChatScreen() {
                         <Text style={styles.imagePlaceholderText}>Tap to load</Text>
                       </TouchableOpacity>
                     )}
-                    <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>✓ {text.verifiedPhoto}</Text></View>
+                    <View style={styles.imageFooterRow}>
+                      <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>✓ {text.verifiedPhoto}</Text></View>
+                      {!mine && (
+                        <TouchableOpacity style={styles.reportImageButton} onPress={() => void reportChatImage(item)}>
+                          <Text style={styles.reportImageText}>⚠ {text.reportPhoto}</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 ) : (
                   <Text style={styles.messageText}>{item.content}</Text>
@@ -763,7 +810,10 @@ const styles = StyleSheet.create({
   imagePlaceholder: { width: 220, height: 150, borderRadius: 14, backgroundColor: '#0B0B0E', borderWidth: 1, borderColor: '#34343A', alignItems: 'center', justifyContent: 'center' },
   imagePlaceholderIcon: { fontSize: 26, marginBottom: 7 },
   imagePlaceholderText: { color: '#A1A1AA', fontSize: 11, fontWeight: '800' },
-  verifiedBadge: { alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: '#102419', borderWidth: 1, borderColor: '#245A38' },
+  imageFooterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 6 },
+  verifiedBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: '#102419', borderWidth: 1, borderColor: '#245A38' },
+  reportImageButton: { paddingHorizontal: 7, paddingVertical: 4, borderRadius: 999, backgroundColor: '#201313', borderWidth: 1, borderColor: '#5A2A2A' },
+  reportImageText: { color: '#FCA5A5', fontSize: 9, fontWeight: '800' },
   verifiedBadgeText: { color: '#67DC98', fontSize: 9, fontWeight: '900', letterSpacing: 0.4 },
   input: { flex: 1, minHeight: 50, backgroundColor: '#151519', borderWidth: 1, borderColor: '#34343A', borderRadius: 25, paddingHorizontal: 16, color: '#FFFFFF', fontSize: 15, outlineStyle: 'none' as any },
   sendButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#DC2626', borderWidth: 1, borderColor: '#F87171', alignItems: 'center', justifyContent: 'center', marginLeft: 9, shadowColor: '#EF4444', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.16, shadowRadius: 9, elevation: 3 },
