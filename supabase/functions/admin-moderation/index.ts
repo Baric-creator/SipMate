@@ -9,6 +9,22 @@ const ADMIN_EMAILS = new Set(["sipmate.app@gmail.com"]);
 const ALLOWED_STATUSES = new Set(["pending", "reviewed", "dismissed"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+function reportSeverity(reason: string | null | undefined) {
+  switch (reason) {
+    case "photo_sexual_content":
+    case "photo_harassment":
+    case "harassment":
+      return "high";
+    case "photo_spam_scam":
+    case "inappropriate_image":
+    case "inappropriate_behavior":
+    case "fake_profile":
+      return "medium";
+    default:
+      return "low";
+  }
+}
+
 function cors(origin: string | null) {
   const allow = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://officialsipmate.com";
   return {
@@ -221,6 +237,7 @@ Deno.serve(async (req: Request) => {
 
       rows.push({
         ...r,
+        severity: reportSeverity(r.reason),
         reporter: profileMap.get(r.reporter_id) ?? { id: r.reporter_id, name: null, age: null, city: null, avatar_url: null },
         reported: profileMap.get(r.reported_id) ?? { id: r.reported_id, name: null, age: null, city: null, avatar_url: null },
         reported_content,
@@ -229,6 +246,7 @@ Deno.serve(async (req: Request) => {
 
     const counts = {
       pending: rows.filter((r) => r.status === "pending").length,
+      pending_high: rows.filter((r) => r.status === "pending" && r.severity === "high").length,
       reviewed: rows.filter((r) => r.status === "reviewed").length,
       dismissed: rows.filter((r) => r.status === "dismissed").length,
     };
