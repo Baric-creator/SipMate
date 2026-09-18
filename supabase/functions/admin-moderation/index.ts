@@ -93,9 +93,18 @@ Deno.serve(async (req: Request) => {
         const { data: updatedReport, error: updateReportError } = await sb.from("reports")
           .update({ status: "reviewed", reviewed_at: new Date().toISOString(), reviewed_by: adminUser.id })
           .eq("id", reportId)
-          .select("id,status,reviewed_at,reviewed_by")
+          .select("id,status,reviewed_at,reviewed_by,reported_id,reported_message_id")
           .maybeSingle();
         if (updateReportError) throw updateReportError;
+
+        const { error: auditError } = await sb.from("moderation_actions").insert({
+          report_id: reportId,
+          action: "photo_removed",
+          admin_user_id: adminUser.id,
+          reported_user_id: updatedReport?.reported_id ?? null,
+          reported_message_id: updatedReport?.reported_message_id ?? null,
+        });
+        if (auditError) console.error("MODERATION AUDIT ERROR", auditError);
 
         return new Response(JSON.stringify({ ok: true, removed: true, report: updatedReport }), { headers });
       }
@@ -107,10 +116,21 @@ Deno.serve(async (req: Request) => {
       const { data, error } = await sb.from("reports")
         .update(update)
         .eq("id", reportId)
-        .select("id,status,reviewed_at,reviewed_by")
+        .select("id,status,reviewed_at,reviewed_by,reported_id,reported_message_id")
         .maybeSingle();
       if (error) throw error;
       if (!data) return new Response(JSON.stringify({ ok: false, error: "not_found" }), { status: 404, headers });
+
+      const auditAction = status === "reviewed" ? "reviewed" : status === "dismissed" ? "dismissed" : "reopened";
+      const { error: auditError } = await sb.from("moderation_actions").insert({
+        report_id: reportId,
+        action: auditAction,
+        admin_user_id: adminUser.id,
+        reported_user_id: data.reported_id ?? null,
+        reported_message_id: data.reported_message_id ?? null,
+      });
+      if (auditError) console.error("MODERATION AUDIT ERROR", auditError);
+
       return new Response(JSON.stringify({ ok: true, report: data }), { headers });
     }
 
