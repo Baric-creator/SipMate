@@ -126,3 +126,14 @@ test('Founder moderation filters show live counters', () => {
   assert.match(founder, /data-severity-count="medium"/);
   assert.match(founder, /function updateModerationFilterCounts/);
 });
+
+
+test('Founder moderation shows pending report age and queue health', () => {
+  const founder = fs.readFileSync('website/founder.html', 'utf8');
+  assert.match(founder, /id="oldestPendingAge"/);
+  assert.match(founder, /id="queueHealth"/);
+  assert.match(founder, /function formatAge/);
+  assert.match(founder, /age-danger/);
+  assert.match(founder, /older than 24h/);
+  assert.match(founder, /older than 2h/);
+});
