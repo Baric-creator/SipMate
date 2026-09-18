@@ -30,6 +30,17 @@ function premiumActive(p: any) {
 function maxNum(...values: unknown[]) {
   return Math.max(0, ...values.map(v => Number(v || 0)).filter(Number.isFinite));
 }
+async function logSafetyEvent(sb:any,outcome:string,aiScore:number|null=null,nsfwScore:number|null=null){
+  try {
+    await sb.from("chat_image_safety_events").insert({
+      outcome,
+      ai_score: Number.isFinite(Number(aiScore)) ? Number(aiScore) : null,
+      nsfw_score: Number.isFinite(Number(nsfwScore)) ? Number(nsfwScore) : null,
+    });
+  } catch (error) {
+    console.log("chat image safety event skipped", error);
+  }
+}
 
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
@@ -136,6 +147,7 @@ Deno.serve(async (req: Request) => {
     });
     const moderation = await moderationResponse.json().catch(()=>null);
     if (!moderationResponse.ok || moderation?.status !== "success") {
+      await logSafetyEvent(sb,"verification_failed");
       await sb.storage.from(BUCKET).remove([pendingPath]);
       return json({ok:false,error:"image_verification_failed"},502,headers);
     }
@@ -150,10 +162,12 @@ Deno.serve(async (req: Request) => {
     );
 
     if (aiScore >= 0.70) {
+      await logSafetyEvent(sb,"ai_rejected",aiScore,nsfwScore);
       await sb.storage.from(BUCKET).remove([pendingPath]);
       return json({ok:false,error:"ai_image_rejected",ai_score:aiScore},422,headers);
     }
     if (nsfwScore >= 0.65) {
+      await logSafetyEvent(sb,"unsafe_rejected",aiScore,nsfwScore);
       await sb.storage.from(BUCKET).remove([pendingPath]);
       return json({ok:false,error:"unsafe_image_rejected"},422,headers);
     }
