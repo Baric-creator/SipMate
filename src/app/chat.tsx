@@ -663,7 +663,20 @@ export default function ChatScreen() {
                     ) : (
                       <>
                         {imageUrls[String(item.id)] ? (
-                          <Image source={{ uri: imageUrls[String(item.id)] }} style={styles.messageImage} resizeMode="cover" />
+                          <Image
+                            source={{ uri: imageUrls[String(item.id)] }}
+                            style={styles.messageImage}
+                            resizeMode="cover"
+                            onError={() => {
+                              const id = String(item.id);
+                              setImageUrls((current) => {
+                                const next = { ...current };
+                                delete next[id];
+                                return next;
+                              });
+                              setImageLoadState((current) => ({ ...current, [id]: 'error' }));
+                            }}
+                          />
                         ) : (
                           <TouchableOpacity style={styles.imagePlaceholder} onPress={() => void loadImageUrl(item)} disabled={imageLoadState[String(item.id)] === 'loading'}>
                             <Text style={styles.imagePlaceholderIcon}>🔒📷</Text>
