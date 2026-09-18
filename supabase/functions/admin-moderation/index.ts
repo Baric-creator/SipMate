@@ -71,7 +71,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const { data: reports, error: reportsError } = await sb.from("reports")
-      .select("id,reporter_id,reported_id,reason,details,status,created_at,reviewed_at,reviewed_by")
+      .select("id,reporter_id,reported_id,reason,details,status,created_at,reviewed_at,reviewed_by,report_kind,reported_message_id")
       .order("created_at", { ascending: false })
       .limit(100);
     if (reportsError) throw reportsError;
@@ -83,11 +83,41 @@ Deno.serve(async (req: Request) => {
     if (profilesError) throw profilesError;
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
-    const rows = (reports ?? []).map((r) => ({
-      ...r,
-      reporter: profileMap.get(r.reporter_id) ?? { id: r.reporter_id, name: null, age: null, city: null, avatar_url: null },
-      reported: profileMap.get(r.reported_id) ?? { id: r.reported_id, name: null, age: null, city: null, avatar_url: null },
-    }));
+    const reportedMessageIds = [...new Set((reports ?? []).map((r) => r.reported_message_id).filter(Boolean))];
+    const { data: reportedMessages, error: messageError } = reportedMessageIds.length
+      ? await sb.from("messages")
+          .select("id,conversation_id,sender_id,message_type,image_path,image_moderation_status,created_at")
+          .in("id", reportedMessageIds)
+      : { data: [], error: null };
+    if (messageError) throw messageError;
+    const messageMap = new Map((reportedMessages ?? []).map((m) => [m.id, m]));
+
+    const rows = [];
+    for (const r of reports ?? []) {
+      let reported_content: any = null;
+      const m: any = r.reported_message_id ? messageMap.get(r.reported_message_id) : null;
+      if (r.report_kind === "chat_image" && m?.message_type === "image" && m?.image_path) {
+        const { data: signed, error: signedError } = await sb.storage
+          .from("chat-images")
+          .createSignedUrl(m.image_path, 300);
+        if (!signedError && signed?.signedUrl) {
+          reported_content = {
+            kind: "chat_image",
+            message_id: m.id,
+            created_at: m.created_at,
+            image_url: signed.signedUrl,
+            expires_in: 300,
+          };
+        }
+      }
+
+      rows.push({
+        ...r,
+        reporter: profileMap.get(r.reporter_id) ?? { id: r.reporter_id, name: null, age: null, city: null, avatar_url: null },
+        reported: profileMap.get(r.reported_id) ?? { id: r.reported_id, name: null, age: null, city: null, avatar_url: null },
+        reported_content,
+      });
+    }
 
     const counts = {
       pending: rows.filter((r) => r.status === "pending").length,
