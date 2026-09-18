@@ -58,6 +58,7 @@ const copy = {
     reportPhotoConfirm: 'Report this photo to SipMate moderation?',
     reportPhotoSent: 'Photo reported. Thank you for helping keep SipMate safe.',
     reportPhotoDuplicate: 'You already reported this photo.',
+    photoRemoved: 'Photo removed by moderation',
   },
   de: {
     active: 'AKTIV — Bereit für einen Drink', inactive: 'INAKTIV', connected: 'CHEERS verbunden',
@@ -83,6 +84,7 @@ const copy = {
     reportPhotoConfirm: 'Dieses Foto an die SipMate-Moderation melden?',
     reportPhotoSent: 'Foto gemeldet. Danke, dass du SipMate sicher hältst.',
     reportPhotoDuplicate: 'Du hast dieses Foto bereits gemeldet.',
+    photoRemoved: 'Foto wurde von der Moderation entfernt',
   },
   hr: {
     active: 'AKTIVAN — Spreman za piće', inactive: 'NEAKTIVAN', connected: 'CHEERS povezani',
@@ -108,6 +110,7 @@ const copy = {
     reportPhotoConfirm: 'Prijaviti ovu sliku SipMate moderaciji?',
     reportPhotoSent: 'Slika je prijavljena. Hvala što pomažeš da SipMate ostane siguran.',
     reportPhotoDuplicate: 'Ovu sliku si već prijavio.',
+    photoRemoved: 'Slika je uklonjena od strane moderacije',
   },
 } as const;
 
@@ -648,24 +651,33 @@ export default function ChatScreen() {
               <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
                 {item.message_type === 'image' ? (
                   <View>
-                    {imageUrls[String(item.id)] ? (
-                      <Image source={{ uri: imageUrls[String(item.id)] }} style={styles.messageImage} resizeMode="cover" />
+                    {item.image_moderation_status === 'rejected' ? (
+                      <View style={styles.imagePlaceholder}>
+                        <Text style={styles.imagePlaceholderIcon}>🚫📷</Text>
+                        <Text style={styles.imagePlaceholderText}>{text.photoRemoved}</Text>
+                      </View>
                     ) : (
-                      <TouchableOpacity style={styles.imagePlaceholder} onPress={() => void loadImageUrl(item)} disabled={imageLoadState[String(item.id)] === 'loading'}>
-                        <Text style={styles.imagePlaceholderIcon}>🔒📷</Text>
-                        <Text style={styles.imagePlaceholderText}>
-                          {imageLoadState[String(item.id)] === 'loading' ? text.photoLoading : text.photoRetry}
-                        </Text>
-                      </TouchableOpacity>
+                      <>
+                        {imageUrls[String(item.id)] ? (
+                          <Image source={{ uri: imageUrls[String(item.id)] }} style={styles.messageImage} resizeMode="cover" />
+                        ) : (
+                          <TouchableOpacity style={styles.imagePlaceholder} onPress={() => void loadImageUrl(item)} disabled={imageLoadState[String(item.id)] === 'loading'}>
+                            <Text style={styles.imagePlaceholderIcon}>🔒📷</Text>
+                            <Text style={styles.imagePlaceholderText}>
+                              {imageLoadState[String(item.id)] === 'loading' ? text.photoLoading : text.photoRetry}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                        <View style={styles.imageFooterRow}>
+                          <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>✓ {text.verifiedPhoto}</Text></View>
+                          {!mine && (
+                            <TouchableOpacity style={styles.reportImageButton} onPress={() => void reportChatImage(item)}>
+                              <Text style={styles.reportImageText}>⚠ {text.reportPhoto}</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </>
                     )}
-                    <View style={styles.imageFooterRow}>
-                      <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>✓ {text.verifiedPhoto}</Text></View>
-                      {!mine && (
-                        <TouchableOpacity style={styles.reportImageButton} onPress={() => void reportChatImage(item)}>
-                          <Text style={styles.reportImageText}>⚠ {text.reportPhoto}</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
                   </View>
                 ) : (
                   <Text style={styles.messageText}>{item.content}</Text>
