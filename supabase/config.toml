@@ -65,3 +65,14 @@ entrypoint = "./functions/announce-cheers/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/send-welcome-email/index.ts"
+
+
+[functions.send-chat-image]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/send-chat-image/index.ts"
+
+[functions.chat-image-url]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/chat-image-url/index.ts"
