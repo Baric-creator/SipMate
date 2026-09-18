@@ -137,3 +137,14 @@ test('Founder moderation shows pending report age and queue health', () => {
   assert.match(founder, /older than 24h/);
   assert.match(founder, /older than 2h/);
 });
+
+
+test('Founder moderation supports queue age filters and oldest-first ordering', () => {
+  const founder = fs.readFileSync('website/founder.html', 'utf8');
+  assert.match(founder, /data-age-filter="fresh"/);
+  assert.match(founder, /data-age-filter="watch"/);
+  assert.match(founder, /data-age-filter="urgent"/);
+  assert.match(founder, /function ageBucket/);
+  assert.match(founder, /ageFilter='all'/);
+  assert.match(founder, /new Date\(a\.created_at\|\|0\)-new Date\(b\.created_at\|\|0\)/);
+});
