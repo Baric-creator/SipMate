@@ -106,3 +106,13 @@ test('moderation assigns report severity and surfaces high-priority counts', () 
   assert.match(moderation, /return "high"/);
   assert.match(moderation, /pending_high:/);
 });
+
+
+test('Founder moderation has severity quick filters', () => {
+  const founder = fs.readFileSync('website/founder.html', 'utf8');
+  assert.match(founder, /data-severity-filter="high"/);
+  assert.match(founder, /data-severity-filter="medium"/);
+  assert.match(founder, /data-severity-filter="low"/);
+  assert.match(founder, /severityFilter='all'/);
+  assert.match(founder, /statusRows\.filter\(x=>x\.severity===severityFilter\)/);
+});
