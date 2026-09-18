@@ -73,3 +73,11 @@ test('chat image report reason is accepted by database constraints', () => {
   assert.match(migration, /'inappropriate_image'::text/);
   assert.match(migration, /reports_valid_reason/);
 });
+
+
+test('expired signed image URLs fall back to retry state', () => {
+  const chat = fs.readFileSync('src/app/chat.tsx', 'utf8');
+  assert.match(chat, /onError=\{\(\) => \{/);
+  assert.match(chat, /delete next\[id\]/);
+  assert.match(chat, /\[id\]: 'error'/);
+});
