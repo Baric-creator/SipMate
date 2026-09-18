@@ -153,6 +153,7 @@
           </article>
           <div class="moderation-filters"><button class="mod-filter active" data-mod-filter="pending" type="button">Pending <span data-status-count="pending">0</span></button><button class="mod-filter" data-mod-filter="reviewed" type="button">Reviewed <span data-status-count="reviewed">0</span></button><button class="mod-filter" data-mod-filter="dismissed" type="button">Dismissed <span data-status-count="dismissed">0</span></button><button class="mod-filter" data-mod-filter="all" type="button">All <span data-status-count="all">0</span></button></div>
           <div class="moderation-filters" style="margin-top:8px"><button class="mod-filter active" data-severity-filter="all" type="button">All severity <span data-severity-count="all">0</span></button><button class="mod-filter" data-severity-filter="high" type="button">HIGH <span data-severity-count="high">0</span></button><button class="mod-filter" data-severity-filter="medium" type="button">MEDIUM <span data-severity-count="medium">0</span></button><button class="mod-filter" data-severity-filter="low" type="button">LOW <span data-severity-count="low">0</span></button></div>
+          <div class="moderation-filters" style="margin-top:8px"><button class="mod-filter active" data-age-filter="all" type="button">All age <span data-age-count="all">0</span></button><button class="mod-filter" data-age-filter="fresh" type="button">Fresh &lt;2h <span data-age-count="fresh">0</span></button><button class="mod-filter" data-age-filter="watch" type="button">WATCH 2–24h <span data-age-count="watch">0</span></button><button class="mod-filter" data-age-filter="urgent" type="button">URGENT 24h+ <span data-age-count="urgent">0</span></button></div>
           <div id="moderationMsg" class="msg"></div>
           <div id="moderationList" class="moderation-list"><div class="report-card"><span class="muted">Loading reports…</span></div></div>
         </article>
@@ -245,6 +246,7 @@
   let moderationRows=[];
   let moderationFilter='pending';
   let severityFilter='all';
+  let ageFilter='all';
   function personLabel(p){const name=p?.name||'Unknown user';const extras=[p?.age,p?.city].filter(Boolean).join(' · ');return `${esc(name)}${extras?` <small>${esc(extras)}</small>`:''}`}
   function reportAgeMs(createdAt){const ts=new Date(createdAt||0).getTime();return Number.isFinite(ts)?Math.max(0,Date.now()-ts):0}
   function formatAge(ms){
@@ -255,15 +257,22 @@
     const days=Math.floor(hours/24);
     return `${days}d ${hours%24}h`;
   }
-  function ageClass(row){
-    if(row.status!=='pending')return '';
+  function ageBucket(row){
+    if(row.status!=='pending')return 'handled';
     const age=reportAgeMs(row.created_at);
-    if(age>=24*60*60*1000)return 'age-danger';
-    if(age>=2*60*60*1000)return 'age-warn';
+    if(age>=24*60*60*1000)return 'urgent';
+    if(age>=2*60*60*1000)return 'watch';
+    return 'fresh';
+  }
+  function ageClass(row){
+    const bucket=ageBucket(row);
+    if(bucket==='urgent')return 'age-danger';
+    if(bucket==='watch')return 'age-warn';
     return '';
   }
   function updateModerationFilterCounts(){
-    const statusBase=severityFilter==='all'?moderationRows:moderationRows.filter(x=>x.severity===severityFilter);
+    const severityScoped=severityFilter==='all'?moderationRows:moderationRows.filter(x=>x.severity===severityFilter);
+    const statusBase=ageFilter==='all'?severityScoped:severityScoped.filter(x=>ageBucket(x)===ageFilter);
     const statusCounts={
       pending:statusBase.filter(x=>x.status==='pending').length,
       reviewed:statusBase.filter(x=>x.status==='reviewed').length,
@@ -272,7 +281,8 @@
     };
     Object.entries(statusCounts).forEach(([key,value])=>{const el=document.querySelector(`[data-status-count="${key}"]`);if(el)el.textContent=String(value)});
 
-    const severityBase=moderationFilter==='all'?moderationRows:moderationRows.filter(x=>x.status===moderationFilter);
+    const statusScoped=moderationFilter==='all'?moderationRows:moderationRows.filter(x=>x.status===moderationFilter);
+    const severityBase=ageFilter==='all'?statusScoped:statusScoped.filter(x=>ageBucket(x)===ageFilter);
     const severityCounts={
       high:severityBase.filter(x=>x.severity==='high').length,
       medium:severityBase.filter(x=>x.severity==='medium').length,
@@ -280,14 +290,25 @@
       all:severityBase.length
     };
     Object.entries(severityCounts).forEach(([key,value])=>{const el=document.querySelector(`[data-severity-count="${key}"]`);if(el)el.textContent=String(value)});
+
+    const ageStatusBase=moderationFilter==='all'?moderationRows:moderationRows.filter(x=>x.status===moderationFilter);
+    const ageBase=severityFilter==='all'?ageStatusBase:ageStatusBase.filter(x=>x.severity===severityFilter);
+    const ageCounts={
+      fresh:ageBase.filter(x=>ageBucket(x)==='fresh').length,
+      watch:ageBase.filter(x=>ageBucket(x)==='watch').length,
+      urgent:ageBase.filter(x=>ageBucket(x)==='urgent').length,
+      all:ageBase.length
+    };
+    Object.entries(ageCounts).forEach(([key,value])=>{const el=document.querySelector(`[data-age-count="${key}"]`);if(el)el.textContent=String(value)});
   }
   function renderModeration(){
     updateModerationFilterCounts();
     const list=document.getElementById('moderationList');
     const severityWeight={high:3,medium:2,low:1};
     const statusRows=moderationFilter==='all'?moderationRows:moderationRows.filter(x=>x.status===moderationFilter);
-    const baseRows=severityFilter==='all'?statusRows:statusRows.filter(x=>x.severity===severityFilter);
-    const rows=[...baseRows].sort((a,b)=>(severityWeight[b.severity]||0)-(severityWeight[a.severity]||0)||new Date(b.created_at||0)-new Date(a.created_at||0));
+    const severityRows=severityFilter==='all'?statusRows:statusRows.filter(x=>x.severity===severityFilter);
+    const baseRows=ageFilter==='all'?severityRows:severityRows.filter(x=>ageBucket(x)===ageFilter);
+    const rows=[...baseRows].sort((a,b)=>(severityWeight[b.severity]||0)-(severityWeight[a.severity]||0)||new Date(a.created_at||0)-new Date(b.created_at||0));
     list.innerHTML=rows.length?rows.map(x=>{
       const imageRemove=x.report_kind==='chat_image'&&x.reported_message_id&&x.reported_content?.image_url
         ? `<button class="mod-action dismiss" data-remove-image data-report-id="${esc(x.id)}">Remove photo</button>`
@@ -318,7 +339,7 @@
   }
 
   async function loadAll(){await Promise.all([loadStatus(),loadAnalytics(),loadLaunch(),loadModeration()])}
-  document.getElementById('refreshAll').addEventListener('click',loadAll);document.getElementById('refreshLaunch').addEventListener('click',loadLaunch);document.getElementById('refreshModeration').addEventListener('click',loadModeration);document.querySelectorAll('[data-phase]').forEach(btn=>btn.addEventListener('click',()=>setPhase(btn.dataset.phase)));document.querySelectorAll('[data-mod-filter]').forEach(btn=>btn.addEventListener('click',()=>{moderationFilter=btn.dataset.modFilter;document.querySelectorAll('[data-mod-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.querySelectorAll('[data-severity-filter]').forEach(btn=>btn.addEventListener('click',()=>{severityFilter=btn.dataset.severityFilter;document.querySelectorAll('[data-severity-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.getElementById('moderationList').addEventListener('click',e=>{const removeBtn=e.target.closest('[data-remove-image]');if(removeBtn){removeReportedImage(removeBtn.dataset.reportId);return}const btn=e.target.closest('[data-report-action]');if(btn)setReportStatus(btn.dataset.reportId,btn.dataset.reportAction)});
+  document.getElementById('refreshAll').addEventListener('click',loadAll);document.getElementById('refreshLaunch').addEventListener('click',loadLaunch);document.getElementById('refreshModeration').addEventListener('click',loadModeration);document.querySelectorAll('[data-phase]').forEach(btn=>btn.addEventListener('click',()=>setPhase(btn.dataset.phase)));document.querySelectorAll('[data-mod-filter]').forEach(btn=>btn.addEventListener('click',()=>{moderationFilter=btn.dataset.modFilter;document.querySelectorAll('[data-mod-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.querySelectorAll('[data-severity-filter]').forEach(btn=>btn.addEventListener('click',()=>{severityFilter=btn.dataset.severityFilter;document.querySelectorAll('[data-severity-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.querySelectorAll('[data-age-filter]').forEach(btn=>btn.addEventListener('click',()=>{ageFilter=btn.dataset.ageFilter;document.querySelectorAll('[data-age-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.getElementById('moderationList').addEventListener('click',e=>{const removeBtn=e.target.closest('[data-remove-image]');if(removeBtn){removeReportedImage(removeBtn.dataset.reportId);return}const btn=e.target.closest('[data-report-action]');if(btn)setReportStatus(btn.dataset.reportId,btn.dataset.reportAction)});
   document.getElementById('saveLaunch').addEventListener('click',async()=>{const raw=playUrl.value.trim();if(selectedPhase!=='waitlist'&&!raw){msg(launchMsg,'Google Play URL is required for this phase.','err');return}if(!confirm(`Change SipMate public launch phase to “${selectedPhase}”?`))return;msg(launchMsg,'Saving…');try{const h=await headers();const r=await fetch(LAUNCH_ENDPOINT,{method:'POST',headers:h,body:JSON.stringify({phase:selectedPhase,play_store_url:raw||null})});const d=await r.json();if(!r.ok||d?.ok!==true)throw new Error(d?.error||'request_failed');document.getElementById('currentPhase').textContent=d.launch.phase;playUrl.value=d.launch.play_store_url||'';msg(launchMsg,'Saved. Public website will update automatically.','ok')}catch(e){msg(launchMsg,`Save failed: ${e.message}`,'err')}});
   document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabase.auth.signOut();showSession(null)});
   const {data}=await supabase.auth.getSession();showSession(data.session);supabase.auth.onAuthStateChange((_event,session)=>{if(!session)showSession(null)});
