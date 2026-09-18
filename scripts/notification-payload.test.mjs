@@ -56,3 +56,12 @@ test('notification fanout is bounded to the newest device tokens', () => {
     assert.match(source, /\.from\("device_push_tokens"\)[\s\S]*?\.eq\("user_id", recipientId\)[\s\S]*?\.order\("updated_at", \{ ascending: false \}\)[\s\S]*?\.limit\(MAX_PUSH_TOKENS_PER_USER\)/);
   }
 });
+
+
+test('verified photo notifications use a safe photo-specific preview', () => {
+  assert.match(messageSource, /message_type, image_moderation_status/);
+  assert.match(messageSource, /message\.message_type === "image" && message\.image_moderation_status === "approved"/);
+  assert.match(messageSource, /skipped: "unapproved_image"/);
+  assert.match(messageSource, /"📷 Verified photo"/);
+  assert.match(messageSource, /messageType: isVerifiedImage \? "image" : "text"/);
+});
