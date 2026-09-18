@@ -59,6 +59,7 @@ const copy = {
     reportPhotoSent: 'Photo reported. Thank you for helping keep SipMate safe.',
     reportPhotoDuplicate: 'You already reported this photo.',
     photoRemoved: 'Photo removed by moderation',
+    reportLimit: 'You reached the photo report limit for today. Try again later.',
   },
   de: {
     active: 'AKTIV — Bereit für einen Drink', inactive: 'INAKTIV', connected: 'CHEERS verbunden',
@@ -85,6 +86,7 @@ const copy = {
     reportPhotoSent: 'Foto gemeldet. Danke, dass du SipMate sicher hältst.',
     reportPhotoDuplicate: 'Du hast dieses Foto bereits gemeldet.',
     photoRemoved: 'Foto wurde von der Moderation entfernt',
+    reportLimit: 'Du hast das Foto-Meldelimit für heute erreicht. Versuch es später erneut.',
   },
   hr: {
     active: 'AKTIVAN — Spreman za piće', inactive: 'NEAKTIVAN', connected: 'CHEERS povezani',
@@ -111,6 +113,7 @@ const copy = {
     reportPhotoSent: 'Slika je prijavljena. Hvala što pomažeš da SipMate ostane siguran.',
     reportPhotoDuplicate: 'Ovu sliku si već prijavio.',
     photoRemoved: 'Slika je uklonjena od strane moderacije',
+    reportLimit: 'Dosegnuo si dnevni limit prijava fotografija. Pokušaj ponovno kasnije.',
   },
 } as const;
 
@@ -563,6 +566,7 @@ export default function ChatScreen() {
     });
     if (error) {
       if (error.code === '23505') showAlert(text.reportPhotoDuplicate);
+      else if (error.code === 'P0001' && error.message.toLowerCase().includes('rate limit')) showAlert(text.reportLimit);
       else showAlert(`${text.photoError}: ${error.message}`);
       return;
     }
