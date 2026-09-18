@@ -51,6 +51,8 @@ const copy = {
     photoType: 'Use a JPG, PNG or WebP image.',
     photoError: 'Photo could not be sent.',
     verifiedPhoto: 'VERIFIED PHOTO',
+    photoLoading: 'Loading secure photo…',
+    photoRetry: 'Tap to retry',
     cancel: 'Cancel',
     reportPhoto: 'Report photo',
     reportPhotoConfirm: 'Report this photo to SipMate moderation?',
@@ -74,6 +76,8 @@ const copy = {
     photoType: 'Bitte JPG, PNG oder WebP verwenden.',
     photoError: 'Foto konnte nicht gesendet werden.',
     verifiedPhoto: 'VERIFIZIERTES FOTO',
+    photoLoading: 'Sicheres Foto wird geladen…',
+    photoRetry: 'Zum erneuten Laden tippen',
     cancel: 'Abbrechen',
     reportPhoto: 'Foto melden',
     reportPhotoConfirm: 'Dieses Foto an die SipMate-Moderation melden?',
@@ -97,6 +101,8 @@ const copy = {
     photoType: 'Koristi JPG, PNG ili WebP sliku.',
     photoError: 'Slika nije mogla biti poslana.',
     verifiedPhoto: 'VERIFIED PHOTO',
+    photoLoading: 'Učitavam sigurnu sliku…',
+    photoRetry: 'Dodirni za ponovni pokušaj',
     cancel: 'Odustani',
     reportPhoto: 'Prijavi sliku',
     reportPhotoConfirm: 'Prijaviti ovu sliku SipMate moderaciji?',
@@ -129,6 +135,7 @@ export default function ChatScreen() {
   const [otherPremium, setOtherPremium] = useState(false);
   const [mutualCheers, setMutualCheers] = useState(false);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+  const [imageLoadState, setImageLoadState] = useState<Record<string, 'idle' | 'loading' | 'error'>>({});
 
   const scrollViewRef = useRef<ScrollView>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -151,6 +158,7 @@ export default function ChatScreen() {
     setOtherPremium(false);
     setMutualCheers(false);
     setImageUrls({});
+    setImageLoadState({});
 
     async function verifyConversation() {
       if (!conversationId) {
@@ -361,18 +369,24 @@ export default function ChatScreen() {
 
   async function loadImageUrl(message: Message) {
     const id = String(message.id);
-    if (message.message_type !== 'image' || imageUrls[id]) return;
+    if (message.message_type !== 'image' || imageUrls[id] || imageLoadState[id] === 'loading') return;
+    setImageLoadState((current) => ({ ...current, [id]: 'loading' }));
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
+    if (!session?.user) {
+      setImageLoadState((current) => ({ ...current, [id]: 'error' }));
+      return;
+    }
     const { data, error } = await supabase.functions.invoke('chat-image-url', {
       headers: { Authorization: `Bearer ${session.access_token}` },
       body: { messageId: id },
     });
     if (error || !data?.ok || !data?.url) {
       if (error) console.log('CHAT IMAGE URL ERROR:', error.message);
+      setImageLoadState((current) => ({ ...current, [id]: 'error' }));
       return;
     }
     setImageUrls((current) => ({ ...current, [id]: data.url }));
+    setImageLoadState((current) => ({ ...current, [id]: 'idle' }));
   }
 
   async function markMessagesAsRead() {
@@ -477,7 +491,6 @@ export default function ChatScreen() {
       }
 
       setSendingImage(true);
-      showAlert(text.photoVerifying);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user || session.user.id !== myUserId) return;
@@ -638,9 +651,11 @@ export default function ChatScreen() {
                     {imageUrls[String(item.id)] ? (
                       <Image source={{ uri: imageUrls[String(item.id)] }} style={styles.messageImage} resizeMode="cover" />
                     ) : (
-                      <TouchableOpacity style={styles.imagePlaceholder} onPress={() => void loadImageUrl(item)}>
+                      <TouchableOpacity style={styles.imagePlaceholder} onPress={() => void loadImageUrl(item)} disabled={imageLoadState[String(item.id)] === 'loading'}>
                         <Text style={styles.imagePlaceholderIcon}>🔒📷</Text>
-                        <Text style={styles.imagePlaceholderText}>Tap to load</Text>
+                        <Text style={styles.imagePlaceholderText}>
+                          {imageLoadState[String(item.id)] === 'loading' ? text.photoLoading : text.photoRetry}
+                        </Text>
                       </TouchableOpacity>
                     )}
                     <View style={styles.imageFooterRow}>
@@ -666,6 +681,10 @@ export default function ChatScreen() {
       </ScrollView>
 
       {otherUserTyping && <View style={styles.typingContainer}><Text style={styles.typingText}>{otherUserName} {text.typing}</Text></View>}
+
+      {sendingImage && !isBlocked && (
+        <View style={styles.photoStatusBar}><Text style={styles.photoStatusText}>🔎 {text.photoVerifying}</Text></View>
+      )}
 
       {isBlocked ? (
         <View style={styles.blockedBar}><Text style={styles.blockedText}>{text.blocked}</Text></View>
@@ -805,6 +824,8 @@ const styles = StyleSheet.create({
   readStatusSent: { color: '#D4D4D8' },
   readStatusRead: { color: '#38BDF8' },
   typingContainer: { paddingHorizontal: 18, paddingVertical: 7, backgroundColor: '#08090B' },
+  photoStatusBar: { paddingHorizontal: 18, paddingVertical: 8, backgroundColor: '#101014', borderTopWidth: 1, borderTopColor: '#27272A' },
+  photoStatusText: { color: '#D4D4D8', fontSize: 11, fontWeight: '800', textAlign: 'center' },
   typingText: { color: '#A1A1AA', fontSize: 12, fontStyle: 'italic' },
   inputBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#2B2224', backgroundColor: '#0B0B0E' },
   photoButton: { width: 46, height: 46, borderRadius: 23, marginRight: 8, backgroundColor: '#151519', borderWidth: 1, borderColor: '#3A2A2D', alignItems: 'center', justifyContent: 'center' },
