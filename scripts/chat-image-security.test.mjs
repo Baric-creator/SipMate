@@ -81,3 +81,18 @@ test('expired signed image URLs fall back to retry state', () => {
   assert.match(chat, /delete next\[id\]/);
   assert.match(chat, /\[id\]: 'error'/);
 });
+
+
+test('chat photo reports capture a structured safety category', () => {
+  const chat = fs.readFileSync('src/app/chat.tsx', 'utf8');
+  const migration = fs.readFileSync('supabase/migrations/20260918113500_add_chat_image_report_categories.sql', 'utf8');
+  assert.match(chat, /chooseOption\(/);
+  assert.match(chat, /photo_sexual_content/);
+  assert.match(chat, /photo_harassment/);
+  assert.match(chat, /photo_spam_scam/);
+  assert.match(chat, /photo_other/);
+  assert.match(migration, /'photo_sexual_content'::text/);
+  assert.match(migration, /'photo_harassment'::text/);
+  assert.match(migration, /'photo_spam_scam'::text/);
+  assert.match(migration, /'photo_other'::text/);
+});
