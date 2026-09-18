@@ -147,8 +147,8 @@
             <h2>Recent moderation actions</h2>
             <div id="moderationAudit" class="list"><div class="row"><div><b>Loading audit trail…</b></div></div></div>
           </article>
-          <div class="moderation-filters"><button class="mod-filter active" data-mod-filter="pending" type="button">Pending</button><button class="mod-filter" data-mod-filter="reviewed" type="button">Reviewed</button><button class="mod-filter" data-mod-filter="dismissed" type="button">Dismissed</button><button class="mod-filter" data-mod-filter="all" type="button">All</button></div>
-          <div class="moderation-filters" style="margin-top:8px"><button class="mod-filter active" data-severity-filter="all" type="button">All severity</button><button class="mod-filter" data-severity-filter="high" type="button">HIGH</button><button class="mod-filter" data-severity-filter="medium" type="button">MEDIUM</button><button class="mod-filter" data-severity-filter="low" type="button">LOW</button></div>
+          <div class="moderation-filters"><button class="mod-filter active" data-mod-filter="pending" type="button">Pending <span data-status-count="pending">0</span></button><button class="mod-filter" data-mod-filter="reviewed" type="button">Reviewed <span data-status-count="reviewed">0</span></button><button class="mod-filter" data-mod-filter="dismissed" type="button">Dismissed <span data-status-count="dismissed">0</span></button><button class="mod-filter" data-mod-filter="all" type="button">All <span data-status-count="all">0</span></button></div>
+          <div class="moderation-filters" style="margin-top:8px"><button class="mod-filter active" data-severity-filter="all" type="button">All severity <span data-severity-count="all">0</span></button><button class="mod-filter" data-severity-filter="high" type="button">HIGH <span data-severity-count="high">0</span></button><button class="mod-filter" data-severity-filter="medium" type="button">MEDIUM <span data-severity-count="medium">0</span></button><button class="mod-filter" data-severity-filter="low" type="button">LOW <span data-severity-count="low">0</span></button></div>
           <div id="moderationMsg" class="msg"></div>
           <div id="moderationList" class="moderation-list"><div class="report-card"><span class="muted">Loading reports…</span></div></div>
         </article>
@@ -242,7 +242,27 @@
   let moderationFilter='pending';
   let severityFilter='all';
   function personLabel(p){const name=p?.name||'Unknown user';const extras=[p?.age,p?.city].filter(Boolean).join(' · ');return `${esc(name)}${extras?` <small>${esc(extras)}</small>`:''}`}
+  function updateModerationFilterCounts(){
+    const statusBase=severityFilter==='all'?moderationRows:moderationRows.filter(x=>x.severity===severityFilter);
+    const statusCounts={
+      pending:statusBase.filter(x=>x.status==='pending').length,
+      reviewed:statusBase.filter(x=>x.status==='reviewed').length,
+      dismissed:statusBase.filter(x=>x.status==='dismissed').length,
+      all:statusBase.length
+    };
+    Object.entries(statusCounts).forEach(([key,value])=>{const el=document.querySelector(`[data-status-count="${key}"]`);if(el)el.textContent=String(value)});
+
+    const severityBase=moderationFilter==='all'?moderationRows:moderationRows.filter(x=>x.status===moderationFilter);
+    const severityCounts={
+      high:severityBase.filter(x=>x.severity==='high').length,
+      medium:severityBase.filter(x=>x.severity==='medium').length,
+      low:severityBase.filter(x=>x.severity==='low').length,
+      all:severityBase.length
+    };
+    Object.entries(severityCounts).forEach(([key,value])=>{const el=document.querySelector(`[data-severity-count="${key}"]`);if(el)el.textContent=String(value)});
+  }
   function renderModeration(){
+    updateModerationFilterCounts();
     const list=document.getElementById('moderationList');
     const severityWeight={high:3,medium:2,low:1};
     const statusRows=moderationFilter==='all'?moderationRows:moderationRows.filter(x=>x.status===moderationFilter);
