@@ -16,7 +16,7 @@ import {
   Vibration,
 } from 'react-native';
 
-import { askConfirmation, showAlert } from '../lib/notify';
+import { chooseOption, showAlert } from '../lib/notify';
 import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 
@@ -55,7 +55,11 @@ const copy = {
     photoRetry: 'Tap to retry',
     cancel: 'Cancel',
     reportPhoto: 'Report photo',
-    reportPhotoConfirm: 'Report this photo to SipMate moderation?',
+    reportPhotoConfirm: 'Choose why you are reporting this photo.',
+    reportSexual: 'Sexual or explicit content',
+    reportHarassment: 'Harassment or abusive content',
+    reportSpamScam: 'Spam, scam or misleading content',
+    reportOther: 'Other safety concern',
     reportPhotoSent: 'Photo reported. Thank you for helping keep SipMate safe.',
     reportPhotoDuplicate: 'You already reported this photo.',
     photoRemoved: 'Photo removed by moderation',
@@ -82,7 +86,11 @@ const copy = {
     photoRetry: 'Zum erneuten Laden tippen',
     cancel: 'Abbrechen',
     reportPhoto: 'Foto melden',
-    reportPhotoConfirm: 'Dieses Foto an die SipMate-Moderation melden?',
+    reportPhotoConfirm: 'Warum möchtest du dieses Foto melden?',
+    reportSexual: 'Sexuelle oder explizite Inhalte',
+    reportHarassment: 'Belästigung oder beleidigende Inhalte',
+    reportSpamScam: 'Spam, Betrug oder irreführende Inhalte',
+    reportOther: 'Anderes Sicherheitsproblem',
     reportPhotoSent: 'Foto gemeldet. Danke, dass du SipMate sicher hältst.',
     reportPhotoDuplicate: 'Du hast dieses Foto bereits gemeldet.',
     photoRemoved: 'Foto wurde von der Moderation entfernt',
@@ -109,7 +117,11 @@ const copy = {
     photoRetry: 'Dodirni za ponovni pokušaj',
     cancel: 'Odustani',
     reportPhoto: 'Prijavi sliku',
-    reportPhotoConfirm: 'Prijaviti ovu sliku SipMate moderaciji?',
+    reportPhotoConfirm: 'Odaberi razlog prijave ove fotografije.',
+    reportSexual: 'Seksualni ili eksplicitni sadržaj',
+    reportHarassment: 'Uznemiravanje ili uvredljiv sadržaj',
+    reportSpamScam: 'Spam, prevara ili obmanjujući sadržaj',
+    reportOther: 'Drugi sigurnosni razlog',
     reportPhotoSent: 'Slika je prijavljena. Hvala što pomažeš da SipMate ostane siguran.',
     reportPhotoDuplicate: 'Ovu sliku si već prijavio.',
     photoRemoved: 'Slika je uklonjena od strane moderacije',
@@ -546,13 +558,18 @@ export default function ChatScreen() {
 
   async function reportChatImage(message: Message) {
     if (!otherUserId || message.message_type !== 'image' || message.sender_id === myUserId) return;
-    const confirmed = await askConfirmation(
+    const reason = await chooseOption(
       text.reportPhoto,
       text.reportPhotoConfirm,
-      text.cancel ?? 'Cancel',
-      text.reportPhoto
+      [
+        { label: text.reportSexual, value: 'photo_sexual_content', destructive: true },
+        { label: text.reportHarassment, value: 'photo_harassment', destructive: true },
+        { label: text.reportSpamScam, value: 'photo_spam_scam' },
+        { label: text.reportOther, value: 'photo_other' },
+      ],
+      text.cancel
     );
-    if (!confirmed) return;
+    if (!reason) return;
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user || session.user.id !== myUserId) return;
@@ -560,7 +577,7 @@ export default function ChatScreen() {
     const { error } = await supabase.from('reports').insert({
       reporter_id: session.user.id,
       reported_id: message.sender_id,
-      reason: 'inappropriate_image',
+      reason,
       report_kind: 'chat_image',
       reported_message_id: String(message.id),
     });
