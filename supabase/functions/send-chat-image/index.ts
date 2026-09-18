@@ -1,0 +1,186 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const ALLOWED_ORIGINS = new Set([
+  "https://officialsipmate.com",
+  "https://www.officialsipmate.com",
+]);
+const BUCKET = "chat-images";
+const MAX_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TYPES = new Set(["image/jpeg","image/png","image/webp"]);
+
+function cors(origin: string | null) {
+  const allow = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://officialsipmate.com";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store",
+    "Vary": "Origin",
+  };
+}
+function json(body: unknown, status: number, headers: Record<string,string>) {
+  return new Response(JSON.stringify(body), { status, headers });
+}
+function premiumActive(p: any) {
+  return p?.is_premium === true && (!p?.premium_until || new Date(p.premium_until).getTime() > Date.now());
+}
+function maxNum(...values: unknown[]) {
+  return Math.max(0, ...values.map(v => Number(v || 0)).filter(Number.isFinite));
+}
+
+Deno.serve(async (req: Request) => {
+  const origin = req.headers.get("origin");
+  const headers = cors(origin);
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (req.method !== "POST") return json({ ok:false,error:"method_not_allowed" },405,headers);
+  if (origin && !ALLOWED_ORIGINS.has(origin)) return json({ ok:false,error:"origin_not_allowed" },403,headers);
+
+  let pendingPath = "";
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !anonKey || !serviceKey) throw new Error("missing_config");
+
+    const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i,"");
+    if (!token) return json({ok:false,error:"unauthorized"},401,headers);
+
+    const authClient = createClient(supabaseUrl, anonKey, { auth:{persistSession:false} });
+    const { data:userData, error:userError } = await authClient.auth.getUser(token);
+    const user = userData?.user;
+    if (userError || !user) return json({ok:false,error:"unauthorized"},401,headers);
+
+    const body = await req.json().catch(()=>({}));
+    const conversationId = String(body?.conversationId || "").trim();
+    pendingPath = String(body?.path || "").trim();
+    if (!conversationId || !pendingPath) return json({ok:false,error:"invalid_request"},400,headers);
+    const expectedPrefix = `pending/${user.id}/`;
+    if (!pendingPath.startsWith(expectedPrefix) || pendingPath.includes("..")) {
+      return json({ok:false,error:"invalid_path"},400,headers);
+    }
+
+    const sb = createClient(supabaseUrl, serviceKey, { auth:{persistSession:false} });
+    const { data:conversation, error:conversationError } = await sb
+      .from("conversations").select("id,user_one,user_two").eq("id",conversationId).maybeSingle();
+    if (conversationError) throw conversationError;
+    if (!conversation || (conversation.user_one !== user.id && conversation.user_two !== user.id)) {
+      return json({ok:false,error:"conversation_forbidden"},403,headers);
+    }
+    const otherId = conversation.user_one === user.id ? conversation.user_two : conversation.user_one;
+
+    const { data:blockState, error:blockError } = await sb.rpc("is_blocked_between",{user_a:user.id,user_b:otherId});
+    if (blockError) throw blockError;
+    if (blockState) return json({ok:false,error:"blocked"},403,headers);
+
+    const { data:profiles, error:profilesError } = await sb
+      .from("profiles").select("id,is_premium,premium_until").in("id",[user.id,otherId]);
+    if (profilesError) throw profilesError;
+    const mine = (profiles || []).find((p:any)=>p.id===user.id);
+    const other = (profiles || []).find((p:any)=>p.id===otherId);
+    if (!premiumActive(mine) || !premiumActive(other)) {
+      return json({ok:false,error:"both_premium_required"},403,headers);
+    }
+
+    const { data:cheers, error:cheersError } = await sb
+      .from("cheers").select("sender_id,receiver_id")
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${user.id})`);
+    if (cheersError) throw cheersError;
+    const mutual = (cheers || []).some((c:any)=>c.sender_id===user.id&&c.receiver_id===otherId)
+      && (cheers || []).some((c:any)=>c.sender_id===otherId&&c.receiver_id===user.id);
+    if (!mutual) return json({ok:false,error:"mutual_cheers_required"},403,headers);
+
+    const { data:fileBlob, error:downloadError } = await sb.storage.from(BUCKET).download(pendingPath);
+    if (downloadError || !fileBlob) return json({ok:false,error:"upload_not_found"},404,headers);
+    if (fileBlob.size <= 0 || fileBlob.size > MAX_BYTES) {
+      await sb.storage.from(BUCKET).remove([pendingPath]);
+      return json({ok:false,error:"file_too_large"},400,headers);
+    }
+    const mime = fileBlob.type || "";
+    if (!ALLOWED_TYPES.has(mime)) {
+      await sb.storage.from(BUCKET).remove([pendingPath]);
+      return json({ok:false,error:"unsupported_image_type"},400,headers);
+    }
+
+    const apiUser = Deno.env.get("SIGHTENGINE_API_USER");
+    const apiSecret = Deno.env.get("SIGHTENGINE_API_SECRET");
+    if (!apiUser || !apiSecret) {
+      await sb.storage.from(BUCKET).remove([pendingPath]);
+      return json({ok:false,error:"image_verification_not_configured"},503,headers);
+    }
+
+    const fd = new FormData();
+    fd.append("media", fileBlob, pendingPath.split("/").pop() || "photo.jpg");
+    fd.append("models", "genai,nudity-2.1");
+    fd.append("api_user", apiUser);
+    fd.append("api_secret", apiSecret);
+
+    const moderationResponse = await fetch("https://api.sightengine.com/1.0/check.json", {
+      method:"POST",
+      body:fd,
+    });
+    const moderation = await moderationResponse.json().catch(()=>null);
+    if (!moderationResponse.ok || moderation?.status !== "success") {
+      await sb.storage.from(BUCKET).remove([pendingPath]);
+      return json({ok:false,error:"image_verification_failed"},502,headers);
+    }
+
+    const aiScore = Number(moderation?.type?.ai_generated ?? 0);
+    const n = moderation?.nudity || {};
+    const nsfwScore = maxNum(
+      n?.sexual_activity,
+      n?.sexual_display,
+      n?.erotica,
+      n?.very_suggestive
+    );
+
+    if (aiScore >= 0.70) {
+      await sb.storage.from(BUCKET).remove([pendingPath]);
+      return json({ok:false,error:"ai_image_rejected",ai_score:aiScore},422,headers);
+    }
+    if (nsfwScore >= 0.65) {
+      await sb.storage.from(BUCKET).remove([pendingPath]);
+      return json({ok:false,error:"unsafe_image_rejected"},422,headers);
+    }
+
+    const messageId = crypto.randomUUID();
+    const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
+    const approvedPath = `approved/${conversationId}/${messageId}.${ext}`;
+    const { error:moveError } = await sb.storage.from(BUCKET).move(pendingPath, approvedPath);
+    if (moveError) throw moveError;
+    pendingPath = "";
+
+    const { data:message, error:messageError } = await sb.from("messages").insert({
+      id: messageId,
+      conversation_id: conversationId,
+      sender_id: user.id,
+      content: "📷 Photo",
+      message_type: "image",
+      image_path: approvedPath,
+      image_ai_score: Number.isFinite(aiScore) ? aiScore : null,
+      image_moderation_status: "approved",
+      image_verification_provider: "sightengine",
+    }).select("id,conversation_id,sender_id,content,created_at,read_at,message_type,image_path,image_ai_score,image_moderation_status").single();
+
+    if (messageError) {
+      await sb.storage.from(BUCKET).remove([approvedPath]);
+      throw messageError;
+    }
+
+    return json({ok:true,message,verification:{ai_score:aiScore}},200,headers);
+  } catch (error) {
+    console.error("send-chat-image", error);
+    try {
+      if (pendingPath) {
+        const url = Deno.env.get("SUPABASE_URL");
+        const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (url && service) {
+          const sb = createClient(url,service,{auth:{persistSession:false}});
+          await sb.storage.from(BUCKET).remove([pendingPath]);
+        }
+      }
+    } catch {}
+    return json({ok:false,error:"server_error"},500,headers);
+  }
+});
