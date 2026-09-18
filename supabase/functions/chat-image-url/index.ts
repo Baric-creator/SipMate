@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ALLOWED_ORIGINS = new Set([
   "https://officialsipmate.com",
   "https://www.officialsipmate.com",
@@ -33,7 +34,7 @@ Deno.serve(async(req:Request)=>{
     const {data:userData,error:userError}=await auth.auth.getUser(token);
     const user=userData?.user;if(userError||!user)return json({ok:false,error:"unauthorized"},401,headers);
     const body=await req.json().catch(()=>({}));const messageId=String(body?.messageId||"").trim();
-    if(!messageId)return json({ok:false,error:"invalid_request"},400,headers);
+    if(!UUID_RE.test(messageId))return json({ok:false,error:"invalid_request"},400,headers);
     const sb=createClient(url,service,{auth:{persistSession:false}});
     const {data:message,error:messageError}=await sb.from("messages")
       .select("id,conversation_id,message_type,image_path,image_moderation_status")
