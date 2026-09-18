@@ -63,6 +63,18 @@ Deno.serve(async (req: Request) => {
     }
 
     const sb = createClient(supabaseUrl, serviceKey, { auth:{persistSession:false} });
+
+    try {
+      const { data: staleCandidates } = await sb.storage.from(BUCKET).list(`pending/${user.id}`, { limit: 100 });
+      const cutoff = Date.now() - 60 * 60 * 1000;
+      const stalePaths = (staleCandidates || [])
+        .filter((item:any) => item?.name && item?.created_at && new Date(item.created_at).getTime() < cutoff)
+        .map((item:any) => `pending/${user.id}/${item.name}`)
+        .filter((path:string) => path !== pendingPath);
+      if (stalePaths.length) await sb.storage.from(BUCKET).remove(stalePaths);
+    } catch (cleanupError) {
+      console.log("pending image cleanup skipped", cleanupError);
+    }
     const { data:conversation, error:conversationError } = await sb
       .from("conversations").select("id,user_one,user_two").eq("id",conversationId).maybeSingle();
     if (conversationError) throw conversationError;
