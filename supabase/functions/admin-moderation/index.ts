@@ -81,6 +81,9 @@ Deno.serve(async (req: Request) => {
       unsafe7dResult,
       imageReportsTotalResult,
       imageReports7dResult,
+      approvedTrendResult,
+      safetyTrendResult,
+      reportTrendResult,
     ] = await Promise.all([
       sb.from("reports")
         .select("id,reporter_id,reported_id,reason,details,status,created_at,reviewed_at,reviewed_by,report_kind,reported_message_id")
@@ -94,17 +97,22 @@ Deno.serve(async (req: Request) => {
       sb.from("chat_image_safety_events").select("id", { count:"exact", head:true }).eq("outcome","unsafe_rejected").gte("created_at",since7d),
       sb.from("reports").select("id", { count:"exact", head:true }).eq("report_kind","chat_image"),
       sb.from("reports").select("id", { count:"exact", head:true }).eq("report_kind","chat_image").gte("created_at",since7d),
+      sb.from("messages").select("created_at").eq("message_type","image").eq("image_moderation_status","approved").gte("created_at",since7d),
+      sb.from("chat_image_safety_events").select("outcome,created_at").gte("created_at",since7d),
+      sb.from("reports").select("created_at").eq("report_kind","chat_image").gte("created_at",since7d),
     ]);
     const reports = reportsResult.data;
     const reportsError = reportsResult.error;
     if (
       reportsError || approvedTotalResult.error || approved7dResult.error ||
       aiTotalResult.error || ai7dResult.error || unsafeTotalResult.error ||
-      unsafe7dResult.error || imageReportsTotalResult.error || imageReports7dResult.error
+      unsafe7dResult.error || imageReportsTotalResult.error || imageReports7dResult.error ||
+      approvedTrendResult.error || safetyTrendResult.error || reportTrendResult.error
     ) {
       throw reportsError ?? approvedTotalResult.error ?? approved7dResult.error ??
         aiTotalResult.error ?? ai7dResult.error ?? unsafeTotalResult.error ??
-        unsafe7dResult.error ?? imageReportsTotalResult.error ?? imageReports7dResult.error;
+        unsafe7dResult.error ?? imageReportsTotalResult.error ?? imageReports7dResult.error ??
+        approvedTrendResult.error ?? safetyTrendResult.error ?? reportTrendResult.error;
     }
 
     const ids = [...new Set((reports ?? []).flatMap((r) => [r.reporter_id, r.reported_id]).filter(Boolean))];
@@ -156,11 +164,43 @@ Deno.serve(async (req: Request) => {
       dismissed: rows.filter((r) => r.status === "dismissed").length,
     };
 
+    const dayKey = (value:string) => new Date(value).toISOString().slice(0,10);
+    const daily = Array.from({ length: 7 }, (_, index) => {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - (6 - index));
+      return { date: d.toISOString().slice(0,10), approved: 0, ai_blocked: 0, unsafe_blocked: 0, reported: 0 };
+    });
+    const dailyMap = new Map(daily.map((row) => [row.date, row]));
+    for (const row of approvedTrendResult.data ?? []) {
+      const item = dailyMap.get(dayKey(row.created_at));
+      if (item) item.approved += 1;
+    }
+    for (const row of safetyTrendResult.data ?? []) {
+      const item = dailyMap.get(dayKey(row.created_at));
+      if (!item) continue;
+      if (row.outcome === "ai_rejected") item.ai_blocked += 1;
+      if (row.outcome === "unsafe_rejected") item.unsafe_blocked += 1;
+    }
+    for (const row of reportTrendResult.data ?? []) {
+      const item = dailyMap.get(dayKey(row.created_at));
+      if (item) item.reported += 1;
+    }
+
+    const blocked7d = (ai7dResult.count ?? 0) + (unsafe7dResult.count ?? 0);
+    const attention = blocked7d >= 5 || (imageReports7dResult.count ?? 0) >= 3;
+
     const photo_safety = {
       approved: { total: approvedTotalResult.count ?? 0, last_7d: approved7dResult.count ?? 0 },
       ai_blocked: { total: aiTotalResult.count ?? 0, last_7d: ai7dResult.count ?? 0 },
       unsafe_blocked: { total: unsafeTotalResult.count ?? 0, last_7d: unsafe7dResult.count ?? 0 },
       reported: { total: imageReportsTotalResult.count ?? 0, last_7d: imageReports7dResult.count ?? 0 },
+      daily_7d: daily,
+      attention: {
+        active: attention,
+        reason: attention ? (blocked7d >= 5 ? "blocked_volume" : "report_volume") : "normal",
+        blocked_7d: blocked7d,
+        reports_7d: imageReports7dResult.count ?? 0,
+      },
     };
 
     return new Response(JSON.stringify({ ok: true, counts, photo_safety, reports: rows }), { headers });
