@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
 
     const { data: message, error: messageError } = await admin
       .from("messages")
-      .select("id, conversation_id, sender_id, content, read_at")
+      .select("id, conversation_id, sender_id, content, read_at, message_type, image_moderation_status")
       .eq("id", messageId)
       .single();
     if (messageError || !message) return new Response(JSON.stringify({ error: "message_not_found" }), { status: 404, headers });
@@ -82,7 +82,11 @@ Deno.serve(async (req) => {
     if (!tokens.length) return new Response(JSON.stringify({ ok: true, skipped: "no_push_token" }), { status: 200, headers });
 
     const senderName = senderProfile?.name || "SipMate";
-    const content = String(message.content || "").slice(0, 180);
+    const isVerifiedImage = message.message_type === "image" && message.image_moderation_status === "approved";
+    if (message.message_type === "image" && !isVerifiedImage) {
+      return new Response(JSON.stringify({ ok: true, skipped: "unapproved_image" }), { status: 200, headers });
+    }
+    const content = isVerifiedImage ? "📷 Verified photo" : String(message.content || "").slice(0, 180);
     const payload = tokens.map((pushToken: string) => ({
       to: pushToken,
       sound: "default",
@@ -92,6 +96,7 @@ Deno.serve(async (req) => {
       data: {
         type: "message",
         conversationId: message.conversation_id,
+        messageType: isVerifiedImage ? "image" : "text",
       },
       priority: "high",
     }));
