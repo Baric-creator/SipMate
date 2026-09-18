@@ -49,3 +49,12 @@ test('moderation can remove a reported photo and mark it rejected', () => {
   assert.match(moderation, /image_moderation_status: "rejected"/);
   assert.match(moderation, /Photo removed by moderation/);
 });
+
+
+test('moderation decisions are written to an audit trail', () => {
+  const moderation = fs.readFileSync('supabase/functions/admin-moderation/index.ts', 'utf8');
+  assert.match(moderation, /from\("moderation_actions"\)\.insert/);
+  assert.match(moderation, /action: "photo_removed"/);
+  assert.match(moderation, /auditAction = status === "reviewed"/);
+  assert.match(moderation, /select\("id,report_id,action,admin_user_id,reported_user_id,reported_message_id,created_at"\)/);
+});
