@@ -116,3 +116,13 @@ test('Founder moderation has severity quick filters', () => {
   assert.match(founder, /severityFilter='all'/);
   assert.match(founder, /statusRows\.filter\(x=>x\.severity===severityFilter\)/);
 });
+
+
+test('Founder moderation filters show live counters', () => {
+  const founder = fs.readFileSync('website/founder.html', 'utf8');
+  assert.match(founder, /data-status-count="pending"/);
+  assert.match(founder, /data-status-count="reviewed"/);
+  assert.match(founder, /data-severity-count="high"/);
+  assert.match(founder, /data-severity-count="medium"/);
+  assert.match(founder, /function updateModerationFilterCounts/);
+});
