@@ -40,3 +40,12 @@ test('chat image reports keep message linkage and prevent duplicate reports per 
   assert.match(migration, /reports_unique_chat_image_reporter_idx/);
   assert.match(migration, /where report_kind = 'chat_image'/);
 });
+
+
+test('moderation can remove a reported photo and mark it rejected', () => {
+  const moderation = fs.readFileSync('supabase/functions/admin-moderation/index.ts', 'utf8');
+  assert.match(moderation, /action === "remove_image"/);
+  assert.match(moderation, /storage\.from\("chat-images"\)\.remove/);
+  assert.match(moderation, /image_moderation_status: "rejected"/);
+  assert.match(moderation, /Photo removed by moderation/);
+});
