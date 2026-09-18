@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ALLOWED_ORIGINS = new Set([
   "https://officialsipmate.com",
   "https://www.officialsipmate.com",
@@ -55,7 +56,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(()=>({}));
     const conversationId = String(body?.conversationId || "").trim();
     pendingPath = String(body?.path || "").trim();
-    if (!conversationId || !pendingPath) return json({ok:false,error:"invalid_request"},400,headers);
+    if (!UUID_RE.test(conversationId) || !pendingPath || pendingPath.length > 240) return json({ok:false,error:"invalid_request"},400,headers);
     const expectedPrefix = `pending/${user.id}/`;
     if (!pendingPath.startsWith(expectedPrefix) || pendingPath.includes("..")) {
       return json({ok:false,error:"invalid_path"},400,headers);
@@ -119,6 +120,7 @@ Deno.serve(async (req: Request) => {
     const moderationResponse = await fetch("https://api.sightengine.com/1.0/check.json", {
       method:"POST",
       body:fd,
+      signal: AbortSignal.timeout(12000),
     });
     const moderation = await moderationResponse.json().catch(()=>null);
     if (!moderationResponse.ok || moderation?.status !== "success") {
