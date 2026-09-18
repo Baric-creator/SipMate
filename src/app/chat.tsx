@@ -1,3 +1,4 @@
+import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,10 @@ type Message = {
   content: string;
   created_at: string;
   read_at: string | null;
+  message_type?: 'text' | 'image';
+  image_path?: string | null;
+  image_ai_score?: number | null;
+  image_moderation_status?: string | null;
 };
 
 const copy = {
@@ -35,6 +40,17 @@ const copy = {
     typing: 'is typing... 💬', blocked: '🚫 Messaging is unavailable because one of you has blocked the other.',
     placeholder: 'Write a message...', blockedSend: "🚫 You can't send messages to this user because one of you has blocked the other.",
     sendError: 'Message could not be sent',
+    photoPremium: 'Photo sharing is a Premium feature.',
+    photoBothPremium: 'Both people need Premium to share photos.',
+    photoMutual: 'Verified photos unlock after a mutual CHEERS.',
+    photoVerifying: 'Checking photo authenticity…',
+    photoRejectedAi: 'This photo looks AI-generated or AI-edited, so it was not sent.',
+    photoRejectedUnsafe: 'This photo could not be sent because it did not pass the safety check.',
+    photoNotConfigured: 'Verified photo sharing is almost ready. Image verification still needs to be activated.',
+    photoTooLarge: 'Photo must be 5 MB or smaller.',
+    photoType: 'Use a JPG, PNG or WebP image.',
+    photoError: 'Photo could not be sent.',
+    verifiedPhoto: 'VERIFIED PHOTO',
   },
   de: {
     active: 'AKTIV — Bereit für einen Drink', inactive: 'INAKTIV', connected: 'CHEERS verbunden',
@@ -42,6 +58,17 @@ const copy = {
     typing: 'tippt gerade... 💬', blocked: '🚫 Nachrichten sind nicht verfügbar, weil einer von euch den anderen blockiert hat.',
     placeholder: 'Nachricht schreiben...', blockedSend: '🚫 Du kannst diesem Nutzer keine Nachrichten senden, weil einer von euch den anderen blockiert hat.',
     sendError: 'Nachricht konnte nicht gesendet werden',
+    photoPremium: 'Fotos im Chat sind eine Premium-Funktion.',
+    photoBothPremium: 'Beide Personen brauchen Premium, um Fotos zu teilen.',
+    photoMutual: 'Verifizierte Fotos werden nach einem gegenseitigen CHEERS freigeschaltet.',
+    photoVerifying: 'Foto wird auf Echtheit geprüft…',
+    photoRejectedAi: 'Dieses Foto wirkt KI-generiert oder KI-bearbeitet und wurde nicht gesendet.',
+    photoRejectedUnsafe: 'Dieses Foto hat die Sicherheitsprüfung nicht bestanden.',
+    photoNotConfigured: 'Verifizierte Fotos sind fast bereit. Die Bildprüfung muss noch aktiviert werden.',
+    photoTooLarge: 'Das Foto darf maximal 5 MB groß sein.',
+    photoType: 'Bitte JPG, PNG oder WebP verwenden.',
+    photoError: 'Foto konnte nicht gesendet werden.',
+    verifiedPhoto: 'VERIFIZIERTES FOTO',
   },
   hr: {
     active: 'AKTIVAN — Spreman za piće', inactive: 'NEAKTIVAN', connected: 'CHEERS povezani',
@@ -49,6 +76,17 @@ const copy = {
     typing: 'piše... 💬', blocked: '🚫 Dopisivanje nije dostupno jer je jedan od vas blokirao drugoga.',
     placeholder: 'Napiši poruku...', blockedSend: '🚫 Ne možeš slati poruke ovom korisniku jer je jedan od vas blokirao drugoga.',
     sendError: 'Poruka nije mogla biti poslana',
+    photoPremium: 'Slanje slika u chatu je Premium opcija.',
+    photoBothPremium: 'Oba korisnika moraju imati Premium za razmjenu slika.',
+    photoMutual: 'Verified slike se otključavaju tek nakon uzajamnog CHEERS-a.',
+    photoVerifying: 'Provjeravam autentičnost slike…',
+    photoRejectedAi: 'Slika izgleda kao AI-generirana ili AI-uređena pa nije poslana.',
+    photoRejectedUnsafe: 'Slika nije prošla sigurnosnu provjeru i nije poslana.',
+    photoNotConfigured: 'Verified Photo Sharing je skoro spreman. Još treba aktivirati provjeru slika.',
+    photoTooLarge: 'Slika mora biti 5 MB ili manja.',
+    photoType: 'Koristi JPG, PNG ili WebP sliku.',
+    photoError: 'Slika nije mogla biti poslana.',
+    verifiedPhoto: 'VERIFIED PHOTO',
   },
 } as const;
 
@@ -71,6 +109,11 @@ export default function ChatScreen() {
   const [otherAvatar, setOtherAvatar] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [sendingImage, setSendingImage] = useState(false);
+  const [myPremium, setMyPremium] = useState(false);
+  const [otherPremium, setOtherPremium] = useState(false);
+  const [mutualCheers, setMutualCheers] = useState(false);
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
 
   const scrollViewRef = useRef<ScrollView>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -89,6 +132,10 @@ export default function ChatScreen() {
     setOtherUserActive(false);
     setOtherUserTyping(false);
     setIsBlocked(false);
+    setMyPremium(false);
+    setOtherPremium(false);
+    setMutualCheers(false);
+    setImageUrls({});
 
     async function verifyConversation() {
       if (!conversationId) {
@@ -154,6 +201,36 @@ export default function ChatScreen() {
     void loadOtherUser();
     return () => { active = false; };
   }, [otherUserId]);
+
+  useEffect(() => {
+    if (!otherUserId || !myUserId || !conversationVerified) return;
+    let active = true;
+    const premiumNow = (p: { is_premium?: boolean | null; premium_until?: string | null } | undefined) =>
+      p?.is_premium === true && (!p.premium_until || new Date(p.premium_until) > new Date());
+
+    async function loadPhotoAccess() {
+      const [{ data: profiles, error: profilesError }, { data: cheers, error: cheersError }] = await Promise.all([
+        supabase.from('profiles').select('id, is_premium, premium_until').in('id', [myUserId, otherUserId]),
+        supabase.from('cheers').select('sender_id, receiver_id').or(
+          `and(sender_id.eq.${myUserId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${myUserId})`
+        ),
+      ]);
+      if (!active) return;
+      if (profilesError) console.log('PHOTO PREMIUM CHECK ERROR:', profilesError.message);
+      if (cheersError) console.log('PHOTO CHEERS CHECK ERROR:', cheersError.message);
+      const mine = (profiles ?? []).find((p: any) => p.id === myUserId);
+      const other = (profiles ?? []).find((p: any) => p.id === otherUserId);
+      setMyPremium(premiumNow(mine));
+      setOtherPremium(premiumNow(other));
+      const rows = cheers ?? [];
+      setMutualCheers(
+        rows.some((c: any) => c.sender_id === myUserId && c.receiver_id === otherUserId) &&
+        rows.some((c: any) => c.sender_id === otherUserId && c.receiver_id === myUserId)
+      );
+    }
+    void loadPhotoAccess();
+    return () => { active = false; };
+  }, [otherUserId, myUserId, conversationVerified]);
 
   useEffect(() => {
     if (!otherUserId || !myUserId) return;
@@ -235,6 +312,7 @@ export default function ChatScreen() {
         const incoming = payload.new as Message;
         if (incoming.conversation_id !== activeConversationIdRef.current) return;
         setMessages((prev) => prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]);
+        if (incoming.message_type === 'image') void loadImageUrl(incoming);
         if (incoming.sender_id !== myUserId) void markMessagesAsRead();
       })
       .on('postgres_changes', {
@@ -255,11 +333,31 @@ export default function ChatScreen() {
   async function loadMessages(requestId: number) {
     if (!conversationId) return;
     setLoading(true);
-    const { data, error } = await supabase.from('messages').select('id, conversation_id, sender_id, content, created_at, read_at').eq('conversation_id', String(conversationId)).order('created_at', { ascending: true });
+    const { data, error } = await supabase.from('messages').select('id, conversation_id, sender_id, content, created_at, read_at, message_type, image_path, image_ai_score, image_moderation_status').eq('conversation_id', String(conversationId)).order('created_at', { ascending: true });
     if (requestId !== messagesRequestIdRef.current) return;
     if (error) console.log('MESSAGES LOAD ERROR:', error.message);
-    else setMessages((data ?? []) as Message[]);
+    else {
+      const rows = (data ?? []) as Message[];
+      setMessages(rows);
+      void Promise.all(rows.filter((m) => m.message_type === 'image').map((m) => loadImageUrl(m)));
+    }
     setLoading(false);
+  }
+
+  async function loadImageUrl(message: Message) {
+    const id = String(message.id);
+    if (message.message_type !== 'image' || imageUrls[id]) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    const { data, error } = await supabase.functions.invoke('chat-image-url', {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: { messageId: id },
+    });
+    if (error || !data?.ok || !data?.url) {
+      if (error) console.log('CHAT IMAGE URL ERROR:', error.message);
+      return;
+    }
+    setImageUrls((current) => ({ ...current, [id]: data.url }));
   }
 
   async function markMessagesAsRead() {
@@ -285,7 +383,7 @@ export default function ChatScreen() {
       }
       const { data, error } = await supabase.from('messages').insert({
         conversation_id: String(conversationId), sender_id: session.user.id, content,
-      }).select('id, conversation_id, sender_id, content, created_at, read_at').single();
+      }).select('id, conversation_id, sender_id, content, created_at, read_at, message_type, image_path, image_ai_score, image_moderation_status').single();
       if (error) {
         console.log('MESSAGE SEND ERROR:', error.message);
         const blocked = error.code === '42501' || error.message.toLowerCase().includes('row-level security');
@@ -314,6 +412,101 @@ export default function ChatScreen() {
     } finally {
       messageSendingRef.current = false;
       setSendingMessage(false);
+    }
+  }
+
+  function photoErrorMessage(code: string | undefined) {
+    if (code === 'both_premium_required') return text.photoBothPremium;
+    if (code === 'mutual_cheers_required') return text.photoMutual;
+    if (code === 'ai_image_rejected') return text.photoRejectedAi;
+    if (code === 'unsafe_image_rejected') return text.photoRejectedUnsafe;
+    if (code === 'image_verification_not_configured') return text.photoNotConfigured;
+    if (code === 'file_too_large') return text.photoTooLarge;
+    if (code === 'unsupported_image_type') return text.photoType;
+    return text.photoError;
+  }
+
+  async function pickAndSendPhoto() {
+    if (sendingImage || !conversationId || !conversationVerified || isBlocked) return;
+    if (!myPremium) {
+      showAlert(text.photoPremium);
+      router.push('/premium');
+      return;
+    }
+    if (!otherPremium) {
+      showAlert(text.photoBothPremium);
+      return;
+    }
+    if (!mutualCheers) {
+      showAlert(text.photoMutual);
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 0.9,
+      });
+      if (result.canceled) return;
+      const asset = result.assets[0];
+      const size = Number((asset as any).fileSize || 0);
+      if (size > 5 * 1024 * 1024) {
+        showAlert(text.photoTooLarge);
+        return;
+      }
+      const mime = asset.mimeType || 'image/jpeg';
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(mime)) {
+        showAlert(text.photoType);
+        return;
+      }
+
+      setSendingImage(true);
+      showAlert(text.photoVerifying);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user || session.user.id !== myUserId) return;
+      const response = await fetch(asset.uri);
+      if (!response.ok) throw new Error('image_read_failed');
+      const arrayBuffer = await response.arrayBuffer();
+      if (arrayBuffer.byteLength > 5 * 1024 * 1024) {
+        showAlert(text.photoTooLarge);
+        return;
+      }
+
+      const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+      const token = Math.random().toString(36).slice(2, 10);
+      const pendingPath = `pending/${session.user.id}/photo-${Date.now()}-${token}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('chat-images').upload(pendingPath, arrayBuffer, {
+        contentType: mime,
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+
+      const { data, error } = await supabase.functions.invoke('send-chat-image', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { conversationId: String(conversationId), path: pendingPath },
+      });
+      if (error || !data?.ok) {
+        await supabase.storage.from('chat-images').remove([pendingPath]).catch(() => undefined);
+        showAlert(photoErrorMessage(data?.error));
+        return;
+      }
+
+      const sent = data.message as Message;
+      setMessages((prev) => prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]);
+      await loadImageUrl(sent);
+      Vibration.vibrate(20);
+
+      void supabase.functions.invoke('send-message-notification', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { messageId: String(sent.id) },
+      });
+    } catch (error: any) {
+      console.log('CHAT PHOTO SEND ERROR:', error?.message ?? error);
+      showAlert(text.photoError);
+    } finally {
+      setSendingImage(false);
     }
   }
 
@@ -397,7 +590,21 @@ export default function ChatScreen() {
             {showDate && <View style={styles.dateSeparator}><Text style={styles.dateSeparatorText}>{getDateLabel(item.created_at)}</Text></View>}
             <View style={[styles.messageRow, mine ? styles.messageRowMine : styles.messageRowOther]}>
               <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
-                <Text style={styles.messageText}>{item.content}</Text>
+                {item.message_type === 'image' ? (
+                  <View>
+                    {imageUrls[String(item.id)] ? (
+                      <Image source={{ uri: imageUrls[String(item.id)] }} style={styles.messageImage} resizeMode="cover" />
+                    ) : (
+                      <TouchableOpacity style={styles.imagePlaceholder} onPress={() => void loadImageUrl(item)}>
+                        <Text style={styles.imagePlaceholderIcon}>🔒📷</Text>
+                        <Text style={styles.imagePlaceholderText}>Tap to load</Text>
+                      </TouchableOpacity>
+                    )}
+                    <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>✓ {text.verifiedPhoto}</Text></View>
+                  </View>
+                ) : (
+                  <Text style={styles.messageText}>{item.content}</Text>
+                )}
                 <View style={styles.messageMeta}>
                   <Text style={styles.messageTime}>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
                   {mine && <Text style={[styles.readStatus, item.read_at ? styles.readStatusRead : styles.readStatusSent]}>{item.read_at ? '✓✓' : '✓'}</Text>}
@@ -414,6 +621,14 @@ export default function ChatScreen() {
         <View style={styles.blockedBar}><Text style={styles.blockedText}>{text.blocked}</Text></View>
       ) : (
         <View style={styles.inputBar}>
+          <TouchableOpacity
+            style={[styles.photoButton, sendingImage && styles.sendButtonDisabled]}
+            onPress={pickAndSendPhoto}
+            disabled={sendingImage}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.photoButtonText}>{sendingImage ? '…' : (myPremium && otherPremium && mutualCheers ? '📷' : '🔒')}</Text>
+          </TouchableOpacity>
           <TextInput
             style={styles.input}
             value={messageText}
@@ -542,6 +757,14 @@ const styles = StyleSheet.create({
   typingContainer: { paddingHorizontal: 18, paddingVertical: 7, backgroundColor: '#08090B' },
   typingText: { color: '#A1A1AA', fontSize: 12, fontStyle: 'italic' },
   inputBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#2B2224', backgroundColor: '#0B0B0E' },
+  photoButton: { width: 46, height: 46, borderRadius: 23, marginRight: 8, backgroundColor: '#151519', borderWidth: 1, borderColor: '#3A2A2D', alignItems: 'center', justifyContent: 'center' },
+  photoButtonText: { fontSize: 18 },
+  messageImage: { width: 230, height: 230, maxWidth: '100%', borderRadius: 14, backgroundColor: '#0B0B0E' },
+  imagePlaceholder: { width: 220, height: 150, borderRadius: 14, backgroundColor: '#0B0B0E', borderWidth: 1, borderColor: '#34343A', alignItems: 'center', justifyContent: 'center' },
+  imagePlaceholderIcon: { fontSize: 26, marginBottom: 7 },
+  imagePlaceholderText: { color: '#A1A1AA', fontSize: 11, fontWeight: '800' },
+  verifiedBadge: { alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: '#102419', borderWidth: 1, borderColor: '#245A38' },
+  verifiedBadgeText: { color: '#67DC98', fontSize: 9, fontWeight: '900', letterSpacing: 0.4 },
   input: { flex: 1, minHeight: 50, backgroundColor: '#151519', borderWidth: 1, borderColor: '#34343A', borderRadius: 25, paddingHorizontal: 16, color: '#FFFFFF', fontSize: 15, outlineStyle: 'none' as any },
   sendButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#DC2626', borderWidth: 1, borderColor: '#F87171', alignItems: 'center', justifyContent: 'center', marginLeft: 9, shadowColor: '#EF4444', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.16, shadowRadius: 9, elevation: 3 },
   sendButtonDisabled: { opacity: 0.35 },
