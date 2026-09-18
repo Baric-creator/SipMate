@@ -66,3 +66,10 @@ test('chat image reports have a dedicated daily abuse limit', () => {
   assert.match(migration, /consume_action_quota\('chat_image_report', 10, 86400\)/);
   assert.match(migration, /consume_action_quota\('report', 20, 86400\)/);
 });
+
+
+test('chat image report reason is accepted by database constraints', () => {
+  const migration = fs.readFileSync('supabase/migrations/20260918073500_allow_chat_image_report_reason.sql', 'utf8');
+  assert.match(migration, /'inappropriate_image'::text/);
+  assert.match(migration, /reports_valid_reason/);
+});
