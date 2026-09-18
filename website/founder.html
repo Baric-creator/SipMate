@@ -148,6 +148,7 @@
             <div id="moderationAudit" class="list"><div class="row"><div><b>Loading audit trail…</b></div></div></div>
           </article>
           <div class="moderation-filters"><button class="mod-filter active" data-mod-filter="pending" type="button">Pending</button><button class="mod-filter" data-mod-filter="reviewed" type="button">Reviewed</button><button class="mod-filter" data-mod-filter="dismissed" type="button">Dismissed</button><button class="mod-filter" data-mod-filter="all" type="button">All</button></div>
+          <div class="moderation-filters" style="margin-top:8px"><button class="mod-filter active" data-severity-filter="all" type="button">All severity</button><button class="mod-filter" data-severity-filter="high" type="button">HIGH</button><button class="mod-filter" data-severity-filter="medium" type="button">MEDIUM</button><button class="mod-filter" data-severity-filter="low" type="button">LOW</button></div>
           <div id="moderationMsg" class="msg"></div>
           <div id="moderationList" class="moderation-list"><div class="report-card"><span class="muted">Loading reports…</span></div></div>
         </article>
@@ -239,11 +240,13 @@
 
   let moderationRows=[];
   let moderationFilter='pending';
+  let severityFilter='all';
   function personLabel(p){const name=p?.name||'Unknown user';const extras=[p?.age,p?.city].filter(Boolean).join(' · ');return `${esc(name)}${extras?` <small>${esc(extras)}</small>`:''}`}
   function renderModeration(){
     const list=document.getElementById('moderationList');
     const severityWeight={high:3,medium:2,low:1};
-    const baseRows=moderationFilter==='all'?moderationRows:moderationRows.filter(x=>x.status===moderationFilter);
+    const statusRows=moderationFilter==='all'?moderationRows:moderationRows.filter(x=>x.status===moderationFilter);
+    const baseRows=severityFilter==='all'?statusRows:statusRows.filter(x=>x.severity===severityFilter);
     const rows=[...baseRows].sort((a,b)=>(severityWeight[b.severity]||0)-(severityWeight[a.severity]||0)||new Date(b.created_at||0)-new Date(a.created_at||0));
     list.innerHTML=rows.length?rows.map(x=>{
       const imageRemove=x.report_kind==='chat_image'&&x.reported_message_id&&x.reported_content?.image_url
@@ -274,7 +277,7 @@
   }
 
   async function loadAll(){await Promise.all([loadStatus(),loadAnalytics(),loadLaunch(),loadModeration()])}
-  document.getElementById('refreshAll').addEventListener('click',loadAll);document.getElementById('refreshLaunch').addEventListener('click',loadLaunch);document.getElementById('refreshModeration').addEventListener('click',loadModeration);document.querySelectorAll('[data-phase]').forEach(btn=>btn.addEventListener('click',()=>setPhase(btn.dataset.phase)));document.querySelectorAll('[data-mod-filter]').forEach(btn=>btn.addEventListener('click',()=>{moderationFilter=btn.dataset.modFilter;document.querySelectorAll('[data-mod-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.getElementById('moderationList').addEventListener('click',e=>{const removeBtn=e.target.closest('[data-remove-image]');if(removeBtn){removeReportedImage(removeBtn.dataset.reportId);return}const btn=e.target.closest('[data-report-action]');if(btn)setReportStatus(btn.dataset.reportId,btn.dataset.reportAction)});
+  document.getElementById('refreshAll').addEventListener('click',loadAll);document.getElementById('refreshLaunch').addEventListener('click',loadLaunch);document.getElementById('refreshModeration').addEventListener('click',loadModeration);document.querySelectorAll('[data-phase]').forEach(btn=>btn.addEventListener('click',()=>setPhase(btn.dataset.phase)));document.querySelectorAll('[data-mod-filter]').forEach(btn=>btn.addEventListener('click',()=>{moderationFilter=btn.dataset.modFilter;document.querySelectorAll('[data-mod-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.querySelectorAll('[data-severity-filter]').forEach(btn=>btn.addEventListener('click',()=>{severityFilter=btn.dataset.severityFilter;document.querySelectorAll('[data-severity-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.getElementById('moderationList').addEventListener('click',e=>{const removeBtn=e.target.closest('[data-remove-image]');if(removeBtn){removeReportedImage(removeBtn.dataset.reportId);return}const btn=e.target.closest('[data-report-action]');if(btn)setReportStatus(btn.dataset.reportId,btn.dataset.reportAction)});
   document.getElementById('saveLaunch').addEventListener('click',async()=>{const raw=playUrl.value.trim();if(selectedPhase!=='waitlist'&&!raw){msg(launchMsg,'Google Play URL is required for this phase.','err');return}if(!confirm(`Change SipMate public launch phase to “${selectedPhase}”?`))return;msg(launchMsg,'Saving…');try{const h=await headers();const r=await fetch(LAUNCH_ENDPOINT,{method:'POST',headers:h,body:JSON.stringify({phase:selectedPhase,play_store_url:raw||null})});const d=await r.json();if(!r.ok||d?.ok!==true)throw new Error(d?.error||'request_failed');document.getElementById('currentPhase').textContent=d.launch.phase;playUrl.value=d.launch.play_store_url||'';msg(launchMsg,'Saved. Public website will update automatically.','ok')}catch(e){msg(launchMsg,`Save failed: ${e.message}`,'err')}});
   document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabase.auth.signOut();showSession(null)});
   const {data}=await supabase.auth.getSession();showSession(data.session);supabase.auth.onAuthStateChange((_event,session)=>{if(!session)showSession(null)});
