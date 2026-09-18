@@ -148,3 +148,13 @@ test('Founder moderation supports queue age filters and oldest-first ordering', 
   assert.match(founder, /ageFilter='all'/);
   assert.match(founder, /new Date\(a\.created_at\|\|0\)-new Date\(b\.created_at\|\|0\)/);
 });
+
+
+test('Founder moderation auto refresh pauses when hidden', () => {
+  const founder = fs.readFileSync('website/founder.html', 'utf8');
+  assert.match(founder, /id="moderationLive"/);
+  assert.match(founder, /setInterval\(\(\)=>\{/);
+  assert.match(founder, /60000/);
+  assert.match(founder, /document\.visibilityState==='visible'/);
+  assert.match(founder, /PAUSED · tab hidden/);
+});
