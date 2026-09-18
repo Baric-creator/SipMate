@@ -240,9 +240,12 @@
     const list=document.getElementById('moderationList');
     const rows=moderationFilter==='all'?moderationRows:moderationRows.filter(x=>x.status===moderationFilter);
     list.innerHTML=rows.length?rows.map(x=>{
-      const actions=x.status==='pending'
+      const imageRemove=x.report_kind==='chat_image'&&x.reported_message_id&&x.reported_content?.image_url
+        ? `<button class="mod-action dismiss" data-remove-image data-report-id="${esc(x.id)}">Remove photo</button>`
+        : '';
+      const actions=(x.status==='pending'
         ? `<button class="mod-action review" data-report-action="reviewed" data-report-id="${esc(x.id)}">Mark reviewed</button><button class="mod-action dismiss" data-report-action="dismissed" data-report-id="${esc(x.id)}">Dismiss</button>`
-        : `<button class="mod-action reopen" data-report-action="pending" data-report-id="${esc(x.id)}">Reopen</button>`;
+        : `<button class="mod-action reopen" data-report-action="pending" data-report-id="${esc(x.id)}">Reopen</button>`) + imageRemove;
       const content=x.reported_content?.kind==='chat_image'&&x.reported_content?.image_url
         ? `<div class="report-image"><img src="${esc(x.reported_content.image_url)}" alt="Reported chat image"><small>Private moderation preview · signed URL expires automatically</small></div>`
         : '';
@@ -257,9 +260,14 @@
     const el=document.getElementById('moderationMsg');msg(el,'Saving…');
     try{const h=await headers();const r=await fetch(MODERATION_ENDPOINT,{method:'PATCH',headers:h,body:JSON.stringify({report_id:id,status})});const d=await r.json();if(!r.ok||d?.ok!==true)throw new Error(d?.error||'request_failed');msg(el,'Saved.','ok');await Promise.all([loadModeration(),loadStatus()])}catch(e){msg(el,`Save failed: ${e.message}`,'err')}
   }
+  async function removeReportedImage(id){
+    if(!confirm('Remove this reported photo from the chat? This deletes the stored image and cannot be undone.'))return;
+    const el=document.getElementById('moderationMsg');msg(el,'Removing photo…');
+    try{const h=await headers();const r=await fetch(MODERATION_ENDPOINT,{method:'PATCH',headers:h,body:JSON.stringify({report_id:id,action:'remove_image'})});const d=await r.json();if(!r.ok||d?.ok!==true)throw new Error(d?.error||'request_failed');msg(el,'Photo removed and report marked reviewed.','ok');await Promise.all([loadModeration(),loadStatus()])}catch(e){msg(el,`Remove failed: ${e.message}`,'err')}
+  }
 
   async function loadAll(){await Promise.all([loadStatus(),loadAnalytics(),loadLaunch(),loadModeration()])}
-  document.getElementById('refreshAll').addEventListener('click',loadAll);document.getElementById('refreshLaunch').addEventListener('click',loadLaunch);document.getElementById('refreshModeration').addEventListener('click',loadModeration);document.querySelectorAll('[data-phase]').forEach(btn=>btn.addEventListener('click',()=>setPhase(btn.dataset.phase)));document.querySelectorAll('[data-mod-filter]').forEach(btn=>btn.addEventListener('click',()=>{moderationFilter=btn.dataset.modFilter;document.querySelectorAll('[data-mod-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.getElementById('moderationList').addEventListener('click',e=>{const btn=e.target.closest('[data-report-action]');if(btn)setReportStatus(btn.dataset.reportId,btn.dataset.reportAction)});
+  document.getElementById('refreshAll').addEventListener('click',loadAll);document.getElementById('refreshLaunch').addEventListener('click',loadLaunch);document.getElementById('refreshModeration').addEventListener('click',loadModeration);document.querySelectorAll('[data-phase]').forEach(btn=>btn.addEventListener('click',()=>setPhase(btn.dataset.phase)));document.querySelectorAll('[data-mod-filter]').forEach(btn=>btn.addEventListener('click',()=>{moderationFilter=btn.dataset.modFilter;document.querySelectorAll('[data-mod-filter]').forEach(x=>x.classList.toggle('active',x===btn));renderModeration()}));document.getElementById('moderationList').addEventListener('click',e=>{const removeBtn=e.target.closest('[data-remove-image]');if(removeBtn){removeReportedImage(removeBtn.dataset.reportId);return}const btn=e.target.closest('[data-report-action]');if(btn)setReportStatus(btn.dataset.reportId,btn.dataset.reportAction)});
   document.getElementById('saveLaunch').addEventListener('click',async()=>{const raw=playUrl.value.trim();if(selectedPhase!=='waitlist'&&!raw){msg(launchMsg,'Google Play URL is required for this phase.','err');return}if(!confirm(`Change SipMate public launch phase to “${selectedPhase}”?`))return;msg(launchMsg,'Saving…');try{const h=await headers();const r=await fetch(LAUNCH_ENDPOINT,{method:'POST',headers:h,body:JSON.stringify({phase:selectedPhase,play_store_url:raw||null})});const d=await r.json();if(!r.ok||d?.ok!==true)throw new Error(d?.error||'request_failed');document.getElementById('currentPhase').textContent=d.launch.phase;playUrl.value=d.launch.play_store_url||'';msg(launchMsg,'Saved. Public website will update automatically.','ok')}catch(e){msg(launchMsg,`Save failed: ${e.message}`,'err')}});
   document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabase.auth.signOut();showSession(null)});
   const {data}=await supabase.auth.getSession();showSession(data.session);supabase.auth.onAuthStateChange((_event,session)=>{if(!session)showSession(null)});
