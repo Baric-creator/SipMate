@@ -51,9 +51,53 @@ Deno.serve(async (req: Request) => {
     if (req.method === "PATCH") {
       const body = await req.json().catch(() => ({}));
       const reportId = String(body?.report_id || "").trim();
+      const action = String(body?.action || "").trim();
       const status = String(body?.status || "").trim();
-      if (!UUID_PATTERN.test(reportId) || !ALLOWED_STATUSES.has(status)) {
+      if (!UUID_PATTERN.test(reportId) || (action !== "remove_image" && !ALLOWED_STATUSES.has(status))) {
         return new Response(JSON.stringify({ ok: false, error: "invalid_request" }), { status: 400, headers });
+      }
+
+      if (action === "remove_image") {
+        const { data: report, error: reportError } = await sb.from("reports")
+          .select("id,report_kind,reported_message_id,status")
+          .eq("id", reportId)
+          .maybeSingle();
+        if (reportError) throw reportError;
+        if (!report || report.report_kind !== "chat_image" || !report.reported_message_id) {
+          return new Response(JSON.stringify({ ok: false, error: "not_a_chat_image_report" }), { status: 400, headers });
+        }
+
+        const { data: message, error: messageError } = await sb.from("messages")
+          .select("id,message_type,image_path,image_moderation_status")
+          .eq("id", report.reported_message_id)
+          .maybeSingle();
+        if (messageError) throw messageError;
+        if (!message || message.message_type !== "image") {
+          return new Response(JSON.stringify({ ok: false, error: "image_message_not_found" }), { status: 404, headers });
+        }
+
+        if (message.image_path) {
+          const { error: storageError } = await sb.storage.from("chat-images").remove([message.image_path]);
+          if (storageError) throw storageError;
+        }
+
+        const { error: messageUpdateError } = await sb.from("messages")
+          .update({
+            image_path: null,
+            image_moderation_status: "rejected",
+            content: "📷 Photo removed by moderation",
+          })
+          .eq("id", message.id);
+        if (messageUpdateError) throw messageUpdateError;
+
+        const { data: updatedReport, error: updateReportError } = await sb.from("reports")
+          .update({ status: "reviewed", reviewed_at: new Date().toISOString(), reviewed_by: adminUser.id })
+          .eq("id", reportId)
+          .select("id,status,reviewed_at,reviewed_by")
+          .maybeSingle();
+        if (updateReportError) throw updateReportError;
+
+        return new Response(JSON.stringify({ ok: true, removed: true, report: updatedReport }), { headers });
       }
 
       const update = status === "pending"
