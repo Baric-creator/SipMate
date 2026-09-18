@@ -96,3 +96,13 @@ test('chat photo reports capture a structured safety category', () => {
   assert.match(migration, /'photo_spam_scam'::text/);
   assert.match(migration, /'photo_other'::text/);
 });
+
+
+test('moderation assigns report severity and surfaces high-priority counts', () => {
+  const moderation = fs.readFileSync('supabase/functions/admin-moderation/index.ts', 'utf8');
+  assert.match(moderation, /function reportSeverity/);
+  assert.match(moderation, /case "photo_sexual_content":/);
+  assert.match(moderation, /case "photo_harassment":/);
+  assert.match(moderation, /return "high"/);
+  assert.match(moderation, /pending_high:/);
+});
