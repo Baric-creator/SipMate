@@ -58,3 +58,11 @@ test('moderation decisions are written to an audit trail', () => {
   assert.match(moderation, /auditAction = status === "reviewed"/);
   assert.match(moderation, /select\("id,report_id,action,admin_user_id,reported_user_id,reported_message_id,created_at"\)/);
 });
+
+
+test('chat image reports have a dedicated daily abuse limit', () => {
+  const migration = fs.readFileSync('supabase/migrations/20260918073000_tighten_chat_image_report_rate_limit.sql', 'utf8');
+  assert.match(migration, /chat_image_report/);
+  assert.match(migration, /consume_action_quota\('chat_image_report', 10, 86400\)/);
+  assert.match(migration, /consume_action_quota\('report', 20, 86400\)/);
+});
