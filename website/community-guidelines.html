@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="index,follow">
+<meta name="description" content="SipMate Community Guidelines for safe, respectful social hangouts, messaging, photos, reporting and meeting in person.">
+<link rel="canonical" href="https://officialsipmate.com/community-guidelines.html">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./styles.css">
+<title>SipMate Community Guidelines</title>
+<style>
+.guideline-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:26px 0}
+.guideline{background:#141417;border:1px solid #29292e;border-radius:20px;padding:20px}
+.guideline h2{font-size:17px;margin:0 0 9px}.guideline p{margin:0;color:#a1a1aa;line-height:1.65}
+.lang-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.lang-tabs button{border:1px solid #3f3f46;background:#18181b;color:#fff;border-radius:999px;padding:9px 13px;font-weight:800;cursor:pointer}.lang-tabs button.active{border-color:#ef4444;background:#2a1215}
+@media(max-width:680px){.guideline-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="nav shell"><a href="./index.html" class="brand"><span>Sip</span>Mate <b>🍻</b></a></header>
+<main class="legal shell">
+<p class="eyebrow">SAFETY & COMMUNITY</p>
+<h1 id="title">Community Guidelines</h1>
+<p id="subtitle">Keep SipMate social, safe and respectful.</p>
+<div class="lang-tabs"><button data-lang="en" class="active">EN</button><button data-lang="de">DE</button><button data-lang="hr">HR</button></div>
+<div class="guideline-grid" id="guidelines"></div>
+<p><a href="./index.html" id="back">← Back to SipMate</a></p>
+</main>
+<script>
+const copy={
+en:{title:"Community Guidelines",subtitle:"Keep SipMate social, safe and respectful.",back:"← Back to SipMate",sections:[
+["18+ only","SipMate is for adults aged 18 and over. Do not create an account if you are under 18."],
+["Respect other people","Harassment, threats, hate, bullying, stalking and unwanted sexual behavior are not welcome on SipMate."],
+["No pressure to drink","A Cheers is an invitation to connect, not an obligation to drink alcohol or meet in person. Respect every no and every boundary."],
+["Meet safely","For a first meeting, choose a public place, tell someone you trust where you are going and arrange your own transport. Never drive after drinking."],
+["Be authentic","Do not impersonate other people, deceive users about who you are or use SipMate for scams, spam or fraudulent activity."],
+["Photos and messages","Only share content you have the right to share. Do not post illegal, exploitative, violent or non-consensual intimate content."],
+["Block and report","Use Block when you do not want contact from another user. Use Report when behavior may violate these guidelines or put someone at risk."],
+["Enforcement","SipMate may restrict or remove accounts that violate these guidelines or create a safety risk. Serious or repeated violations may result in permanent removal."]]},
+de:{title:"Community-Richtlinien",subtitle:"Halte SipMate sozial, sicher und respektvoll.",back:"← Zurück zu SipMate",sections:[
+["Nur ab 18","SipMate ist ausschließlich für Erwachsene ab 18 Jahren. Erstelle kein Konto, wenn du unter 18 bist."],
+["Respektiere andere","Belästigung, Drohungen, Hass, Mobbing, Stalking und unerwünschtes sexuelles Verhalten sind bei SipMate nicht willkommen."],
+["Kein Druck zu trinken","Ein Cheers ist eine Einladung zum Kontakt, keine Verpflichtung Alkohol zu trinken oder sich persönlich zu treffen. Respektiere jedes Nein und jede Grenze."],
+["Triff dich sicher","Wähle für ein erstes Treffen einen öffentlichen Ort, informiere eine Vertrauensperson und organisiere deinen eigenen Transport. Fahre niemals nach Alkoholkonsum."],
+["Sei authentisch","Gib dich nicht als eine andere Person aus, täusche andere nicht über deine Identität und nutze SipMate nicht für Betrug oder Spam."],
+["Fotos und Nachrichten","Teile nur Inhalte, die du teilen darfst. Illegale, ausbeuterische, gewalttätige oder nicht einvernehmliche intime Inhalte sind verboten."],
+["Blockieren und melden","Nutze Blockieren, wenn du keinen Kontakt mit einem Nutzer möchtest. Nutze Melden, wenn Verhalten gegen diese Richtlinien verstoßen oder jemanden gefährden könnte."],
+["Durchsetzung","SipMate kann Konten einschränken oder entfernen, die gegen diese Richtlinien verstoßen oder ein Sicherheitsrisiko darstellen. Schwere oder wiederholte Verstöße können zur dauerhaften Entfernung führen."]]},
+hr:{title:"Pravila zajednice",subtitle:"Neka SipMate ostane društven, siguran i pun poštovanja.",back:"← Natrag na SipMate",sections:[
+["Samo 18+","SipMate je namijenjen isključivo odraslim osobama od 18 godina nadalje. Nemoj izrađivati račun ako imaš manje od 18 godina."],
+["Poštuj druge","Uznemiravanje, prijetnje, govor mržnje, maltretiranje, uhođenje i neželjeno seksualno ponašanje nisu dopušteni na SipMateu."],
+["Bez pritiska na piće","Cheers je poziv za povezivanje, a ne obveza na konzumiranje alkohola ili susret uživo. Poštuj svako ne i svaku granicu."],
+["Nalazi se sigurno","Za prvi susret odaberi javno mjesto, reci osobi kojoj vjeruješ kamo ideš i organiziraj vlastiti prijevoz. Nikada nemoj voziti nakon konzumiranja alkohola."],
+["Budi autentičan","Nemoj se predstavljati kao druga osoba, obmanjivati korisnike o svom identitetu niti koristiti SipMate za prijevare ili spam."],
+["Fotografije i poruke","Dijeli samo sadržaj koji imaš pravo dijeliti. Zabranjen je ilegalan, iskorištavajući, nasilan ili intiman sadržaj bez pristanka."],
+["Blokiraj i prijavi","Koristi Block kada ne želiš kontakt s drugim korisnikom. Koristi Report kada ponašanje može kršiti ova pravila ili ugroziti nekoga."],
+["Provođenje pravila","SipMate može ograničiti ili ukloniti račune koji krše ova pravila ili predstavljaju sigurnosni rizik. Ozbiljna ili ponovljena kršenja mogu dovesti do trajnog uklanjanja."]]}
+};
+function render(lang){
+ const c=copy[lang]||copy.en;
+ document.documentElement.lang=lang;
+ document.getElementById("title").textContent=c.title;
+ document.getElementById("subtitle").textContent=c.subtitle;
+ document.getElementById("back").textContent=c.back;
+ document.getElementById("guidelines").innerHTML=c.sections.map(([t,b])=>`<article class="guideline"><h2>${t}</h2><p>${b}</p></article>`).join("");
+ document.querySelectorAll("[data-lang]").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang));
+ try{localStorage.setItem("sipmate-language",lang)}catch{}
+}
+document.querySelectorAll("[data-lang]").forEach(b=>b.onclick=()=>render(b.dataset.lang));
+let lang="en";try{const saved=localStorage.getItem("sipmate-language");if(copy[saved])lang=saved}catch{}
+render(lang);
+</script>
+</body></html>
