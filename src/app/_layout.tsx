@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import '../lib/i18n';
 import { clearPresence, touchPresence } from '../lib/presence';
+import { captureGrowthAttributionFromUrl } from '../lib/growth-attribution';
 import { registerForPushNotificationsAsync } from '../lib/push-notifications';
 import { supabase } from '../lib/supabase';
 
@@ -89,6 +90,13 @@ export default function RootLayout() {
   useEffect(() => {
     let mounted = true;
 
+    void Linking.getInitialURL().then((initialUrl) => {
+      if (mounted) void captureGrowthAttributionFromUrl(initialUrl);
+    });
+    const deepLinkSubscription = Linking.addEventListener('url', ({ url }) => {
+      void captureGrowthAttributionFromUrl(url);
+    });
+
     const register = async () => {
       const { data } = await supabase.auth.getSession();
       if (mounted && data.session?.user) {
@@ -141,6 +149,7 @@ export default function RootLayout() {
       mounted = false;
       authListener.subscription.unsubscribe();
       notificationSubscription.remove();
+      deepLinkSubscription.remove();
     };
   }, [router]);
 
