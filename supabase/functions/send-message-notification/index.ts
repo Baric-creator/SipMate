@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
 
     const [{ data: senderProfile }, { data: recipientProfile }, { data: pushTokens }] = await Promise.all([
       admin.from("profiles").select("name").eq("id", caller.id).maybeSingle(),
-      admin.from("profiles").select("preferred_language").eq("id", recipientId).maybeSingle(),
+      admin.from("profiles").select("preferred_language,notify_messages,notify_photos").eq("id", recipientId).maybeSingle(),
       admin
         .from("device_push_tokens")
         .select("token")
@@ -90,6 +90,8 @@ Deno.serve(async (req) => {
 
     const senderName = senderProfile?.name || "SipMate";
     const isVerifiedImage = message.message_type === "image" && message.image_moderation_status === "approved";
+    if (message.message_type === "image" && recipientProfile?.notify_photos === false) return new Response(JSON.stringify({ ok: true, skipped: "photo_notifications_disabled" }), { status: 200, headers });
+    if (message.message_type !== "image" && recipientProfile?.notify_messages === false) return new Response(JSON.stringify({ ok: true, skipped: "message_notifications_disabled" }), { status: 200, headers });
     if (message.message_type === "image" && !isVerifiedImage) {
       return new Response(JSON.stringify({ ok: true, skipped: "unapproved_image" }), { status: 200, headers });
     }
