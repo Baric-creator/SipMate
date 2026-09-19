@@ -161,6 +161,7 @@ export default function ChatScreen() {
   const messageSendingRef = useRef(false);
   const messagesRequestIdRef = useRef(0);
   const activeConversationIdRef = useRef('');
+  const imageRefreshAttemptRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let active = true;
@@ -177,6 +178,7 @@ export default function ChatScreen() {
     setMutualCheers(false);
     setImageUrls({});
     setImageLoadState({});
+    imageRefreshAttemptRef.current.clear();
 
     async function verifyConversation() {
       if (!conversationId) {
@@ -385,9 +387,9 @@ export default function ChatScreen() {
     setLoading(false);
   }
 
-  async function loadImageUrl(message: Message) {
+  async function loadImageUrl(message: Message, force = false) {
     const id = String(message.id);
-    if (message.message_type !== 'image' || imageUrls[id] || imageLoadState[id] === 'loading') return;
+    if (message.message_type !== 'image' || (!force && imageUrls[id]) || imageLoadState[id] === 'loading') return;
     setImageLoadState((current) => ({ ...current, [id]: 'loading' }));
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
@@ -692,6 +694,10 @@ export default function ChatScreen() {
                                 return next;
                               });
                               setImageLoadState((current) => ({ ...current, [id]: 'error' }));
+                              if (!imageRefreshAttemptRef.current.has(id)) {
+                                imageRefreshAttemptRef.current.add(id);
+                                void loadImageUrl(item, true);
+                              }
                             }}
                           />
                         ) : (
