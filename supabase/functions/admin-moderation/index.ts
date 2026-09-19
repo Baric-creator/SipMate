@@ -7,6 +7,7 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 const ADMIN_EMAILS = new Set(["sipmate.app@gmail.com"]);
 const ALLOWED_STATUSES = new Set(["pending", "reviewed", "dismissed"]);
+const ALLOWED_RESOLUTIONS = new Set(["no_action", "photo_removed", "warning_issued", "false_report", "other"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function reportSeverity(reason: string | null | undefined) {
@@ -69,7 +70,13 @@ Deno.serve(async (req: Request) => {
       const reportId = String(body?.report_id || "").trim();
       const action = String(body?.action || "").trim();
       const status = String(body?.status || "").trim();
-      if (!UUID_PATTERN.test(reportId) || (action !== "remove_image" && !ALLOWED_STATUSES.has(status))) {
+      const resolutionReason = String(body?.resolution_reason || "").trim();
+      const moderatorNote = String(body?.moderator_note || "").trim().slice(0, 500);
+      if (
+        !UUID_PATTERN.test(reportId) ||
+        (action !== "remove_image" && !ALLOWED_STATUSES.has(status)) ||
+        (resolutionReason && !ALLOWED_RESOLUTIONS.has(resolutionReason))
+      ) {
         return new Response(JSON.stringify({ ok: false, error: "invalid_request" }), { status: 400, headers });
       }
 
@@ -107,9 +114,15 @@ Deno.serve(async (req: Request) => {
         if (messageUpdateError) throw messageUpdateError;
 
         const { data: updatedReport, error: updateReportError } = await sb.from("reports")
-          .update({ status: "reviewed", reviewed_at: new Date().toISOString(), reviewed_by: adminUser.id })
+          .update({
+            status: "reviewed",
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: adminUser.id,
+            resolution_reason: "photo_removed",
+            moderator_note: moderatorNote || null,
+          })
           .eq("id", reportId)
-          .select("id,status,reviewed_at,reviewed_by,reported_id,reported_message_id")
+          .select("id,status,reviewed_at,reviewed_by,reported_id,reported_message_id,resolution_reason,moderator_note")
           .maybeSingle();
         if (updateReportError) throw updateReportError;
 
@@ -119,6 +132,8 @@ Deno.serve(async (req: Request) => {
           admin_user_id: adminUser.id,
           reported_user_id: updatedReport?.reported_id ?? null,
           reported_message_id: updatedReport?.reported_message_id ?? null,
+          resolution_reason: "photo_removed",
+          note: moderatorNote || null,
         });
         if (auditError) console.error("MODERATION AUDIT ERROR", auditError);
 
@@ -126,8 +141,14 @@ Deno.serve(async (req: Request) => {
       }
 
       const update = status === "pending"
-        ? { status, reviewed_at: null, reviewed_by: null }
-        : { status, reviewed_at: new Date().toISOString(), reviewed_by: adminUser.id };
+        ? { status, reviewed_at: null, reviewed_by: null, resolution_reason: null, moderator_note: null }
+        : {
+            status,
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: adminUser.id,
+            resolution_reason: resolutionReason || (status === "dismissed" ? "false_report" : "no_action"),
+            moderator_note: moderatorNote || null,
+          };
 
       const { data, error } = await sb.from("reports")
         .update(update)
@@ -144,6 +165,8 @@ Deno.serve(async (req: Request) => {
         admin_user_id: adminUser.id,
         reported_user_id: data.reported_id ?? null,
         reported_message_id: data.reported_message_id ?? null,
+        resolution_reason: data.resolution_reason ?? null,
+        note: data.moderator_note ?? null,
       });
       if (auditError) console.error("MODERATION AUDIT ERROR", auditError);
 
@@ -165,9 +188,13 @@ Deno.serve(async (req: Request) => {
       safetyTrendResult,
       reportTrendResult,
       auditResult,
+      verificationFailedTotalResult,
+      verificationFailed7dResult,
+      handled7dResult,
+      removed7dResult,
     ] = await Promise.all([
       sb.from("reports")
-        .select("id,reporter_id,reported_id,reason,details,status,created_at,reviewed_at,reviewed_by,report_kind,reported_message_id")
+        .select("id,reporter_id,reported_id,reason,details,status,created_at,reviewed_at,reviewed_by,report_kind,reported_message_id,resolution_reason,moderator_note")
         .order("created_at", { ascending: false })
         .limit(100),
       sb.from("messages").select("id", { count:"exact", head:true }).eq("message_type","image").eq("image_moderation_status","approved"),
@@ -182,9 +209,13 @@ Deno.serve(async (req: Request) => {
       sb.from("chat_image_safety_events").select("outcome,created_at").gte("created_at",since7d),
       sb.from("reports").select("created_at").eq("report_kind","chat_image").gte("created_at",since7d),
       sb.from("moderation_actions")
-        .select("id,report_id,action,admin_user_id,reported_user_id,reported_message_id,created_at")
+        .select("id,report_id,action,admin_user_id,reported_user_id,reported_message_id,resolution_reason,note,created_at")
         .order("created_at", { ascending:false })
         .limit(25),
+      sb.from("chat_image_safety_events").select("id", { count:"exact", head:true }).eq("outcome","verification_failed"),
+      sb.from("chat_image_safety_events").select("id", { count:"exact", head:true }).eq("outcome","verification_failed").gte("created_at",since7d),
+      sb.from("reports").select("id,created_at,reviewed_at,status").not("reviewed_at","is",null).gte("reviewed_at",since7d),
+      sb.from("moderation_actions").select("id", { count:"exact", head:true }).eq("action","photo_removed").gte("created_at",since7d),
     ]);
     const reports = reportsResult.data;
     const reportsError = reportsResult.error;
@@ -192,12 +223,14 @@ Deno.serve(async (req: Request) => {
       reportsError || approvedTotalResult.error || approved7dResult.error ||
       aiTotalResult.error || ai7dResult.error || unsafeTotalResult.error ||
       unsafe7dResult.error || imageReportsTotalResult.error || imageReports7dResult.error ||
-      approvedTrendResult.error || safetyTrendResult.error || reportTrendResult.error || auditResult.error
+      approvedTrendResult.error || safetyTrendResult.error || reportTrendResult.error || auditResult.error ||
+      verificationFailedTotalResult.error || verificationFailed7dResult.error || handled7dResult.error || removed7dResult.error
     ) {
       throw reportsError ?? approvedTotalResult.error ?? approved7dResult.error ??
         aiTotalResult.error ?? ai7dResult.error ?? unsafeTotalResult.error ??
         unsafe7dResult.error ?? imageReportsTotalResult.error ?? imageReports7dResult.error ??
-        approvedTrendResult.error ?? safetyTrendResult.error ?? reportTrendResult.error ?? auditResult.error;
+        approvedTrendResult.error ?? safetyTrendResult.error ?? reportTrendResult.error ?? auditResult.error ??
+        verificationFailedTotalResult.error ?? verificationFailed7dResult.error ?? handled7dResult.error ?? removed7dResult.error;
     }
 
     const ids = [...new Set((reports ?? []).flatMap((r) => [r.reporter_id, r.reported_id]).filter(Boolean))];
@@ -274,6 +307,16 @@ Deno.serve(async (req: Request) => {
     }
 
     const blocked7d = (ai7dResult.count ?? 0) + (unsafe7dResult.count ?? 0);
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+    const handled7d = handled7dResult.data ?? [];
+    const handledToday = handled7d.filter((row) => row.reviewed_at && new Date(row.reviewed_at) >= todayStart).length;
+    const handlingMinutes = handled7d
+      .filter((row) => row.reviewed_at && row.created_at)
+      .map((row) => Math.max(0, (new Date(row.reviewed_at).getTime() - new Date(row.created_at).getTime()) / 60000));
+    const avgHandlingMinutes = handlingMinutes.length
+      ? Math.round(handlingMinutes.reduce((sum, value) => sum + value, 0) / handlingMinutes.length)
+      : 0;
     const attention = blocked7d >= 5 || (imageReports7dResult.count ?? 0) >= 3;
 
     const photo_safety = {
@@ -281,6 +324,7 @@ Deno.serve(async (req: Request) => {
       ai_blocked: { total: aiTotalResult.count ?? 0, last_7d: ai7dResult.count ?? 0 },
       unsafe_blocked: { total: unsafeTotalResult.count ?? 0, last_7d: unsafe7dResult.count ?? 0 },
       reported: { total: imageReportsTotalResult.count ?? 0, last_7d: imageReports7dResult.count ?? 0 },
+      verification_failed: { total: verificationFailedTotalResult.count ?? 0, last_7d: verificationFailed7dResult.count ?? 0 },
       daily_7d: daily,
       attention: {
         active: attention,
@@ -295,6 +339,12 @@ Deno.serve(async (req: Request) => {
       counts,
       photo_safety,
       audit: auditResult.data ?? [],
+      moderation_stats: {
+        handled_today: handledToday,
+        handled_7d: handled7d.length,
+        avg_handling_minutes_7d: avgHandlingMinutes,
+        photos_removed_7d: removed7dResult.count ?? 0,
+      },
       reports: rows
     }), { headers });
   } catch (error) {
