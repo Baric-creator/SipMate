@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>SipMate App Control</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#09090b;color:#fff;font-family:Inter,system-ui,sans-serif}.shell{width:min(820px,calc(100% - 30px));margin:auto;padding:34px 0 80px}.card{background:#121215;border:1px solid #29292e;border-radius:24px;padding:26px;margin-bottom:16px}.eyebrow{color:#ef4444;font-size:11px;font-weight:900;letter-spacing:1.5px}.muted{color:#a1a1aa;line-height:1.55}.row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px solid #29292e}.row:last-child{border-bottom:0}.row b{display:block}.row small{display:block;color:#71717a;margin-top:4px}.toggle{width:52px;height:30px;border-radius:999px;border:1px solid #3f3f46;background:#27272a;position:relative;cursor:pointer}.toggle::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#d4d4d8;top:3px;left:4px;transition:.18s}.toggle.on{background:#7f1d1d;border-color:#ef4444}.toggle.on::after{left:25px;background:#fff}.field{display:grid;gap:8px;margin-top:14px}.field input{height:48px;border-radius:13px;border:1px solid #3f3f46;background:#18181b;color:#fff;padding:0 14px;font:inherit}.actions{display:flex;gap:10px;margin-top:18px}.btn{border:0;border-radius:14px;padding:14px 18px;background:#dc2626;color:#fff;font-weight:900;cursor:pointer}.btn.secondary{background:#27272a}.msg{min-height:20px;margin-top:14px;color:#a1a1aa}.ok{color:#4ade80}.err{color:#f87171}.hidden{display:none!important}h1{font-size:38px;margin:10px 0}label{color:#a1a1aa;font-size:12px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="card">
+    <div class="eyebrow">SIPMATE · APP CONTROL</div>
+    <h1>Remote config</h1>
+    <p class="muted">Maintenance mode, forced Android updates and feature flags without shipping a new APK.</p>
+  </div>
+
+  <div id="loginCard" class="card">
+    <form id="loginForm">
+      <div class="field"><label>Admin email</label><input id="email" type="email" autocomplete="username" value="sipmate.app@gmail.com" required></div>
+      <div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <div class="actions"><button class="btn" type="submit">Sign in</button></div>
+    </form>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+
+  <div id="controlCard" class="card hidden">
+    <div class="row"><div><b>Maintenance mode</b><small>Blocks normal app use with a clean maintenance screen.</small></div><button id="maintenance" class="toggle" type="button" aria-pressed="false"></button></div>
+    <div class="field"><label for="minVersion">Minimum Android versionCode</label><input id="minVersion" type="number" min="1" max="1000000" step="1" value="1"></div>
+    <h3>Feature flags</h3>
+    <div id="flags"></div>
+    <div class="actions"><button id="save" class="btn" type="button">Save app config</button><button id="refresh" class="btn secondary" type="button">Refresh</button></div>
+    <div id="msg" class="msg"></div>
+    <div class="actions"><a class="btn secondary" href="./founder.html" style="text-decoration:none">Founder Dashboard</a><button id="logout" class="btn secondary" type="button">Sign out</button></div>
+  </div>
+</div>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const supabase=createClient('https://poatmbsfglhrcdbosinb.supabase.co','sb_publishable_VooWOnzPl1SCUA44rZDTow_Ee5XrMd3',{auth:{persistSession:true,autoRefreshToken:true}});
+const labels={
+  premium:['Premium','Premium screens and purchase entry points'],
+  verified_photos:['Verified photos','Premium chat photo sending'],
+  discord:['Discord integration','Discord connect and community features'],
+  nearby:['Nearby','Nearby discovery'],
+  founders_offer:['Founders offer','Founders pricing and promotion']
+};
+const flagsEl=document.getElementById('flags');
+const state={maintenance:false,flags:{}};
+for(const [key,[title,sub]] of Object.entries(labels)){
+  const row=document.createElement('div');row.className='row';
+  row.innerHTML=`<div><b>${title}</b><small>${sub}</small></div><button class="toggle" type="button" data-flag="${key}" aria-pressed="false"></button>`;
+  flagsEl.appendChild(row);
+}
+function syncToggle(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+function setMsg(text,kind=''){const el=document.getElementById('msg');el.textContent=text;el.className=`msg ${kind}`}
+document.getElementById('maintenance').onclick=()=>{state.maintenance=!state.maintenance;syncToggle(document.getElementById('maintenance'),state.maintenance)};
+flagsEl.addEventListener('click',e=>{const b=e.target.closest('[data-flag]');if(!b)return;const k=b.dataset.flag;state.flags[k]=state.flags[k]!==false?false:true;syncToggle(b,state.flags[k]!==false)});
+async function load(){
+  setMsg('Loading…');
+  const {data,error}=await supabase.rpc('get_app_remote_config');
+  if(error){setMsg(error.message,'err');return}
+  const row=Array.isArray(data)?data[0]:data;
+  state.maintenance=row?.maintenance_mode===true;
+  state.flags=row?.feature_flags||{};
+  document.getElementById('minVersion').value=String(row?.min_android_version_code||1);
+  syncToggle(document.getElementById('maintenance'),state.maintenance);
+  document.querySelectorAll('[data-flag]').forEach(b=>syncToggle(b,state.flags[b.dataset.flag]!==false));
+  setMsg('Config loaded.','ok');
+}
+async function show(session){
+  document.getElementById('loginCard').classList.toggle('hidden',!!session);
+  document.getElementById('controlCard').classList.toggle('hidden',!session);
+  if(session)await load();
+}
+document.getElementById('loginForm').onsubmit=async e=>{
+  e.preventDefault();
+  const {data,error}=await supabase.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});
+  document.getElementById('password').value='';
+  if(error){document.getElementById('loginMsg').textContent=error.message;return}
+  await show(data.session);
+};
+document.getElementById('refresh').onclick=load;
+document.getElementById('save').onclick=async()=>{
+  const min=Number(document.getElementById('minVersion').value);
+  if(!Number.isInteger(min)||min<1){setMsg('Invalid versionCode.','err');return}
+  if(!confirm('Save SipMate app remote config?'))return;
+  setMsg('Saving…');
+  const {error}=await supabase.rpc('set_app_remote_config',{p_maintenance_mode:state.maintenance,p_min_android_version_code:min,p_feature_flags:state.flags});
+  if(error){setMsg(error.message,'err');return}
+  setMsg('Saved. Apps will pick this up on next refresh.','ok');
+  await load();
+};
+document.getElementById('logout').onclick=async()=>{await supabase.auth.signOut();await show(null)};
+const {data}=await supabase.auth.getSession();await show(data.session);
+</script>
+</body>
+</html>
