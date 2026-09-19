@@ -49,3 +49,16 @@ test('profile photo uploads normalize mime and reject unsupported formats clearl
   assert.match(source, /UIImagePickerPreferredAssetRepresentationMode\.Compatible/);
   assert.match(source, /arrayBuffer\.byteLength > 10 \* 1024 \* 1024/);
 });
+
+
+test('Premium Nearby can use live GPS and clear persisted custom origin', () => {
+  const source = fs.readFileSync('src/app/nearby.tsx', 'utf8');
+  assert.match(source, /import \* as Location from 'expo-location'/);
+  assert.match(source, /async function useCurrentPremiumLocation/);
+  assert.match(source, /Location\.getCurrentPositionAsync/);
+  assert.match(source, /USE CURRENT LOCATION/);
+  assert.match(source, /KORISTI TRENUTNU LOKACIJU/);
+  assert.match(source, /AKTUELLEN STANDORT VERWENDEN/);
+  assert.match(source, /customLatitude: null/);
+  assert.match(source, /customLongitude: null/);
+});
