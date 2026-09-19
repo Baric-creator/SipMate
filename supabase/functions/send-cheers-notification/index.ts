@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     if (blocked) return new Response(JSON.stringify({ ok: true, skipped: "blocked" }), { status: 200, headers });
 
     const [{ data: recipientProfile }, { data: senderProfile }, { data: pushTokens }, { data: reciprocal }] = await Promise.all([
-      admin.from("profiles").select("is_active, active_until").eq("id", recipientId).maybeSingle(),
+      admin.from("profiles").select("is_active, active_until, notify_cheers").eq("id", recipientId).maybeSingle(),
       admin.from("profiles").select("name").eq("id", caller.id).maybeSingle(),
       admin
         .from("device_push_tokens")
@@ -56,6 +56,8 @@ Deno.serve(async (req) => {
         .limit(MAX_PUSH_TOKENS_PER_USER),
       admin.from("cheers").select("id").eq("sender_id", recipientId).eq("receiver_id", caller.id).maybeSingle(),
     ]);
+
+    if (recipientProfile?.notify_cheers === false) return new Response(JSON.stringify({ ok: true, skipped: "cheers_notifications_disabled" }), { status: 200, headers });
 
     const activeUntil = recipientProfile?.active_until ? new Date(recipientProfile.active_until).getTime() : 0;
     if (recipientProfile?.is_active !== true || !Number.isFinite(activeUntil) || activeUntil <= Date.now()) {
