@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>SipMate App Health</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#09090b;color:#fff;font-family:Inter,system-ui,sans-serif}.shell{width:min(980px,calc(100% - 30px));margin:auto;padding:34px 0 80px}.card{background:#121215;border:1px solid #29292e;border-radius:24px;padding:24px;margin-bottom:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#17171a;border:1px solid #2f2f34;border-radius:18px;padding:18px}.stat small{display:block;color:#71717a}.stat strong{display:block;font-size:30px;margin-top:8px}.good{color:#4ade80}.warn{color:#fbbf24}.bad{color:#f87171}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:14px;background:#dc2626;color:#fff;padding:13px 18px;font-weight:900;cursor:pointer}.btn.secondary{background:#27272a;text-decoration:none}.field{display:grid;gap:8px;margin-top:12px}.field input{height:48px;border-radius:13px;border:1px solid #3f3f46;background:#18181b;color:#fff;padding:0 14px;font:inherit}.muted{color:#a1a1aa}.hidden{display:none!important}.msg{margin-top:14px;min-height:20px;color:#a1a1aa}@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:420px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="card"><h1>🍻 SipMate App Health</h1><p class="muted">Live operational snapshot without exposing message content or precise location.</p></div>
+  <div id="login" class="card">
+    <form id="loginForm">
+      <div class="field"><label>Admin email</label><input id="email" type="email" value="sipmate.app@gmail.com" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password"></div>
+      <div class="row"><button class="btn">Sign in</button></div>
+    </form>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+  <div id="dashboard" class="hidden">
+    <div class="card">
+      <div class="grid" id="stats"></div>
+      <div class="row"><button id="refresh" class="btn">Refresh</button><a href="./founder.html" class="btn secondary">Founder Dashboard</a><a href="./admin-app-config.html" class="btn secondary">App Control</a><button id="logout" class="btn secondary">Sign out</button></div>
+      <div id="meta" class="msg"></div>
+    </div>
+  </div>
+</div>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+const supabase=createClient('https://poatmbsfglhrcdbosinb.supabase.co','sb_publishable_VooWOnzPl1SCUA44rZDTow_Ee5XrMd3',{auth:{persistSession:true,autoRefreshToken:true}});
+const defs=[
+  ['active_users_24h','Active users · 24h','good'],
+  ['active_users_7d','Active users · 7d','good'],
+  ['messages_24h','Messages · 24h',''],
+  ['cheers_24h','Cheers · 24h',''],
+  ['mutual_pairs_24h','Mutual CHEERS · 24h',''],
+  ['premium_active','Active Premium',''],
+  ['push_tokens','Push tokens',''],
+  ['pending_reports','Pending reports','warn'],
+  ['client_errors_24h','Client errors · 24h','bad'],
+  ['verification_failures_24h','Photo verify failures · 24h','bad'],
+  ['profiles_total','Profiles total','']
+];
+async function load(){
+  document.getElementById('meta').textContent='Loading…';
+  const {data,error}=await supabase.rpc('get_admin_app_health');
+  if(error){document.getElementById('meta').textContent=error.message;return}
+  document.getElementById('stats').innerHTML=defs.map(([key,label,cls])=>`<div class="stat"><small>${label}</small><strong class="${cls}">${data?.[key]??0}</strong></div>`).join('');
+  document.getElementById('meta').textContent=data?.generated_at?`Updated ${new Date(data.generated_at).toLocaleString()}`:'Updated';
+}
+async function show(session){document.getElementById('login').classList.toggle('hidden',!!session);document.getElementById('dashboard').classList.toggle('hidden',!session);if(session)await load()}
+document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();const {data,error}=await supabase.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});document.getElementById('password').value='';if(error){document.getElementById('loginMsg').textContent=error.message;return}await show(data.session)};
+document.getElementById('refresh').onclick=load;
+document.getElementById('logout').onclick=async()=>{await supabase.auth.signOut();await show(null)};
+const {data}=await supabase.auth.getSession();await show(data.session);
+setInterval(()=>{if(!document.getElementById('dashboard').classList.contains('hidden')&&document.visibilityState==='visible')void load()},60000);
+</script>
+</body>
+</html>
