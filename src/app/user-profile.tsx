@@ -786,6 +786,12 @@ export default function UserProfileScreen() {
           <View style={styles.menuCard}>
             <Text style={styles.menuTitle}>{profile.name ?? text.userFallback}</Text>
 
+            <Pressable style={styles.menuOption} onPress={() => void handleShareProfile()}>
+              <View style={styles.actionRowLeft}><Text style={styles.actionEmoji}>↗️</Text><Text style={styles.reportOptionText}>{text.shareProfile}</Text></View>
+            </Pressable>
+
+            <View style={styles.menuDivider} />
+
             <Pressable
               style={styles.menuOption}
               onPress={() => {
