@@ -8,6 +8,7 @@ import { FutureBackdrop } from '../components/FutureBackdrop';
 import { isProfileAvailable, isProfileOnline, stopActiveSession } from '../lib/presence';
 import { unregisterCurrentDevicePushTokenAsync } from '../lib/push-notifications';
 import { supabase } from '../lib/supabase';
+import { loadAppRemoteConfig } from '../lib/remote-config';
 
 type UserProfile = {
   avatar_url: string | null;
@@ -36,6 +37,7 @@ const copy = {
 export default function UserProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [discordEnabled, setDiscordEnabled] = useState(true);
   const hasLoadedProfileRef = useRef(false);
   const profileLoadIdRef = useRef(0);
   const { t, i18n } = useTranslation();
@@ -50,6 +52,14 @@ export default function UserProfileScreen() {
       };
     }, [])
   );
+
+  useEffect(() => {
+    let active = true;
+    void loadAppRemoteConfig().then((config) => {
+      if (active) setDiscordEnabled(config.featureFlags.discord);
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
@@ -311,7 +321,7 @@ export default function UserProfileScreen() {
           <Text style={styles.bio}>{profile.bio?.trim() ? profile.bio : t('profileScreen.noBioYet')}</Text>
         </View>
 
-        <View style={styles.discordCard}>
+        {discordEnabled && <View style={styles.discordCard}>
           <View style={styles.discordTop}>
             <View>
               <Text style={styles.discordTitle}>Discord</Text>
@@ -332,7 +342,7 @@ export default function UserProfileScreen() {
               {profile.discord_user_id ? text.disconnectDiscord : text.connectDiscord}
             </Text>
           </Pressable>
-        </View>
+        </View>}
 
         <View style={styles.settingsCard}>
           <Pressable style={styles.settingsRow} onPress={() => router.push('/blocked-users')}>
