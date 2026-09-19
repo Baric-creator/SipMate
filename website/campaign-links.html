@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>SipMate Campaign Links</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#09090b;color:#fff;font-family:Inter,system-ui,sans-serif}.shell{width:min(820px,calc(100% - 28px));margin:auto;padding:34px 0 70px}.card{background:#121215;border:1px solid #29292e;border-radius:24px;padding:24px;margin-bottom:14px}.field{display:grid;gap:7px;margin-top:14px}.field input,.field select{height:48px;border:1px solid #3f3f46;border-radius:13px;background:#18181b;color:#fff;padding:0 13px;font:inherit}.btn{border:0;background:#dc2626;color:#fff;border-radius:13px;padding:13px 16px;font-weight:900;cursor:pointer}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.out{word-break:break-all;background:#18181b;border:1px solid #3f3f46;border-radius:14px;padding:15px;margin-top:14px;color:#d4d4d8}.muted{color:#a1a1aa;line-height:1.55}.presets{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.preset{background:#18181b;border:1px solid #34343a;border-radius:15px;padding:14px;color:#fff;text-align:left;cursor:pointer}@media(max-width:600px){.presets{grid-template-columns:1fr}}
+</style></head>
+<body><main class="shell">
+<div class="card"><h1>📈 SipMate Campaign Links</h1><p class="muted">Create trackable website/app handoff URLs. Use the generated URL as the destination behind a QR code or social campaign.</p></div>
+<div class="card">
+ <div class="field"><label>Campaign source</label><input id="source" value="qr-sticker-nuernberg" maxlength="80"></div>
+ <div class="field"><label>Optional referral code</label><input id="ref" placeholder="SM..." maxlength="32"></div>
+ <div class="field"><label>Destination</label><select id="route"><option value="">Website / waitlist</option><option value="index">Open app</option><option value="premium">Open Premium</option><option value="nearby">Open Nearby</option><option value="register">Open Register</option></select></div>
+ <div class="row"><button id="build" class="btn">Generate link</button></div>
+ <div id="out" class="out">—</div>
+</div>
+<div class="card"><h2>Quick presets</h2><div class="presets">
+ <button class="preset" data-src="qr-sticker-nuernberg">📍 Nürnberg sticker</button>
+ <button class="preset" data-src="qr-sticker-croatia">🇭🇷 Croatia sticker</button>
+ <button class="preset" data-src="instagram-bio">📸 Instagram bio</button>
+ <button class="preset" data-src="tiktok-bio">♪ TikTok bio</button>
+ <button class="preset" data-src="discord">🎮 Discord</button>
+ <button class="preset" data-src="whatsapp">💬 WhatsApp</button>
+ </div></div>
+<div class="card"><a href="./founder.html" style="color:#f87171;font-weight:900">← Founder Dashboard</a></div>
+</main>
+<script>
+const source=document.getElementById("source"),ref=document.getElementById("ref"),route=document.getElementById("route"),out=document.getElementById("out");
+function clean(v,re,max){v=String(v||"").trim();return re.test(v)?v.slice(0,max):""}
+function build(){
+ const src=clean(source.value.toLowerCase(),/^[a-z0-9._-]{1,80}$/,80)||"campaign";
+ const r=clean(ref.value.toUpperCase(),/^[A-Z0-9_-]{3,32}$/,32);
+ let url;
+ if(route.value){url=new URL("https://officialsipmate.com/open.html");url.searchParams.set("route",route.value);url.searchParams.set("src",src)}
+ else{url=new URL("https://officialsipmate.com/");url.searchParams.set("src",src)}
+ if(r)url.searchParams.set("ref",r);
+ out.textContent=url.toString();
+}
+document.getElementById("build").onclick=build;
+document.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{source.value=b.dataset.src;build()});
+build();
+</script></body></html>
