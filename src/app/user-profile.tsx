@@ -524,6 +524,18 @@ export default function UserProfileScreen() {
     showAlert(text.reportThanks);
   }
 
+  async function handleShareProfile() {
+    if (!profile?.id) return;
+    const url = `https://officialsipmate.com/open.html?route=user-profile&id=${encodeURIComponent(profile.id)}&src=profile-share`;
+    const message = language === 'de'
+      ? `Profil auf SipMate ansehen 🍻 ${url}`
+      : language === 'hr'
+        ? `Pogledaj profil na SipMateu 🍻 ${url}`
+        : `View this profile on SipMate 🍻 ${url}`;
+    await Share.share({ title: 'SipMate 🍻', message, url });
+    setShowUserMenu(false);
+  }
+
   async function handleBlockUser() {
     if (!profile) return;
 
