@@ -98,9 +98,9 @@ export default function OnboardingScreen() {
   const slide = text.slides[page];
   const isLast = page === text.slides.length - 1;
 
-  async function finish() {
+  async function finish(openProfileSetup = false) {
     await AsyncStorage.setItem(ONBOARDING_KEY, 'done');
-    router.replace('/');
+    router.replace(openProfileSetup ? '/edit-profile' : '/');
   }
 
   return (
@@ -110,7 +110,7 @@ export default function OnboardingScreen() {
       <View pointerEvents="none" style={styles.scanAccent} />
       <View style={styles.topBar}>
         <Text style={styles.brand}>SipMate 🍻</Text>
-        <Pressable onPress={finish} hitSlop={12}>
+        <Pressable onPress={() => void finish(false)} hitSlop={12}>
           <Text style={styles.skip}>{text.skip}</Text>
         </Pressable>
       </View>
@@ -137,7 +137,7 @@ export default function OnboardingScreen() {
       <Pressable
         style={styles.button}
         onPress={() => {
-          if (isLast) finish();
+          if (isLast) void finish(true);
           else setPage((current) => current + 1);
         }}
       >
