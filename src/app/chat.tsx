@@ -666,6 +666,17 @@ export default function ChatScreen() {
             <View style={styles.connectedRow}><Text style={styles.connectedEmoji}>🍻</Text><Text style={styles.connectedText}>{text.connected}</Text></View>
           </View>
         </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Open profile actions"
+          activeOpacity={0.8}
+          onPress={() => {
+            if (otherUserId) router.push({ pathname: '/user-profile', params: { id: otherUserId } });
+          }}
+          style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(24,24,27,0.88)', borderWidth: 1, borderColor: '#3F3F46' }}
+        >
+          <Text style={{ color: '#FFFFFF', fontSize: 22, fontWeight: '900' }}>⋮</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
