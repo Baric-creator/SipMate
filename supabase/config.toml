@@ -76,3 +76,18 @@ entrypoint = "./functions/send-chat-image/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/chat-image-url/index.ts"
+
+[functions.claim-attribution]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/claim-attribution/index.ts"
+
+[functions.public-launch-status]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/public-launch-status/index.ts"
+
+[functions.admin-launch-config]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/admin-launch-config/index.ts"
