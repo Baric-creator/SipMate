@@ -133,9 +133,12 @@ if(form&&status){
     e.preventDefault();
     if(submitting||!validateWaitlistEmail())return;
     const fd=new FormData(form);
-    let refCode=(new URLSearchParams(location.search).get("ref")||"").trim();
-    try{if(!refCode)refCode=localStorage.getItem("sipmate-ref")||""}catch{}
-    const payload={name:String(fd.get("name")||"").trim(),email:String(fd.get("email")||"").trim(),city:String(fd.get("city")||"").trim(),locale,ref:refCode};
+    const query=new URLSearchParams(location.search);
+    let refCode=(query.get("ref")||"").trim();
+    let source=(query.get("src")||"").trim().toLowerCase();
+    try{if(!refCode)refCode=localStorage.getItem("sipmate-ref")||"";if(!source)source=localStorage.getItem("sipmate-src")||""}catch{}
+    if(!/^[a-z0-9._-]{1,80}$/.test(source))source="officialsipmate.com";
+    const payload={name:String(fd.get("name")||"").trim(),email:String(fd.get("email")||"").trim(),city:String(fd.get("city")||"").trim(),locale,ref:refCode,source};
     const button=form.querySelector("button");
     submitting=true;button.disabled=true;status.textContent=translations[locale].loading;form.setAttribute("aria-busy","true");
     const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
