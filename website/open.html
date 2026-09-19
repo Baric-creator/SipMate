@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#09090B">
+  <meta name="robots" content="noindex">
+  <title>Open SipMate 🍻</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:#09090B;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;display:grid;place-items:center;padding:24px}.card{width:min(460px,100%);background:#121215;border:1px solid #2c2023;border-radius:28px;padding:34px;text-align:center;box-shadow:0 24px 80px #0008}.logo{font-size:34px;font-weight:900}.logo span{color:#ef4444}.beer{font-size:62px;margin:20px 0}.muted{color:#a1a1aa;line-height:1.55}.btn{display:block;width:100%;border:0;border-radius:16px;padding:15px;margin-top:14px;text-decoration:none;font-weight:900;cursor:pointer}.primary{background:#dc2626;color:#fff}.secondary{background:#222226;color:#fff;border:1px solid #3f3f46}.small{font-size:12px;color:#71717a;margin-top:20px}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo"><span>Sip</span>Mate 🍻</div>
+    <div class="beer">🍻</div>
+    <h1>Opening SipMate…</h1>
+    <p class="muted">If the app is installed, it should open automatically. Otherwise you can continue to Google Play or the SipMate website.</p>
+    <a id="openApp" class="btn primary" href="#">OPEN SIPMATE</a>
+    <a id="storeLink" class="btn secondary" href="/" hidden>GOOGLE PLAY</a>
+    <a class="btn secondary" href="/">SIPMATE WEBSITE</a>
+    <p class="small">officialsipmate.com</p>
+  </main>
+<script>
+(() => {
+  const q=new URLSearchParams(location.search);
+  const allowedRoutes=new Set(["index","nearby","cheers","premium","register","user-profile"]);
+  const route=allowedRoutes.has(q.get("route"))?q.get("route"):"index";
+  const id=(q.get("id")||"").trim();
+  const ref=(q.get("ref")||"").trim().toUpperCase().replace(/[^A-Z0-9_-]/g,"").slice(0,32);
+  const src=(q.get("src")||"web-open").trim().toLowerCase().replace(/[^a-z0-9._-]/g,"").slice(0,80)||"web-open";
+  const deep=new URL("sipmate://"+route);
+  if(route==="user-profile"&&/^[0-9a-f-]{36}$/i.test(id))deep.searchParams.set("id",id);
+  if(ref)deep.searchParams.set("ref",ref);
+  deep.searchParams.set("src",src);
+  const deepUrl=deep.toString();
+  document.getElementById("openApp").href=deepUrl;
+
+  let storeUrl=null;
+  fetch("https://poatmbsfglhrcdbosinb.supabase.co/functions/v1/public-launch-status",{headers:{Accept:"application/json"}})
+    .then(r=>r.ok?r.json():null)
+    .then(data=>{
+      storeUrl=data?.launch?.play_store_url||null;
+      const link=document.getElementById("storeLink");
+      if(storeUrl){link.href=storeUrl;link.hidden=false;}
+    }).catch(()=>{});
+
+  const openedAt=Date.now();
+  location.href=deepUrl;
+  setTimeout(()=>{
+    if(document.visibilityState!=="visible"||Date.now()-openedAt>3500)return;
+    if(storeUrl)location.href=storeUrl;
+  },1400);
+})();
+</script>
+</body>
+</html>
