@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -254,6 +255,81 @@ export default function NearbyScreen() {
       if (typeof saved.customLongitude === 'number') setCustomLongitude(saved.customLongitude);
     } catch (error) {
       console.log('PREMIUM FILTER LOAD ERROR:', error);
+    }
+  }
+
+  async function useCurrentPremiumLocation() {
+    try {
+      setLocationLoading(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert(
+          language === 'de'
+            ? 'Standortberechtigung ist erforderlich.'
+            : language === 'hr'
+              ? 'Potrebna je dozvola za lokaciju.'
+              : 'Location permission is required.'
+        );
+        return;
+      }
+
+      let position = await Location.getLastKnownPositionAsync({
+        maxAge: 120000,
+        requiredAccuracy: 5000,
+      });
+
+      if (!position) {
+        position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+      }
+
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      let detectedCity = customCity.trim();
+
+      try {
+        const reverseResponse = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+          { headers: { 'User-Agent': 'SipMate/1.0' } }
+        );
+        if (reverseResponse.ok) {
+          const reverseData = await reverseResponse.json();
+          detectedCity =
+            reverseData?.address?.city ??
+            reverseData?.address?.town ??
+            reverseData?.address?.village ??
+            reverseData?.address?.municipality ??
+            reverseData?.address?.county ??
+            reverseData?.address?.state ??
+            detectedCity;
+        }
+      } catch (error) {
+        console.log('PREMIUM LOCATION REVERSE GEOCODE ERROR:', error);
+      }
+
+      setCustomLatitude(latitude);
+      setCustomLongitude(longitude);
+      if (detectedCity) setCustomCity(detectedCity);
+
+      showAlert(
+        language === 'de'
+          ? `Aktueller Standort gefunden${detectedCity ? `: ${detectedCity}` : '.'}`
+          : language === 'hr'
+            ? `Trenutna lokacija pronađena${detectedCity ? `: ${detectedCity}` : '.'}`
+            : `Current location found${detectedCity ? `: ${detectedCity}` : '.'}`
+      );
+    } catch (error) {
+      console.log('PREMIUM CURRENT LOCATION ERROR:', error);
+      showAlert(
+        language === 'de'
+          ? 'Aktueller Standort konnte nicht ermittelt werden.'
+          : language === 'hr'
+            ? 'Trenutnu lokaciju nije moguće pronaći.'
+            : 'Could not determine your current location.'
+      );
+    } finally {
+      setLocationLoading(false);
     }
   }
 
@@ -1250,21 +1326,29 @@ export default function NearbyScreen() {
                           styles.useMyLocationButton
                         }
                         onPress={() => {
-                          setCustomCity(
-                            ''
-                          );
+                          void (async () => {
+                            setCustomCity('');
+                            setCustomLatitude(null);
+                            setCustomLongitude(null);
+                            setShowLocationChanger(false);
 
-                          setCustomLatitude(
-                            null
-                          );
-
-                          setCustomLongitude(
-                            null
-                          );
-
-                          setShowLocationChanger(
-                            false
-                          );
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (user) {
+                              await AsyncStorage.setItem(
+                                premiumFilterStorageKey(user.id),
+                                JSON.stringify({
+                                  maxDistance,
+                                  drinkFilter,
+                                  ageFilter,
+                                  genderFilter,
+                                  customCity: '',
+                                  customLatitude: null,
+                                  customLongitude: null,
+                                })
+                              );
+                              savedFilterUserIdRef.current = user.id;
+                            }
+                          })();
                         }}
                       >
                         <Text
