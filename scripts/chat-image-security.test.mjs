@@ -56,7 +56,7 @@ test('moderation decisions are written to an audit trail', () => {
   assert.match(moderation, /from\("moderation_actions"\)\.insert/);
   assert.match(moderation, /action: "photo_removed"/);
   assert.match(moderation, /auditAction = status === "reviewed"/);
-  assert.match(moderation, /select\("id,report_id,action,admin_user_id,reported_user_id,reported_message_id,created_at"\)/);
+  assert.match(moderation, /select\("id,report_id,action,admin_user_id,reported_user_id,reported_message_id,resolution_reason,note,created_at"\)/);
 });
 
 
