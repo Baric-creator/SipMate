@@ -338,6 +338,7 @@ export default function RootLayout() {
         <Tabs.Screen name="edit-profile" options={{ href: null }} />
         <Tabs.Screen name="explore" options={{ href: null }} />
         <Tabs.Screen name="language" options={{ href: null }} />
+        <Tabs.Screen name="notification-settings" options={{ href: null }} />
         <Tabs.Screen name="premium" options={{ href: null }} />
         <Tabs.Screen name="privacy" options={{ href: null }} />
         <Tabs.Screen name="terms" options={{ href: null }} />
