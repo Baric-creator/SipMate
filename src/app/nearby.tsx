@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -96,6 +97,8 @@ export default function NearbyScreen() {
     loadingSkipped,
     setLoadingSkipped,
   ] = useState(false);
+
+  const savedFilterUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -219,6 +222,70 @@ export default function NearbyScreen() {
     return R * c;
   }
 
+  function premiumFilterStorageKey(userId: string) {
+    return `sipmate-nearby-premium-filters:${userId}`;
+  }
+
+  async function loadSavedPremiumFilters(userId: string) {
+    if (savedFilterUserIdRef.current === userId) return;
+    try {
+      const raw = await AsyncStorage.getItem(premiumFilterStorageKey(userId));
+      savedFilterUserIdRef.current = userId;
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (typeof saved.maxDistance === 'number') setMaxDistance(saved.maxDistance);
+      if (typeof saved.drinkFilter === 'string') setDrinkFilter(saved.drinkFilter);
+      if (typeof saved.ageFilter === 'string') setAgeFilter(saved.ageFilter);
+      if (typeof saved.genderFilter === 'string') setGenderFilter(saved.genderFilter);
+      if (typeof saved.customCity === 'string') setCustomCity(saved.customCity);
+      if (typeof saved.customLatitude === 'number') setCustomLatitude(saved.customLatitude);
+      if (typeof saved.customLongitude === 'number') setCustomLongitude(saved.customLongitude);
+    } catch (error) {
+      console.log('PREMIUM FILTER LOAD ERROR:', error);
+    }
+  }
+
+  async function savePremiumFilters() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+
+    try {
+      await AsyncStorage.setItem(
+        premiumFilterStorageKey(user.id),
+        JSON.stringify({
+          maxDistance,
+          drinkFilter,
+          ageFilter,
+          genderFilter,
+          customCity: customCity.trim(),
+          customLatitude,
+          customLongitude,
+        })
+      );
+      savedFilterUserIdRef.current = user.id;
+      setShowAdvancedFilters(false);
+      showAlert(
+        language === 'de'
+          ? 'Premium-Filter gespeichert.'
+          : language === 'hr'
+            ? 'Premium filteri su spremljeni.'
+            : 'Premium filters saved.'
+      );
+    } catch (error) {
+      console.log('PREMIUM FILTER SAVE ERROR:', error);
+      showAlert(
+        language === 'de'
+          ? 'Filter konnten nicht gespeichert werden.'
+          : language === 'hr'
+            ? 'Filtere nije moguće spremiti.'
+            : 'Could not save filters.'
+      );
+    }
+  }
+
   async function loadNearbyProfiles(silent = false) {
     const requestId = ++nearbyRequestIdRef.current;
     const isLatestRequest = () => requestId === nearbyRequestIdRef.current;
@@ -251,6 +318,7 @@ export default function NearbyScreen() {
         nearbyUserIdRef.current !== null &&
         nearbyUserIdRef.current !== user.id;
       nearbyUserIdRef.current = user.id;
+      await loadSavedPremiumFilters(user.id);
 
       if (accountChanged) {
         setNearbyProfiles([]);
@@ -1025,9 +1093,11 @@ export default function NearbyScreen() {
                     styles.locationInput
                   }
                   value={customCity}
-                  onChangeText={
-                    setCustomCity
-                  }
+                  onChangeText={(value) => {
+                    setCustomCity(value);
+                    setCustomLatitude(null);
+                    setCustomLongitude(null);
+                  }}
                   maxLength={80}
                   placeholder={t(
                     'nearbyScreen.cityPlaceholder'
@@ -1056,7 +1126,8 @@ export default function NearbyScreen() {
                           await fetch(
                             `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
                               customCity.trim()
-                            )}`
+                            )}`,
+                            { headers: { 'User-Agent': 'SipMate/1.0' } }
                           );
 
                         if (!response.ok) {
@@ -1350,6 +1421,19 @@ export default function NearbyScreen() {
                 )}
               </View>
             )}
+
+            <TouchableOpacity
+              style={styles.applyLocationButton}
+              onPress={() => void savePremiumFilters()}
+            >
+              <Text style={styles.applyLocationText}>
+                {language === 'de'
+                  ? 'ÄNDERUNGEN SPEICHERN'
+                  : language === 'hr'
+                    ? 'SPREMI PROMJENE'
+                    : 'SAVE CHANGES'}
+              </Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={
