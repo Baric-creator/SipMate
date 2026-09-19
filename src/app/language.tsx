@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import {
     changeLanguage,
 } from '../lib/i18n';
+import { supabase } from '../lib/supabase';
 
 export default function LanguageScreen() {
   const router = useRouter();
@@ -18,6 +19,18 @@ export default function LanguageScreen() {
 
   const currentLanguage =
     i18n.language?.split('-')[0] ?? 'en';
+
+  async function selectLanguage(language: 'en' | 'de' | 'hr') {
+    await changeLanguage(language);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ preferred_language: language })
+        .eq('id', session.user.id);
+      if (error) console.log('LANGUAGE PREFERENCE SAVE ERROR:', error.message);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -36,9 +49,7 @@ export default function LanguageScreen() {
             currentLanguage === 'en' &&
               styles.languageCardActive,
           ]}
-          onPress={() =>
-            changeLanguage('en')
-          }
+          onPress={() => void selectLanguage('en')}
         >
           <View>
             <View style={styles.languageNameRow}><Text style={styles.flag}>🇬🇧</Text><Text style={styles.languageName}>English</Text></View>
@@ -61,9 +72,7 @@ export default function LanguageScreen() {
             currentLanguage === 'de' &&
               styles.languageCardActive,
           ]}
-          onPress={() =>
-            changeLanguage('de')
-          }
+          onPress={() => void selectLanguage('de')}
         >
           <View>
             <View style={styles.languageNameRow}><Text style={styles.flag}>🇩🇪</Text><Text style={styles.languageName}>Deutsch</Text></View>
@@ -86,9 +95,7 @@ export default function LanguageScreen() {
             currentLanguage === 'hr' &&
               styles.languageCardActive,
           ]}
-          onPress={() =>
-            changeLanguage('hr')
-          }
+          onPress={() => void selectLanguage('hr')}
         >
           <View>
             <View style={styles.languageNameRow}><Text style={styles.flag}>🇭🇷</Text><Text style={styles.languageName}>Hrvatski</Text></View>
