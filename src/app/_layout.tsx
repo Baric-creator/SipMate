@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import '../lib/i18n';
 import { clearPresence, touchPresence } from '../lib/presence';
-import { captureGrowthAttributionFromUrl } from '../lib/growth-attribution';
+import { captureGrowthAttributionFromUrl, clearGrowthAttribution, getGrowthAttribution } from '../lib/growth-attribution';
 import { registerForPushNotificationsAsync } from '../lib/push-notifications';
 import { supabase } from '../lib/supabase';
 
@@ -100,6 +100,15 @@ export default function RootLayout() {
     const register = async () => {
       const { data } = await supabase.auth.getSession();
       if (mounted && data.session?.user) {
+        const attribution = await getGrowthAttribution();
+        if (attribution.referralCode || attribution.source) {
+          const { error: attributionError } = await supabase.functions.invoke('claim-attribution', {
+            headers: { Authorization: `Bearer ${data.session.access_token}` },
+            body: { referralCode: attribution.referralCode, source: attribution.source },
+          });
+          if (!attributionError) await clearGrowthAttribution();
+          else console.log('ATTRIBUTION CLAIM ERROR:', attributionError.message);
+        }
         await registerForPushNotificationsAsync();
       }
     };
