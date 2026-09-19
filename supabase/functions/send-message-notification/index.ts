@@ -5,6 +5,12 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 const MAX_PUSH_TOKENS_PER_USER = 10;
 const PUSH_TIMEOUT_MS = 8_000;
 
+function verifiedPhotoText(language: string | null | undefined) {
+  if (language === "de") return "📷 Verifiziertes Foto";
+  if (language === "hr") return "📷 Verificirana fotografija";
+  return "📷 Verified photo";
+}
+
 Deno.serve(async (req) => {
   const headers = { "Content-Type": "application/json" };
   if (req.method !== "POST") {
@@ -68,8 +74,9 @@ Deno.serve(async (req) => {
     const { data: blocked } = await admin.rpc("is_blocked_between", { user_a: caller.id, user_b: recipientId });
     if (blocked) return new Response(JSON.stringify({ ok: true, skipped: "blocked" }), { status: 200, headers });
 
-    const [{ data: senderProfile }, { data: pushTokens }] = await Promise.all([
+    const [{ data: senderProfile }, { data: recipientProfile }, { data: pushTokens }] = await Promise.all([
       admin.from("profiles").select("name").eq("id", caller.id).maybeSingle(),
+      admin.from("profiles").select("preferred_language").eq("id", recipientId).maybeSingle(),
       admin
         .from("device_push_tokens")
         .select("token")
@@ -86,7 +93,9 @@ Deno.serve(async (req) => {
     if (message.message_type === "image" && !isVerifiedImage) {
       return new Response(JSON.stringify({ ok: true, skipped: "unapproved_image" }), { status: 200, headers });
     }
-    const content = isVerifiedImage ? "📷 Verified photo" : String(message.content || "").slice(0, 180);
+    const content = isVerifiedImage
+      ? verifiedPhotoText(recipientProfile?.preferred_language)
+      : String(message.content || "").slice(0, 180);
     const payload = tokens.map((pushToken: string) => ({
       to: pushToken,
       sound: "default",
