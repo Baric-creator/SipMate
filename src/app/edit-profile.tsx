@@ -153,11 +153,30 @@ export default function EditProfileScreen() {
       let detectedCity = city.trim() || null;
 
       if (status !== 'granted') {
+        if ((latitude == null || longitude == null) && detectedCity) {
+          try {
+            const searchResponse = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,
+              { headers: { 'User-Agent': 'SipMate/1.0' } }
+            );
+            if (searchResponse.ok) {
+              const results = await searchResponse.json();
+              if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
+                latitude = Number(results[0].lat);
+                longitude = Number(results[0].lon);
+                console.log('LOCATION PERMISSION DENIED: using typed city coordinates for', detectedCity);
+              }
+            }
+          } catch (geocodeError) {
+            console.log('CITY GEOCODE WITHOUT GPS ERROR:', geocodeError);
+          }
+        }
+
         if (latitude == null || longitude == null) {
-          showAlert(t('editProfileScreen.locationPermissionRequired'));
+          showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
           return;
         }
-        console.log('LOCATION PERMISSION DENIED: preserving existing saved coordinates');
+        console.log('LOCATION PERMISSION DENIED: preserving or resolving city coordinates');
       } else {
         try {
           let resolvedLocation = await Location.getLastKnownPositionAsync({
@@ -331,13 +350,31 @@ export default function EditProfileScreen() {
 
   async function handleAddGalleryPhoto() {
     if (!profile?.id) return;
+
+    const { data: entitlement, error: entitlementError } = await supabase
+      .from('profiles')
+      .select('is_premium, premium_until')
+      .eq('id', profile.id)
+      .maybeSingle();
+
+    if (entitlementError) {
+      console.log('PREMIUM ENTITLEMENT CHECK ERROR:', entitlementError.message);
+      showAlert(entitlementError.message);
+      return;
+    }
+
     const premiumActive =
-      profile.is_premium === true &&
-      (!profile.premium_until || new Date(profile.premium_until) > new Date());
+      entitlement?.is_premium === true &&
+      (!entitlement.premium_until || new Date(entitlement.premium_until) > new Date());
+
     if (!premiumActive) {
       router.push('/premium');
       return;
     }
+
+    setProfile((current) => current
+      ? { ...current, is_premium: true, premium_until: entitlement?.premium_until ?? null }
+      : current);
     if (profilePhotos.length >= 6) {
       showAlert(t('editProfileScreen.galleryLimit'));
       return;
@@ -352,14 +389,15 @@ export default function EditProfileScreen() {
         showAlert(t('editProfileScreen.imageReadError'));
         return;
       }
-      const blob = await response.blob();
-      const extension = asset.fileName?.split('.').pop() || 'jpg';
+      const arrayBuffer = await response.arrayBuffer();
+      const extension = asset.fileName?.split('.').pop()?.toLowerCase() || 'jpg';
       const filePath = `${profile.id}/gallery-${Date.now()}.${extension}`;
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, blob, {
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arrayBuffer, {
         contentType: asset.mimeType || 'image/jpeg', upsert: false,
       });
       if (uploadError) {
-        showAlert(t('editProfileScreen.galleryUploadError'));
+        console.log('GALLERY UPLOAD ERROR:', uploadError.message);
+        showAlert(`${t('editProfileScreen.galleryUploadError')}: ${uploadError.message}`);
         return;
       }
 
@@ -370,7 +408,8 @@ export default function EditProfileScreen() {
 
       if (insertError) {
         await supabase.storage.from('avatars').remove([filePath]);
-        showAlert(t('editProfileScreen.gallerySaveError'));
+        console.log('GALLERY SAVE ERROR:', insertError.message);
+        showAlert(`${t('editProfileScreen.gallerySaveError')}: ${insertError.message}`);
         return;
       }
       setProfilePhotos((current) => [...current, insertedPhoto as GalleryPhoto]);
