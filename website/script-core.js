@@ -256,7 +256,10 @@ async function shareSipMate(){
     de:"Kein Dating. Nur Drinks, Leute & gute Zeit.",
     hr:"Nije dating. Samo piće, ljudi i dobra zabava."
   };
-  const shareData={title:"SipMate 🍻",text:shareTexts[locale]||shareTexts.en,url:"https://officialsipmate.com/"};
+  const shareUrl=new URL("https://officialsipmate.com/");
+  try{const savedRef=localStorage.getItem("sipmate-ref")||"";if(savedRef)shareUrl.searchParams.set("ref",savedRef)}catch{}
+  shareUrl.searchParams.set("src","web-share");
+  const shareData={title:"SipMate 🍻",text:shareTexts[locale]||shareTexts.en,url:shareUrl.toString()};
   try{
     if(navigator.share){await navigator.share(shareData);return;}
     await navigator.clipboard?.writeText(shareData.url);
