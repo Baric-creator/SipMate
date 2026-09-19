@@ -252,6 +252,9 @@ export default function RootLayout() {
   }, []);
 
   const currentRoute = segments[0] ?? '';
+  const featureDisabled =
+    (currentRoute === 'premium' && remoteConfig?.featureFlags.premium === false) ||
+    (currentRoute === 'nearby' && remoteConfig?.featureFlags.nearby === false);
   const hideSupport =
     currentRoute === 'login' ||
     currentRoute === 'register' ||
@@ -351,7 +354,7 @@ export default function RootLayout() {
         <Tabs.Screen name="user-profile" options={{ href: null }} />
       </Tabs>
 
-      {(remoteConfig?.maintenanceMode || updateRequired) && (
+      {(remoteConfig?.maintenanceMode || updateRequired || featureDisabled) && (
         <View
           style={{
             position: 'absolute',
@@ -363,16 +366,20 @@ export default function RootLayout() {
             paddingHorizontal: 28,
           }}
         >
-          <Text style={{ fontSize: 58 }}>{updateRequired ? '⬆️' : '🛠️'}</Text>
+          <Text style={{ fontSize: 58 }}>{updateRequired ? '⬆️' : featureDisabled ? '⏸️' : '🛠️'}</Text>
           <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '900', textAlign: 'center', marginTop: 18 }}>
             {updateRequired
               ? (language === 'de' ? 'SipMate aktualisieren' : language === 'hr' ? 'Ažuriraj SipMate' : 'Update SipMate')
-              : (language === 'de' ? 'Kurze Wartungspause' : language === 'hr' ? 'Kratko održavanje' : 'Quick maintenance break')}
+              : featureDisabled
+                ? (language === 'de' ? 'Funktion vorübergehend pausiert' : language === 'hr' ? 'Funkcija je privremeno pauzirana' : 'Feature temporarily paused')
+                : (language === 'de' ? 'Kurze Wartungspause' : language === 'hr' ? 'Kratko održavanje' : 'Quick maintenance break')}
           </Text>
           <Text style={{ color: '#A1A1AA', fontSize: 15, lineHeight: 23, textAlign: 'center', marginTop: 12, maxWidth: 430 }}>
             {updateRequired
               ? (language === 'de' ? 'Eine neuere SipMate-Version ist erforderlich, um fortzufahren.' : language === 'hr' ? 'Za nastavak je potrebna novija verzija SipMatea.' : 'A newer SipMate version is required to continue.')
-              : (language === 'de' ? 'SipMate wird gerade kurz aktualisiert. Versuch es gleich noch einmal.' : language === 'hr' ? 'SipMate se trenutno kratko održava. Pokušaj ponovno uskoro.' : 'SipMate is temporarily under maintenance. Try again shortly.')}
+              : featureDisabled
+                ? (language === 'de' ? 'Diese Funktion wurde im Founder Control vorübergehend deaktiviert.' : language === 'hr' ? 'Ova je funkcija privremeno isključena u Founder Controlu.' : 'This feature was temporarily disabled in Founder Control.')
+                : (language === 'de' ? 'SipMate wird gerade kurz aktualisiert. Versuch es gleich noch einmal.' : language === 'hr' ? 'SipMate se trenutno kratko održava. Pokušaj ponovno uskoro.' : 'SipMate is temporarily under maintenance. Try again shortly.')}
           </Text>
           {updateRequired && remoteConfig?.playStoreUrl && (
             <Pressable
