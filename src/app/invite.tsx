@@ -1,4 +1,3 @@
-import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
@@ -9,9 +8,9 @@ import { showAlert } from '../lib/notify';
 import { supabase } from '../lib/supabase';
 
 const copy = {
-  en: { title:'Invite friends', subtitle:'Share your personal SipMate link. When a friend joins through it, the referral stays attached to your account.', code:'YOUR INVITE CODE', share:'SHARE INVITE', copy:'COPY LINK', copied:'Invite link copied.', back:'BACK', unavailable:'Your invite link is not available yet.' },
-  de: { title:'Freunde einladen', subtitle:'Teile deinen persönlichen SipMate-Link. Wenn ein Freund darüber beitritt, bleibt die Empfehlung deinem Konto zugeordnet.', code:'DEIN EINLADUNGSCODE', share:'EINLADUNG TEILEN', copy:'LINK KOPIEREN', copied:'Einladungslink kopiert.', back:'ZURÜCK', unavailable:'Dein Einladungslink ist noch nicht verfügbar.' },
-  hr: { title:'Pozovi prijatelje', subtitle:'Podijeli svoj osobni SipMate link. Kad se prijatelj pridruži preko njega, referral ostaje povezan s tvojim računom.', code:'TVOJ POZIVNI KOD', share:'PODIJELI POZIV', copy:'KOPIRAJ LINK', copied:'Pozivni link je kopiran.', back:'NATRAG', unavailable:'Tvoj pozivni link još nije dostupan.' },
+  en: { title:'Invite friends', subtitle:'Share your personal SipMate link. When a friend joins through it, the referral stays attached to your account.', code:'YOUR INVITE CODE', share:'SHARE INVITE', back:'BACK', unavailable:'Your invite link is not available yet.' },
+  de: { title:'Freunde einladen', subtitle:'Teile deinen persönlichen SipMate-Link. Wenn ein Freund darüber beitritt, bleibt die Empfehlung deinem Konto zugeordnet.', code:'DEIN EINLADUNGSCODE', share:'EINLADUNG TEILEN', back:'ZURÜCK', unavailable:'Dein Einladungslink ist noch nicht verfügbar.' },
+  hr: { title:'Pozovi prijatelje', subtitle:'Podijeli svoj osobni SipMate link. Kad se prijatelj pridruži preko njega, referral ostaje povezan s tvojim računom.', code:'TVOJ POZIVNI KOD', share:'PODIJELI POZIV', back:'NATRAG', unavailable:'Tvoj pozivni link još nije dostupan.' },
 } as const;
 
 export default function InviteScreen() {
@@ -51,12 +50,6 @@ export default function InviteScreen() {
     await Share.share({ title:'SipMate 🍻', message, url });
   }
 
-  async function copyInvite() {
-    if (!url) return showAlert(text.unavailable);
-    await Clipboard.setStringAsync(url);
-    showAlert(text.copied);
-  }
-
   return (
     <View style={styles.screen}>
       <View style={styles.card}>
@@ -72,9 +65,6 @@ export default function InviteScreen() {
 
         <Pressable style={styles.primary} onPress={() => void shareInvite()}>
           <Text style={styles.primaryText}>↗ {text.share}</Text>
-        </Pressable>
-        <Pressable style={styles.secondary} onPress={() => void copyInvite()}>
-          <Text style={styles.secondaryText}>📋 {text.copy}</Text>
         </Pressable>
         <Pressable style={styles.back} onPress={() => router.back()}>
           <Text style={styles.backText}>← {text.back}</Text>
@@ -93,6 +83,5 @@ const styles=StyleSheet.create({
  label:{color:'#71717A',fontSize:10,fontWeight:'900',letterSpacing:1.2},
  code:{color:'#FFF',fontSize:24,fontWeight:'900',marginTop:9},url:{color:'#A1A1AA',fontSize:12,lineHeight:18,marginTop:10},
  primary:{marginTop:18,backgroundColor:'#DC2626',borderRadius:16,paddingVertical:15,alignItems:'center'},
- primaryText:{color:'#FFF',fontWeight:'900'},secondary:{marginTop:10,backgroundColor:'#27272A',borderRadius:16,paddingVertical:15,alignItems:'center'},
- secondaryText:{color:'#FFF',fontWeight:'800'},back:{marginTop:16,paddingVertical:13,alignItems:'center'},backText:{color:'#A1A1AA',fontWeight:'900'}
+ primaryText:{color:'#FFF',fontWeight:'900'},back:{marginTop:16,paddingVertical:13,alignItems:'center'},backText:{color:'#A1A1AA',fontWeight:'900'}
 });
