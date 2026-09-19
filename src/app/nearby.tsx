@@ -102,6 +102,18 @@ export default function NearbyScreen() {
 
   useEffect(() => {
     let active = true;
+    void supabase.auth.getUser().then(({ data }) => {
+      const userId = data.user?.id;
+      if (!active || !userId) return;
+      void loadSavedPremiumFilters(userId).catch((error) => {
+        console.log('PREMIUM FILTER INITIAL LOAD ERROR:', error);
+      });
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     void loadAppRemoteConfig().then((config) => {
       if (active) setNearbyEnabled(config.featureFlags.nearby);
     });
@@ -318,7 +330,6 @@ export default function NearbyScreen() {
         nearbyUserIdRef.current !== null &&
         nearbyUserIdRef.current !== user.id;
       nearbyUserIdRef.current = user.id;
-      await loadSavedPremiumFilters(user.id);
 
       if (accountChanged) {
         setNearbyProfiles([]);
