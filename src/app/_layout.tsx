@@ -13,6 +13,7 @@ import { captureGrowthAttributionFromUrl, clearGrowthAttribution, getGrowthAttri
 import { registerForPushNotificationsAsync } from '../lib/push-notifications';
 import { AppRemoteConfig, loadAppRemoteConfig } from '../lib/remote-config';
 import { supabase } from '../lib/supabase';
+import { installGlobalTelemetry } from '../lib/telemetry';
 
 const hiddenTabBar = { display: 'none' as const };
 
@@ -89,6 +90,9 @@ export default function RootLayout() {
     language === 'hr' ? '1545891206322458775' :
     '1545880341699493978';
   const supportUrl = `https://discord.com/channels/1545876541387440188/${supportChannelId}`;
+  useEffect(() => {
+    installGlobalTelemetry();
+  }, []);
   const androidVersionCode = Number(Constants.expoConfig?.android?.versionCode ?? 1);
   const updateRequired = Platform.OS === 'android' && remoteConfig !== null && androidVersionCode < remoteConfig.minAndroidVersionCode;
 
