@@ -158,3 +158,39 @@ test('Founder moderation auto refresh pauses when hidden', () => {
   assert.match(founder, /document\.visibilityState==='visible'/);
   assert.match(founder, /PAUSED · tab hidden/);
 });
+
+
+test('moderation records resolution reasons and notes', () => {
+  const moderation = fs.readFileSync('supabase/functions/admin-moderation/index.ts', 'utf8');
+  const founder = fs.readFileSync('website/founder.html', 'utf8');
+  assert.match(moderation, /ALLOWED_RESOLUTIONS/);
+  assert.match(moderation, /resolution_reason/);
+  assert.match(moderation, /moderator_note/);
+  assert.match(founder, /askResolution/);
+  assert.match(founder, /moderationEscalation/);
+  assert.match(founder, /photoVerificationFailed/);
+  assert.match(founder, /modAvgHandling/);
+});
+
+test('account deletion removes private chat images before deleting messages', () => {
+  const fn = fs.readFileSync('supabase/functions/delete-account/index.ts', 'utf8');
+  assert.match(fn, /from\('chat-images'\)\.remove\(imagePaths\)/);
+  assert.match(fn, /select\('image_path'\)/);
+});
+
+test('verified photo signed URLs auto-refresh once after an image error', () => {
+  const chat = fs.readFileSync('src/app/chat.tsx', 'utf8');
+  assert.match(chat, /imageRefreshAttemptRef/);
+  assert.match(chat, /loadImageUrl\(item, true\)/);
+  assert.match(chat, /async function loadImageUrl\(message: Message, force = false\)/);
+});
+
+test('verified photo push text is localized from recipient preference', () => {
+  const notify = fs.readFileSync('supabase/functions/send-message-notification/index.ts', 'utf8');
+  const language = fs.readFileSync('src/app/language.tsx', 'utf8');
+  assert.match(notify, /verifiedPhotoText/);
+  assert.match(notify, /preferred_language/);
+  assert.match(notify, /Verifiziertes Foto/);
+  assert.match(notify, /Verificirana fotografija/);
+  assert.match(language, /preferred_language: language/);
+});
