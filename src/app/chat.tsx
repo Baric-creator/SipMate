@@ -19,6 +19,7 @@ import {
 import { chooseOption, showAlert } from '../lib/notify';
 import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
+import { loadAppRemoteConfig } from '../lib/remote-config';
 
 type Message = {
   id: number | string;
@@ -152,6 +153,7 @@ export default function ChatScreen() {
   const [myPremium, setMyPremium] = useState(false);
   const [otherPremium, setOtherPremium] = useState(false);
   const [mutualCheers, setMutualCheers] = useState(false);
+  const [verifiedPhotosEnabled, setVerifiedPhotosEnabled] = useState(true);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [imageLoadState, setImageLoadState] = useState<Record<string, 'idle' | 'loading' | 'error'>>({});
 
@@ -162,6 +164,14 @@ export default function ChatScreen() {
   const messagesRequestIdRef = useRef(0);
   const activeConversationIdRef = useRef('');
   const imageRefreshAttemptRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    let active = true;
+    void loadAppRemoteConfig().then((config) => {
+      if (active) setVerifiedPhotosEnabled(config.featureFlags.verified_photos);
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -476,6 +486,10 @@ export default function ChatScreen() {
   }
 
   async function pickAndSendPhoto() {
+    if (!verifiedPhotosEnabled) {
+      showAlert(lang === 'de' ? 'Verified Photos sind vorübergehend pausiert.' : lang === 'hr' ? 'Verified Photos su privremeno pauzirane.' : 'Verified Photos are temporarily paused.');
+      return;
+    }
     if (sendingImage || !conversationId || !conversationVerified || isBlocked) return;
     if (!myPremium) {
       showAlert(text.photoPremium);
@@ -748,7 +762,7 @@ export default function ChatScreen() {
             disabled={sendingImage}
             activeOpacity={0.8}
           >
-            <Text style={styles.photoButtonText}>{sendingImage ? '…' : (myPremium && otherPremium && mutualCheers ? '📷' : '🔒')}</Text>
+            <Text style={styles.photoButtonText}>{sendingImage ? '…' : (!verifiedPhotosEnabled ? '⏸️' : (myPremium && otherPremium && mutualCheers ? '📷' : '🔒'))}</Text>
           </TouchableOpacity>
           <TextInput
             style={styles.input}
