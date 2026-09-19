@@ -46,6 +46,10 @@ Deno.serve(async (req) => {
     const name = String(body?.name ?? "").trim().slice(0, 80) || null;
     const city = String(body?.city ?? "").trim().slice(0, 120) || null;
     const locale = ["en", "de", "hr"].includes(String(body?.locale ?? "")) ? String(body.locale) : "en";
+    const refRaw = String(body?.ref ?? "").trim().toUpperCase();
+    const referredByCode = /^[A-Z0-9_-]{3,32}$/.test(refRaw) ? refRaw : null;
+    const sourceRaw = String(body?.source ?? "").trim().toLowerCase();
+    const source = /^[a-z0-9._-]{1,80}$/.test(sourceRaw) ? sourceRaw : "officialsipmate.com";
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
       return new Response(JSON.stringify({ error: "invalid_email" }), { status: 400, headers });
@@ -62,7 +66,7 @@ Deno.serve(async (req) => {
 
     const { error } = await supabase
       .from("waitlist")
-      .insert({ email, name, city, locale, source: "officialsipmate.com" });
+      .insert({ email, name, city, locale, source, referred_by_code: referredByCode });
 
     if (error?.code === "23505") {
       return new Response(JSON.stringify({ ok: true, already: true }), { status: 200, headers });
