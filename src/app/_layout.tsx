@@ -334,6 +334,7 @@ export default function RootLayout() {
 
         <Tabs.Screen name="activity" options={{ href: null }} />
         <Tabs.Screen name="blocked-users" options={{ href: null }} />
+        <Tabs.Screen name="account-safety" options={{ href: null }} />
         <Tabs.Screen name="chat" options={{ href: null, tabBarStyle: hiddenTabBar }} />
         <Tabs.Screen name="chats" options={{ href: null }} />
         <Tabs.Screen name="cheers" options={{ href: null }} />
@@ -342,6 +343,7 @@ export default function RootLayout() {
         <Tabs.Screen name="edit-profile" options={{ href: null }} />
         <Tabs.Screen name="explore" options={{ href: null }} />
         <Tabs.Screen name="language" options={{ href: null }} />
+        <Tabs.Screen name="invite" options={{ href: null }} />
         <Tabs.Screen name="notification-settings" options={{ href: null }} />
         <Tabs.Screen name="premium" options={{ href: null }} />
         <Tabs.Screen name="privacy" options={{ href: null }} />
