@@ -150,34 +150,31 @@ export default function EditProfileScreen() {
 
       let latitude: number | null = profile.latitude ?? null;
       let longitude: number | null = profile.longitude ?? null;
-      let detectedCity = city.trim() || null;
+      const typedCity = city.trim();
+      let detectedCity = typedCity || null;
 
-      if (status !== 'granted') {
-        if ((latitude == null || longitude == null) && detectedCity) {
-          try {
-            const searchResponse = await fetch(
-              `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,
-              { headers: { 'User-Agent': 'SipMate/1.0' } }
-            );
-            if (searchResponse.ok) {
-              const results = await searchResponse.json();
-              if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
-                latitude = Number(results[0].lat);
-                longitude = Number(results[0].lon);
-                console.log('LOCATION PERMISSION DENIED: using typed city coordinates for', detectedCity);
-              }
+      // If the user explicitly typed a city, that city is authoritative.
+      // Resolve coordinates from the typed city instead of silently replacing it
+      // with the device/GPS city.
+      if (typedCity) {
+        try {
+          const searchResponse = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(typedCity)}`,
+            { headers: { 'User-Agent': 'SipMate/1.0' } }
+          );
+          if (searchResponse.ok) {
+            const results = await searchResponse.json();
+            if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
+              latitude = Number(results[0].lat);
+              longitude = Number(results[0].lon);
+              detectedCity = typedCity;
+              console.log('PROFILE LOCATION: using manually selected city coordinates for', typedCity);
             }
-          } catch (geocodeError) {
-            console.log('CITY GEOCODE WITHOUT GPS ERROR:', geocodeError);
           }
+        } catch (geocodeError) {
+          console.log('MANUAL CITY GEOCODE ERROR:', geocodeError);
         }
-
-        if (latitude == null || longitude == null) {
-          showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
-          return;
-        }
-        console.log('LOCATION PERMISSION DENIED: preserving or resolving city coordinates');
-      } else {
+      } else if (status === 'granted') {
         try {
           let resolvedLocation = await Location.getLastKnownPositionAsync({
             maxAge: 120000,
@@ -200,48 +197,31 @@ export default function EditProfileScreen() {
             );
             if (reverseResponse.ok) {
               const reverseData = await reverseResponse.json();
-              detectedCity = reverseData?.address?.city ?? reverseData?.address?.town ?? reverseData?.address?.village ??
-                reverseData?.address?.municipality ?? reverseData?.address?.county ?? reverseData?.address?.state ?? detectedCity;
+              detectedCity =
+                reverseData?.address?.city ??
+                reverseData?.address?.town ??
+                reverseData?.address?.village ??
+                reverseData?.address?.municipality ??
+                reverseData?.address?.county ??
+                reverseData?.address?.state ??
+                null;
             }
           } catch (reverseError) {
             console.log('REVERSE GEOCODE ERROR:', reverseError);
           }
         } catch (locationError) {
           console.log('LOCATION FIX UNAVAILABLE:', locationError);
-
-          if (detectedCity) {
-            try {
-              const searchResponse = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(detectedCity)}`,
-                { headers: { 'User-Agent': 'SipMate/1.0' } }
-              );
-              if (searchResponse.ok) {
-                const results = await searchResponse.json();
-                if (Array.isArray(results) && results[0]?.lat && results[0]?.lon) {
-                  latitude = Number(results[0].lat);
-                  longitude = Number(results[0].lon);
-                  console.log('LOCATION FALLBACK: using city coordinates for', detectedCity);
-                }
-              }
-            } catch (geocodeError) {
-              console.log('CITY GEOCODE FALLBACK ERROR:', geocodeError);
-            }
-          }
-
-          if (latitude == null || longitude == null) {
-            const lastKnown = await Location.getLastKnownPositionAsync().catch(() => null);
-            if (lastKnown) {
-              latitude = lastKnown.coords.latitude;
-              longitude = lastKnown.coords.longitude;
-              console.log('LOCATION FALLBACK: using last known coordinates');
-            }
-          }
-
-          if (latitude == null || longitude == null) {
-            showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
-            return;
-          }
         }
+      }
+
+      if ((latitude == null || longitude == null) && typedCity) {
+        showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
+        return;
+      }
+
+      if ((latitude == null || longitude == null) && status !== 'granted') {
+        showAlert(t('editProfileScreen.locationPermissionRequired'));
+        return;
       }
 
       const numericAge = age.trim() ? Number(age) : null;
