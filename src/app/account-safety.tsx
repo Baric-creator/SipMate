@@ -3,15 +3,14 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 const copy={
- en:{title:'Account & Safety',subtitle:'Manage your account, privacy and safety controls in one place.',password:'Change password',notifications:'Notifications',blocked:'Blocked users',guidelines:'Community Guidelines',privacy:'Privacy Policy',terms:'Terms of Use',invite:'Invite friends',delete:'Delete account',back:'BACK'},
- de:{title:'Konto & Sicherheit',subtitle:'Verwalte Konto, Datenschutz und Sicherheit an einem Ort.',password:'Passwort ändern',notifications:'Benachrichtigungen',blocked:'Blockierte Nutzer',guidelines:'Community-Richtlinien',privacy:'Datenschutzerklärung',terms:'Nutzungsbedingungen',invite:'Freunde einladen',delete:'Konto löschen',back:'ZURÜCK'},
- hr:{title:'Račun i sigurnost',subtitle:'Upravljaj računom, privatnošću i sigurnošću na jednom mjestu.',password:'Promijeni lozinku',notifications:'Obavijesti',blocked:'Blokirani korisnici',guidelines:'Pravila zajednice',privacy:'Pravila privatnosti',terms:'Uvjeti korištenja',invite:'Pozovi prijatelje',delete:'Izbriši račun',back:'NATRAG'}
+ en:{title:'Account & Safety',subtitle:'Manage your account, privacy and safety controls in one place.',notifications:'Notifications',blocked:'Blocked users',guidelines:'Community Guidelines',privacy:'Privacy Policy',terms:'Terms of Use',invite:'Invite friends',delete:'Delete account',back:'BACK'},
+ de:{title:'Konto & Sicherheit',subtitle:'Verwalte Konto, Datenschutz und Sicherheit an einem Ort.',notifications:'Benachrichtigungen',blocked:'Blockierte Nutzer',guidelines:'Community-Richtlinien',privacy:'Datenschutzerklärung',terms:'Nutzungsbedingungen',invite:'Freunde einladen',delete:'Konto löschen',back:'ZURÜCK'},
+ hr:{title:'Račun i sigurnost',subtitle:'Upravljaj računom, privatnošću i sigurnošću na jednom mjestu.',notifications:'Obavijesti',blocked:'Blokirani korisnici',guidelines:'Pravila zajednice',privacy:'Pravila privatnosti',terms:'Uvjeti korištenja',invite:'Pozovi prijatelje',delete:'Izbriši račun',back:'NATRAG'}
 } as const;
 
 export default function AccountSafetyScreen(){
  const {i18n}=useTranslation();const lang=i18n.language?.split('-')[0] as keyof typeof copy;const t=copy[lang]??copy.en;
  const rows=[
-  ['🔑',t.password,'/change-password'],
   ['🔔',t.notifications,'/notification-settings'],
   ['🚫',t.blocked,'/blocked-users'],
   ['↗️',t.invite,'/invite'],
