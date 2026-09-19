@@ -17,3 +17,24 @@ test('Premium gallery rechecks entitlement and uploads binary data reliably', ()
   assert.match(source, /GALLERY UPLOAD ERROR/);
   assert.match(source, /GALLERY SAVE ERROR/);
 });
+
+
+test('manual city remains authoritative instead of being overwritten by GPS city', () => {
+  const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
+  assert.match(source, /const typedCity = city\.trim\(\)/);
+  assert.match(source, /if \(typedCity\)/);
+  assert.match(source, /PROFILE LOCATION: using manually selected city coordinates/);
+  assert.match(source, /detectedCity = typedCity/);
+});
+
+test('Premium Nearby filters persist custom location and expose Save Changes', () => {
+  const source = fs.readFileSync('src/app/nearby.tsx', 'utf8');
+  assert.match(source, /AsyncStorage/);
+  assert.match(source, /premiumFilterStorageKey/);
+  assert.match(source, /savePremiumFilters/);
+  assert.match(source, /customLatitude/);
+  assert.match(source, /customLongitude/);
+  assert.match(source, /SAVE CHANGES/);
+  assert.match(source, /SPREMI PROMJENE/);
+  assert.match(source, /ÄNDERUNGEN SPEICHERN/);
+});
