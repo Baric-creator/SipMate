@@ -91,6 +91,20 @@ Deno.serve(async (req) => {
 
     const conversationIds = (conversations ?? []).map((row) => row.id as string)
     if (conversationIds.length) {
+      const { data: imageMessages, error: imageLookupError } = await admin
+        .from('messages')
+        .select('image_path')
+        .in('conversation_id', conversationIds)
+        .eq('message_type', 'image')
+        .not('image_path', 'is', null)
+      if (imageLookupError) throw imageLookupError
+
+      const imagePaths = [...new Set((imageMessages ?? []).map((row) => row.image_path as string | null).filter((path): path is string => Boolean(path)))]
+      if (imagePaths.length) {
+        const { error: imageCleanupError } = await admin.storage.from('chat-images').remove(imagePaths)
+        if (imageCleanupError) throw imageCleanupError
+      }
+
       const { error } = await admin.from('messages').delete().in('conversation_id', conversationIds)
       if (error) throw error
     }
