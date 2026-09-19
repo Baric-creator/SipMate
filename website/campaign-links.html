@@ -13,12 +13,12 @@
  <div id="out" class="out">—</div>
 </div>
 <div class="card"><h2>Quick presets</h2><div class="presets">
- <button class="preset" data-src="qr-sticker-nuernberg">📍 Nürnberg sticker</button>
- <button class="preset" data-src="qr-sticker-croatia">🇭🇷 Croatia sticker</button>
- <button class="preset" data-src="instagram-bio">📸 Instagram bio</button>
- <button class="preset" data-src="tiktok-bio">♪ TikTok bio</button>
- <button class="preset" data-src="discord">🎮 Discord</button>
- <button class="preset" data-src="whatsapp">💬 WhatsApp</button>
+ <button class="preset" data-campaign="qr-sticker-nuernberg">📍 Nürnberg sticker</button>
+ <button class="preset" data-campaign="qr-sticker-croatia">🇭🇷 Croatia sticker</button>
+ <button class="preset" data-campaign="instagram-bio">📸 Instagram bio</button>
+ <button class="preset" data-campaign="tiktok-bio">♪ TikTok bio</button>
+ <button class="preset" data-campaign="discord">🎮 Discord</button>
+ <button class="preset" data-campaign="whatsapp">💬 WhatsApp</button>
  </div></div>
 <div class="card"><a href="./founder.html" style="color:#f87171;font-weight:900">← Founder Dashboard</a></div>
 </main>
@@ -35,6 +35,6 @@ function build(){
  out.textContent=url.toString();
 }
 document.getElementById("build").onclick=build;
-document.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{source.value=b.dataset.src;build()});
+document.querySelectorAll("[data-campaign]").forEach(b=>b.onclick=()=>{source.value=b.dataset.campaign;build()});
 build();
 </script></body></html>
