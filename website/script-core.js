@@ -183,6 +183,10 @@ async function loadPremiumPublicStatus(){
     const r=await fetch(premiumStatusEndpoint,{headers:{Accept:"application/json"}});
     if(!r.ok)return;
     const data=await r.json();
+    const foundersOfferEnabled=data?.launch?.feature_flags?.founders_offer!==false;
+    document.querySelectorAll(".tier-founders,.founders-live,.why-now").forEach(el=>{
+      el.hidden=!foundersOfferEnabled;
+    });
     const el=document.querySelector("[data-founders-remaining]");
     if(el&&data?.ok&&Number.isFinite(data?.founders?.remaining))el.textContent=String(data.founders.remaining);
 
