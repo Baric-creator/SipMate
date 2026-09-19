@@ -43,6 +43,23 @@ type GalleryPhoto = {
   sort_order: number | null;
 };
 
+function normalizedImageUpload(asset: ImagePicker.ImagePickerAsset) {
+  const originalExtension = asset.fileName?.split('.').pop()?.toLowerCase() ?? '';
+  const rawMime = (asset.mimeType ?? '').toLowerCase();
+
+  if (rawMime === 'image/jpeg' || rawMime === 'image/jpg' || ['jpg', 'jpeg'].includes(originalExtension)) {
+    return { extension: 'jpg', contentType: 'image/jpeg' };
+  }
+  if (rawMime === 'image/png' || originalExtension === 'png') {
+    return { extension: 'png', contentType: 'image/png' };
+  }
+  if (rawMime === 'image/webp' || originalExtension === 'webp') {
+    return { extension: 'webp', contentType: 'image/webp' };
+  }
+
+  return null;
+}
+
 export default function EditProfileScreen() {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -290,7 +307,13 @@ export default function EditProfileScreen() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.65,
+        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+      });
       if (result.canceled) return;
       const image = result.assets[0];
       const response = await fetch(image.uri);
@@ -299,11 +322,34 @@ export default function EditProfileScreen() {
         return;
       }
 
+      const normalized = normalizedImageUpload(image);
+      if (!normalized) {
+        showAlert(
+          i18n.language?.startsWith('de')
+            ? 'Dieses Fotoformat wird nicht unterstützt. Bitte JPG, PNG oder WEBP wählen.'
+            : i18n.language?.startsWith('hr')
+              ? 'Ovaj format fotografije nije podržan. Odaberi JPG, PNG ili WEBP.'
+              : 'This photo format is not supported. Choose JPG, PNG or WEBP.'
+        );
+        return;
+      }
+
       const arrayBuffer = await response.arrayBuffer();
-      const fileExt = image.fileName?.split('.').pop()?.toLowerCase() || 'jpg';
-      const filePath = `${session.user.id}/avatar.${fileExt}`;
+      if (arrayBuffer.byteLength > 10 * 1024 * 1024) {
+        showAlert(
+          i18n.language?.startsWith('de')
+            ? 'Das Foto ist zu groß. Bitte ein Foto unter 10 MB wählen.'
+            : i18n.language?.startsWith('hr')
+              ? 'Fotografija je prevelika. Odaberi fotografiju manju od 10 MB.'
+              : 'The photo is too large. Choose a photo under 10 MB.'
+        );
+        return;
+      }
+
+      const filePath = `${session.user.id}/avatar.${normalized.extension}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arrayBuffer, {
-        contentType: image.mimeType || 'image/jpeg', upsert: true,
+        contentType: normalized.contentType,
+        upsert: true,
       });
 
       if (uploadError) {
@@ -361,7 +407,12 @@ export default function EditProfileScreen() {
     }
 
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.65,
+        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+      });
       if (result.canceled) return;
       const asset = result.assets[0];
       const response = await fetch(asset.uri);
@@ -369,11 +420,34 @@ export default function EditProfileScreen() {
         showAlert(t('editProfileScreen.imageReadError'));
         return;
       }
+      const normalized = normalizedImageUpload(asset);
+      if (!normalized) {
+        showAlert(
+          i18n.language?.startsWith('de')
+            ? 'Dieses Fotoformat wird nicht unterstützt. Bitte JPG, PNG oder WEBP wählen.'
+            : i18n.language?.startsWith('hr')
+              ? 'Ovaj format fotografije nije podržan. Odaberi JPG, PNG ili WEBP.'
+              : 'This photo format is not supported. Choose JPG, PNG or WEBP.'
+        );
+        return;
+      }
+
       const arrayBuffer = await response.arrayBuffer();
-      const extension = asset.fileName?.split('.').pop()?.toLowerCase() || 'jpg';
-      const filePath = `${profile.id}/gallery-${Date.now()}.${extension}`;
+      if (arrayBuffer.byteLength > 10 * 1024 * 1024) {
+        showAlert(
+          i18n.language?.startsWith('de')
+            ? 'Das Foto ist zu groß. Bitte ein Foto unter 10 MB wählen.'
+            : i18n.language?.startsWith('hr')
+              ? 'Fotografija je prevelika. Odaberi fotografiju manju od 10 MB.'
+              : 'The photo is too large. Choose a photo under 10 MB.'
+        );
+        return;
+      }
+
+      const filePath = `${profile.id}/gallery-${Date.now()}.${normalized.extension}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arrayBuffer, {
-        contentType: asset.mimeType || 'image/jpeg', upsert: false,
+        contentType: normalized.contentType,
+        upsert: false,
       });
       if (uploadError) {
         console.log('GALLERY UPLOAD ERROR:', uploadError.message);
