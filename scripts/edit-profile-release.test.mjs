@@ -38,3 +38,14 @@ test('Premium Nearby filters persist custom location and expose Save Changes', (
   assert.match(source, /SPREMI PROMJENE/);
   assert.match(source, /ÄNDERUNGEN SPEICHERN/);
 });
+
+
+test('profile photo uploads normalize mime and reject unsupported formats clearly', () => {
+  const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
+  assert.match(source, /function normalizedImageUpload/);
+  assert.match(source, /image\/jpg/);
+  assert.match(source, /image\/jpeg/);
+  assert.match(source, /preferredAssetRepresentationMode/);
+  assert.match(source, /UIImagePickerPreferredAssetRepresentationMode\.Compatible/);
+  assert.match(source, /arrayBuffer\.byteLength > 10 \* 1024 \* 1024/);
+});
