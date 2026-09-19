@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -14,6 +14,7 @@ import {
 
 import { showAlert } from '../lib/notify';
 import { supabase } from '../lib/supabase';
+import { loadAppRemoteConfig } from '../lib/remote-config';
 import { ProfileCardSkeleton } from '../components/Skeleton';
 import { FutureBackdrop } from '../components/FutureBackdrop';
 
@@ -25,6 +26,7 @@ export default function NearbyScreen() {
 
   const [nearbyProfiles, setNearbyProfiles] =
     useState<any[]>([]);
+  const [nearbyEnabled, setNearbyEnabled] = useState(true);
 
   const nearbyRequestIdRef = useRef(0);
   const nearbyUserIdRef = useRef<string | null>(null);
@@ -94,6 +96,14 @@ export default function NearbyScreen() {
     loadingSkipped,
     setLoadingSkipped,
   ] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void loadAppRemoteConfig().then((config) => {
+      if (active) setNearbyEnabled(config.featureFlags.nearby);
+    });
+    return () => { active = false; };
+  }, []);
 
   const drinkFilters = [
     {
@@ -629,6 +639,20 @@ export default function NearbyScreen() {
         error
       );
     }
+  }
+
+  if (!nearbyEnabled) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }]}>
+        <Text style={{ fontSize: 52 }}>📍</Text>
+        <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '900', textAlign: 'center', marginTop: 16 }}>
+          {language === 'de' ? 'Nearby ist kurz nicht verfügbar' : language === 'hr' ? 'Nearby je privremeno nedostupan' : 'Nearby is temporarily unavailable'}
+        </Text>
+        <Text style={{ color: '#A1A1AA', textAlign: 'center', lineHeight: 21, marginTop: 10 }}>
+          {language === 'de' ? 'Diese Funktion wurde vorübergehend deaktiviert.' : language === 'hr' ? 'Ova je funkcija privremeno isključena.' : 'This feature has been temporarily disabled.'}
+        </Text>
+      </View>
+    );
   }
 
   return (
