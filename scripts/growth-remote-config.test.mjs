@@ -62,3 +62,13 @@ test('Founder tools expose app health and campaign attribution controls', () => 
   assert.match(health, /get_admin_growth_funnel/);
   assert.match(campaigns, /qr-sticker-nuernberg/);
 });
+
+
+test('invite and profile sharing use attributed SipMate handoff links', () => {
+  const invite = fs.readFileSync('src/app/invite.tsx', 'utf8');
+  const profile = fs.readFileSync('src/app/user-profile.tsx', 'utf8');
+  assert.match(invite, /buildInviteUrl/);
+  assert.match(invite, /invite_code/);
+  assert.match(profile, /profile-share/);
+  assert.match(profile, /open\.html\?route=user-profile/);
+});
