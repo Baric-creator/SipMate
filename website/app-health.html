@@ -40,14 +40,24 @@ const defs=[
   ['pending_reports','Pending reports','warn'],
   ['client_errors_24h','Client errors · 24h','bad'],
   ['verification_failures_24h','Photo verify failures · 24h','bad'],
-  ['profiles_total','Profiles total','']
+  ['profiles_total','Profiles total',''],
+  ['waitlist_total','Waitlist total',''],
+  ['waitlist_confirmed','Waitlist confirmed','good'],
+  ['app_registered','Waitlist → app','good'],
+  ['referred_profiles','Referred profiles','']
 ];
 async function load(){
   document.getElementById('meta').textContent='Loading…';
-  const {data,error}=await supabase.rpc('get_admin_app_health');
+  const [{data:health,error:healthError},{data:funnel,error:funnelError}]=await Promise.all([
+    supabase.rpc('get_admin_app_health'),
+    supabase.rpc('get_admin_growth_funnel')
+  ]);
+  const error=healthError||funnelError;
   if(error){document.getElementById('meta').textContent=error.message;return}
+  const data={...(health||{}),...(funnel||{})};
   document.getElementById('stats').innerHTML=defs.map(([key,label,cls])=>`<div class="stat"><small>${label}</small><strong class="${cls}">${data?.[key]??0}</strong></div>`).join('');
-  document.getElementById('meta').textContent=data?.generated_at?`Updated ${new Date(data.generated_at).toLocaleString()}`:'Updated';
+  const conversion=Number(data.waitlist_total||0)>0?Math.round((Number(data.app_registered||0)/Number(data.waitlist_total))*100):0;
+  document.getElementById('meta').textContent=`Waitlist → app conversion: ${conversion}% · Updated ${new Date(data.generated_at||Date.now()).toLocaleString()}`;
 }
 async function show(session){document.getElementById('login').classList.toggle('hidden',!!session);document.getElementById('dashboard').classList.toggle('hidden',!session);if(session)await load()}
 document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();const {data,error}=await supabase.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});document.getElementById('password').value='';if(error){document.getElementById('loginMsg').textContent=error.message;return}await show(data.session)};
