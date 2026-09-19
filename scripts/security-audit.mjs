@@ -185,6 +185,7 @@ if (exists('supabase/config.toml')) {
     'stripe-webhook',
     'discord-oauth',
     'join-waitlist',
+    'public-launch-status',
   ]);
   const unreviewedManualAuthFunctions = manualJwtFunctions.filter((fn) => !reviewedManualAuthFunctions.has(fn));
   assert(unreviewedManualAuthFunctions.length === 0, `Unreviewed verify_jwt=false function(s): ${unreviewedManualAuthFunctions.join(', ')}`);
