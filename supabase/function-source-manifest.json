@@ -1,0 +1,5 @@
+{
+  "claim-attribution": { "verify_jwt": true },
+  "public-launch-status": { "verify_jwt": false },
+  "admin-launch-config": { "verify_jwt": true }
+}
