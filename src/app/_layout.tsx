@@ -1,8 +1,9 @@
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { AppState, Linking, Pressable, Text, View } from 'react-native';
+import { AppState, Linking, Platform, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -10,6 +11,7 @@ import '../lib/i18n';
 import { clearPresence, touchPresence } from '../lib/presence';
 import { captureGrowthAttributionFromUrl, clearGrowthAttribution, getGrowthAttribution } from '../lib/growth-attribution';
 import { registerForPushNotificationsAsync } from '../lib/push-notifications';
+import { AppRemoteConfig, loadAppRemoteConfig } from '../lib/remote-config';
 import { supabase } from '../lib/supabase';
 
 const hiddenTabBar = { display: 'none' as const };
@@ -67,6 +69,7 @@ export default function RootLayout() {
   const router = useRouter();
   const { i18n } = useTranslation();
   const [supportExpanded, setSupportExpanded] = useState(false);
+  const [remoteConfig, setRemoteConfig] = useState<AppRemoteConfig | null>(null);
   const bottomInset = Math.max(insets.bottom, 10);
   const language = i18n.language?.split('-')[0];
 
@@ -86,6 +89,8 @@ export default function RootLayout() {
     language === 'hr' ? '1545891206322458775' :
     '1545880341699493978';
   const supportUrl = `https://discord.com/channels/1545876541387440188/${supportChannelId}`;
+  const androidVersionCode = Number(Constants.expoConfig?.android?.versionCode ?? 1);
+  const updateRequired = Platform.OS === 'android' && remoteConfig !== null && androidVersionCode < remoteConfig.minAndroidVersionCode;
 
   useEffect(() => {
     let mounted = true;
@@ -161,6 +166,23 @@ export default function RootLayout() {
       deepLinkSubscription.remove();
     };
   }, [router]);
+
+  useEffect(() => {
+    let active = true;
+    const refreshRemoteConfig = () => {
+      void loadAppRemoteConfig().then((config) => {
+        if (active) setRemoteConfig(config);
+      });
+    };
+    refreshRemoteConfig();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refreshRemoteConfig();
+    });
+    return () => {
+      active = false;
+      subscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     let heartbeat: ReturnType<typeof setInterval> | null = null;
@@ -321,6 +343,42 @@ export default function RootLayout() {
         <Tabs.Screen name="terms" options={{ href: null }} />
         <Tabs.Screen name="user-profile" options={{ href: null }} />
       </Tabs>
+
+      {(remoteConfig?.maintenanceMode || updateRequired) && (
+        <View
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: '#09090B',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 28,
+          }}
+        >
+          <Text style={{ fontSize: 58 }}>{updateRequired ? '⬆️' : '🛠️'}</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '900', textAlign: 'center', marginTop: 18 }}>
+            {updateRequired
+              ? (language === 'de' ? 'SipMate aktualisieren' : language === 'hr' ? 'Ažuriraj SipMate' : 'Update SipMate')
+              : (language === 'de' ? 'Kurze Wartungspause' : language === 'hr' ? 'Kratko održavanje' : 'Quick maintenance break')}
+          </Text>
+          <Text style={{ color: '#A1A1AA', fontSize: 15, lineHeight: 23, textAlign: 'center', marginTop: 12, maxWidth: 430 }}>
+            {updateRequired
+              ? (language === 'de' ? 'Eine neuere SipMate-Version ist erforderlich, um fortzufahren.' : language === 'hr' ? 'Za nastavak je potrebna novija verzija SipMatea.' : 'A newer SipMate version is required to continue.')
+              : (language === 'de' ? 'SipMate wird gerade kurz aktualisiert. Versuch es gleich noch einmal.' : language === 'hr' ? 'SipMate se trenutno kratko održava. Pokušaj ponovno uskoro.' : 'SipMate is temporarily under maintenance. Try again shortly.')}
+          </Text>
+          {updateRequired && remoteConfig?.playStoreUrl && (
+            <Pressable
+              onPress={() => void Linking.openURL(remoteConfig.playStoreUrl!)}
+              style={{ marginTop: 24, backgroundColor: '#DC2626', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16 }}
+            >
+              <Text style={{ color: '#FFFFFF', fontWeight: '900' }}>
+                {language === 'de' ? 'GOOGLE PLAY ÖFFNEN' : language === 'hr' ? 'OTVORI GOOGLE PLAY' : 'OPEN GOOGLE PLAY'}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      )}
 
       {!hideSupport && (
         <View
