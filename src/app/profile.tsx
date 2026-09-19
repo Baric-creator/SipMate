@@ -418,8 +418,8 @@ const styles = StyleSheet.create({
   progressTrack: { height: 6, backgroundColor: '#25252A', borderRadius: 999, overflow: 'hidden', marginTop: 14 },
   progressFill: { height: '100%', backgroundColor: '#EF4444', borderRadius: 999, shadowColor: '#EF4444', shadowOpacity: 0.35, shadowRadius: 8 },
 
-  quickGrid: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  quickCard: { flex: 1, minHeight: 94, backgroundColor: 'rgba(18,14,16,0.96)', borderWidth: 1, borderColor: '#6B2A30', borderRadius: 24, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, shadowColor: '#EF4444', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.12, shadowRadius: 16, elevation: 4 },
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
+  quickCard: { flexGrow: 1, flexBasis: '46%', minHeight: 94, backgroundColor: 'rgba(18,14,16,0.96)', borderWidth: 1, borderColor: '#6B2A30', borderRadius: 24, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, shadowColor: '#EF4444', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.12, shadowRadius: 16, elevation: 4 },
   quickIcon: { fontSize: 22, marginBottom: 7 },
   quickLabel: { color: '#E4E4E7', fontSize: 10, fontWeight: '800', textAlign: 'center', fontFamily: 'sans-serif' },
 
