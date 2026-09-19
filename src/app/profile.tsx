@@ -292,6 +292,10 @@ export default function UserProfileScreen() {
             <Text style={styles.quickIcon}>💎</Text>
             <Text style={styles.quickLabel}>{t('profileScreen.premium')}</Text>
           </Pressable>
+          <Pressable style={({ pressed }) => [styles.quickCard, pressed && styles.cardPressed]} onPress={() => router.push('/account-safety')}>
+            <Text style={styles.quickIcon}>🛡️</Text>
+            <Text style={styles.quickLabel}>{language === 'de' ? 'Sicherheit' : language === 'hr' ? 'Sigurnost' : 'Safety'}</Text>
+          </Pressable>
         </View>
 
         <View style={styles.infoCard}>
