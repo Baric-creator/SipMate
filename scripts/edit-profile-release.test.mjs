@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 test('edit profile can resolve a typed city when GPS permission is unavailable', () => {
   const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
-  assert.match(source, /LOCATION PERMISSION DENIED: using typed city coordinates/);
+  assert.match(source, /PROFILE LOCATION: using manually selected city coordinates/);
   assert.match(source, /nominatim\.openstreetmap\.org\/search/);
   assert.match(source, /locationUnavailableCityFallback/);
 });
