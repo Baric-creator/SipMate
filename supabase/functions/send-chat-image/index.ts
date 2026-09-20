@@ -221,7 +221,7 @@ Deno.serve(async (req: Request) => {
       image_ai_score: Number.isFinite(aiScore) ? aiScore : null,
       image_moderation_status: "approved",
       image_verification_provider: verificationProvider,
-    }).select("id,conversation_id,sender_id,content,created_at,read_at,message_type,image_path,image_ai_score,image_moderation_status").single();
+    }).select("id,conversation_id,sender_id,content,created_at,read_at,message_type,image_path,image_ai_score,image_moderation_status,image_verification_provider").single();
 
     if (messageError) {
       await sb.storage.from(BUCKET).remove([approvedPath]);
