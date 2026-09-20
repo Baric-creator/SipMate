@@ -74,6 +74,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const sb = createClient(supabaseUrl, serviceKey, { auth:{persistSession:false} });
+    await logSafetyEvent(sb,"attempt_received");
 
     try {
       const { data: staleCandidates } = await sb.storage.from(BUCKET).list(`pending/${user.id}`, { limit: 100 });
@@ -104,6 +105,7 @@ Deno.serve(async (req: Request) => {
     const mine = (profiles || []).find((p:any)=>p.id===user.id);
     const other = (profiles || []).find((p:any)=>p.id===otherId);
     if (!premiumActive(mine) || !premiumActive(other)) {
+      await logSafetyEvent(sb,"both_premium_required");
       return json({ok:false,error:"both_premium_required"},200,headers);
     }
 
@@ -113,23 +115,32 @@ Deno.serve(async (req: Request) => {
     if (cheersError) throw cheersError;
     const mutual = (cheers || []).some((c:any)=>c.sender_id===user.id&&c.receiver_id===otherId)
       && (cheers || []).some((c:any)=>c.sender_id===otherId&&c.receiver_id===user.id);
-    if (!mutual) return json({ok:false,error:"mutual_cheers_required"},200,headers);
+    if (!mutual) {
+      await logSafetyEvent(sb,"mutual_cheers_required");
+      return json({ok:false,error:"mutual_cheers_required"},200,headers);
+    }
 
     const { data:fileBlob, error:downloadError } = await sb.storage.from(BUCKET).download(pendingPath);
-    if (downloadError || !fileBlob) return json({ok:false,error:"upload_not_found"},404,headers);
+    if (downloadError || !fileBlob) {
+      await logSafetyEvent(sb,"upload_missing");
+      return json({ok:false,error:"upload_not_found"},404,headers);
+    }
     if (fileBlob.size <= 0 || fileBlob.size > MAX_BYTES) {
       await sb.storage.from(BUCKET).remove([pendingPath]);
+      await logSafetyEvent(sb,"file_too_large");
       return json({ok:false,error:"file_too_large"},200,headers);
     }
     const mime = fileBlob.type || "";
     if (!ALLOWED_TYPES.has(mime)) {
       await sb.storage.from(BUCKET).remove([pendingPath]);
+      await logSafetyEvent(sb,"unsupported_image_type");
       return json({ok:false,error:"unsupported_image_type"},200,headers);
     }
 
     const apiUser = Deno.env.get("SIGHTENGINE_API_USER");
     const apiSecret = Deno.env.get("SIGHTENGINE_API_SECRET");
     if (!apiUser || !apiSecret) {
+      await logSafetyEvent(sb,"verification_not_configured");
       await sb.storage.from(BUCKET).remove([pendingPath]);
       return json({ok:false,error:"image_verification_not_configured"},200,headers);
     }
@@ -196,6 +207,7 @@ Deno.serve(async (req: Request) => {
       throw messageError;
     }
 
+    await logSafetyEvent(sb,"approved",aiScore,nsfwScore);
     return json({ok:true,message,verification:{ai_score:aiScore}},200,headers);
   } catch (error) {
     console.error("send-chat-image", error);
