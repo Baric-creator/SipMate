@@ -16,7 +16,7 @@ import {
   Vibration,
 } from 'react-native';
 
-import { chooseOption, showAlert } from '../lib/notify';
+import { askConfirmation, chooseOption, showAlert } from '../lib/notify';
 import { isProfileOnline } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 import { loadAppRemoteConfig } from '../lib/remote-config';
@@ -67,6 +67,10 @@ const copy = {
     reportPhotoDuplicate: 'You already reported this photo.',
     photoRemoved: 'Photo removed by moderation',
     reportLimit: 'You reached the photo report limit for today. Try again later.',
+    deletePhotoTitle: 'Delete photo?',
+    deletePhotoBody: 'This will remove the photo from the chat for both people.',
+    deletePhoto: 'DELETE',
+    deletePhotoError: 'Photo could not be deleted.',
   },
   de: {
     active: 'AKTIV — Bereit für einen Drink', inactive: 'INAKTIV', connected: 'CHEERS verbunden',
@@ -99,6 +103,10 @@ const copy = {
     reportPhotoDuplicate: 'Du hast dieses Foto bereits gemeldet.',
     photoRemoved: 'Foto wurde von der Moderation entfernt',
     reportLimit: 'Du hast das Foto-Meldelimit für heute erreicht. Versuch es später erneut.',
+    deletePhotoTitle: 'Foto löschen?',
+    deletePhotoBody: 'Das Foto wird für beide Personen aus dem Chat entfernt.',
+    deletePhoto: 'LÖSCHEN',
+    deletePhotoError: 'Foto konnte nicht gelöscht werden.',
   },
   hr: {
     active: 'AKTIVAN — Spreman za piće', inactive: 'NEAKTIVAN', connected: 'CHEERS povezani',
@@ -131,6 +139,10 @@ const copy = {
     reportPhotoDuplicate: 'Ovu sliku si već prijavio.',
     photoRemoved: 'Slika je uklonjena od strane moderacije',
     reportLimit: 'Dosegnuo si dnevni limit prijava fotografija. Pokušaj ponovno kasnije.',
+    deletePhotoTitle: 'Obrisati sliku?',
+    deletePhotoBody: 'Slika će biti uklonjena iz chata za obje osobe.',
+    deletePhoto: 'OBRIŠI',
+    deletePhotoError: 'Slika nije mogla biti obrisana.',
   },
 } as const;
 
@@ -379,6 +391,19 @@ export default function ChatScreen() {
         if (updated.conversation_id !== activeConversationIdRef.current) return;
         setMessages((prev) => prev.map((m) => m.id === updated.id ? updated : m));
       })
+      .on('postgres_changes', {
+        event: 'DELETE', schema: 'public', table: 'messages',
+      }, (payload) => {
+        const deleted = payload.old as Partial<Message>;
+        if (!deleted?.id) return;
+        const id = String(deleted.id);
+        setMessages((prev) => prev.filter((m) => String(m.id) !== id));
+        setImageUrls((current) => {
+          const next = { ...current };
+          delete next[id];
+          return next;
+        });
+      })
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if (String(conversationId) !== activeConversationIdRef.current) return;
         if (payload && payload.userId !== myUserId) setOtherUserTyping(Boolean(payload.isTyping));
@@ -606,6 +631,46 @@ export default function ChatScreen() {
     }
   }
 
+  async function deleteOwnChatImage(message: Message) {
+    if (message.message_type !== 'image' || message.sender_id !== myUserId) return;
+
+    const confirmed = await askConfirmation(
+      text.deletePhotoTitle,
+      text.deletePhotoBody,
+      text.cancel,
+      text.deletePhoto
+    );
+    if (!confirmed) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user || session.user.id !== myUserId) return;
+
+    const { data, error } = await supabase.functions.invoke('delete-chat-image', {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: { messageId: String(message.id) },
+    });
+
+    if (error || !data?.ok) {
+      console.log('DELETE CHAT PHOTO ERROR:', data?.error ?? error?.message ?? error);
+      showAlert(text.deletePhotoError);
+      return;
+    }
+
+    const id = String(message.id);
+    setMessages((prev) => prev.filter((item) => String(item.id) !== id));
+    setImageUrls((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+    setImageLoadState((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+    Vibration.vibrate(35);
+  }
+
   async function reportChatImage(message: Message) {
     if (!otherUserId || message.message_type !== 'image' || message.sender_id === myUserId) return;
     const reason = await chooseOption(
@@ -747,6 +812,12 @@ export default function ChatScreen() {
                     ) : (
                       <>
                         {imageUrls[String(item.id)] ? (
+                          <TouchableOpacity
+                            activeOpacity={mine ? 0.9 : 1}
+                            onLongPress={mine ? () => void deleteOwnChatImage(item) : undefined}
+                            delayLongPress={450}
+                            disabled={!mine}
+                          >
                           <Image
                             source={{ uri: imageUrls[String(item.id)] }}
                             style={styles.messageImage}
@@ -765,6 +836,7 @@ export default function ChatScreen() {
                               }
                             }}
                           />
+                          </TouchableOpacity>
                         ) : (
                           <TouchableOpacity style={styles.imagePlaceholder} onPress={() => void loadImageUrl(item)} disabled={imageLoadState[String(item.id)] === 'loading'}>
                             <Text style={styles.imagePlaceholderIcon}>🔒📷</Text>
