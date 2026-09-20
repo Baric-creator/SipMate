@@ -509,7 +509,8 @@ export default function ChatScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: false,
-        quality: 0.9,
+        quality: 0.7,
+        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
       });
       if (result.canceled) return;
       const asset = result.assets[0];
@@ -518,8 +519,18 @@ export default function ChatScreen() {
         showAlert(text.photoTooLarge);
         return;
       }
-      const mime = asset.mimeType || 'image/jpeg';
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(mime)) {
+      const rawMime = (asset.mimeType || '').toLowerCase();
+      const originalExt = asset.fileName?.split('.').pop()?.toLowerCase() || '';
+      const mime =
+        rawMime === 'image/jpg' || rawMime === 'image/jpeg' || ['jpg', 'jpeg'].includes(originalExt)
+          ? 'image/jpeg'
+          : rawMime === 'image/png' || originalExt === 'png'
+            ? 'image/png'
+            : rawMime === 'image/webp' || originalExt === 'webp'
+              ? 'image/webp'
+              : '';
+
+      if (!mime) {
         showAlert(text.photoType);
         return;
       }
