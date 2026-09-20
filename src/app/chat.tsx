@@ -1,5 +1,4 @@
-impo
-  premiumPhotoBadge: { backgroundColor: '#1F2937', borderColor: '#374151' },rt * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -964,6 +963,7 @@ const styles = StyleSheet.create({
   imagePlaceholderText: { color: '#A1A1AA', fontSize: 11, fontWeight: '800' },
   imageFooterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 6 },
   verifiedBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: '#102419', borderWidth: 1, borderColor: '#245A38' },
+  premiumPhotoBadge: { backgroundColor: '#1F2937', borderColor: '#374151' },
   reportImageButton: { paddingHorizontal: 7, paddingVertical: 4, borderRadius: 999, backgroundColor: '#201313', borderWidth: 1, borderColor: '#5A2A2A' },
   reportImageText: { color: '#FCA5A5', fontSize: 9, fontWeight: '800' },
   verifiedBadgeText: { color: '#67DC98', fontSize: 9, fontWeight: '900', letterSpacing: 0.4 },
