@@ -1210,6 +1210,26 @@ export default function NearbyScreen() {
                 />
 
                 <TouchableOpacity
+                  style={styles.useMyLocationButton}
+                  onPress={() => void useCurrentPremiumLocation()}
+                  disabled={locationLoading}
+                >
+                  <Text style={styles.useMyLocationText}>
+                    {locationLoading
+                      ? (language === 'de'
+                          ? 'STANDORT WIRD GESUCHT…'
+                          : language === 'hr'
+                            ? 'TRAŽIM LOKACIJU…'
+                            : 'FINDING LOCATION…')
+                      : (language === 'de'
+                          ? '📍 AKTUELLEN STANDORT VERWENDEN'
+                          : language === 'hr'
+                            ? '📍 KORISTI TRENUTNU LOKACIJU'
+                            : '📍 USE CURRENT LOCATION')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   style={
                     styles.applyLocationButton
                   }
