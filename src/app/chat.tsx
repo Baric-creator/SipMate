@@ -1,4 +1,5 @@
-import * as ImagePicker from 'expo-image-picker';
+impo
+  premiumPhotoBadge: { backgroundColor: '#1F2937', borderColor: '#374151' },rt * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,7 @@ type Message = {
   image_path?: string | null;
   image_ai_score?: number | null;
   image_moderation_status?: string | null;
+  image_verification_provider?: string | null;
 };
 
 const copy = {
@@ -52,6 +54,8 @@ const copy = {
     photoType: 'Use a JPG, PNG or WebP image.',
     photoError: 'Photo could not be sent.',
     verifiedPhoto: 'VERIFIED PHOTO',
+    premiumPhoto: 'PREMIUM FOTOGRAFIJA',
+    premiumPhoto: 'PREMIUM PHOTO',
     photoLoading: 'Loading secure photo…',
     photoRetry: 'Tap to retry',
     cancel: 'Cancel',
@@ -83,6 +87,7 @@ const copy = {
     photoType: 'Bitte JPG, PNG oder WebP verwenden.',
     photoError: 'Foto konnte nicht gesendet werden.',
     verifiedPhoto: 'VERIFIZIERTES FOTO',
+    premiumPhoto: 'PREMIUM FOTO',
     photoLoading: 'Sicheres Foto wird geladen…',
     photoRetry: 'Zum erneuten Laden tippen',
     cancel: 'Abbrechen',
@@ -386,7 +391,7 @@ export default function ChatScreen() {
   async function loadMessages(requestId: number) {
     if (!conversationId) return;
     setLoading(true);
-    const { data, error } = await supabase.from('messages').select('id, conversation_id, sender_id, content, created_at, read_at, message_type, image_path, image_ai_score, image_moderation_status').eq('conversation_id', String(conversationId)).order('created_at', { ascending: true });
+    const { data, error } = await supabase.from('messages').select('id, conversation_id, sender_id, content, created_at, read_at, message_type, image_path, image_ai_score, image_moderation_status, image_verification_provider').eq('conversation_id', String(conversationId)).order('created_at', { ascending: true });
     if (requestId !== messagesRequestIdRef.current) return;
     if (error) console.log('MESSAGES LOAD ERROR:', error.message);
     else {
@@ -442,7 +447,7 @@ export default function ChatScreen() {
       }
       const { data, error } = await supabase.from('messages').insert({
         conversation_id: String(conversationId), sender_id: session.user.id, content,
-      }).select('id, conversation_id, sender_id, content, created_at, read_at, message_type, image_path, image_ai_score, image_moderation_status').single();
+      }).select('id, conversation_id, sender_id, content, created_at, read_at, message_type, image_path, image_ai_score, image_moderation_status, image_verification_provider').single();
       if (error) {
         console.log('MESSAGE SEND ERROR:', error.message);
         const blocked = error.code === '42501' || error.message.toLowerCase().includes('row-level security');
@@ -726,7 +731,13 @@ export default function ChatScreen() {
           return <View key={String(item.id)}>
             {showDate && <View style={styles.dateSeparator}><Text style={styles.dateSeparatorText}>{getDateLabel(item.created_at)}</Text></View>}
             <View style={[styles.messageRow, mine ? styles.messageRowMine : styles.messageRowOther]}>
-              <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
+              <View style={[
+                styles.bubble,
+                mine ? styles.bubbleMine : styles.bubbleOther,
+                item.message_type === 'image' && styles.imageBubble,
+                item.message_type === 'image' && mine && styles.imageBubbleMine,
+                item.message_type === 'image' && !mine && styles.imageBubbleOther,
+              ]}>
                 {item.message_type === 'image' ? (
                   <View>
                     {item.image_moderation_status === 'rejected' ? (
@@ -764,7 +775,14 @@ export default function ChatScreen() {
                           </TouchableOpacity>
                         )}
                         <View style={styles.imageFooterRow}>
-                          <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>✓ {text.verifiedPhoto}</Text></View>
+                          <View style={[
+                            styles.verifiedBadge,
+                            item.image_verification_provider !== 'sightengine' && styles.premiumPhotoBadge,
+                          ]}>
+                            <Text style={styles.verifiedBadgeText}>
+                              {item.image_verification_provider === 'sightengine' ? `✓ ${text.verifiedPhoto}` : `📷 ${text.premiumPhoto}`}
+                            </Text>
+                          </View>
                           {!mine && (
                             <TouchableOpacity style={styles.reportImageButton} onPress={() => void reportChatImage(item)}>
                               <Text style={styles.reportImageText}>⚠ {text.reportPhoto}</Text>
@@ -937,6 +955,9 @@ const styles = StyleSheet.create({
   inputBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#2B2224', backgroundColor: '#0B0B0E' },
   photoButton: { width: 46, height: 46, borderRadius: 23, marginRight: 8, backgroundColor: '#151519', borderWidth: 1, borderColor: '#3A2A2D', alignItems: 'center', justifyContent: 'center' },
   photoButtonText: { fontSize: 18 },
+  imageBubble: { paddingHorizontal: 8, paddingTop: 8, paddingBottom: 7, backgroundColor: '#111114' },
+  imageBubbleMine: { borderColor: '#7F1D1D', shadowOpacity: 0.06, shadowRadius: 5 },
+  imageBubbleOther: { borderColor: '#303036' },
   messageImage: { width: 230, height: 230, maxWidth: '100%', borderRadius: 14, backgroundColor: '#0B0B0E' },
   imagePlaceholder: { width: 220, height: 150, borderRadius: 14, backgroundColor: '#0B0B0E', borderWidth: 1, borderColor: '#34343A', alignItems: 'center', justifyContent: 'center' },
   imagePlaceholderIcon: { fontSize: 26, marginBottom: 7 },
