@@ -93,11 +93,13 @@ Deno.serve(async (req: Request) => {
     if (!conversation || (conversation.user_one !== user.id && conversation.user_two !== user.id)) {
       return json({ok:false,error:"conversation_forbidden"},403,headers);
     }
+    await logSafetyEvent(sb,"conversation_ok");
     const otherId = conversation.user_one === user.id ? conversation.user_two : conversation.user_one;
 
     const { data:blockState, error:blockError } = await sb.rpc("is_blocked_between",{user_a:user.id,user_b:otherId});
     if (blockError) throw blockError;
     if (blockState) return json({ok:false,error:"blocked"},403,headers);
+    await logSafetyEvent(sb,"block_check_ok");
 
     const { data:profiles, error:profilesError } = await sb
       .from("profiles").select("id,is_premium,premium_until").in("id",[user.id,otherId]);
@@ -108,6 +110,7 @@ Deno.serve(async (req: Request) => {
       await logSafetyEvent(sb,"both_premium_required");
       return json({ok:false,error:"both_premium_required"},200,headers);
     }
+    await logSafetyEvent(sb,"premium_ok");
 
     const { data:cheers, error:cheersError } = await sb
       .from("cheers").select("sender_id,receiver_id")
@@ -119,12 +122,14 @@ Deno.serve(async (req: Request) => {
       await logSafetyEvent(sb,"mutual_cheers_required");
       return json({ok:false,error:"mutual_cheers_required"},200,headers);
     }
+    await logSafetyEvent(sb,"mutual_ok");
 
     const { data:fileBlob, error:downloadError } = await sb.storage.from(BUCKET).download(pendingPath);
     if (downloadError || !fileBlob) {
       await logSafetyEvent(sb,"upload_missing");
       return json({ok:false,error:"upload_not_found"},404,headers);
     }
+    await logSafetyEvent(sb,"download_ok");
     if (fileBlob.size <= 0 || fileBlob.size > MAX_BYTES) {
       await sb.storage.from(BUCKET).remove([pendingPath]);
       await logSafetyEvent(sb,"file_too_large");
@@ -145,6 +150,7 @@ Deno.serve(async (req: Request) => {
       return json({ok:false,error:"image_verification_not_configured"},200,headers);
     }
 
+    await logSafetyEvent(sb,"verification_start");
     const fd = new FormData();
     fd.append("media", fileBlob, pendingPath.split("/").pop() || "photo.jpg");
     fd.append("models", "genai,nudity-2.1");
@@ -211,6 +217,14 @@ Deno.serve(async (req: Request) => {
     return json({ok:true,message,verification:{ai_score:aiScore}},200,headers);
   } catch (error) {
     console.error("send-chat-image", error);
+    try {
+      const url = Deno.env.get("SUPABASE_URL");
+      const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (url && service) {
+        const trace = createClient(url,service,{auth:{persistSession:false}});
+        await logSafetyEvent(trace,"server_error");
+      }
+    } catch {}
     try {
       if (pendingPath) {
         const url = Deno.env.get("SUPABASE_URL");
