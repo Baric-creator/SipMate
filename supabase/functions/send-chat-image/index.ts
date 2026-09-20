@@ -7,7 +7,7 @@ const ALLOWED_ORIGINS = new Set([
   "https://www.officialsipmate.com",
 ]);
 const BUCKET = "chat-images";
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg","image/png","image/webp"]);
 
 function cors(origin: string | null) {
@@ -104,7 +104,7 @@ Deno.serve(async (req: Request) => {
     const mine = (profiles || []).find((p:any)=>p.id===user.id);
     const other = (profiles || []).find((p:any)=>p.id===otherId);
     if (!premiumActive(mine) || !premiumActive(other)) {
-      return json({ok:false,error:"both_premium_required"},403,headers);
+      return json({ok:false,error:"both_premium_required"},200,headers);
     }
 
     const { data:cheers, error:cheersError } = await sb
@@ -113,25 +113,25 @@ Deno.serve(async (req: Request) => {
     if (cheersError) throw cheersError;
     const mutual = (cheers || []).some((c:any)=>c.sender_id===user.id&&c.receiver_id===otherId)
       && (cheers || []).some((c:any)=>c.sender_id===otherId&&c.receiver_id===user.id);
-    if (!mutual) return json({ok:false,error:"mutual_cheers_required"},403,headers);
+    if (!mutual) return json({ok:false,error:"mutual_cheers_required"},200,headers);
 
     const { data:fileBlob, error:downloadError } = await sb.storage.from(BUCKET).download(pendingPath);
     if (downloadError || !fileBlob) return json({ok:false,error:"upload_not_found"},404,headers);
     if (fileBlob.size <= 0 || fileBlob.size > MAX_BYTES) {
       await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"file_too_large"},400,headers);
+      return json({ok:false,error:"file_too_large"},200,headers);
     }
     const mime = fileBlob.type || "";
     if (!ALLOWED_TYPES.has(mime)) {
       await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"unsupported_image_type"},400,headers);
+      return json({ok:false,error:"unsupported_image_type"},200,headers);
     }
 
     const apiUser = Deno.env.get("SIGHTENGINE_API_USER");
     const apiSecret = Deno.env.get("SIGHTENGINE_API_SECRET");
     if (!apiUser || !apiSecret) {
       await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"image_verification_not_configured"},503,headers);
+      return json({ok:false,error:"image_verification_not_configured"},200,headers);
     }
 
     const fd = new FormData();
@@ -149,7 +149,7 @@ Deno.serve(async (req: Request) => {
     if (!moderationResponse.ok || moderation?.status !== "success") {
       await logSafetyEvent(sb,"verification_failed");
       await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"image_verification_failed"},502,headers);
+      return json({ok:false,error:"image_verification_failed"},200,headers);
     }
 
     const aiScore = Number(moderation?.type?.ai_generated ?? 0);
@@ -164,12 +164,12 @@ Deno.serve(async (req: Request) => {
     if (aiScore >= 0.70) {
       await logSafetyEvent(sb,"ai_rejected",aiScore,nsfwScore);
       await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"ai_image_rejected",ai_score:aiScore},422,headers);
+      return json({ok:false,error:"ai_image_rejected",ai_score:aiScore},200,headers);
     }
     if (nsfwScore >= 0.65) {
       await logSafetyEvent(sb,"unsafe_rejected",aiScore,nsfwScore);
       await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"unsafe_image_rejected"},422,headers);
+      return json({ok:false,error:"unsafe_image_rejected"},200,headers);
     }
 
     const messageId = crypto.randomUUID();
