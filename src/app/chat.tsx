@@ -48,7 +48,7 @@ const copy = {
     photoRejectedAi: 'This photo looks AI-generated or AI-edited, so it was not sent.',
     photoRejectedUnsafe: 'This photo could not be sent because it did not pass the safety check.',
     photoNotConfigured: 'Verified photo sharing is almost ready. Image verification still needs to be activated.',
-    photoTooLarge: 'Photo must be 5 MB or smaller.',
+    photoTooLarge: 'Photo must be 10 MB or smaller.',
     photoType: 'Use a JPG, PNG or WebP image.',
     photoError: 'Photo could not be sent.',
     verifiedPhoto: 'VERIFIED PHOTO',
@@ -79,7 +79,7 @@ const copy = {
     photoRejectedAi: 'Dieses Foto wirkt KI-generiert oder KI-bearbeitet und wurde nicht gesendet.',
     photoRejectedUnsafe: 'Dieses Foto hat die Sicherheitsprüfung nicht bestanden.',
     photoNotConfigured: 'Verifizierte Fotos sind fast bereit. Die Bildprüfung muss noch aktiviert werden.',
-    photoTooLarge: 'Das Foto darf maximal 5 MB groß sein.',
+    photoTooLarge: 'Das Foto darf maximal 10 MB groß sein.',
     photoType: 'Bitte JPG, PNG oder WebP verwenden.',
     photoError: 'Foto konnte nicht gesendet werden.',
     verifiedPhoto: 'VERIFIZIERTES FOTO',
@@ -110,7 +110,7 @@ const copy = {
     photoRejectedAi: 'Slika izgleda kao AI-generirana ili AI-uređena pa nije poslana.',
     photoRejectedUnsafe: 'Slika nije prošla sigurnosnu provjeru i nije poslana.',
     photoNotConfigured: 'Verified Photo Sharing je skoro spreman. Još treba aktivirati provjeru slika.',
-    photoTooLarge: 'Slika mora biti 5 MB ili manja.',
+    photoTooLarge: 'Slika mora biti 10 MB ili manja.',
     photoType: 'Koristi JPG, PNG ili WebP sliku.',
     photoError: 'Slika nije mogla biti poslana.',
     verifiedPhoto: 'VERIFIED PHOTO',
@@ -480,6 +480,13 @@ export default function ChatScreen() {
     if (code === 'ai_image_rejected') return text.photoRejectedAi;
     if (code === 'unsafe_image_rejected') return text.photoRejectedUnsafe;
     if (code === 'image_verification_not_configured') return text.photoNotConfigured;
+    if (code === 'image_verification_failed') {
+      return lang === 'de'
+        ? 'Die Bildprüfung ist gerade nicht erreichbar. Versuch es gleich noch einmal.'
+        : lang === 'hr'
+          ? 'Provjera slike trenutno nije dostupna. Pokušaj ponovno za trenutak.'
+          : 'Image verification is temporarily unavailable. Try again in a moment.';
+    }
     if (code === 'file_too_large') return text.photoTooLarge;
     if (code === 'unsupported_image_type') return text.photoType;
     return text.photoError;
@@ -515,7 +522,7 @@ export default function ChatScreen() {
       if (result.canceled) return;
       const asset = result.assets[0];
       const size = Number((asset as any).fileSize || 0);
-      if (size > 5 * 1024 * 1024) {
+      if (size > 10 * 1024 * 1024) {
         showAlert(text.photoTooLarge);
         return;
       }
@@ -542,7 +549,7 @@ export default function ChatScreen() {
       const response = await fetch(asset.uri);
       if (!response.ok) throw new Error('image_read_failed');
       const arrayBuffer = await response.arrayBuffer();
-      if (arrayBuffer.byteLength > 5 * 1024 * 1024) {
+      if (arrayBuffer.byteLength > 10 * 1024 * 1024) {
         showAlert(text.photoTooLarge);
         return;
       }
@@ -560,11 +567,23 @@ export default function ChatScreen() {
         headers: { Authorization: `Bearer ${session.access_token}` },
         body: { conversationId: String(conversationId), path: pendingPath },
       });
-      if (error || !data?.ok) {
+
+      let functionPayload: any = data;
+      if (error && !functionPayload) {
+        try {
+          functionPayload = await (error as any)?.context?.json?.();
+        } catch {}
+      }
+
+      if (error || !functionPayload?.ok) {
         await supabase.storage.from('chat-images').remove([pendingPath]).catch(() => undefined);
-        showAlert(photoErrorMessage(data?.error));
+        const code = functionPayload?.error;
+        console.log('CHAT PHOTO FUNCTION ERROR:', code ?? error?.message ?? error);
+        showAlert(photoErrorMessage(code));
         return;
       }
+
+      const data = functionPayload;
 
       const sent = data.message as Message;
       setMessages((prev) => prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]);
