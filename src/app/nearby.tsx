@@ -6,15 +6,18 @@ import { useTranslation } from 'react-i18next';
 
 import {
   Image,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  Vibration,
 } from 'react-native';
 
 import { showAlert } from '../lib/notify';
+import { findOrCreateConversation } from '../lib/conversations';
 import { supabase } from '../lib/supabase';
 import { loadAppRemoteConfig } from '../lib/remote-config';
 import { ProfileCardSkeleton } from '../components/Skeleton';
@@ -101,6 +104,14 @@ export default function NearbyScreen() {
 
   const savedFilterUserIdRef = useRef<string | null>(null);
 
+  const [mutualCheersPopup, setMutualCheersPopup] = useState<{
+    userId: string;
+    name: string;
+    age: number | null;
+    avatarUrl: string | null;
+  } | null>(null);
+  const mutualPopupSeenRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     let active = true;
     void supabase.auth.getUser().then(({ data }) => {
@@ -112,6 +123,84 @@ export default function NearbyScreen() {
     });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    void supabase.auth.getUser().then(({ data }) => {
+      const userId = data.user?.id;
+      if (!active || !userId) return;
+
+      channel = supabase
+        .channel(`nearby-mutual-cheers-${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'cheers',
+            filter: `receiver_id=eq.${userId}`,
+          },
+          async (payload: any) => {
+            if (!active) return;
+            const incoming = payload?.new;
+            const senderId = String(incoming?.sender_id ?? '');
+            const cheersId = String(incoming?.id ?? '');
+            if (!senderId || senderId === userId || (cheersId && mutualPopupSeenRef.current.has(cheersId))) return;
+
+            const { data: sentBack } = await supabase
+              .from('cheers')
+              .select('id')
+              .eq('sender_id', userId)
+              .eq('receiver_id', senderId)
+              .maybeSingle();
+
+            if (!active || !sentBack) return;
+            if (cheersId) mutualPopupSeenRef.current.add(cheersId);
+
+            const { data: senderProfile } = await supabase
+              .from('profiles')
+              .select('id,name,age,avatar_url')
+              .eq('id', senderId)
+              .maybeSingle();
+
+            if (!active) return;
+            setMutualCheersPopup({
+              userId: senderId,
+              name: senderProfile?.name ?? (language === 'de' ? 'SipMate-Nutzer' : language === 'hr' ? 'SipMate korisnik' : 'SipMate User'),
+              age: senderProfile?.age ?? null,
+              avatarUrl: senderProfile?.avatar_url ?? null,
+            });
+            Vibration.vibrate([0, 80, 70, 120]);
+          }
+        )
+        .subscribe();
+    });
+
+    return () => {
+      active = false;
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, [language]);
+
+  async function openMutualCheersChat() {
+    if (!mutualCheersPopup) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+
+    try {
+      const conversationId = await findOrCreateConversation(user.id, mutualCheersPopup.userId);
+      if (!conversationId) return;
+      setMutualCheersPopup(null);
+      router.push({ pathname: '/chat', params: { conversationId } });
+    } catch (error) {
+      console.log('NEARBY MUTUAL CHEERS CHAT ERROR:', error);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -830,6 +919,43 @@ export default function NearbyScreen() {
   return (
     <View style={styles.container}>
       <FutureBackdrop />
+      {mutualCheersPopup && (
+        <Modal transparent visible animationType="fade" onRequestClose={() => setMutualCheersPopup(null)}>
+          <View style={styles.mutualOverlay}>
+            <View style={styles.mutualCard}>
+              <Text style={styles.mutualEmoji}>🍻</Text>
+              <Text style={styles.mutualTitle}>CHEERS!</Text>
+              {mutualCheersPopup.avatarUrl ? (
+                <Image source={{ uri: mutualCheersPopup.avatarUrl }} style={styles.mutualAvatar} />
+              ) : (
+                <View style={styles.mutualAvatarFallback}>
+                  <Text style={styles.mutualAvatarFallbackText}>{mutualCheersPopup.name.charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
+              <Text style={styles.mutualName}>
+                {mutualCheersPopup.name}{mutualCheersPopup.age ? `, ${mutualCheersPopup.age}` : ''}
+              </Text>
+              <Text style={styles.mutualCopy}>
+                {language === 'de'
+                  ? 'Ihr habt euch beide Cheers geschickt. Zeit für einen Drink! 🍻'
+                  : language === 'hr'
+                    ? 'Oboje ste poslali Cheers. Vrijeme je za piće! 🍻'
+                    : 'You both sent Cheers. Time for a drink! 🍻'}
+              </Text>
+              <TouchableOpacity style={styles.mutualChatButton} onPress={() => void openMutualCheersChat()}>
+                <Text style={styles.mutualChatButtonText}>
+                  {language === 'de' ? '💬 CHAT STARTEN' : language === 'hr' ? '💬 POKRENI CHAT' : '💬 START CHAT'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.mutualContinueButton} onPress={() => setMutualCheersPopup(null)}>
+                <Text style={styles.mutualContinueText}>
+                  {language === 'de' ? 'WEITER SUCHEN' : language === 'hr' ? 'NASTAVI TRAŽITI' : 'KEEP BROWSING'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbBottom]} />
       <View pointerEvents="none" style={styles.scanAccent} />
@@ -2411,4 +2537,18 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
   },
+,
+  mutualOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.82)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  mutualCard: { width: '100%', maxWidth: 420, backgroundColor: '#111114', borderRadius: 28, borderWidth: 1, borderColor: '#EF4444', padding: 26, alignItems: 'center', shadowColor: '#EF4444', shadowOpacity: 0.3, shadowRadius: 28, elevation: 12 },
+  mutualEmoji: { fontSize: 58 },
+  mutualTitle: { color: '#FFFFFF', fontSize: 36, fontWeight: '900', marginTop: 8, letterSpacing: 1.5 },
+  mutualAvatar: { width: 82, height: 82, borderRadius: 41, marginTop: 18, backgroundColor: '#27272A' },
+  mutualAvatarFallback: { width: 82, height: 82, borderRadius: 41, marginTop: 18, backgroundColor: '#450A0A', alignItems: 'center', justifyContent: 'center' },
+  mutualAvatarFallbackText: { color: '#FFFFFF', fontSize: 30, fontWeight: '900' },
+  mutualName: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', marginTop: 12 },
+  mutualCopy: { color: '#D4D4D8', fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 8, marginBottom: 20 },
+  mutualChatButton: { width: '100%', backgroundColor: '#DC2626', borderRadius: 18, paddingVertical: 15, alignItems: 'center', borderWidth: 1, borderColor: '#F87171' },
+  mutualChatButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
+  mutualContinueButton: { width: '100%', paddingVertical: 14, alignItems: 'center', marginTop: 8 },
+  mutualContinueText: { color: '#A1A1AA', fontSize: 12, fontWeight: '900' }
 });
