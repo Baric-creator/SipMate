@@ -70,3 +70,15 @@ test('new profiles can save without a usable location', () => {
   assert.doesNotMatch(source, /locationPermissionRequired\)\);\s*return/);
   assert.match(source, /Profile edits must not be blocked just because this device\/account/);
 });
+
+
+test('Nearby shows an immediate mutual Cheers callout while browsing', () => {
+  const source = fs.readFileSync('src/app/nearby.tsx', 'utf8');
+  assert.match(source, /nearby-mutual-cheers-/);
+  assert.match(source, /receiver_id=eq/);
+  assert.match(source, /mutualCheersPopup/);
+  assert.match(source, /Time for a drink!/);
+  assert.match(source, /Vrijeme je za piće!/);
+  assert.match(source, /CHAT STARTEN/);
+  assert.match(source, /POKRENI CHAT/);
+});
