@@ -194,3 +194,20 @@ test('verified photo push text is localized from recipient preference', () => {
   assert.match(notify, /Verificirana fotografija/);
   assert.match(language, /preferred_language: language/);
 });
+
+
+test('verified chat photos allow up to 10 MB end to end', () => {
+  const chat = fs.readFileSync('src/app/chat.tsx', 'utf8');
+  const sendImage = fs.readFileSync('supabase/functions/send-chat-image/index.ts', 'utf8');
+  const migration = fs.readFileSync('supabase/migrations/20260920112000_raise_chat_image_limit_to_10mb.sql', 'utf8');
+  assert.match(chat, /10 \* 1024 \* 1024/);
+  assert.match(chat, /10 MB/);
+  assert.match(sendImage, /MAX_BYTES = 10 \* 1024 \* 1024/);
+  assert.match(migration, /file_size_limit = 10485760/);
+});
+
+test('chat photo domain rejections return payloads the app can explain', () => {
+  assert.match(sendImage, /image_verification_not_configured"},200,headers/);
+  assert.match(sendImage, /image_verification_failed"},200,headers/);
+  assert.match(sendImage, /ai_image_rejected",ai_score:aiScore},200,headers/);
+});
