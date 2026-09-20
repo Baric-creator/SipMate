@@ -563,12 +563,12 @@ export default function ChatScreen() {
       });
       if (uploadError) throw uploadError;
 
-      const { data, error } = await supabase.functions.invoke('send-chat-image', {
+      const { data: invokeData, error } = await supabase.functions.invoke('send-chat-image', {
         headers: { Authorization: `Bearer ${session.access_token}` },
         body: { conversationId: String(conversationId), path: pendingPath },
       });
 
-      let functionPayload: any = data;
+      let functionPayload: any = invokeData;
       if (error && !functionPayload) {
         try {
           functionPayload = await (error as any)?.context?.json?.();
