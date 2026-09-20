@@ -231,14 +231,16 @@ export default function EditProfileScreen() {
         }
       }
 
-      if ((latitude == null || longitude == null) && typedCity) {
-        showAlert(t('editProfileScreen.locationUnavailableCityFallback'));
-        return;
-      }
-
-      if ((latitude == null || longitude == null) && status !== 'granted') {
-        showAlert(t('editProfileScreen.locationPermissionRequired'));
-        return;
+      // Profile edits must not be blocked just because this device/account
+      // does not have a usable location yet. New accounts can save name, age,
+      // bio, drink, etc. with null coordinates and set location later.
+      if (
+        typedCity &&
+        (latitude == null || longitude == null) &&
+        typedCity !== (profile.city ?? '').trim()
+      ) {
+        latitude = null;
+        longitude = null;
       }
 
       const numericAge = age.trim() ? Number(age) : null;
