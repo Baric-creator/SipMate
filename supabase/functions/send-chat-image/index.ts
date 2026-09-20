@@ -96,9 +96,15 @@ Deno.serve(async (req: Request) => {
     await logSafetyEvent(sb,"conversation_ok");
     const otherId = conversation.user_one === user.id ? conversation.user_two : conversation.user_one;
 
-    const { data:blockState, error:blockError } = await sb.rpc("is_blocked_between",{user_a:user.id,user_b:otherId});
+    const { data:blockRows, error:blockError } = await sb
+      .from("blocks")
+      .select("id")
+      .or(
+        `and(blocker_id.eq.${user.id},blocked_id.eq.${otherId}),and(blocker_id.eq.${otherId},blocked_id.eq.${user.id})`
+      )
+      .limit(1);
     if (blockError) throw blockError;
-    if (blockState) return json({ok:false,error:"blocked"},403,headers);
+    if ((blockRows || []).length > 0) return json({ok:false,error:"blocked"},403,headers);
     await logSafetyEvent(sb,"block_check_ok");
 
     const { data:profiles, error:profilesError } = await sb
