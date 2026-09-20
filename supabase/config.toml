@@ -91,3 +91,9 @@ entrypoint = "./functions/public-launch-status/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/admin-launch-config/index.ts"
+
+
+[functions.delete-chat-image]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/delete-chat-image/index.ts"
