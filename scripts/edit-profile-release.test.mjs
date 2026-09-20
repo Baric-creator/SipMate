@@ -6,7 +6,7 @@ test('edit profile can resolve a typed city when GPS permission is unavailable',
   const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
   assert.match(source, /PROFILE LOCATION: using manually selected city coordinates/);
   assert.match(source, /nominatim\.openstreetmap\.org\/search/);
-  assert.match(source, /locationUnavailableCityFallback/);
+  assert.doesNotMatch(source, /locationUnavailableCityFallback\)\);\s*return/);
 });
 
 test('Premium gallery rechecks entitlement and uploads binary data reliably', () => {
@@ -56,9 +56,9 @@ test('Premium Nearby can use live GPS and clear persisted custom origin', () => 
   assert.match(source, /import \* as Location from 'expo-location'/);
   assert.match(source, /async function useCurrentPremiumLocation/);
   assert.match(source, /Location\.getCurrentPositionAsync/);
-  assert.match(source, /USE CURRENT LOCATION/);
-  assert.match(source, /KORISTI TRENUTNU LOKACIJU/);
-  assert.match(source, /AKTUELLEN STANDORT VERWENDEN/);
+  assert.match(source, /📍 USE CURRENT LOCATION/);
+  assert.match(source, /📍 KORISTI TRENUTNU LOKACIJU/);
+  assert.match(source, /📍 AKTUELLEN STANDORT VERWENDEN/);
   assert.match(source, /customLatitude: null/);
   assert.match(source, /customLongitude: null/);
 });
