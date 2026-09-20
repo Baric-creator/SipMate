@@ -62,3 +62,11 @@ test('Premium Nearby can use live GPS and clear persisted custom origin', () => 
   assert.match(source, /customLatitude: null/);
   assert.match(source, /customLongitude: null/);
 });
+
+
+test('new profiles can save without a usable location', () => {
+  const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
+  assert.doesNotMatch(source, /locationUnavailableCityFallback\)\);\s*return/);
+  assert.doesNotMatch(source, /locationPermissionRequired\)\);\s*return/);
+  assert.match(source, /Profile edits must not be blocked just because this device\/account/);
+});
