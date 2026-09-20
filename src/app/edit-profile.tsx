@@ -61,7 +61,7 @@ function normalizedImageUpload(asset: ImagePicker.ImagePickerAsset) {
 }
 
 export default function EditProfileScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
