@@ -24,7 +24,9 @@ test('verified chat photos are AI and safety checked before becoming messages', 
 
 test('chat photos stay private and are served with short-lived signed URLs', () => {
   assert.match(imageUrl, /createSignedUrl\(message\.image_path,300\)/);
-  assert.match(imageUrl, /is_blocked_between/);
+  assert.match(imageUrl, /from\("blocks"\)/);
+  assert.match(imageUrl, /blocker_id\.eq/);
+  assert.match(imageUrl, /blocked_id\.eq/);
   assert.match(imageUrl, /UUID_RE\.test\(messageId\)/);
 });
 
@@ -210,4 +212,11 @@ test('chat photo domain rejections return payloads the app can explain', () => {
   assert.match(sendImage, /image_verification_not_configured"},200,headers/);
   assert.match(sendImage, /image_verification_failed"},200,headers/);
   assert.match(sendImage, /ai_image_rejected",ai_score:aiScore},200,headers/);
+});
+
+
+test('temporary verification bypass never claims a photo is verified in chat UI', () => {
+  assert.match(chat, /image_verification_provider/);
+  assert.match(chat, /item\.image_verification_provider === 'sightengine'/);
+  assert.match(chat, /premiumPhoto/);
 });
