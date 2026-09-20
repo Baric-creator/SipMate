@@ -2537,7 +2537,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
   },
-,
+
   mutualOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.82)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   mutualCard: { width: '100%', maxWidth: 420, backgroundColor: '#111114', borderRadius: 28, borderWidth: 1, borderColor: '#EF4444', padding: 26, alignItems: 'center', shadowColor: '#EF4444', shadowOpacity: 0.3, shadowRadius: 28, elevation: 12 },
   mutualEmoji: { fontSize: 58 },
