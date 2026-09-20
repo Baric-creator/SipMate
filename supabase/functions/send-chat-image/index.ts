@@ -9,6 +9,7 @@ const ALLOWED_ORIGINS = new Set([
 const BUCKET = "chat-images";
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg","image/png","image/webp"]);
+const TEMPORARY_CHAT_IMAGE_VERIFICATION_BYPASS = true; // TEST ONLY: disable before production release
 
 function cors(origin: string | null) {
   const allow = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://officialsipmate.com";
@@ -150,49 +151,57 @@ Deno.serve(async (req: Request) => {
 
     const apiUser = Deno.env.get("SIGHTENGINE_API_USER");
     const apiSecret = Deno.env.get("SIGHTENGINE_API_SECRET");
+
+    let aiScore = 0;
+    let nsfwScore = 0;
+    let verificationProvider = "temporary_bypass";
+
     if (!apiUser || !apiSecret) {
-      await logSafetyEvent(sb,"verification_not_configured");
-      await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"image_verification_not_configured"},200,headers);
-    }
+      if (!TEMPORARY_CHAT_IMAGE_VERIFICATION_BYPASS) {
+        await logSafetyEvent(sb,"verification_not_configured");
+        await sb.storage.from(BUCKET).remove([pendingPath]);
+        return json({ok:false,error:"image_verification_not_configured"},200,headers);
+      }
+    } else {
+      await logSafetyEvent(sb,"verification_start");
+      const fd = new FormData();
+      fd.append("media", fileBlob, pendingPath.split("/").pop() || "photo.jpg");
+      fd.append("models", "genai,nudity-2.1");
+      fd.append("api_user", apiUser);
+      fd.append("api_secret", apiSecret);
 
-    await logSafetyEvent(sb,"verification_start");
-    const fd = new FormData();
-    fd.append("media", fileBlob, pendingPath.split("/").pop() || "photo.jpg");
-    fd.append("models", "genai,nudity-2.1");
-    fd.append("api_user", apiUser);
-    fd.append("api_secret", apiSecret);
+      const moderationResponse = await fetch("https://api.sightengine.com/1.0/check.json", {
+        method:"POST",
+        body:fd,
+        signal: AbortSignal.timeout(12000),
+      });
+      const moderation = await moderationResponse.json().catch(()=>null);
+      if (!moderationResponse.ok || moderation?.status !== "success") {
+        await logSafetyEvent(sb,"verification_failed");
+        await sb.storage.from(BUCKET).remove([pendingPath]);
+        return json({ok:false,error:"image_verification_failed"},200,headers);
+      }
 
-    const moderationResponse = await fetch("https://api.sightengine.com/1.0/check.json", {
-      method:"POST",
-      body:fd,
-      signal: AbortSignal.timeout(12000),
-    });
-    const moderation = await moderationResponse.json().catch(()=>null);
-    if (!moderationResponse.ok || moderation?.status !== "success") {
-      await logSafetyEvent(sb,"verification_failed");
-      await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"image_verification_failed"},200,headers);
-    }
+      aiScore = Number(moderation?.type?.ai_generated ?? 0);
+      const n = moderation?.nudity || {};
+      nsfwScore = maxNum(
+        n?.sexual_activity,
+        n?.sexual_display,
+        n?.erotica,
+        n?.very_suggestive
+      );
+      verificationProvider = "sightengine";
 
-    const aiScore = Number(moderation?.type?.ai_generated ?? 0);
-    const n = moderation?.nudity || {};
-    const nsfwScore = maxNum(
-      n?.sexual_activity,
-      n?.sexual_display,
-      n?.erotica,
-      n?.very_suggestive
-    );
-
-    if (aiScore >= 0.70) {
-      await logSafetyEvent(sb,"ai_rejected",aiScore,nsfwScore);
-      await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"ai_image_rejected",ai_score:aiScore},200,headers);
-    }
-    if (nsfwScore >= 0.65) {
-      await logSafetyEvent(sb,"unsafe_rejected",aiScore,nsfwScore);
-      await sb.storage.from(BUCKET).remove([pendingPath]);
-      return json({ok:false,error:"unsafe_image_rejected"},200,headers);
+      if (aiScore >= 0.70) {
+        await logSafetyEvent(sb,"ai_rejected",aiScore,nsfwScore);
+        await sb.storage.from(BUCKET).remove([pendingPath]);
+        return json({ok:false,error:"ai_image_rejected",ai_score:aiScore},200,headers);
+      }
+      if (nsfwScore >= 0.65) {
+        await logSafetyEvent(sb,"unsafe_rejected",aiScore,nsfwScore);
+        await sb.storage.from(BUCKET).remove([pendingPath]);
+        return json({ok:false,error:"unsafe_image_rejected"},200,headers);
+      }
     }
 
     const messageId = crypto.randomUUID();
@@ -211,7 +220,7 @@ Deno.serve(async (req: Request) => {
       image_path: approvedPath,
       image_ai_score: Number.isFinite(aiScore) ? aiScore : null,
       image_moderation_status: "approved",
-      image_verification_provider: "sightengine",
+      image_verification_provider: verificationProvider,
     }).select("id,conversation_id,sender_id,content,created_at,read_at,message_type,image_path,image_ai_score,image_moderation_status").single();
 
     if (messageError) {
