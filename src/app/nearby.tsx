@@ -312,6 +312,23 @@ export default function NearbyScreen() {
       setCustomLongitude(longitude);
       if (detectedCity) setCustomCity(detectedCity);
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await AsyncStorage.setItem(
+          premiumFilterStorageKey(user.id),
+          JSON.stringify({
+            maxDistance,
+            drinkFilter,
+            ageFilter,
+            genderFilter,
+            customCity: detectedCity,
+            customLatitude: latitude,
+            customLongitude: longitude,
+          })
+        );
+        savedFilterUserIdRef.current = user.id;
+      }
+
       showAlert(
         language === 'de'
           ? `Aktueller Standort gefunden${detectedCity ? `: ${detectedCity}` : '.'}`
