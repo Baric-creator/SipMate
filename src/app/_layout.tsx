@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { Tabs, useRouter, useSegments } from 'expo-router';
@@ -147,6 +148,7 @@ export default function RootLayout() {
         return;
       }
       if (data?.type === 'cheers' && data?.id) {
+        await AsyncStorage.setItem('sipmate:activity-seen-at', new Date().toISOString());
         router.push({ pathname: '/user-profile', params: { id: String(data.id) } });
       }
     };
