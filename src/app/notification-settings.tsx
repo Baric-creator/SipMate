@@ -10,6 +10,7 @@ type Prefs = {
   notify_messages: boolean;
   notify_cheers: boolean;
   notify_photos: boolean;
+  notify_nearby: boolean;
   notify_marketing: boolean;
 };
 
@@ -23,6 +24,8 @@ const copy = {
     cheersSub: 'New and mutual Cheers',
     photos: 'Verified photos',
     photosSub: 'Photo messages in Premium chats',
+    nearby: 'Nearby activity',
+    nearbySub: 'Tell me when someone nearby is up for a drink',
     marketing: 'SipMate news',
     marketingSub: 'Product and launch updates',
     back: 'BACK',
@@ -37,6 +40,8 @@ const copy = {
     cheersSub: 'Neue und gegenseitige Cheers',
     photos: 'Verifizierte Fotos',
     photosSub: 'Foto-Nachrichten in Premium-Chats',
+    nearby: 'Nearby-Aktivität',
+    nearbySub: 'Benachrichtige mich, wenn jemand in der Nähe etwas trinken möchte',
     marketing: 'SipMate News',
     marketingSub: 'Produkt- und Launch-Updates',
     back: 'ZURÜCK',
@@ -51,6 +56,8 @@ const copy = {
     cheersSub: 'Novi i uzajamni Cheers',
     photos: 'Verificirane fotografije',
     photosSub: 'Foto poruke u Premium chatovima',
+    nearby: 'Aktivnost u blizini',
+    nearbySub: 'Javi mi kad netko u blizini želi na piće',
     marketing: 'SipMate novosti',
     marketingSub: 'Novosti o proizvodu i launchu',
     back: 'NATRAG',
@@ -62,6 +69,7 @@ const defaults: Prefs = {
   notify_messages: true,
   notify_cheers: true,
   notify_photos: true,
+  notify_nearby: true,
   notify_marketing: false,
 };
 
@@ -82,7 +90,7 @@ export default function NotificationSettingsScreen() {
       }
       const { data, error } = await supabase
         .from('profiles')
-        .select('notify_messages, notify_cheers, notify_photos, notify_marketing')
+        .select('notify_messages, notify_cheers, notify_photos, notify_nearby, notify_marketing')
         .eq('id', session.user.id)
         .maybeSingle();
       if (!active) return;
@@ -118,6 +126,7 @@ export default function NotificationSettingsScreen() {
     { key: 'notify_messages', icon: '💬', title: text.messages, subtitle: text.messagesSub },
     { key: 'notify_cheers', icon: '🍻', title: text.cheers, subtitle: text.cheersSub },
     { key: 'notify_photos', icon: '📷', title: text.photos, subtitle: text.photosSub },
+    { key: 'notify_nearby', icon: '📍', title: text.nearby, subtitle: text.nearbySub },
     { key: 'notify_marketing', icon: '📣', title: text.marketing, subtitle: text.marketingSub },
   ];
 
