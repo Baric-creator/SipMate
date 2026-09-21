@@ -150,6 +150,10 @@ export default function RootLayout() {
       if (data?.type === 'cheers' && data?.id) {
         await AsyncStorage.setItem('sipmate:activity-seen-at', new Date().toISOString());
         router.push({ pathname: '/user-profile', params: { id: String(data.id) } });
+        return;
+      }
+      if (data?.type === 'nearby_activity' && data?.id) {
+        router.push({ pathname: '/user-profile', params: { id: String(data.id) } });
       }
     };
 
