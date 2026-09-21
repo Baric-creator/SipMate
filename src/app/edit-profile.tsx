@@ -281,6 +281,16 @@ export default function EditProfileScreen() {
       }).eq('id', session.user.id);
 
       if (error) throw error;
+
+      if (isActive) {
+        void supabase.functions.invoke('send-nearby-activity-notification', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: {},
+        }).then(({ error: nearbyPushError }) => {
+          if (nearbyPushError) console.log('NEARBY ACTIVITY PUSH ERROR:', nearbyPushError.message);
+        });
+      }
+
       router.back();
     } catch (error: any) {
       console.log('PROFILE SAVE ERROR:', error?.message ?? error);
