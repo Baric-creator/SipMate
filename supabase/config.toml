@@ -97,3 +97,9 @@ entrypoint = "./functions/admin-launch-config/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/delete-chat-image/index.ts"
+
+
+[functions.profile-photo-upload-url]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/profile-photo-upload-url/index.ts"
