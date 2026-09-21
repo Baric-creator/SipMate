@@ -126,6 +126,20 @@ export default function NearbyScreen() {
 
   useEffect(() => {
     let active = true;
+    void supabase.auth.getUser().then(async ({ data }) => {
+      const userId = data.user?.id;
+      if (!active || !userId) return;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ nearby_notify_radius_km: maxDistance })
+        .eq('id', userId);
+      if (error) console.log('NEARBY NOTIFICATION RADIUS ERROR:', error.message);
+    });
+    return () => { active = false; };
+  }, [maxDistance]);
+
+  useEffect(() => {
+    let active = true;
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     void supabase.auth.getUser().then(({ data }) => {
