@@ -399,6 +399,13 @@ export default function HomeScreen() {
       Vibration.vibrate(35);
       if (newStatus) {
         showAlert(language === 'de' ? '🍻 Du bist jetzt 3 Stunden auf Nearby sichtbar. Wir benachrichtigen dich, wenn dir jemand Cheers sendet.' : language === 'hr' ? '🍻 Sada si 3 sata vidljiv na Nearbyu. Obavijestit ćemo te kad ti netko pošalje Cheers.' : '🍻 You are now visible on Nearby for 3 hours. We will notify you when someone sends you Cheers.');
+
+        void supabase.functions.invoke('send-nearby-activity-notification', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: {},
+        }).then(({ error: nearbyPushError }) => {
+          if (nearbyPushError) console.log('NEARBY ACTIVITY PUSH ERROR:', nearbyPushError.message);
+        });
       }
     } finally {
       statusUpdateRef.current = false;
