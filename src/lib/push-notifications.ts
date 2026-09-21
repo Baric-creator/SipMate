@@ -50,6 +50,14 @@ async function registerForPushNotificationsInternal(expectedUserId: string) {
       lightColor: '#EF4444',
       sound: 'default',
     });
+
+    await Notifications.setNotificationChannelAsync('nearby', {
+      name: 'Nearby activity',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 180, 120, 220],
+      lightColor: '#EF4444',
+      sound: 'default',
+    });
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
