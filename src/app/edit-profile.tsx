@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -13,6 +13,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  AppState,
 } from 'react-native';
 
 import { showAlert } from '../lib/notify';
@@ -44,7 +45,9 @@ type GalleryPhoto = {
 };
 
 function normalizedImageUpload(asset: ImagePicker.ImagePickerAsset) {
-  const originalExtension = asset.fileName?.split('.').pop()?.toLowerCase() ?? '';
+  const fileExtension = asset.fileName?.split('.').pop()?.toLowerCase() ?? '';
+  const uriExtension = asset.uri.split('?')[0].split('.').pop()?.toLowerCase() ?? '';
+  const originalExtension = fileExtension || uriExtension;
   const rawMime = (asset.mimeType ?? '').toLowerCase();
 
   if (rawMime === 'image/jpeg' || rawMime === 'image/jpg' || ['jpg', 'jpeg'].includes(originalExtension)) {
@@ -91,8 +94,17 @@ export default function EditProfileScreen() {
     { value: 'other', label: `⚪ ${t('editProfileScreen.other')}` },
   ];
 
+  useFocusEffect(
+    useCallback(() => {
+      void loadProfile();
+    }, [])
+  );
+
   useEffect(() => {
-    loadProfile();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void loadProfile();
+    });
+    return () => subscription.remove();
   }, []);
 
   async function loadProfile() {
@@ -411,8 +423,8 @@ export default function EditProfileScreen() {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        quality: 0.65,
+        allowsEditing: false,
+        quality: 0.72,
         preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
       });
       if (result.canceled) return;
@@ -446,7 +458,7 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const filePath = `${profile.id}/gallery-${Date.now()}.${normalized.extension}`;
+      const filePath = `${profile.id}/gallery-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${normalized.extension}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arrayBuffer, {
         contentType: normalized.contentType,
         upsert: false,
