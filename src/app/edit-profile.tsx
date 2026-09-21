@@ -458,11 +458,29 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const filePath = `${profile.id}/gallery-${Date.now()}.${normalized.extension}`;
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arrayBuffer, {
-        contentType: normalized.contentType,
-        upsert: false,
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        showAlert(t('editProfileScreen.galleryUploadError'));
+        return;
+      }
+
+      const { data: signedUpload, error: signedUploadError } = await supabase.functions.invoke('profile-photo-upload-url', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { extension: normalized.extension },
       });
+      if (signedUploadError || !signedUpload?.ok || !signedUpload?.path || !signedUpload?.token) {
+        const reason = signedUpload?.error ?? signedUploadError?.message ?? 'signed_upload_failed';
+        console.log('GALLERY SIGNED UPLOAD ERROR:', reason);
+        showAlert(`${t('editProfileScreen.galleryUploadError')}: ${reason}`);
+        return;
+      }
+
+      const filePath = String(signedUpload.path);
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .uploadToSignedUrl(filePath, String(signedUpload.token), arrayBuffer, {
+          contentType: normalized.contentType,
+        });
       if (uploadError) {
         console.log('GALLERY UPLOAD ERROR:', uploadError.message);
         showAlert(`${t('editProfileScreen.galleryUploadError')}: ${uploadError.message}`);
