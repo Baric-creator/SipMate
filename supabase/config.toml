@@ -103,3 +103,9 @@ entrypoint = "./functions/delete-chat-image/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/profile-photo-upload-url/index.ts"
+
+
+[functions.send-nearby-activity-notification]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/send-nearby-activity-notification/index.ts"
