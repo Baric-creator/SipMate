@@ -861,10 +861,12 @@ export default function ChatScreen() {
                 ) : (
                   <Text style={styles.messageText}>{item.content}</Text>
                 )}
-                <View style={styles.messageMeta}>
-                  <Text style={styles.messageTime}>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-                  {mine && <Text style={[styles.readStatus, item.read_at ? styles.readStatusRead : styles.readStatusSent]}>{item.read_at ? '✓✓' : '✓'}</Text>}
-                </View>
+                {item.message_type !== 'image' && (
+                  <View style={styles.messageMeta}>
+                    <Text style={styles.messageTime}>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                    {mine && <Text style={[styles.readStatus, item.read_at ? styles.readStatusRead : styles.readStatusSent]}>{item.read_at ? '✓✓' : '✓'}</Text>}
+                  </View>
+                )}
               </View>
             </View>
           </View>;
