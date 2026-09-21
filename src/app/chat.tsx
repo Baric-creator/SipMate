@@ -6,6 +6,7 @@ import {
   Image,
   ImageBackground,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -172,6 +173,7 @@ export default function ChatScreen() {
   const [verifiedPhotosEnabled, setVerifiedPhotosEnabled] = useState(true);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [imageLoadState, setImageLoadState] = useState<Record<string, 'idle' | 'loading' | 'error'>>({});
+  const [selectedChatImage, setSelectedChatImage] = useState<string | null>(null);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -796,11 +798,9 @@ export default function ChatScreen() {
             {showDate && <View style={styles.dateSeparator}><Text style={styles.dateSeparatorText}>{getDateLabel(item.created_at)}</Text></View>}
             <View style={[styles.messageRow, mine ? styles.messageRowMine : styles.messageRowOther]}>
               <View style={[
-                styles.bubble,
-                mine ? styles.bubbleMine : styles.bubbleOther,
-                item.message_type === 'image' && styles.imageBubble,
-                item.message_type === 'image' && mine && styles.imageBubbleMine,
-                item.message_type === 'image' && !mine && styles.imageBubbleOther,
+                item.message_type === 'image'
+                  ? styles.imageBubble
+                  : [styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther],
               ]}>
                 {item.message_type === 'image' ? (
                   <View>
@@ -813,10 +813,10 @@ export default function ChatScreen() {
                       <>
                         {imageUrls[String(item.id)] ? (
                           <TouchableOpacity
-                            activeOpacity={mine ? 0.9 : 1}
+                            activeOpacity={0.92}
+                            onPress={() => setSelectedChatImage(imageUrls[String(item.id)])}
                             onLongPress={mine ? () => void deleteOwnChatImage(item) : undefined}
-                            delayLongPress={450}
-                            disabled={!mine}
+                            delayLongPress={500}
                           >
                           <Image
                             source={{ uri: imageUrls[String(item.id)] }}
@@ -846,14 +846,9 @@ export default function ChatScreen() {
                           </TouchableOpacity>
                         )}
                         <View style={styles.imageFooterRow}>
-                          <View style={[
-                            styles.verifiedBadge,
-                            item.image_verification_provider !== 'sightengine' && styles.premiumPhotoBadge,
-                          ]}>
-                            <Text style={styles.verifiedBadgeText}>
-                              {item.image_verification_provider === 'sightengine' ? `✓ ${text.verifiedPhoto}` : `📷 ${text.premiumPhoto}`}
-                            </Text>
-                          </View>
+                          <Text style={styles.verifiedChecks}>
+                            {item.image_verification_provider === 'sightengine' ? '✓✓' : '✓✓'}
+                          </Text>
                           {!mine && (
                             <TouchableOpacity style={styles.reportImageButton} onPress={() => void reportChatImage(item)}>
                               <Text style={styles.reportImageText}>⚠ {text.reportPhoto}</Text>
@@ -928,6 +923,27 @@ export default function ChatScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      <Modal
+        visible={selectedChatImage !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedChatImage(null)}
+      >
+        <View style={styles.fullscreenImageOverlay}>
+          <TouchableOpacity style={styles.fullscreenImageClose} onPress={() => setSelectedChatImage(null)}>
+            <Text style={styles.fullscreenImageCloseText}>✕</Text>
+          </TouchableOpacity>
+          {selectedChatImage && (
+            <Image
+              source={{ uri: selectedChatImage }}
+              style={styles.fullscreenImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
+
     </KeyboardAvoidingView>
   );
 }
@@ -1026,16 +1042,13 @@ const styles = StyleSheet.create({
   inputBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#2B2224', backgroundColor: '#0B0B0E' },
   photoButton: { width: 46, height: 46, borderRadius: 23, marginRight: 8, backgroundColor: '#151519', borderWidth: 1, borderColor: '#3A2A2D', alignItems: 'center', justifyContent: 'center' },
   photoButtonText: { fontSize: 18 },
-  imageBubble: { paddingHorizontal: 8, paddingTop: 8, paddingBottom: 7, backgroundColor: '#111114' },
-  imageBubbleMine: { borderColor: '#7F1D1D', shadowOpacity: 0.06, shadowRadius: 5 },
-  imageBubbleOther: { borderColor: '#303036' },
+  imageBubble: { maxWidth: '82%', paddingHorizontal: 0, paddingTop: 0, paddingBottom: 2, backgroundColor: 'transparent' },
   messageImage: { width: 230, height: 230, maxWidth: '100%', borderRadius: 14, backgroundColor: '#0B0B0E' },
   imagePlaceholder: { width: 220, height: 150, borderRadius: 14, backgroundColor: '#0B0B0E', borderWidth: 1, borderColor: '#34343A', alignItems: 'center', justifyContent: 'center' },
   imagePlaceholderIcon: { fontSize: 26, marginBottom: 7 },
   imagePlaceholderText: { color: '#A1A1AA', fontSize: 11, fontWeight: '800' },
-  imageFooterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 6 },
-  verifiedBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: '#102419', borderWidth: 1, borderColor: '#245A38' },
-  premiumPhotoBadge: { backgroundColor: '#1F2937', borderColor: '#374151' },
+  imageFooterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 5, paddingHorizontal: 2 },
+  verifiedChecks: { color: '#22C55E', fontSize: 15, fontWeight: '900', letterSpacing: -1 },
   reportImageButton: { paddingHorizontal: 7, paddingVertical: 4, borderRadius: 999, backgroundColor: '#201313', borderWidth: 1, borderColor: '#5A2A2A' },
   reportImageText: { color: '#FCA5A5', fontSize: 9, fontWeight: '800' },
   verifiedBadgeText: { color: '#67DC98', fontSize: 9, fontWeight: '900', letterSpacing: 0.4 },
@@ -1045,4 +1058,8 @@ const styles = StyleSheet.create({
   sendText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
   blockedBar: { paddingHorizontal: 18, paddingVertical: 16, borderTopWidth: 1, borderTopColor: '#27272A', backgroundColor: '#18181B' },
   blockedText: { color: '#EF4444', fontSize: 13, fontWeight: '800', textAlign: 'center', lineHeight: 18 },
+  fullscreenImageOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.96)', alignItems: 'center', justifyContent: 'center' },
+  fullscreenImage: { width: '100%', height: '100%' },
+  fullscreenImageClose: { position: 'absolute', top: 46, right: 20, zIndex: 3, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(24,24,27,0.92)', alignItems: 'center', justifyContent: 'center' },
+  fullscreenImageCloseText: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
 });
