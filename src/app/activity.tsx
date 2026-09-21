@@ -111,12 +111,16 @@ export default function ActivityScreen() {
       }
 
       const myId = session.user.id;
+      const seenAt = await AsyncStorage.getItem('sipmate:activity-seen-at');
+
+      let receivedQuery = supabase
+        .from('cheers')
+        .select('id, sender_id, receiver_id, created_at')
+        .eq('receiver_id', myId);
+      if (seenAt) receivedQuery = receivedQuery.gt('created_at', seenAt);
 
       const [receivedResult, sentResult, conversationsResult] = await Promise.all([
-        supabase
-          .from('cheers')
-          .select('id, sender_id, receiver_id, created_at')
-          .eq('receiver_id', myId)
+        receivedQuery
           .order('created_at', { ascending: false })
           .limit(30),
         supabase
