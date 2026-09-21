@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import '../lib/i18n';
-import { clearPresence, touchPresence } from '../lib/presence';
+import { touchPresence } from '../lib/presence';
 import { captureGrowthAttributionFromUrl, clearGrowthAttribution, getGrowthAttribution } from '../lib/growth-attribution';
 import { registerForPushNotificationsAsync } from '../lib/push-notifications';
 import { AppRemoteConfig, loadAppRemoteConfig } from '../lib/remote-config';
@@ -210,7 +210,6 @@ export default function RootLayout() {
         generation !== heartbeatGeneration ||
         AppState.currentState !== 'active'
       ) {
-        await clearPresence();
         return;
       }
 
@@ -231,9 +230,6 @@ export default function RootLayout() {
         void startHeartbeat();
       } else {
         stopHeartbeat();
-        if (state === 'background') {
-          void clearPresence();
-        }
       }
     });
 
@@ -282,7 +278,7 @@ export default function RootLayout() {
             position: 'absolute',
             left: 14,
             right: 14,
-            bottom: bottomInset,
+            bottom: bottomInset + 8,
             height: 70,
             paddingTop: 8,
             paddingBottom: 7,
@@ -402,7 +398,7 @@ export default function RootLayout() {
           style={{
             position: 'absolute',
             right: 18,
-            bottom: 94 + bottomInset,
+            bottom: 102 + bottomInset,
             flexDirection: 'row',
             alignItems: 'center',
             gap: 8,
