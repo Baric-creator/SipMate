@@ -68,6 +68,33 @@ export default function UserProfileScreen() {
     return () => subscription.remove();
   }, []);
 
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let mounted = true;
+
+    void supabase.auth.getUser().then(({ data }) => {
+      const userId = data.user?.id;
+      if (!mounted || !userId) return;
+
+      channel = supabase
+        .channel(`profile-live-${userId}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
+          (payload) => {
+            if (!mounted) return;
+            setProfile((current) => current ? { ...current, ...(payload.new as UserProfile) } : current);
+          }
+        )
+        .subscribe();
+    });
+
+    return () => {
+      mounted = false;
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, []);
+
   async function loadUserProfile(silent = false) {
     const requestId = ++profileLoadIdRef.current;
 
@@ -209,7 +236,8 @@ export default function UserProfileScreen() {
   if (loading) return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.loading}</Text></SafeAreaView>;
   if (!profile) return <SafeAreaView style={styles.screen}><Text style={styles.loading}>{text.notFound}</Text></SafeAreaView>;
 
-  const profileOnline = isProfileAvailable(profile) && isProfileOnline(profile);
+  const profileAvailable = isProfileAvailable(profile);
+  const profileOnline = profileAvailable && isProfileOnline(profile);
 
   const premiumActive = profile.is_premium === true &&
     (!profile.premium_until || new Date(profile.premium_until) > new Date());
@@ -261,9 +289,9 @@ export default function UserProfileScreen() {
           <Text style={styles.city}>📍 {profile.city ?? text.location}</Text>
 
           <View style={styles.badgeRow}>
-            <View style={[styles.statusPill, profileOnline ? styles.statusPillActive : styles.statusPillInactive]}>
-              <Text style={[styles.statusPillText, profileOnline ? styles.statusTextActive : styles.statusTextInactive]}>
-                {profileOnline ? t('profileScreen.active') : t('profileScreen.inactive')}
+            <View style={[styles.statusPill, profileAvailable ? styles.statusPillActive : styles.statusPillInactive]}>
+              <Text style={[styles.statusPillText, profileAvailable ? styles.statusTextActive : styles.statusTextInactive]}>
+                {profileAvailable ? t('profileScreen.active') : t('profileScreen.inactive')}
               </Text>
             </View>
             {premiumActive && (
