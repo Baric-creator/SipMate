@@ -256,7 +256,7 @@ if (exists('src/lib/push-notifications.ts')) {
   assert(s.includes("Notifications.setNotificationChannelAsync('cheers'"), 'Android Cheers notification channel is missing');
   assert(s.includes('Notifications.requestPermissionsAsync()'), 'Push notification permission request is missing');
   assert(s.includes("supabase.functions.invoke('register-push-token'"), 'Push token registration backend call is missing');
-  assert(s.includes(".from('device_push_tokens')"), 'Push token logout cleanup is missing');
+  assert(s.includes("action: 'unregister'"), 'Push token logout cleanup is missing');
 }
 
 if (exists('src/app/_layout.tsx')) {
@@ -265,7 +265,8 @@ if (exists('src/app/_layout.tsx')) {
   assert(s.includes('Notifications.clearLastNotificationResponseAsync'), 'Consumed cold-start notification response is not cleared');
   assert(s.includes("pathname: '/chat'"), 'Message notifications no longer deep-link into chat');
   assert(s.includes("pathname: '/user-profile'"), 'Cheers notifications no longer deep-link into sender profile');
-  assert(s.includes('clearPresence()'), 'Presence cleanup is missing from app lifecycle');
+  assert(s.includes('stopHeartbeat()'), 'Presence heartbeat cleanup is missing from app lifecycle');
+  assert(!s.includes('clearPresence()'), 'Backgrounding should not end a timed Active Nearby session');
 }
 
 if (exists('src/lib/presence.ts')) {
