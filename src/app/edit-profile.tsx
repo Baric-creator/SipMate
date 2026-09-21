@@ -458,7 +458,7 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const filePath = `${profile.id}/gallery-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${normalized.extension}`;
+      const filePath = `${profile.id}/gallery-${Date.now()}.${normalized.extension}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, arrayBuffer, {
         contentType: normalized.contentType,
         upsert: false,
@@ -523,6 +523,11 @@ export default function EditProfileScreen() {
           <Text style={styles.logo}>SipMate 🍻</Text>
           <Text style={styles.title}>{t('editProfileScreen.title')}</Text>
           <Text style={styles.subtitle}>{t('editProfileScreen.subtitle')}</Text>
+          {profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date()) && (
+            <View style={styles.premiumStateBadge}>
+              <Text style={styles.premiumStateText}>💎 PREMIUM ACTIVE</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.avatarSection}>
@@ -645,6 +650,8 @@ const styles = StyleSheet.create({
   container: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingTop: 42, paddingHorizontal: 20, paddingBottom: 150 },
   header: { marginBottom: 26 },
   logo: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
+  premiumStateBadge: { alignSelf: 'center', marginTop: 10, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: '#0D1812', borderWidth: 1, borderColor: '#285A3B' },
+  premiumStateText: { color: '#67DC98', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
   title: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', marginTop: 18, letterSpacing: -0.5 },
   subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, marginTop: 7 },
   avatarSection: { alignItems: 'center', marginBottom: 24 },
