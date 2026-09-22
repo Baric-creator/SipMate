@@ -497,18 +497,18 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      const { data: insertedPhoto, error: insertError } = await supabase.from('profile_photos').insert({
-        user_id: profile.id, photo_url: publicUrl, sort_order: profilePhotos.length,
-      }).select('id, photo_url, sort_order').single();
-
-      if (insertError) {
+      const { data: finalized, error: finalizeError } = await supabase.functions.invoke('profile-photo-upload-url', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { action: 'finalize', path: filePath },
+      });
+      if (finalizeError || !finalized?.ok || !finalized?.photo) {
         await supabase.storage.from('avatars').remove([filePath]);
-        console.log('GALLERY SAVE ERROR:', insertError.message);
-        showAlert(`${t('editProfileScreen.gallerySaveError')}: ${insertError.message}`);
+        const reason = finalized?.error ?? finalizeError?.message ?? 'gallery_finalize_failed';
+        console.log('GALLERY SAVE ERROR:', reason);
+        showAlert(`${t('editProfileScreen.gallerySaveError')}: ${reason}`);
         return;
       }
-      setProfilePhotos((current) => [...current, insertedPhoto as GalleryPhoto]);
+      setProfilePhotos((current) => [...current, finalized.photo as GalleryPhoto]);
     } catch (error) {
       console.log('ADD GALLERY PHOTO ERROR:', error);
       showAlert(t('editProfileScreen.galleryAddError'));
