@@ -111,11 +111,15 @@ export default function UserProfileScreen() {
       }
 
       const expectedUserId = session.user.id;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, active_until, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
-        .eq('id', expectedUserId)
-        .maybeSingle();
+      const [{ data, error }, { data: entitlementRows, error: entitlementError }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, name, age, city, bio, currently_up_for, is_active, last_seen_at, active_until, avatar_url, is_premium, premium_until, discord_user_id, discord_username, discord_connected_at')
+          .eq('id', expectedUserId)
+          .maybeSingle(),
+        supabase.rpc('get_my_premium_entitlement'),
+      ]);
+      if (entitlementError) console.log('PROFILE ENTITLEMENT ERROR:', entitlementError.message);
 
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (
@@ -167,7 +171,12 @@ export default function UserProfileScreen() {
         return;
       }
 
-      setProfile(data as UserProfile);
+      const entitlement = Array.isArray(entitlementRows) ? entitlementRows[0] : entitlementRows;
+      setProfile({
+        ...(data as UserProfile),
+        is_premium: entitlement?.is_premium ?? data.is_premium,
+        premium_until: entitlement?.premium_until ?? data.premium_until,
+      });
     } finally {
       if (requestId === profileLoadIdRef.current) {
         hasLoadedProfileRef.current = true;
