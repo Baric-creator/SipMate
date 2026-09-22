@@ -151,6 +151,7 @@ const copy = {
 export default function ChatScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId?: string }>();
   const router = useRouter();
+  const safeInsets = useSafeAreaInsets();
   const { i18n } = useTranslation();
   const lang = i18n.language?.split('-')[0] as keyof typeof copy;
   const text = copy[lang] ?? copy.en;
