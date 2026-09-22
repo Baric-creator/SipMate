@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 
 import { askConfirmation, chooseOption, showAlert } from '../lib/notify';
-import { isProfileOnline } from '../lib/presence';
+import { isProfileAvailable } from '../lib/presence';
 import { supabase } from '../lib/supabase';
 import { loadAppRemoteConfig } from '../lib/remote-config';
 
@@ -186,6 +186,7 @@ export default function ChatScreen() {
   const messagesRequestIdRef = useRef(0);
   const activeConversationIdRef = useRef('');
   const imageRefreshAttemptRef = useRef<Set<string>>(new Set());
+  const imageUrlsRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     let active = true;
@@ -208,6 +209,7 @@ export default function ChatScreen() {
     setMyPremium(false);
     setOtherPremium(false);
     setMutualCheers(false);
+    imageUrlsRef.current = {};
     setImageUrls({});
     setImageLoadState({});
     imageRefreshAttemptRef.current.clear();
@@ -270,7 +272,7 @@ export default function ChatScreen() {
       if (!active) return;
       if (error) return console.log('OTHER USER PROFILE ERROR:', error.message);
       setOtherUserName(data?.name ?? 'SipMate');
-      setOtherUserActive(isProfileOnline(data ?? {}));
+      setOtherUserActive(isProfileAvailable(data ?? {}));
       setOtherAvatar(data?.avatar_url ?? null);
     }
     void loadOtherUser();
@@ -341,7 +343,7 @@ export default function ChatScreen() {
       event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${otherUserId}`,
     }, (payload) => {
       const profile = payload.new as { is_active?: boolean | null; last_seen_at?: string | null; active_until?: string | null; avatar_url?: string | null };
-      setOtherUserActive(isProfileOnline(profile));
+      setOtherUserActive(isProfileAvailable(profile));
       if (typeof profile.avatar_url !== 'undefined') setOtherAvatar(profile.avatar_url ?? null);
     }).subscribe();
     return () => { void supabase.removeChannel(channel); };
@@ -520,7 +522,7 @@ export default function ChatScreen() {
 
   async function loadImageUrl(message: Message, force = false) {
     const id = String(message.id);
-    if (message.message_type !== 'image' || (!force && imageUrls[id]) || imageLoadState[id] === 'loading') return;
+    if (message.message_type !== 'image' || (!force && imageUrlsRef.current[id]) || imageLoadState[id] === 'loading') return;
     setImageLoadState((current) => ({ ...current, [id]: 'loading' }));
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
@@ -536,6 +538,7 @@ export default function ChatScreen() {
       setImageLoadState((current) => ({ ...current, [id]: 'error' }));
       return;
     }
+    imageUrlsRef.current = { ...imageUrlsRef.current, [id]: data.url };
     setImageUrls((current) => ({ ...current, [id]: data.url }));
     setImageLoadState((current) => ({ ...current, [id]: 'idle' }));
   }
@@ -914,6 +917,7 @@ export default function ChatScreen() {
                             resizeMode="cover"
                             onError={() => {
                               const id = String(item.id);
+                              delete imageUrlsRef.current[id];
                               setImageUrls((current) => {
                                 const next = { ...current };
                                 delete next[id];
