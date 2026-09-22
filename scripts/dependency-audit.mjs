@@ -7,10 +7,19 @@ const allowedModerateAdvisories = new Set([
 
 let stdout = '';
 try {
-  stdout = execFileSync('npm', ['audit', '--json'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  const npmExecPath = process.env.npm_execpath;
+  if (npmExecPath) {
+    stdout = execFileSync(process.execPath, [npmExecPath, 'audit', '--json'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } else {
+    const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    stdout = execFileSync(npmCommand, ['audit', '--json'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  }
 } catch (error) {
   // npm audit exits non-zero whenever findings meet its default threshold.
   // The JSON report is still the source of truth for our policy below.
