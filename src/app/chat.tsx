@@ -2,6 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Image,
   ImageBackground,
@@ -413,6 +414,39 @@ export default function ChatScreen() {
     chatChannelRef.current = channel;
     return () => { chatChannelRef.current = null; void supabase.removeChannel(channel); };
   }, [conversationId, myUserId, conversationVerified]);
+
+  // CHAT POLL FALLBACK: keep messages moving even if the device misses a Realtime event.
+  useEffect(() => {
+    if (!conversationId || !conversationVerified) return;
+
+    let alive = true;
+    const syncMessages = async () => {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('id, conversation_id, sender_id, content, created_at, read_at, message_type, image_path, image_ai_score, image_moderation_status, image_verification_provider')
+        .eq('conversation_id', String(conversationId))
+        .order('created_at', { ascending: true });
+
+      if (!alive || error || !data) {
+        if (error) console.log('CHAT POLL ERROR:', error.message);
+        return;
+      }
+
+      const rows = data as Message[];
+      setMessages(rows);
+      void Promise.all(rows.filter((m) => m.message_type === 'image').map((m) => loadImageUrl(m)));
+      if (rows.some((m) => m.sender_id !== myUserId && !m.read_at)) {
+        void markMessagesAsRead();
+      }
+    };
+
+    const timer = setInterval(() => { void syncMessages(); }, 2200);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [conversationId, conversationVerified, myUserId]);
+
 
   async function loadMessages(requestId: number) {
     if (!conversationId) return;
@@ -880,9 +914,9 @@ export default function ChatScreen() {
       )}
 
       {isBlocked ? (
-        <View style={styles.blockedBar}><Text style={styles.blockedText}>{text.blocked}</Text></View>
+        <View style={[styles.blockedBar, { paddingBottom: Math.max(safeInsets.bottom, 12) + 8 }]}><Text style={styles.blockedText}>{text.blocked}</Text></View>
       ) : (
-        <View style={styles.inputBar}>
+        <View style={[styles.inputBar, { paddingBottom: Math.max(safeInsets.bottom, 12) + 8 }]}>
           <TouchableOpacity
             style={[styles.photoButton, sendingImage && styles.sendButtonDisabled]}
             onPress={pickAndSendPhoto}
