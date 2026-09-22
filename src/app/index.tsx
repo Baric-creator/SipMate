@@ -316,7 +316,13 @@ export default function HomeScreen() {
       (typeof requestId === 'undefined' || requestId === homeLoadIdRef.current);
 
     try {
-      const seenAt = await AsyncStorage.getItem('sipmate:activity-seen-at');
+      const { data: activityProfile, error: seenError } = await supabase
+        .from('profiles')
+        .select('activity_seen_at')
+        .eq('id', myId)
+        .maybeSingle();
+      if (seenError) console.log('ACTIVITY SEEN LOAD ERROR:', seenError.message);
+      const seenAt = activityProfile?.activity_seen_at ?? null;
       if (!isCurrent()) return;
 
       const [{ data: conversations }, cheersResult] = await Promise.all([
@@ -341,12 +347,13 @@ export default function HomeScreen() {
       let unreadMessages = 0;
 
       if (conversationIds.length) {
-        const { count } = await supabase
+        let messageCountQuery = supabase
           .from('messages')
           .select('id', { count: 'exact', head: true })
           .in('conversation_id', conversationIds)
-          .neq('sender_id', myId)
-          .is('read_at', null);
+          .neq('sender_id', myId);
+        if (seenAt) messageCountQuery = messageCountQuery.gt('created_at', seenAt);
+        const { count } = await messageCountQuery;
 
         if (!isCurrent()) return;
         unreadMessages = count ?? 0;
