@@ -44,8 +44,9 @@ export default function PremiumAndroidScreen() {
     let mounted = true;
     supabase.auth.getUser().then(async ({ data }) => {
       if (!mounted || !data.user) return;
-      const { data: profile } = await supabase.from('profiles').select('is_premium, premium_until').eq('id', data.user.id).maybeSingle();
-      const active = profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date());
+      const { data: entitlementRows } = await supabase.rpc('get_my_premium_entitlement');
+      const entitlement = Array.isArray(entitlementRows) ? entitlementRows[0] : entitlementRows;
+      const active = entitlement?.is_premium === true;
       if (mounted) setIsPremium(active);
     });
     return () => { mounted = false; };
