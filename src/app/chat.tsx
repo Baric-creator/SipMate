@@ -179,6 +179,7 @@ export default function ChatScreen() {
 
   const scrollViewRef = useRef<ScrollView>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const incomingTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chatChannelRef = useRef<any>(null);
   const messageSendingRef = useRef(false);
   const messagesRequestIdRef = useRef(0);
@@ -366,12 +367,50 @@ export default function ChatScreen() {
     return () => { messagesRequestIdRef.current += 1; };
   }, [conversationId, conversationVerified]);
 
+  // CHAT FOCUS REFRESH: notification taps and app resumes must always show the latest saved messages.
+  useFocusEffect(
+    useCallback(() => {
+      if (!conversationId || !conversationVerified) return;
+
+      const requestId = ++messagesRequestIdRef.current;
+      setOtherUserTyping(false);
+      void loadMessages(requestId);
+      void markMessagesAsRead();
+
+      return () => {
+        messagesRequestIdRef.current += 1;
+        if (incomingTypingTimeoutRef.current) {
+          clearTimeout(incomingTypingTimeoutRef.current);
+          incomingTypingTimeoutRef.current = null;
+        }
+        setOtherUserTyping(false);
+      };
+    }, [conversationId, conversationVerified])
+  );
+
+  useEffect(() => {
+    if (!conversationId || !conversationVerified) return;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      const requestId = ++messagesRequestIdRef.current;
+      setOtherUserTyping(false);
+      void loadMessages(requestId);
+      void markMessagesAsRead();
+    });
+    return () => subscription.remove();
+  }, [conversationId, conversationVerified]);
+
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
       }
+      if (incomingTypingTimeoutRef.current) {
+        clearTimeout(incomingTypingTimeoutRef.current);
+        incomingTypingTimeoutRef.current = null;
+      }
+      setOtherUserTyping(false);
       void sendTypingStatus(false);
     };
   }, [conversationId, myUserId, conversationVerified]);
@@ -410,7 +449,22 @@ export default function ChatScreen() {
       })
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if (String(conversationId) !== activeConversationIdRef.current) return;
-        if (payload && payload.userId !== myUserId) setOtherUserTyping(Boolean(payload.isTyping));
+        if (!payload || payload.userId === myUserId) return;
+
+        if (incomingTypingTimeoutRef.current) {
+          clearTimeout(incomingTypingTimeoutRef.current);
+          incomingTypingTimeoutRef.current = null;
+        }
+
+        const typing = Boolean(payload.isTyping);
+        setOtherUserTyping(typing);
+
+        if (typing) {
+          incomingTypingTimeoutRef.current = setTimeout(() => {
+            setOtherUserTyping(false);
+            incomingTypingTimeoutRef.current = null;
+          }, 2200);
+        }
       }).subscribe();
     chatChannelRef.current = channel;
     return () => { chatChannelRef.current = null; void supabase.removeChannel(channel); };
