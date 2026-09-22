@@ -539,14 +539,14 @@ export default function NearbyScreen() {
       const requestCustomLatitude = accountChanged ? null : customLatitude;
       const requestCustomLongitude = accountChanged ? null : customLongitude;
 
-      const {
-        data: myProfile,
-        error: myError,
-      } = await supabase
-        .from('profiles')
-        .select('id, city, is_premium, premium_until')
-        .eq('id', user.id)
-        .single();
+      const [{ data: myProfile, error: myError }, { data: entitlementRows, error: entitlementError }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, city, is_premium, premium_until')
+          .eq('id', user.id)
+          .single(),
+        supabase.rpc('get_my_premium_entitlement'),
+      ]);
 
       if (!isLatestRequest()) return;
 
@@ -558,12 +558,13 @@ export default function NearbyScreen() {
         return;
       }
 
+      if (entitlementError) console.log('NEARBY ENTITLEMENT ERROR:', entitlementError.message);
+      const entitlement = Array.isArray(entitlementRows) ? entitlementRows[0] : entitlementRows;
       const premiumActive =
-        myProfile.is_premium === true &&
-        (!myProfile.premium_until ||
-          new Date(
-            myProfile.premium_until
-          ) > new Date());
+        entitlement?.is_premium === true ||
+        (myProfile.is_premium === true &&
+          (!myProfile.premium_until ||
+            new Date(myProfile.premium_until) > new Date()));
 
       setIsPremium(premiumActive);
 
