@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -111,7 +110,13 @@ export default function ActivityScreen() {
       }
 
       const myId = session.user.id;
-      const seenAt = await AsyncStorage.getItem('sipmate:activity-seen-at');
+      const { data: myProfile, error: seenLoadError } = await supabase
+        .from('profiles')
+        .select('activity_seen_at')
+        .eq('id', myId)
+        .maybeSingle();
+      if (seenLoadError) console.log('ACTIVITY SEEN LOAD ERROR:', seenLoadError.message);
+      const seenAt = myProfile?.activity_seen_at ?? null;
 
       let receivedQuery = supabase
         .from('cheers')
@@ -149,12 +154,13 @@ export default function ActivityScreen() {
 
       let unreadMessages: any[] = [];
       if (conversationIds.length) {
-        const { data, error } = await supabase
+        let messageQuery = supabase
           .from('messages')
           .select('id, conversation_id, sender_id, created_at')
           .in('conversation_id', conversationIds)
-          .neq('sender_id', myId)
-          .is('read_at', null)
+          .neq('sender_id', myId);
+        if (seenAt) messageQuery = messageQuery.gt('created_at', seenAt);
+        const { data, error } = await messageQuery
           .order('created_at', { ascending: false })
           .limit(30);
         if (error) console.log('ACTIVITY MESSAGES LOAD ERROR:', error.message);
@@ -214,7 +220,11 @@ export default function ActivityScreen() {
         .slice(0, 40);
 
       setItems(merged);
-      await AsyncStorage.setItem('sipmate:activity-seen-at', new Date().toISOString());
+      const { error: seenSaveError } = await supabase
+        .from('profiles')
+        .update({ activity_seen_at: new Date().toISOString() })
+        .eq('id', myId);
+      if (seenSaveError) console.log('ACTIVITY SEEN SAVE ERROR:', seenSaveError.message);
     } finally {
       if (requestId === activityLoadIdRef.current) {
         hasLoadedActivityRef.current = true;
