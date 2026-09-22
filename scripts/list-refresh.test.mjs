@@ -122,6 +122,9 @@ function harness(screen, compiled) {
         if (name === 'get_my_profile_location') {
           return Promise.resolve({ data: [{ latitude: 0, longitude: 0 }], error: null });
         }
+        if (name === 'get_my_premium_entitlement') {
+          return Promise.resolve({ data: [{ is_premium: false }], error: null });
+        }
         assert.ok(['get_chat_list', 'get_nearby_profiles'].includes(name));
         return nextData();
       },
