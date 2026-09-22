@@ -116,11 +116,16 @@ export default function EditProfileScreen() {
         return;
       }
 
-      const { data, error } = await supabase.from('profiles').select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, active_until, avatar_url, share_cheers_discord').eq('id', session.user.id).single();
+      const [{ data, error }, { data: entitlementRows, error: entitlementError }] = await Promise.all([
+        supabase.from('profiles').select('id, name, age, bio, city, currently_up_for, gender, is_premium, premium_until, is_active, active_until, avatar_url, share_cheers_discord').eq('id', session.user.id).single(),
+        supabase.rpc('get_my_premium_entitlement'),
+      ]);
       if (error) {
         console.log('EDIT PROFILE LOAD ERROR:', error.message);
         return;
       }
+      if (entitlementError) console.log('EDIT PROFILE ENTITLEMENT ERROR:', entitlementError.message);
+      const entitlement = Array.isArray(entitlementRows) ? entitlementRows[0] : entitlementRows;
 
       const { data: locationRows, error: locationError } = await supabase.rpc('get_my_profile_location');
       if (locationError) {
@@ -129,6 +134,8 @@ export default function EditProfileScreen() {
       const ownLocation = Array.isArray(locationRows) ? locationRows[0] : locationRows;
       const loadedProfile = {
         ...data,
+        is_premium: entitlement?.is_premium ?? data.is_premium,
+        premium_until: entitlement?.premium_until ?? data.premium_until,
         latitude: ownLocation?.latitude ?? null,
         longitude: ownLocation?.longitude ?? null,
       } as Profile;
@@ -401,11 +408,8 @@ export default function EditProfileScreen() {
   async function handleAddGalleryPhoto() {
     if (!profile?.id) return;
 
-    const { data: entitlement, error: entitlementError } = await supabase
-      .from('profiles')
-      .select('is_premium, premium_until')
-      .eq('id', profile.id)
-      .maybeSingle();
+    const { data: entitlementRows, error: entitlementError } = await supabase.rpc('get_my_premium_entitlement');
+    const entitlement = Array.isArray(entitlementRows) ? entitlementRows[0] : entitlementRows;
 
     if (entitlementError) {
       console.log('PREMIUM ENTITLEMENT CHECK ERROR:', entitlementError.message);
