@@ -7,10 +7,10 @@ import { supabase } from './supabase';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowBanner: false,
-    shouldShowList: false,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
   }),
 });
 
