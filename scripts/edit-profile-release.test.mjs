@@ -12,7 +12,7 @@ test('edit profile can resolve a typed city when GPS permission is unavailable',
 test('Premium gallery rechecks entitlement and uploads binary data reliably', () => {
   const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
   assert.match(source, /PREMIUM ENTITLEMENT CHECK ERROR/);
-  assert.match(source, /select\('is_premium, premium_until'\)/);
+  assert.match(source, /rpc\('get_my_premium_entitlement'\)/);
   assert.match(source, /response\.arrayBuffer\(\)/);
   assert.match(source, /GALLERY UPLOAD ERROR/);
   assert.match(source, /GALLERY SAVE ERROR/);
