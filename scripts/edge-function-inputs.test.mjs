@@ -2,14 +2,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 
-const announceCheers = fs.readFileSync('supabase/functions/announce-cheers/index.ts', 'utf8');
-const discordOauth = fs.readFileSync('supabase/functions/discord-oauth/index.ts', 'utf8');
-const registerPushToken = fs.readFileSync('supabase/functions/register-push-token/index.ts', 'utf8');
-const sendMessageNotification = fs.readFileSync('supabase/functions/send-message-notification/index.ts', 'utf8');
-const sendCheersNotification = fs.readFileSync('supabase/functions/send-cheers-notification/index.ts', 'utf8');
-const adminModeration = fs.readFileSync('supabase/functions/admin-moderation/index.ts', 'utf8');
-const joinWaitlist = fs.readFileSync('supabase/functions/join-waitlist/index.ts', 'utf8');
-const createCheckoutSession = fs.readFileSync('supabase/functions/create-checkout-session/index.ts', 'utf8');
+const readSource = (path) => fs.readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+
+const announceCheers = readSource('supabase/functions/announce-cheers/index.ts');
+const discordOauth = readSource('supabase/functions/discord-oauth/index.ts');
+const registerPushToken = readSource('supabase/functions/register-push-token/index.ts');
+const sendMessageNotification = readSource('supabase/functions/send-message-notification/index.ts');
+const sendCheersNotification = readSource('supabase/functions/send-cheers-notification/index.ts');
+const adminModeration = readSource('supabase/functions/admin-moderation/index.ts');
+const joinWaitlist = readSource('supabase/functions/join-waitlist/index.ts');
+const createCheckoutSession = readSource('supabase/functions/create-checkout-session/index.ts');
 
 test('Discord Cheers feed validates other_user_id before interpolated PostgREST filters', () => {
   assert.match(announceCheers, /const UUID_PATTERN =/);
