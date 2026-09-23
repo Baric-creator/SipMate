@@ -4,12 +4,12 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
 <title>SipMate App Health</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#09090b;color:#fff;font-family:Inter,system-ui,sans-serif}.shell{width:min(1180px,calc(100% - 30px));margin:auto;padding:34px 0 80px}.card{background:#121215;border:1px solid #29292e;border-radius:24px;padding:24px;margin-bottom:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#17171a;border:1px solid #2f2f34;border-radius:18px;padding:18px}.stat small{display:block;color:#71717a}.stat strong{display:block;font-size:30px;margin-top:8px}.good{color:#4ade80}.warn{color:#fbbf24}.bad{color:#f87171}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:14px;background:#dc2626;color:#fff;padding:13px 18px;font-weight:900;cursor:pointer}.btn.secondary{background:#27272a;text-decoration:none}.field{display:grid;gap:8px;margin-top:12px}.field input{height:48px;border-radius:13px;border:1px solid #3f3f46;background:#18181b;color:#fff;padding:0 14px;font:inherit}.muted{color:#a1a1aa}.hidden{display:none!important}.msg{margin-top:14px;min-height:20px;color:#a1a1aa}.funnel{display:grid;grid-template-columns:repeat(6,1fr);gap:9px}.step{position:relative;background:#17171a;border:1px solid #2f2f34;border-radius:16px;padding:16px;min-width:0}.step:not(:last-child):after{content:'›';position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:22px;color:#52525b;z-index:2}.step small{display:block;color:#71717a;font-size:10px;text-transform:uppercase;letter-spacing:.7px}.step strong{display:block;font-size:26px;margin-top:7px}.step span{display:block;color:#71717a;font-size:11px;margin-top:5px}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:950px}.table th,.table td{text-align:left;padding:11px;border-bottom:1px solid #27272a;font-size:12px;vertical-align:top}.table th{color:#71717a;text-transform:uppercase;font-size:10px;letter-spacing:.7px}.tag{display:inline-flex;border:1px solid #3f3f46;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:800}.tag.on{color:#4ade80;border-color:#245f39}.tag.off{color:#a1a1aa}.tag.premium{color:#fbbf24;border-color:#6b4f1d}.feedback-details{white-space:pre-wrap;max-width:420px;line-height:1.45}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.funnel{grid-template-columns:repeat(3,1fr)}.step:nth-child(3):after{display:none}}@media(max-width:520px){.grid,.funnel{grid-template-columns:1fr}.step:after{display:none!important}}
+*{box-sizing:border-box}body{margin:0;background:#09090b;color:#fff;font-family:Inter,system-ui,sans-serif}.shell{width:min(1240px,calc(100% - 30px));margin:auto;padding:34px 0 80px}.card{background:#121215;border:1px solid #29292e;border-radius:24px;padding:24px;margin-bottom:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.alpha-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}.stat{background:#17171a;border:1px solid #2f2f34;border-radius:18px;padding:18px}.stat small{display:block;color:#71717a}.stat strong{display:block;font-size:30px;margin-top:8px}.good{color:#4ade80}.warn{color:#fbbf24}.bad{color:#f87171}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:14px;background:#dc2626;color:#fff;padding:12px 16px;font-weight:900;cursor:pointer}.btn.secondary{background:#27272a;text-decoration:none}.btn.tiny{padding:8px 10px;border-radius:10px;font-size:11px}.field{display:grid;gap:8px;margin-top:12px}.field input{height:48px;border-radius:13px;border:1px solid #3f3f46;background:#18181b;color:#fff;padding:0 14px;font:inherit}.muted{color:#a1a1aa}.hidden{display:none!important}.msg{margin-top:14px;min-height:20px;color:#a1a1aa}.funnel{display:grid;grid-template-columns:repeat(6,1fr);gap:9px}.step{position:relative;background:#17171a;border:1px solid #2f2f34;border-radius:16px;padding:16px;min-width:0}.step:not(:last-child):after{content:'›';position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:22px;color:#52525b;z-index:2}.step small{display:block;color:#71717a;font-size:10px;text-transform:uppercase;letter-spacing:.7px}.step strong{display:block;font-size:26px;margin-top:7px}.step span{display:block;color:#71717a;font-size:11px;margin-top:5px}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:1050px}.table th,.table td{text-align:left;padding:11px;border-bottom:1px solid #27272a;font-size:12px;vertical-align:top}.table th{color:#71717a;text-transform:uppercase;font-size:10px;letter-spacing:.7px}.tag{display:inline-flex;border:1px solid #3f3f46;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:800;white-space:nowrap}.tag.on{color:#4ade80;border-color:#245f39}.tag.off{color:#a1a1aa}.tag.premium{color:#fbbf24;border-color:#6b4f1d}.tag.p0{color:#fecaca;border-color:#991b1b;background:#2b1010}.tag.p1{color:#fdba74;border-color:#9a3412}.tag.p2{color:#fde68a;border-color:#854d0e}.tag.p3{color:#a1a1aa}.feedback-details{white-space:pre-wrap;max-width:380px;line-height:1.45}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.filters{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.filters select,.filters input,.triage select{background:#18181b;color:#fff;border:1px solid #3f3f46;border-radius:11px;padding:9px 10px;font:inherit;font-size:12px}.filters input{min-width:210px}.triage{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.readiness{height:8px;border-radius:999px;background:#27272a;overflow:hidden;margin-top:10px}.readiness>span{display:block;height:100%;background:linear-gradient(90deg,#dc2626,#f59e0b,#22c55e)}.alpha-note{font-size:11px;color:#71717a;margin-top:8px}@media(max-width:1000px){.alpha-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.funnel{grid-template-columns:repeat(3,1fr)}.step:nth-child(3):after{display:none}}@media(max-width:520px){.grid,.funnel,.alpha-grid{grid-template-columns:1fr}.step:after{display:none!important}}
 </style>
 </head>
 <body>
 <div class="shell">
-  <div class="card"><h1>🍻 SipMate App Health</h1><p class="muted">Live operational snapshot and closed-test funnel. No message content or precise location is exposed.</p></div>
+  <div class="card"><h1>🍻 SipMate App Health</h1><p class="muted">Live Closed Alpha snapshot. No message content or precise location is exposed.</p></div>
   <div id="login" class="card">
     <form id="loginForm">
       <div class="field"><label>Admin email</label><input id="email" type="email" value="sipmate.app@gmail.com" autocomplete="username"></div>
@@ -19,6 +19,12 @@
     <div id="loginMsg" class="msg"></div>
   </div>
   <div id="dashboard" class="hidden">
+    <div class="card">
+      <div class="section-head"><div><h2>Alpha status</h2><p class="muted">Operational view for the current closed test.</p></div><span id="alphaState" class="tag off">LOADING</span></div>
+      <div id="alphaStats" class="alpha-grid"></div>
+      <div class="readiness"><span id="readinessBar" style="width:0%"></span></div>
+      <div id="readinessNote" class="alpha-note"></div>
+    </div>
     <div class="card"><h2>Launch funnel</h2><div id="funnel" class="funnel"></div><div id="funnelMeta" class="msg"></div></div>
     <div class="card">
       <div class="grid" id="stats"></div>
@@ -30,60 +36,80 @@
       <div class="table-wrap"><table class="table"><thead><tr><th>Tester</th><th>City</th><th>Last seen</th><th>Cheers sent</th><th>Cheers received</th><th>Messages</th><th>Chats</th><th>Status</th></tr></thead><tbody id="testerBody"><tr><td colspan="8">Loading…</td></tr></tbody></table></div>
     </div>
     <div class="card">
-      <div class="section-head"><div><h2>Tester feedback</h2><p class="muted">Reports submitted from Account & Safety → Report a problem.</p></div><div id="feedbackCounts" class="muted"></div></div>
-      <div class="table-wrap"><table class="table"><thead><tr><th>Tester</th><th>Category</th><th>Details</th><th>Screen</th><th>Build</th><th>Received</th><th>Status</th></tr></thead><tbody id="feedbackBody"><tr><td colspan="7">Loading…</td></tr></tbody></table></div>
+      <div class="section-head"><div><h2>Tester feedback</h2><p class="muted">Triage incoming reports and prepare the v9 fix batch.</p></div><div id="feedbackCounts" class="muted"></div></div>
+      <div class="filters">
+        <select id="filterStatus"><option value="all">All statuses</option><option value="new">NEW</option><option value="reviewed">REVIEWED</option><option value="resolved">RESOLVED</option></select>
+        <select id="filterSeverity"><option value="all">All severities</option><option value="p0">P0 Critical</option><option value="p1">P1 High</option><option value="p2">P2 Normal</option><option value="p3">P3 Cosmetic</option></select>
+        <select id="filterCategory"><option value="all">All categories</option><option value="bug">Bug</option><option value="performance">Performance</option><option value="ui">UI / text</option><option value="account">Account</option><option value="other">Other</option></select>
+        <select id="filterBuild"><option value="all">All builds</option></select>
+        <input id="filterSearch" type="search" placeholder="Search tester or report…">
+        <button id="clearFilters" class="btn secondary tiny" type="button">Clear</button>
+      </div>
+      <div id="feedbackMeta" class="muted"></div>
+      <div class="table-wrap"><table class="table"><thead><tr><th>Tester</th><th>Category</th><th>Severity</th><th>Details</th><th>Screen</th><th>Build</th><th>Received</th><th>Triage</th></tr></thead><tbody id="feedbackBody"><tr><td colspan="8">Loading…</td></tr></tbody></table></div>
     </div>
   </div>
 </div>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const supabase=createClient('https://poatmbsfglhrcdbosinb.supabase.co','sb_publishable_VooWOnzPl1SCUA44rZDTow_Ee5XrMd3',{auth:{persistSession:true,autoRefreshToken:true}});
+const ALPHA_INVITED=17;
 const defs=[
   ['app_installs','App installs','good'],['app_installs_24h','Installs · 24h','good'],['app_installs_7d','Installs · 7d','good'],['profiles_total','Profiles total',''],
   ['active_users_24h','Active users · 24h','good'],['active_users_7d','Active users · 7d','good'],['messages_24h','Messages · 24h',''],['cheers_24h','Cheers · 24h',''],
   ['mutual_pairs_24h','Mutual CHEERS · 24h',''],['premium_active','Active Premium',''],['push_tokens','Push tokens',''],['pending_reports','Pending reports','warn'],
-  ['feedback_new','New feedback','warn'],['feedback_7d','Feedback · 7d',''],['client_errors_24h','Client errors · 24h','bad'],['verification_failures_24h','Photo verify failures · 24h','bad'],
-  ['waitlist_total','Waitlist total',''],['waitlist_confirmed','Waitlist confirmed','good']
+  ['feedback_new','New feedback','warn'],['feedback_7d','Feedback · 7d',''],['client_errors_24h','Client errors · 24h','bad'],['verification_failures_24h','Photo verify failures · 24h','bad']
 ];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const n=v=>Number(v||0);
-function pct(a,b){return b>0?Math.round((a/b)*100):0}
+const pct=(a,b)=>b>0?Math.round((a/b)*100):0;
+let feedbackCache={counts:{},feedback:[]};
 function renderFunnel(f){
   const steps=[['Installs',n(f.installs_total),'first launches'],['Registered',n(f.registered),`${pct(n(f.registered),n(f.installs_total))}% of installs`],['Active · 7d',n(f.active_7d),`${pct(n(f.active_7d),n(f.registered))}% of registered`],['Cheers users',n(f.cheers_users),`${n(f.cheers_users_7d)} active in 7d`],['Chat users',n(f.chat_users),`${n(f.chat_users_7d)} active in 7d`],['Premium',n(f.premium_active),`${pct(n(f.premium_active),n(f.registered))}% of registered`]];
   document.getElementById('funnel').innerHTML=steps.map(([label,value,sub])=>`<div class="step"><small>${esc(label)}</small><strong>${value}</strong><span>${esc(sub)}</span></div>`).join('');
   document.getElementById('funnelMeta').textContent='Install tracking counts first launches only from builds that contain installation tracking; older installs cannot be recovered retroactively.';
 }
+function renderAlpha(f,feedback){
+  const c=feedback?.counts||{};const total=n(c.new)+n(c.reviewed)+n(c.resolved);const p0=n(c.p0),p1=n(c.p1),fresh=n(c.new);
+  const readiness=Math.max(0,100-Math.min(p0*50,50)-Math.min(p1*15,30)-Math.min(fresh*5,20));
+  const state=p0>0?'HOLD':(p1>0||fresh>0?'REVIEW':'READY');
+  const cls=state==='READY'?'on':state==='HOLD'?'p0':'premium';
+  document.getElementById('alphaState').className=`tag ${cls}`;document.getElementById('alphaState').textContent=`V9 ${state}`;
+  const items=[['Invited',ALPHA_INVITED,'tester emails'],['Registered',n(f.registered),'profiles'],['Active · 7d',n(f.active_7d),'recent users'],['Feedback',total,'reports'],['Critical bugs',p0,'open P0'],['V9 readiness',`${readiness}%`,'triage score']];
+  document.getElementById('alphaStats').innerHTML=items.map(([l,v,s])=>`<div class="stat"><small>${l}</small><strong>${v}</strong><span class="muted">${s}</span></div>`).join('');
+  document.getElementById('readinessBar').style.width=`${readiness}%`;
+  document.getElementById('readinessNote').textContent='Internal triage score only: P0, P1 and unreviewed reports reduce readiness. It is not a Google Play approval score.';
+}
 function renderTesters(data){
   const rows=data?.testers||[];const now=Date.now();
-  document.getElementById('testerBody').innerHTML=rows.length?rows.map(x=>{
-    const seen=x.last_seen_at?new Date(x.last_seen_at):null;const age=seen?now-seen.getTime():Infinity;const active=age<=24*3600*1000;
-    const status=x.premium_active?'<span class="tag premium">PREMIUM</span>':active?'<span class="tag on">ACTIVE 24H</span>':'<span class="tag off">INACTIVE</span>';
-    return `<tr><td><b>${esc(x.name||'Unnamed')}</b><br><span class="muted">${esc((x.preferred_language||'').toUpperCase())}</span></td><td>${esc(x.city||'—')}</td><td>${seen?esc(seen.toLocaleString()):'—'}</td><td>${n(x.cheers_sent)}</td><td>${n(x.cheers_received)}</td><td>${n(x.messages_sent)}</td><td>${n(x.conversations)}</td><td>${status}</td></tr>`;
-  }).join(''):'<tr><td colspan="8">No profiles yet.</td></tr>';
+  document.getElementById('testerBody').innerHTML=rows.length?rows.map(x=>{const seen=x.last_seen_at?new Date(x.last_seen_at):null;const active=seen&&now-seen.getTime()<=86400000;const status=x.premium_active?'<span class="tag premium">PREMIUM</span>':active?'<span class="tag on">ACTIVE 24H</span>':'<span class="tag off">INACTIVE</span>';return `<tr><td><b>${esc(x.name||'Unnamed')}</b><br><span class="muted">${esc((x.preferred_language||'').toUpperCase())}</span></td><td>${esc(x.city||'—')}</td><td>${seen?esc(seen.toLocaleString()):'—'}</td><td>${n(x.cheers_sent)}</td><td>${n(x.cheers_received)}</td><td>${n(x.messages_sent)}</td><td>${n(x.conversations)}</td><td>${status}</td></tr>`}).join(''):'<tr><td colspan="8">No profiles yet.</td></tr>';
 }
-function renderFeedback(data){
-  const counts=data?.counts||{};const rows=data?.feedback||[];
-  document.getElementById('feedbackCounts').textContent=`${n(counts.new)} new · ${n(counts.reviewed)} reviewed · ${n(counts.resolved)} resolved`;
-  document.getElementById('feedbackBody').innerHTML=rows.length?rows.map(x=>{
-    const status=x.status==='new'?'<span class="tag premium">NEW</span>':x.status==='resolved'?'<span class="tag on">RESOLVED</span>':'<span class="tag off">REVIEWED</span>';
-    return `<tr><td><b>${esc(x.name||'Unnamed')}</b><br><span class="muted">${esc(x.city||'—')}</span></td><td>${esc(String(x.category||'other').toUpperCase())}</td><td class="feedback-details">${esc(x.details||'')}</td><td>${esc(x.screen||'—')}</td><td>${esc(x.platform||'—')} · ${esc(x.app_version||'—')}</td><td>${x.created_at?esc(new Date(x.created_at).toLocaleString()):'—'}</td><td>${status}</td></tr>`;
-  }).join(''):'<tr><td colspan="7">No tester feedback yet.</td></tr>';
+function buildKey(x){return `${x.platform||'unknown'} · ${x.app_version||'unknown'} (${x.build_number||'unknown'})`}
+function populateBuildFilter(rows){const el=document.getElementById('filterBuild');const current=el.value;const builds=[...new Set(rows.map(buildKey))].sort();el.innerHTML='<option value="all">All builds</option>'+builds.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(builds.includes(current))el.value=current}
+function severityTag(s){const sev=['p0','p1','p2','p3'].includes(s)?s:'p2';const labels={p0:'P0 CRITICAL',p1:'P1 HIGH',p2:'P2 NORMAL',p3:'P3 COSMETIC'};return `<span class="tag ${sev}">${labels[sev]}</span>`}
+function renderFeedback(){
+  const counts=feedbackCache?.counts||{};let rows=feedbackCache?.feedback||[];
+  document.getElementById('feedbackCounts').textContent=`${n(counts.new)} new · ${n(counts.reviewed)} reviewed · ${n(counts.resolved)} resolved · ${n(counts.p0)} P0 · ${n(counts.p1)} P1`;
+  populateBuildFilter(rows);
+  const fs=document.getElementById('filterStatus').value, fv=document.getElementById('filterSeverity').value, fc=document.getElementById('filterCategory').value, fb=document.getElementById('filterBuild').value, q=document.getElementById('filterSearch').value.trim().toLowerCase();
+  rows=rows.filter(x=>(fs==='all'||x.status===fs)&&(fv==='all'||x.severity===fv)&&(fc==='all'||x.category===fc)&&(fb==='all'||buildKey(x)===fb)&&(!q||`${x.name||''} ${x.city||''} ${x.details||''} ${x.screen||''}`.toLowerCase().includes(q)));
+  document.getElementById('feedbackMeta').textContent=`Showing ${rows.length} of ${(feedbackCache?.feedback||[]).length} reports`;
+  document.getElementById('feedbackBody').innerHTML=rows.length?rows.map(x=>`<tr data-id="${esc(x.id)}"><td><b>${esc(x.name||'Unnamed')}</b><br><span class="muted">${esc(x.city||'—')}</span></td><td>${esc(String(x.category||'other').toUpperCase())}</td><td>${severityTag(x.severity)}</td><td class="feedback-details">${esc(x.details||'')}</td><td>${esc(x.screen||'—')}</td><td>${esc(buildKey(x))}</td><td>${x.created_at?esc(new Date(x.created_at).toLocaleString()):'—'}</td><td><div class="triage"><select class="sev"><option value="p0" ${x.severity==='p0'?'selected':''}>P0 Critical</option><option value="p1" ${x.severity==='p1'?'selected':''}>P1 High</option><option value="p2" ${(!x.severity||x.severity==='p2')?'selected':''}>P2 Normal</option><option value="p3" ${x.severity==='p3'?'selected':''}>P3 Cosmetic</option></select><select class="status"><option value="new" ${x.status==='new'?'selected':''}>NEW</option><option value="reviewed" ${x.status==='reviewed'?'selected':''}>REVIEWED</option><option value="resolved" ${x.status==='resolved'?'selected':''}>RESOLVED</option></select><button class="btn tiny save-triage" type="button">Save</button></div></td></tr>`).join(''):'<tr><td colspan="8">No feedback matches these filters.</td></tr>';
+  document.querySelectorAll('.save-triage').forEach(btn=>btn.onclick=async()=>{const tr=btn.closest('tr');btn.disabled=true;btn.textContent='Saving…';const {error}=await supabase.rpc('set_admin_app_feedback_triage',{p_feedback_id:tr.dataset.id,p_status:tr.querySelector('.status').value,p_severity:tr.querySelector('.sev').value});if(error){alert(error.message);btn.disabled=false;btn.textContent='Save';return}await load()});
 }
 async function load(){
   document.getElementById('meta').textContent='Loading…';
-  const [{data:health,error:healthError},{data:funnel,error:funnelError},{data:testers,error:testersError},{data:feedback,error:feedbackError}]=await Promise.all([
-    supabase.rpc('get_admin_app_health'),supabase.rpc('get_admin_growth_funnel'),supabase.rpc('get_admin_tester_activity'),supabase.rpc('get_admin_app_feedback')
-  ]);
+  const [{data:health,error:healthError},{data:funnel,error:funnelError},{data:testers,error:testersError},{data:feedback,error:feedbackError}]=await Promise.all([supabase.rpc('get_admin_app_health'),supabase.rpc('get_admin_growth_funnel'),supabase.rpc('get_admin_tester_activity'),supabase.rpc('get_admin_app_feedback')]);
   const error=healthError||funnelError||testersError||feedbackError;if(error){document.getElementById('meta').textContent=error.message;return}
-  const data={...(health||{}),...(funnel||{})};
+  feedbackCache=feedback||{counts:{},feedback:[]};const data={...(health||{}),...(funnel||{})};
   document.getElementById('stats').innerHTML=defs.map(([key,label,cls])=>`<div class="stat"><small>${label}</small><strong class="${cls}">${data?.[key]??0}</strong></div>`).join('');
-  renderFunnel(funnel||{});renderTesters(testers||{});renderFeedback(feedback||{});
-  const conversion=n(data.waitlist_total)>0?Math.round((n(data.app_registered)/n(data.waitlist_total))*100):0;
-  document.getElementById('meta').textContent=`Waitlist → app conversion: ${conversion}% · Updated ${new Date(data.generated_at||Date.now()).toLocaleString()}`;
+  renderAlpha(funnel||{},feedbackCache);renderFunnel(funnel||{});renderTesters(testers||{});renderFeedback();
+  document.getElementById('meta').textContent=`Updated ${new Date(data.generated_at||Date.now()).toLocaleString()}`;
 }
 async function show(session){document.getElementById('login').classList.toggle('hidden',!!session);document.getElementById('dashboard').classList.toggle('hidden',!session);if(session)await load()}
 document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();const {data,error}=await supabase.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});document.getElementById('password').value='';if(error){document.getElementById('loginMsg').textContent=error.message;return}await show(data.session)};
 document.getElementById('refresh').onclick=load;document.getElementById('logout').onclick=async()=>{await supabase.auth.signOut();await show(null)};
+['filterStatus','filterSeverity','filterCategory','filterBuild'].forEach(id=>document.getElementById(id).onchange=renderFeedback);document.getElementById('filterSearch').oninput=renderFeedback;document.getElementById('clearFilters').onclick=()=>{['filterStatus','filterSeverity','filterCategory','filterBuild'].forEach(id=>document.getElementById(id).value='all');document.getElementById('filterSearch').value='';renderFeedback()};
 const {data}=await supabase.auth.getSession();await show(data.session);setInterval(()=>{if(!document.getElementById('dashboard').classList.contains('hidden')&&document.visibilityState==='visible')void load()},60000);
 </script>
 </body>
