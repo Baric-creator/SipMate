@@ -4,12 +4,12 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
 <title>SipMate App Health</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#09090b;color:#fff;font-family:Inter,system-ui,sans-serif}.shell{width:min(980px,calc(100% - 30px));margin:auto;padding:34px 0 80px}.card{background:#121215;border:1px solid #29292e;border-radius:24px;padding:24px;margin-bottom:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#17171a;border:1px solid #2f2f34;border-radius:18px;padding:18px}.stat small{display:block;color:#71717a}.stat strong{display:block;font-size:30px;margin-top:8px}.good{color:#4ade80}.warn{color:#fbbf24}.bad{color:#f87171}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:14px;background:#dc2626;color:#fff;padding:13px 18px;font-weight:900;cursor:pointer}.btn.secondary{background:#27272a;text-decoration:none}.field{display:grid;gap:8px;margin-top:12px}.field input{height:48px;border-radius:13px;border:1px solid #3f3f46;background:#18181b;color:#fff;padding:0 14px;font:inherit}.muted{color:#a1a1aa}.hidden{display:none!important}.msg{margin-top:14px;min-height:20px;color:#a1a1aa}@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:420px){.grid{grid-template-columns:1fr}}
+*{box-sizing:border-box}body{margin:0;background:#09090b;color:#fff;font-family:Inter,system-ui,sans-serif}.shell{width:min(1180px,calc(100% - 30px));margin:auto;padding:34px 0 80px}.card{background:#121215;border:1px solid #29292e;border-radius:24px;padding:24px;margin-bottom:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#17171a;border:1px solid #2f2f34;border-radius:18px;padding:18px}.stat small{display:block;color:#71717a}.stat strong{display:block;font-size:30px;margin-top:8px}.good{color:#4ade80}.warn{color:#fbbf24}.bad{color:#f87171}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:14px;background:#dc2626;color:#fff;padding:13px 18px;font-weight:900;cursor:pointer}.btn.secondary{background:#27272a;text-decoration:none}.field{display:grid;gap:8px;margin-top:12px}.field input{height:48px;border-radius:13px;border:1px solid #3f3f46;background:#18181b;color:#fff;padding:0 14px;font:inherit}.muted{color:#a1a1aa}.hidden{display:none!important}.msg{margin-top:14px;min-height:20px;color:#a1a1aa}.funnel{display:grid;grid-template-columns:repeat(6,1fr);gap:9px}.step{position:relative;background:#17171a;border:1px solid #2f2f34;border-radius:16px;padding:16px;min-width:0}.step:not(:last-child):after{content:'›';position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:22px;color:#52525b;z-index:2}.step small{display:block;color:#71717a;font-size:10px;text-transform:uppercase;letter-spacing:.7px}.step strong{display:block;font-size:26px;margin-top:7px}.step span{display:block;color:#71717a;font-size:11px;margin-top:5px}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:950px}.table th,.table td{text-align:left;padding:11px;border-bottom:1px solid #27272a;font-size:12px}.table th{color:#71717a;text-transform:uppercase;font-size:10px;letter-spacing:.7px}.tag{display:inline-flex;border:1px solid #3f3f46;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:800}.tag.on{color:#4ade80;border-color:#245f39}.tag.off{color:#a1a1aa}.tag.premium{color:#fbbf24;border-color:#6b4f1d}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.funnel{grid-template-columns:repeat(3,1fr)}.step:nth-child(3):after{display:none}}@media(max-width:520px){.grid,.funnel{grid-template-columns:1fr}.step:after{display:none!important}}
 </style>
 </head>
 <body>
 <div class="shell">
-  <div class="card"><h1>🍻 SipMate App Health</h1><p class="muted">Live operational snapshot without exposing message content or precise location.</p></div>
+  <div class="card"><h1>🍻 SipMate App Health</h1><p class="muted">Live operational snapshot and closed-test funnel. No message content or precise location is exposed.</p></div>
   <div id="login" class="card">
     <form id="loginForm">
       <div class="field"><label>Admin email</label><input id="email" type="email" value="sipmate.app@gmail.com" autocomplete="username"></div>
@@ -19,10 +19,15 @@
     <div id="loginMsg" class="msg"></div>
   </div>
   <div id="dashboard" class="hidden">
+    <div class="card"><h2>Launch funnel</h2><div id="funnel" class="funnel"></div><div id="funnelMeta" class="msg"></div></div>
     <div class="card">
       <div class="grid" id="stats"></div>
       <div class="row"><button id="refresh" class="btn">Refresh</button><a href="./founder.html" class="btn secondary">Founder Dashboard</a><a href="./admin-app-config.html" class="btn secondary">App Control</a><button id="logout" class="btn secondary">Sign out</button></div>
       <div id="meta" class="msg"></div>
+    </div>
+    <div class="card">
+      <h2>Tester activity</h2><p class="muted">Profiles sorted by latest activity. Counts are aggregates only; chat contents are never shown.</p>
+      <div class="table-wrap"><table class="table"><thead><tr><th>Tester</th><th>City</th><th>Last seen</th><th>Cheers sent</th><th>Cheers received</th><th>Messages</th><th>Chats</th><th>Status</th></tr></thead><tbody id="testerBody"><tr><td colspan="8">Loading…</td></tr></tbody></table></div>
     </div>
   </div>
 </div>
@@ -30,44 +35,43 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const supabase=createClient('https://poatmbsfglhrcdbosinb.supabase.co','sb_publishable_VooWOnzPl1SCUA44rZDTow_Ee5XrMd3',{auth:{persistSession:true,autoRefreshToken:true}});
 const defs=[
-  ['app_installs','App installs','good'],
-  ['app_installs_24h','Installs · 24h','good'],
-  ['app_installs_7d','Installs · 7d','good'],
-  ['active_users_24h','Active users · 24h','good'],
-  ['active_users_7d','Active users · 7d','good'],
-  ['messages_24h','Messages · 24h',''],
-  ['cheers_24h','Cheers · 24h',''],
-  ['mutual_pairs_24h','Mutual CHEERS · 24h',''],
-  ['premium_active','Active Premium',''],
-  ['push_tokens','Push tokens',''],
-  ['pending_reports','Pending reports','warn'],
-  ['client_errors_24h','Client errors · 24h','bad'],
-  ['verification_failures_24h','Photo verify failures · 24h','bad'],
-  ['profiles_total','Profiles total',''],
-  ['waitlist_total','Waitlist total',''],
-  ['waitlist_confirmed','Waitlist confirmed','good'],
-  ['app_registered','Waitlist → app','good'],
-  ['referred_profiles','Referred profiles','']
+  ['app_installs','App installs','good'],['app_installs_24h','Installs · 24h','good'],['app_installs_7d','Installs · 7d','good'],['profiles_total','Profiles total',''],
+  ['active_users_24h','Active users · 24h','good'],['active_users_7d','Active users · 7d','good'],['messages_24h','Messages · 24h',''],['cheers_24h','Cheers · 24h',''],
+  ['mutual_pairs_24h','Mutual CHEERS · 24h',''],['premium_active','Active Premium',''],['push_tokens','Push tokens',''],['pending_reports','Pending reports','warn'],
+  ['client_errors_24h','Client errors · 24h','bad'],['verification_failures_24h','Photo verify failures · 24h','bad'],['waitlist_total','Waitlist total',''],['waitlist_confirmed','Waitlist confirmed','good']
 ];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n=v=>Number(v||0);
+function pct(a,b){return b>0?Math.round((a/b)*100):0}
+function renderFunnel(f){
+  const steps=[['Installs',n(f.installs_total),'first launches'],['Registered',n(f.registered),`${pct(n(f.registered),n(f.installs_total))}% of installs`],['Active · 7d',n(f.active_7d),`${pct(n(f.active_7d),n(f.registered))}% of registered`],['Cheers users',n(f.cheers_users),`${n(f.cheers_users_7d)} active in 7d`],['Chat users',n(f.chat_users),`${n(f.chat_users_7d)} active in 7d`],['Premium',n(f.premium_active),`${pct(n(f.premium_active),n(f.registered))}% of registered`]];
+  document.getElementById('funnel').innerHTML=steps.map(([label,value,sub])=>`<div class="step"><small>${esc(label)}</small><strong>${value}</strong><span>${esc(sub)}</span></div>`).join('');
+  document.getElementById('funnelMeta').textContent='Install tracking counts first launches only from builds that contain installation tracking; older installs cannot be recovered retroactively.';
+}
+function renderTesters(data){
+  const rows=data?.testers||[];const now=Date.now();
+  document.getElementById('testerBody').innerHTML=rows.length?rows.map(x=>{
+    const seen=x.last_seen_at?new Date(x.last_seen_at):null;const age=seen?now-seen.getTime():Infinity;const active=age<=24*3600*1000;
+    const status=x.premium_active?'<span class="tag premium">PREMIUM</span>':active?'<span class="tag on">ACTIVE 24H</span>':'<span class="tag off">INACTIVE</span>';
+    return `<tr><td><b>${esc(x.name||'Unnamed')}</b><br><span class="muted">${esc((x.preferred_language||'').toUpperCase())}</span></td><td>${esc(x.city||'—')}</td><td>${seen?esc(seen.toLocaleString()):'—'}</td><td>${n(x.cheers_sent)}</td><td>${n(x.cheers_received)}</td><td>${n(x.messages_sent)}</td><td>${n(x.conversations)}</td><td>${status}</td></tr>`;
+  }).join(''):'<tr><td colspan="8">No profiles yet.</td></tr>';
+}
 async function load(){
   document.getElementById('meta').textContent='Loading…';
-  const [{data:health,error:healthError},{data:funnel,error:funnelError}]=await Promise.all([
-    supabase.rpc('get_admin_app_health'),
-    supabase.rpc('get_admin_growth_funnel')
+  const [{data:health,error:healthError},{data:funnel,error:funnelError},{data:testers,error:testersError}]=await Promise.all([
+    supabase.rpc('get_admin_app_health'),supabase.rpc('get_admin_growth_funnel'),supabase.rpc('get_admin_tester_activity')
   ]);
-  const error=healthError||funnelError;
-  if(error){document.getElementById('meta').textContent=error.message;return}
+  const error=healthError||funnelError||testersError;if(error){document.getElementById('meta').textContent=error.message;return}
   const data={...(health||{}),...(funnel||{})};
   document.getElementById('stats').innerHTML=defs.map(([key,label,cls])=>`<div class="stat"><small>${label}</small><strong class="${cls}">${data?.[key]??0}</strong></div>`).join('');
-  const conversion=Number(data.waitlist_total||0)>0?Math.round((Number(data.app_registered||0)/Number(data.waitlist_total))*100):0;
-  document.getElementById('meta').textContent=`Install count starts with builds containing tracking and counts first launches per local app installation. Waitlist → app conversion: ${conversion}% · Updated ${new Date(data.generated_at||Date.now()).toLocaleString()}`;
+  renderFunnel(funnel||{});renderTesters(testers||{});
+  const conversion=n(data.waitlist_total)>0?Math.round((n(data.app_registered)/n(data.waitlist_total))*100):0;
+  document.getElementById('meta').textContent=`Waitlist → app conversion: ${conversion}% · Updated ${new Date(data.generated_at||Date.now()).toLocaleString()}`;
 }
 async function show(session){document.getElementById('login').classList.toggle('hidden',!!session);document.getElementById('dashboard').classList.toggle('hidden',!session);if(session)await load()}
 document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();const {data,error}=await supabase.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});document.getElementById('password').value='';if(error){document.getElementById('loginMsg').textContent=error.message;return}await show(data.session)};
-document.getElementById('refresh').onclick=load;
-document.getElementById('logout').onclick=async()=>{await supabase.auth.signOut();await show(null)};
-const {data}=await supabase.auth.getSession();await show(data.session);
-setInterval(()=>{if(!document.getElementById('dashboard').classList.contains('hidden')&&document.visibilityState==='visible')void load()},60000);
+document.getElementById('refresh').onclick=load;document.getElementById('logout').onclick=async()=>{await supabase.auth.signOut();await show(null)};
+const {data}=await supabase.auth.getSession();await show(data.session);setInterval(()=>{if(!document.getElementById('dashboard').classList.contains('hidden')&&document.visibilityState==='visible')void load()},60000);
 </script>
 </body>
 </html>
