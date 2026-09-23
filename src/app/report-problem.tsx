@@ -54,6 +54,7 @@ export default function ReportProblemScreen() {
         details: clean.slice(0, 2000),
         screen: screen.trim().slice(0, 100) || null,
         app_version: String(Constants.expoConfig?.version ?? 'unknown').slice(0, 30),
+        build_number: String(Constants.nativeBuildVersion ?? 'unknown').slice(0, 30),
         platform: Platform.OS.slice(0, 30),
       });
       if (error) throw error;
