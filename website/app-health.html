@@ -30,6 +30,9 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const supabase=createClient('https://poatmbsfglhrcdbosinb.supabase.co','sb_publishable_VooWOnzPl1SCUA44rZDTow_Ee5XrMd3',{auth:{persistSession:true,autoRefreshToken:true}});
 const defs=[
+  ['app_installs','App installs','good'],
+  ['app_installs_24h','Installs · 24h','good'],
+  ['app_installs_7d','Installs · 7d','good'],
   ['active_users_24h','Active users · 24h','good'],
   ['active_users_7d','Active users · 7d','good'],
   ['messages_24h','Messages · 24h',''],
@@ -57,7 +60,7 @@ async function load(){
   const data={...(health||{}),...(funnel||{})};
   document.getElementById('stats').innerHTML=defs.map(([key,label,cls])=>`<div class="stat"><small>${label}</small><strong class="${cls}">${data?.[key]??0}</strong></div>`).join('');
   const conversion=Number(data.waitlist_total||0)>0?Math.round((Number(data.app_registered||0)/Number(data.waitlist_total))*100):0;
-  document.getElementById('meta').textContent=`Waitlist → app conversion: ${conversion}% · Updated ${new Date(data.generated_at||Date.now()).toLocaleString()}`;
+  document.getElementById('meta').textContent=`Install count starts with builds containing tracking and counts first launches per local app installation. Waitlist → app conversion: ${conversion}% · Updated ${new Date(data.generated_at||Date.now()).toLocaleString()}`;
 }
 async function show(session){document.getElementById('login').classList.toggle('hidden',!!session);document.getElementById('dashboard').classList.toggle('hidden',!session);if(session)await load()}
 document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();const {data,error}=await supabase.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});document.getElementById('password').value='';if(error){document.getElementById('loginMsg').textContent=error.message;return}await show(data.session)};
