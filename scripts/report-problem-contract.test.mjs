@@ -15,6 +15,7 @@ test('problem reports require a signed-in user and write only bounded feedback f
   assert.match(reportSource, /details:\s*clean\.slice\(0,\s*2000\)/);
   assert.match(reportSource, /screen:\s*screen\.trim\(\)\.slice\(0,\s*100\)/);
   assert.match(reportSource, /app_version:/);
+  assert.match(reportSource, /build_number:\s*String\(Constants\.nativeBuildVersion/);
   assert.match(reportSource, /platform:/);
 });
 
