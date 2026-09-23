@@ -1,7 +1,11 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { supabase } from './supabase';
+
+const INSTALLATION_ID_KEY = 'sipmate.installation_id.v1';
+const INSTALLATION_SYNCED_KEY = 'sipmate.installation_synced.v1';
 
 function cleanText(value: unknown, max = 180) {
   return String(value ?? '').replace(/[\r\n\t]+/g, ' ').slice(0, max);
@@ -16,6 +20,37 @@ function safeMetadata(metadata: Record<string, unknown> = {}) {
     else out[key] = cleanText(value, 120);
   }
   return out;
+}
+
+function newInstallationId() {
+  return `sm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
+async function syncInstallationMetric() {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') return;
+
+  try {
+    const alreadySynced = await AsyncStorage.getItem(INSTALLATION_SYNCED_KEY);
+    if (alreadySynced === '1') return;
+
+    let installationId = await AsyncStorage.getItem(INSTALLATION_ID_KEY);
+    if (!installationId) {
+      installationId = newInstallationId();
+      await AsyncStorage.setItem(INSTALLATION_ID_KEY, installationId);
+    }
+
+    const { error } = await supabase.from('app_installations').insert({
+      installation_id: installationId,
+      platform: Platform.OS,
+      app_version: cleanText(Constants.expoConfig?.version ?? 'unknown', 30),
+    });
+
+    if (!error || error.code === '23505') {
+      await AsyncStorage.setItem(INSTALLATION_SYNCED_KEY, '1');
+    }
+  } catch {
+    // Installation analytics must never break app startup.
+  }
 }
 
 export async function logClientEvent(
@@ -45,6 +80,8 @@ let installed = false;
 export function installGlobalTelemetry() {
   if (installed) return;
   installed = true;
+
+  void syncInstallationMetric();
 
   const globalAny = globalThis as any;
   const errorUtils = globalAny.ErrorUtils;
