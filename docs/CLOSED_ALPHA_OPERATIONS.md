@@ -48,16 +48,22 @@ Treat tester reports in this order:
 - photo upload or moderation path broken;
 - repeated UI defect that blocks use.
 
-### P2 — batch / polish
-- copy, spacing, icon, animation and visual issues;
-- minor performance complaints without a broken flow;
-- optional feature requests.
+### P2 — normal backlog / batch
+- a non-blocking functional defect;
+- intermittent performance issue;
+- usability issue with a working workaround;
+- improvement worth bundling into the next meaningful Alpha update.
+
+### P3 — cosmetic / later polish
+- copy, spacing, icon, animation or minor visual issues;
+- cosmetic inconsistency that does not block use;
+- optional feature requests that are not required for the current test goal.
 
 ## Reproduction standard
 
 Before changing code, record:
 
-- app version / Play build;
+- app version and native Play build number;
 - device and Android version when known;
 - screen / flow;
 - exact steps;
@@ -67,6 +73,18 @@ Before changing code, record:
 - whether another tester/device reproduces it.
 
 Do not include passwords, message content, payment-card data or precise coordinates in bug notes.
+
+## Founder/App Health workflow
+
+Use the App Health feedback table as the single operational queue during Closed Alpha:
+
+1. Filter reports by build, category or status.
+2. Assign P0/P1/P2/P3 severity.
+3. Mark the report `REVIEWED` after reproduction/assessment.
+4. Mark it `RESOLVED` only after the fix is verified, not merely committed.
+5. Keep all unresolved P0/P1 items visible before deciding to build V9.
+
+The V9 readiness score is an internal triage indicator only. It is not a Google Play approval score and must not replace the release gate below.
 
 ## V9 release gate
 
@@ -78,10 +96,12 @@ Before building the next Alpha candidate:
 - [ ] `npm run release:audit` is green.
 - [ ] `npm run doctor` is green or any warning is explicitly reviewed and accepted.
 - [ ] Current production Supabase migrations/functions required by the build are deployed.
+- [ ] Production database recovery/backup readiness is checked using `docs/SUPABASE_RELEASE_BACKUP_RECOVERY.md`.
+- [ ] Current Play Alpha remains compatible with backend changes until testers update.
 - [ ] Android Premium remains consumption-only with no Stripe/external purchase CTA.
+- [ ] V9 notes are prepared from `docs/V9_RELEASE_NOTES_TEMPLATE.md` and contain tester-visible changes only.
 - [ ] Fresh production AAB is created from the exact green commit.
 - [ ] Manifest/permissions are checked for unexpected additions.
-- [ ] Play release notes describe tester-visible changes only.
 - [ ] Play-delivered build is installed on a physical Android phone.
 - [ ] Core smoke test passes before the tester group is told to update.
 
@@ -89,9 +109,9 @@ Before building the next Alpha candidate:
 
 Minimum pass:
 
-`install → register/login → location → Nearby → Cheers → mutual CHEERS → chat text/image → push → Report/Block → logout/login → Account & Safety → delete disposable account`
+`install → register/login → forgot password → location deny/grant → Nearby → Cheers → mutual CHEERS → chat text/image → push → Report/Block → logout/login → Account & Safety → delete disposable account`
 
-Also verify any exact bug fixed for V9 on the same Play-delivered build.
+Also verify every exact P0/P1 bug fixed for V9 on the same Play-delivered build and confirm the feedback report records the correct app version/native build number.
 
 ## Decision discipline
 
