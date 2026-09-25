@@ -262,7 +262,8 @@ export default function RootLayout() {
     currentRoute === 'onboarding' ||
     currentRoute === 'forgot-password' ||
     currentRoute === 'reset-password' ||
-    currentRoute === 'chat';
+    currentRoute === 'chat' ||
+    currentRoute === 'spots';
 
   useEffect(() => {
     setSupportExpanded(false);
@@ -350,6 +351,7 @@ export default function RootLayout() {
         <Tabs.Screen name="invite" options={{ href: null }} />
         <Tabs.Screen name="notification-settings" options={{ href: null }} />
         <Tabs.Screen name="premium" options={{ href: null }} />
+        <Tabs.Screen name="spots" options={{ href: null }} />
         <Tabs.Screen name="privacy" options={{ href: null }} />
         <Tabs.Screen name="terms" options={{ href: null }} />
         <Tabs.Screen name="user-profile" options={{ href: null }} />
