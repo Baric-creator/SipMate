@@ -10,18 +10,21 @@ const copy = {
     title: 'SipMate Premium', subtitle: 'Premium account benefits',
     body: 'This Android version does not sell digital subscriptions inside the app. If Premium is active on your SipMate account, your Premium features unlock automatically after you sign in.',
     active: '💎 PREMIUM ACTIVE', activeNote: 'Premium is active on this SipMate account.',
+    spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM FEATURE', spotsBody: 'Discover bars, cafés, pubs, clubs and other places for a drink around you on a clean, privacy-first map.', spotsNote: 'Nearby venue map is being prepared for the next Alpha build.',
     monthly: 'Monthly', founders: 'Founders Premium', foundersBadge: 'FIRST 100 MEMBERS', early: 'Early Access', standard: 'Standard Yearly', firstYear: '/ first year', month: '/ month', year: '/ year', foundersNote: 'Exclusive for the first 100 confirmed yearly Premium members.', earlyNote: 'Starts after the first 100 Founder spots are taken.', standardNote: 'Standard yearly price after the Early Access period.', back: '← BACK',
   },
   de: {
     title: 'SipMate Premium', subtitle: 'Premium-Kontovorteile',
     body: 'Diese Android-Version verkauft keine digitalen Abos innerhalb der App. Wenn Premium auf deinem SipMate-Konto aktiv ist, werden deine Premium-Funktionen nach der Anmeldung automatisch freigeschaltet.',
     active: '💎 PREMIUM AKTIV', activeNote: 'Premium ist auf diesem SipMate-Konto aktiv.',
+    spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM-FUNKTION', spotsBody: 'Entdecke Bars, Cafés, Pubs, Clubs und weitere Orte für einen Drink in deiner Nähe auf einer klaren, datenschutzfreundlichen Karte.', spotsNote: 'Die Karte mit Orten in der Nähe wird für den nächsten Alpha-Build vorbereitet.',
     monthly: 'Monatlich', founders: 'Founders Premium', foundersBadge: 'DIE ERSTEN 100 MITGLIEDER', early: 'Early Access', standard: 'Standard jährlich', firstYear: '/ erstes Jahr', month: '/ Monat', year: '/ Jahr', foundersNote: 'Exklusiv für die ersten 100 bestätigten jährlichen Premium-Mitglieder.', earlyNote: 'Startet, sobald die ersten 100 Founder-Plätze vergeben sind.', standardNote: 'Regulärer Jahrespreis nach der Early-Access-Phase.', back: '← ZURÜCK',
   },
   hr: {
     title: 'SipMate Premium', subtitle: 'Premium pogodnosti računa',
     body: 'Ova Android verzija ne prodaje digitalne pretplate unutar aplikacije. Ako je Premium aktivan na tvom SipMate računu, Premium mogućnosti se automatski otključavaju nakon prijave.',
     active: '💎 PREMIUM AKTIVAN', activeNote: 'Premium je aktivan na ovom SipMate računu.',
+    spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM FUNKCIJA', spotsBody: 'Otkrij barove, kafiće, pubove, klubove i druga mjesta za piće u blizini na čistoj karti koja čuva privatnost korisnika.', spotsNote: 'Mapa mjesta u blizini priprema se za sljedeći Alpha build.',
     monthly: 'Mjesečno', founders: 'Founders Premium', foundersBadge: 'PRVIH 100 ČLANOVA', early: 'Early Access', standard: 'Standard godišnje', firstYear: '/ prva godina', month: '/ mjesec', year: '/ godina', foundersNote: 'Ekskluzivno za prvih 100 potvrđenih godišnjih Premium članova.', earlyNote: 'Počinje nakon što se popuni prvih 100 Founder mjesta.', standardNote: 'Standardna godišnja cijena nakon Early Access razdoblja.', back: '← NATRAG',
   },
 } as const;
@@ -68,6 +71,13 @@ export default function PremiumAndroidScreen() {
         <Text style={styles.subtitle}>{text.subtitle}</Text>
         {isPremium && <View style={styles.activeCard}><Text style={styles.activeTitle}>{text.active}</Text><Text style={styles.activeText}>{text.activeNote}</Text></View>}
         <Text style={styles.body}>{text.body}</Text>
+        <View style={styles.spotsCard}>
+          <View style={styles.spotsTopRow}><Text style={styles.spotsBadge}>{text.spotsBadge}</Text><Text style={styles.spotsIcon}>🗺️</Text></View>
+          <Text style={styles.spotsTitle}>{text.spotsTitle}</Text>
+          <Text style={styles.spotsBody}>{text.spotsBody}</Text>
+          <View style={styles.spotsDivider} />
+          <Text style={styles.spotsNote}>{text.spotsNote}</Text>
+        </View>
         <View style={styles.tierList}>
           {tiers.map((tier) => (
             <View key={tier.key} style={[styles.tierCard, { borderColor: tier.border, backgroundColor: tier.bg }]}>
@@ -94,7 +104,15 @@ const styles = StyleSheet.create({
   activeCard: { marginTop: 18, backgroundColor: '#0D1812', borderWidth: 1, borderColor: '#285A3B', borderRadius: 18, padding: 16 },
   activeTitle: { color: '#67DC98', fontSize: 14, fontWeight: '900', textAlign: 'center' },
   activeText: { color: '#A7D7B9', fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 5 },
-  body: { color: '#A1A1AA', fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 14, marginBottom: 22 },
+  body: { color: '#A1A1AA', fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 14, marginBottom: 18 },
+  spotsCard: { borderWidth: 1, borderColor: '#5A3B17', backgroundColor: '#15120D', borderRadius: 22, padding: 18, marginBottom: 22, shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 18, elevation: 3 },
+  spotsTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  spotsBadge: { color: '#F5B942', fontSize: 9, fontWeight: '900', letterSpacing: 1.0 },
+  spotsIcon: { fontSize: 20 },
+  spotsTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '900', marginTop: 9 },
+  spotsBody: { color: '#D4D4D8', fontSize: 13, lineHeight: 20, marginTop: 8 },
+  spotsDivider: { height: 1, backgroundColor: '#3A2A18', marginVertical: 13 },
+  spotsNote: { color: '#A1A1AA', fontSize: 11, lineHeight: 17 },
   tierList: { gap: 12 },
   tierCard: { position: 'relative', overflow: 'hidden', borderWidth: 1.5, borderRadius: 22, padding: 20, minHeight: 150 },
   shine: { position: 'absolute', top: -80, bottom: -80, left: -80, width: 78, opacity: 0.95 },
