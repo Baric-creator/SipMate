@@ -182,7 +182,7 @@ export default function SpotsScreen() {
         <View style={styles.mapCard}>
           {locationGranted && userCoordinate ? (
             <Map style={styles.map} mapStyle="https://tiles.openfreemap.org/styles/dark">
-              <Camera centerCoordinate={userCoordinate} zoomLevel={14} />
+              <Camera center={userCoordinate} zoom={14} />
               <UserLocation animated accuracy heading minDisplacement={5} />
             </Map>
           ) : (
