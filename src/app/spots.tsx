@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { Camera, Map, UserLocation } from '@maplibre/maplibre-react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -19,9 +20,9 @@ const copy = {
     permissionBody: 'Spots uses foreground location only while you are looking for nearby venues. No background tracking and no public user pin.',
     enable: 'ENABLE LOCATION',
     ready: 'LOCATION READY',
-    readyBody: 'Great. The next step will place nearby bars, cafés, pubs and clubs on the map without exposing your position to other users.',
+    readyBody: 'Your map is centered on your current location. Nearby places will be added in a later step.',
     categories: 'COMING TO THE MAP',
-    privacy: 'Your coordinates stay private. Venues are shown around you; people are not shown as precise pins.',
+    privacy: 'Your coordinates stay private. Venues will be shown around you; people are not shown as precise pins.',
     denied: 'Location permission was not granted. You can try again whenever you want.',
     back: '← BACK',
   },
@@ -37,9 +38,9 @@ const copy = {
     permissionBody: 'Spots verwendet den Standort nur im Vordergrund, während du Orte in der Nähe suchst. Kein Hintergrund-Tracking und kein öffentlicher Nutzer-Pin.',
     enable: 'STANDORT AKTIVIEREN',
     ready: 'STANDORT BEREIT',
-    readyBody: 'Perfekt. Im nächsten Schritt erscheinen Bars, Cafés, Pubs und Clubs in der Nähe auf der Karte, ohne deinen Standort anderen Nutzern zu zeigen.',
+    readyBody: 'Die Karte ist auf deinen aktuellen Standort zentriert. Orte in der Nähe folgen in einem späteren Schritt.',
     categories: 'BALD AUF DER KARTE',
-    privacy: 'Deine Koordinaten bleiben privat. Orte werden um dich herum angezeigt; Personen erscheinen nicht als genaue Pins.',
+    privacy: 'Deine Koordinaten bleiben privat. Orte werden später um dich herum angezeigt; Personen erscheinen nicht als genaue Pins.',
     denied: 'Die Standortfreigabe wurde nicht erteilt. Du kannst es jederzeit erneut versuchen.',
     back: '← ZURÜCK',
   },
@@ -55,15 +56,17 @@ const copy = {
     permissionBody: 'Spots koristi lokaciju samo dok tražiš mjesta u blizini. Nema praćenja u pozadini i nema javnog pina tvoje lokacije.',
     enable: 'OMOGUĆI LOKACIJU',
     ready: 'LOKACIJA SPREMNA',
-    readyBody: 'Odlično. Sljedeći korak će prikazati barove, kafiće, pubove i klubove u blizini bez otkrivanja tvoje lokacije drugim korisnicima.',
+    readyBody: 'Mapa je centrirana na tvoju trenutačnu lokaciju. Mjesta u blizini dodat ćemo u sljedećem koraku.',
     categories: 'USKORO NA MAPI',
-    privacy: 'Tvoje koordinate ostaju privatne. Prikazujemo lokale oko tebe, a ljude ne prikazujemo kao precizne pinove.',
+    privacy: 'Tvoje koordinate ostaju privatne. Lokale ćemo prikazivati oko tebe, a ljude ne prikazujemo kao precizne pinove.',
     denied: 'Dozvola za lokaciju nije odobrena. Možeš pokušati ponovno kad god želiš.',
     back: '← NATRAG',
   },
 } as const;
 
 const categoryChips = ['🍺 Bar', '🍻 Pub', '☕ Café', '🍸 Cocktail', '🎵 Club', '🌿 Biergarten'];
+
+type Coordinate = [number, number];
 
 export default function SpotsScreen() {
   const router = useRouter();
@@ -73,8 +76,14 @@ export default function SpotsScreen() {
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [locationGranted, setLocationGranted] = useState(false);
+  const [userCoordinate, setUserCoordinate] = useState<Coordinate | null>(null);
   const [permissionMessage, setPermissionMessage] = useState('');
   const [requestingLocation, setRequestingLocation] = useState(false);
+
+  const loadCurrentLocation = async (): Promise<Coordinate> => {
+    const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    return [position.coords.longitude, position.coords.latitude];
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -95,7 +104,16 @@ export default function SpotsScreen() {
 
       if (active) {
         const permission = await Location.getForegroundPermissionsAsync();
-        if (mounted) setLocationGranted(permission.status === 'granted');
+        const granted = permission.status === 'granted';
+        if (mounted) setLocationGranted(granted);
+        if (granted) {
+          try {
+            const coordinate = await loadCurrentLocation();
+            if (mounted) setUserCoordinate(coordinate);
+          } catch {
+            if (mounted) setPermissionMessage(text.denied);
+          }
+        }
       }
 
       if (mounted) setLoading(false);
@@ -113,10 +131,12 @@ export default function SpotsScreen() {
       const permission = await Location.requestForegroundPermissionsAsync();
       const granted = permission.status === 'granted';
       setLocationGranted(granted);
-      if (!granted) setPermissionMessage(text.denied);
-      if (granted) {
-        await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (!granted) {
+        setPermissionMessage(text.denied);
+        return;
       }
+      const coordinate = await loadCurrentLocation();
+      setUserCoordinate(coordinate);
     } catch {
       setPermissionMessage(text.denied);
     } finally {
@@ -159,17 +179,26 @@ export default function SpotsScreen() {
         <Text style={styles.title}>{text.title}</Text>
         <Text style={styles.subtitle}>{text.subtitle}</Text>
 
-        <View style={styles.previewCard}>
-          <View style={styles.previewHalo} />
-          <Text style={styles.previewPin}>📍</Text>
-          <Text style={styles.previewLabel}>SipMate Spots</Text>
-          <Text style={styles.previewSmall}>3 km</Text>
+        <View style={styles.mapCard}>
+          {locationGranted && userCoordinate ? (
+            <Map style={styles.map} mapStyle="https://tiles.openfreemap.org/styles/dark">
+              <Camera centerCoordinate={userCoordinate} zoomLevel={14} />
+              <UserLocation animated accuracy heading minDisplacement={5} />
+            </Map>
+          ) : (
+            <View style={styles.mapPlaceholder}>
+              <View style={styles.previewHalo} />
+              <Text style={styles.previewPin}>📍</Text>
+              <Text style={styles.previewLabel}>SipMate Spots</Text>
+              <Text style={styles.previewSmall}>{text.permissionTitle}</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.permissionCard}>
-          <Text style={styles.cardTitle}>{locationGranted ? text.ready : text.permissionTitle}</Text>
-          <Text style={styles.cardBody}>{locationGranted ? text.readyBody : text.permissionBody}</Text>
-          {!locationGranted && (
+          <Text style={styles.cardTitle}>{locationGranted && userCoordinate ? text.ready : text.permissionTitle}</Text>
+          <Text style={styles.cardBody}>{locationGranted && userCoordinate ? text.readyBody : text.permissionBody}</Text>
+          {(!locationGranted || !userCoordinate) && (
             <Pressable disabled={requestingLocation} style={[styles.primaryButton, requestingLocation && styles.buttonDisabled]} onPress={() => void requestLocation()}>
               <Text style={styles.primaryButtonText}>{requestingLocation ? '…' : text.enable}</Text>
             </Pressable>
@@ -204,11 +233,13 @@ const styles = StyleSheet.create({
   title: { color: '#FFFFFF', fontSize: 30, lineHeight: 36, fontWeight: '900', textAlign: 'center', marginTop: 8 },
   subtitle: { color: '#A1A1AA', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 8 },
   bodyCentered: { color: '#A1A1AA', maxWidth: 430, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 12, marginBottom: 8 },
-  previewCard: { height: 190, borderRadius: 28, marginTop: 26, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: '#111114', borderWidth: 1, borderColor: '#3C3020' },
+  mapCard: { height: 300, borderRadius: 28, marginTop: 26, overflow: 'hidden', backgroundColor: '#111114', borderWidth: 1, borderColor: '#3C3020' },
+  map: { flex: 1 },
+  mapPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   previewHalo: { position: 'absolute', width: 240, height: 240, borderRadius: 120, backgroundColor: 'rgba(245,185,66,0.06)', borderWidth: 1, borderColor: 'rgba(245,185,66,0.12)' },
   previewPin: { fontSize: 40 },
   previewLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', marginTop: 8 },
-  previewSmall: { color: '#71717A', fontSize: 10, fontWeight: '800', marginTop: 4 },
+  previewSmall: { color: '#71717A', fontSize: 10, fontWeight: '800', marginTop: 4, textAlign: 'center' },
   permissionCard: { marginTop: 16, borderRadius: 22, padding: 18, backgroundColor: '#121214', borderWidth: 1, borderColor: '#27272A' },
   cardTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
   cardBody: { color: '#A1A1AA', fontSize: 13, lineHeight: 20, marginTop: 7 },
