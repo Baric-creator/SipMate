@@ -74,13 +74,27 @@ export default function RootLayout() {
   const bottomInset = Math.max(insets.bottom, 10);
   const language = i18n.language?.split('-')[0];
 
-  const tabLabels =
-    language === 'de'
-      ? { discover: 'Entdecken', nearby: 'In der Nähe', profile: 'Profil' }
-      : language === 'hr'
-        ? { discover: 'Otkrivaj', nearby: 'U blizini', profile: 'Profil' }
-        : { discover: 'Discover', nearby: 'Nearby', profile: 'Profile' };
-
+const tabLabels =
+  language === 'de'
+    ? {
+        discover: 'Entdecken',
+        nearby: 'In der Nähe',
+        spots: 'Spots',
+        profile: 'Profil',
+      }
+    : language === 'hr'
+      ? {
+          discover: 'Otkrivaj',
+          nearby: 'U blizini',
+          spots: 'Spots',
+          profile: 'Profil',
+        }
+      : {
+          discover: 'Discover',
+          nearby: 'Nearby',
+          spots: 'Spots',
+          profile: 'Profile',
+        };
   const supportLabel =
     language === 'de' ? 'Brauchst du Hilfe?' :
     language === 'hr' ? 'Trebaš pomoć?' :
@@ -324,6 +338,13 @@ export default function RootLayout() {
           }}
         />
         <Tabs.Screen
+  name="spots"
+  options={{
+    title: tabLabels.spots,
+    tabBarIcon: ({ focused }) => <TabIcon icon="🗺️" focused={focused} />,
+  }}
+/>
+        <Tabs.Screen
           name="profile"
           options={{
             title: tabLabels.profile,
@@ -351,7 +372,6 @@ export default function RootLayout() {
         <Tabs.Screen name="invite" options={{ href: null }} />
         <Tabs.Screen name="notification-settings" options={{ href: null }} />
         <Tabs.Screen name="premium" options={{ href: null }} />
-        <Tabs.Screen name="spots" options={{ href: null }} />
         <Tabs.Screen name="privacy" options={{ href: null }} />
         <Tabs.Screen name="terms" options={{ href: null }} />
         <Tabs.Screen name="user-profile" options={{ href: null }} />
