@@ -78,7 +78,8 @@
         }
       ],
       "expo-secure-store",
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      "expo-iap"
     ],
     "experiments": {
       "typedRoutes": true,
