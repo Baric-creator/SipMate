@@ -1,4 +1,4 @@
-{
+﻿{
   "expo": {
     "name": "SipMate",
     "slug": "SipMate",
@@ -18,7 +18,7 @@
     },
     "android": {
       "package": "com.bariccreator.sipmate",
-      "versionCode": 1,
+      "versionCode": 9,
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
@@ -94,3 +94,4 @@
     "owner": "sipmate.app"
   }
 }
+
