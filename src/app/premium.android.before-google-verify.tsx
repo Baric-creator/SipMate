@@ -15,28 +15,24 @@ import {
 import { useIAP } from 'expo-iap';
 import { supabase } from '../lib/supabase';
 
-const PREMIUM_PRODUCT_ID = 'sipmate_premium';
-const PREMIUM_BASE_PLAN_ID = 'monthly';
-
-
 const copy = {
   en: {
     title: 'SipMate Premium', subtitle: 'Premium account benefits',
-    body: 'Subscribe securely through Google Play. Premium is linked to your SipMate account and unlocks automatically after your purchase is verified.',
+    body: 'This Android version does not sell digital subscriptions inside the app. If Premium is active on your SipMate account, your Premium features unlock automatically after you sign in.',
     active: '💎 PREMIUM ACTIVE', activeNote: 'Premium is active on this SipMate account.',
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM FEATURE', spotsBody: 'Discover bars, cafés, pubs, clubs and other places for a drink around you on a clean, privacy-first map.', spotsOpen: 'OPEN SPOTS →', spotsLocked: 'Available with Premium',
     monthly: 'Monthly', founders: 'Founders Premium', foundersBadge: 'FIRST 100 MEMBERS', early: 'Early Access', standard: 'Standard Yearly', firstYear: '/ first year', month: '/ month', year: '/ year', foundersNote: 'Exclusive for the first 100 confirmed yearly Premium members.', earlyNote: 'Starts after the first 100 Founder spots are taken.', standardNote: 'Standard yearly price after the Early Access period.', back: '← BACK',
   },
   de: {
     title: 'SipMate Premium', subtitle: 'Premium-Kontovorteile',
-    body: 'Abonniere sicher über Google Play. Premium wird mit deinem SipMate-Konto verknüpft und nach erfolgreicher Bestätigung automatisch freigeschaltet.',
+    body: 'Diese Android-Version verkauft keine digitalen Abos innerhalb der App. Wenn Premium auf deinem SipMate-Konto aktiv ist, werden deine Premium-Funktionen nach der Anmeldung automatisch freigeschaltet.',
     active: '💎 PREMIUM AKTIV', activeNote: 'Premium ist auf diesem SipMate-Konto aktiv.',
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM-FUNKTION', spotsBody: 'Entdecke Bars, Cafés, Pubs, Clubs und weitere Orte für einen Drink in deiner Nähe auf einer klaren, datenschutzfreundlichen Karte.', spotsOpen: 'SPOTS ÖFFNEN →', spotsLocked: 'Mit Premium verfügbar',
     monthly: 'Monatlich', founders: 'Founders Premium', foundersBadge: 'DIE ERSTEN 100 MITGLIEDER', early: 'Early Access', standard: 'Standard jährlich', firstYear: '/ erstes Jahr', month: '/ Monat', year: '/ Jahr', foundersNote: 'Exklusiv für die ersten 100 bestätigten jährlichen Premium-Mitglieder.', earlyNote: 'Startet, sobald die ersten 100 Founder-Plätze vergeben sind.', standardNote: 'Regulärer Jahrespreis nach der Early-Access-Phase.', back: '← ZURÜCK',
   },
   hr: {
     title: 'SipMate Premium', subtitle: 'Premium pogodnosti računa',
-    body:  'Pretplati se sigurno putem Google Playa. Premium se povezuje s tvojim SipMate računom i automatski se aktivira nakon potvrde kupnje.',
+    body: 'Ova Android verzija ne prodaje digitalne pretplate unutar aplikacije. Ako je Premium aktivan na tvom SipMate računu, Premium mogućnosti se automatski otključavaju nakon prijave.',
     active: '💎 PREMIUM AKTIVAN', activeNote: 'Premium je aktivan na ovom SipMate računu.',
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM FUNKCIJA', spotsBody: 'Otkrij barove, kafiće, pubove, klubove i druga mjesta za piće u blizini na čistoj karti koja čuva privatnost korisnika.', spotsOpen: 'OTVORI SPOTS →', spotsLocked: 'Dostupno uz Premium',
     monthly: 'Mjesečno', founders: 'Founders Premium', foundersBadge: 'PRVIH 100 ČLANOVA', early: 'Early Access', standard: 'Standard godišnje', firstYear: '/ prva godina', month: '/ mjesec', year: '/ godina', foundersNote: 'Ekskluzivno za prvih 100 potvrđenih godišnjih Premium članova.', earlyNote: 'Počinje nakon što se popuni prvih 100 Founder mjesta.', standardNote: 'Standardna godišnja cijena nakon Early Access razdoblja.', back: '← NATRAG',
@@ -51,182 +47,15 @@ export default function PremiumAndroidScreen() {
   const shine = useRef(new Animated.Value(0)).current;
   const [isPremium, setIsPremium] = useState(false);
   const [googlePlayPrice, setGooglePlayPrice] = useState<string | null>(null);
-  const [isPurchasing, setIsPurchasing] = useState(false);
-  const processingTokenRef = useRef<string | null>(null);
-  const recoveredTokensRef = useRef<Set<string>>(new Set());
-  const verifyPurchaseOnServer = async (purchaseToken: string) => {
-  const { data, error } = await supabase.functions.invoke(
-    'google-play-verify',
-    {
-      body: {
-        purchase_token: purchaseToken,
-      },
-    }
-  );
-
-  if (error) {
-    console.warn('Premium verification failed:', error);
-    throw new Error('verification_failed');
-  }
-
-  if (!data?.ok || data?.premium !== true) {
-    console.warn('Premium verification rejected:', data);
-    throw new Error(data?.error || 'verification_rejected');
-  }
-
-  return data;
-};
 
 const {
   connected,
   subscriptions,
   fetchProducts,
   requestPurchase,
-  finishTransaction,
-  availablePurchases,
-getAvailablePurchases,
-} = useIAP({
-  onPurchaseSuccess: async (purchase) => {
-    const purchaseToken = purchase.purchaseToken;
-
-    if (!purchaseToken) {
-      console.warn('Google Play purchase has no purchase token');
-      setIsPurchasing(false);
-
-      Alert.alert(
-        'SipMate Premium',
-        'Google Play completed the purchase, but SipMate could not verify it. Please try again.'
-      );
-      return;
-    }
-
-    if (processingTokenRef.current === purchaseToken) {
-      return;
-    }
-
-    processingTokenRef.current = purchaseToken;
-
-    try {
-      await verifyPurchaseOnServer(purchaseToken);
-
-      await finishTransaction({
-        purchase,
-        isConsumable: false,
-      });
-
-      const { data: entitlementRows, error: entitlementError } =
-        await supabase.rpc('get_my_premium_entitlement');
-
-      if (entitlementError) {
-        console.warn(
-          'Premium entitlement refresh failed:',
-          entitlementError
-        );
-      }
-
-      const entitlement = Array.isArray(entitlementRows)
-        ? entitlementRows[0]
-        : entitlementRows;
-
-      setIsPremium(entitlement?.is_premium === true);
-
-      Alert.alert(
-        'SipMate Premium',
-        'Premium activated successfully. 🍻'
-      );
-    } catch (error) {
-      console.warn('Google Play verification failed:', error);
-
-      Alert.alert(
-        'SipMate Premium',
-        'Your purchase could not be verified yet. You will not need to buy it again. Please try again shortly.'
-      );
-    } finally {
-      processingTokenRef.current = null;
-      setIsPurchasing(false);
-    }
-  },
-
-  onPurchaseError: (error) => {
-    console.warn('Google Play purchase error:', error);
-    processingTokenRef.current = null;
-    setIsPurchasing(false);
-
-    const code = String(error?.code ?? '').toLowerCase();
-
-    if (
-      code.includes('cancel') ||
-      code.includes('user-cancelled') ||
-      code.includes('user_cancelled')
-    ) {
-      return;
-    }
-
-    Alert.alert(
-      'SipMate Premium',
-      'The purchase could not be completed. Please try again.'
-    );
-  },
-});
+} = useIAP();
 useEffect(() => {
   if (!connected) return;
-  getAvailablePurchases().catch((error) => {
-  console.warn('Failed to load existing Google Play purchases:', error);
-});
-useEffect(() => {
-  const recoverPremiumPurchase = async () => {
-    const purchase = availablePurchases.find(
-      (item) =>
-        item.productId === PREMIUM_PRODUCT_ID &&
-        Boolean(item.purchaseToken)
-    );
-
-    if (!purchase?.purchaseToken) return;
-
-    const purchaseToken = purchase.purchaseToken;
-
-    if (recoveredTokensRef.current.has(purchaseToken)) return;
-    if (processingTokenRef.current === purchaseToken) return;
-
-    recoveredTokensRef.current.add(purchaseToken);
-    processingTokenRef.current = purchaseToken;
-
-    try {
-      await verifyPurchaseOnServer(purchaseToken);
-      await finishTransaction({
-  purchase,
-  isConsumable: false,
-});
-const { data: entitlementRows, error: entitlementError } =
-  await supabase.rpc('get_my_premium_entitlement');
-
-if (entitlementError) {
-  console.warn(
-    'Recovered Premium entitlement refresh failed:',
-    entitlementError
-  );
-} else {
-  const entitlement = Array.isArray(entitlementRows)
-    ? entitlementRows[0]
-    : entitlementRows;
-
-  setIsPremium(entitlement?.is_premium === true);
-}
-
-      console.log('Existing Google Play Premium purchase recovered.');
-    } catch (error) {
-      recoveredTokensRef.current.delete(purchaseToken);
-      console.warn(
-        'Existing Google Play purchase recovery failed:',
-        error
-      );
-    } finally {
-      processingTokenRef.current = null;
-    }
-  };
-
-  void recoverPremiumPurchase();
-}, [availablePurchases]);
 
   fetchProducts({
     skus: [PREMIUM_PRODUCT_ID],
@@ -252,6 +81,8 @@ useEffect(() => {
     setGooglePlayPrice(product.displayPrice);
   }
 }, [subscriptions]);
+  const PREMIUM_PRODUCT_ID = 'sipmate_premium';
+const PREMIUM_BASE_PLAN_ID = 'monthly';
 
   useEffect(() => {
     const loop = Animated.loop(Animated.timing(shine, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }));
@@ -270,17 +101,13 @@ useEffect(() => {
     });
     return () => { mounted = false; };
   }, []);
-
   const handleSubscribe = async () => {
-      if (isPurchasing) return;
-      setIsPurchasing(true);
   try {
     const product = subscriptions.find(
       (item) => item.id === PREMIUM_PRODUCT_ID
     );
 
     if (!product || product.platform !== 'android') {
-      setIsPurchasing(false);
       Alert.alert(
         'SipMate Premium',
         'Google Play subscription is not available yet. Please try again.'
@@ -293,7 +120,6 @@ useEffect(() => {
     );
 
     if (!monthlyOffer?.offerTokenAndroid) {
-      setIsPurchasing(false);
       Alert.alert(
         'SipMate Premium',
         'Monthly Google Play plan is not available.'
@@ -317,7 +143,6 @@ await requestPurchase({
 });
   } catch (error) {
     console.warn('Google Play purchase failed:', error);
-    setIsPurchasing(false);
 
     Alert.alert(
       'SipMate Premium',
@@ -359,12 +184,7 @@ await requestPurchase({
           {tiers.map((tier) => (
             <Pressable
   key={tier.key}
-  disabled={
-  tier.key !== 'monthly' ||
-  !googlePlayPrice ||
-  isPremium ||
-  isPurchasing
-}
+  disabled={tier.key !== 'monthly' || !googlePlayPrice || isPremium}
   onPress={tier.key === 'monthly' ? handleSubscribe : undefined}
   style={({ pressed }) => [
     styles.tierCard,
