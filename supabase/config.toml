@@ -66,7 +66,6 @@ enabled = true
 verify_jwt = true
 entrypoint = "./functions/send-welcome-email/index.ts"
 
-
 [functions.send-chat-image]
 enabled = true
 verify_jwt = true
@@ -92,20 +91,22 @@ enabled = true
 verify_jwt = true
 entrypoint = "./functions/admin-launch-config/index.ts"
 
-
 [functions.delete-chat-image]
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/delete-chat-image/index.ts"
-
 
 [functions.profile-photo-upload-url]
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/profile-photo-upload-url/index.ts"
 
-
 [functions.send-nearby-activity-notification]
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/send-nearby-activity-notification/index.ts"
+
+[functions.nearby-places]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/nearby-places/index.ts"
