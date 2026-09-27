@@ -1,7 +1,7 @@
 import * as Location from 'expo-location';
 import { Camera, Map, UserLocation } from '@maplibre/maplibre-react-native';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -20,10 +20,11 @@ const copy = {
     permissionBody: 'Spots uses foreground location only while you are looking for nearby venues. No background tracking and no public user pin.',
     enable: 'ENABLE LOCATION',
     ready: 'LOCATION READY',
-    readyBody: 'Your map is centered on your current location. Nearby places will be added in a later step.',
+    readyBody: 'Drag the map freely, zoom in or out, and tap the target button to return to your location.',
     categories: 'COMING TO THE MAP',
     privacy: 'Your coordinates stay private. Venues will be shown around you; people are not shown as precise pins.',
     denied: 'Location permission was not granted. You can try again whenever you want.',
+    recenter: 'Return to my location',
     back: '← BACK',
   },
   de: {
@@ -38,10 +39,11 @@ const copy = {
     permissionBody: 'Spots verwendet den Standort nur im Vordergrund, während du Orte in der Nähe suchst. Kein Hintergrund-Tracking und kein öffentlicher Nutzer-Pin.',
     enable: 'STANDORT AKTIVIEREN',
     ready: 'STANDORT BEREIT',
-    readyBody: 'Die Karte ist auf deinen aktuellen Standort zentriert. Orte in der Nähe folgen in einem späteren Schritt.',
+    readyBody: 'Verschiebe die Karte frei, zoome hinein oder heraus und tippe auf den Zielknopf, um zu deinem Standort zurückzukehren.',
     categories: 'BALD AUF DER KARTE',
     privacy: 'Deine Koordinaten bleiben privat. Orte werden später um dich herum angezeigt; Personen erscheinen nicht als genaue Pins.',
     denied: 'Die Standortfreigabe wurde nicht erteilt. Du kannst es jederzeit erneut versuchen.',
+    recenter: 'Zurück zu meinem Standort',
     back: '← ZURÜCK',
   },
   hr: {
@@ -56,10 +58,11 @@ const copy = {
     permissionBody: 'Spots koristi lokaciju samo dok tražiš mjesta u blizini. Nema praćenja u pozadini i nema javnog pina tvoje lokacije.',
     enable: 'OMOGUĆI LOKACIJU',
     ready: 'LOKACIJA SPREMNA',
-    readyBody: 'Mapa je centrirana na tvoju trenutačnu lokaciju. Mjesta u blizini dodat ćemo u sljedećem koraku.',
+    readyBody: 'Pomiči mapu slobodno, zumiraj i pritisni ciljnik za povratak na svoju lokaciju.',
     categories: 'USKORO NA MAPI',
     privacy: 'Tvoje koordinate ostaju privatne. Lokale ćemo prikazivati oko tebe, a ljude ne prikazujemo kao precizne pinove.',
     denied: 'Dozvola za lokaciju nije odobrena. Možeš pokušati ponovno kad god želiš.',
+    recenter: 'Vrati na moju lokaciju',
     back: '← NATRAG',
   },
 } as const;
@@ -73,6 +76,7 @@ export default function SpotsScreen() {
   const { i18n } = useTranslation();
   const language = i18n.language?.split('-')[0] as keyof typeof copy;
   const text = copy[language] ?? copy.en;
+  const cameraRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [locationGranted, setLocationGranted] = useState(false);
@@ -83,6 +87,11 @@ export default function SpotsScreen() {
   const loadCurrentLocation = async (): Promise<Coordinate> => {
     const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     return [position.coords.longitude, position.coords.latitude];
+  };
+
+  const recenterMap = () => {
+    if (!userCoordinate) return;
+    cameraRef.current?.easeTo?.({ center: userCoordinate, zoom: 14, duration: 450 });
   };
 
   useEffect(() => {
@@ -174,17 +183,43 @@ export default function SpotsScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        nestedScrollEnabled
+        disableScrollViewPanResponder
+        contentContainerStyle={styles.content}
+      >
         <Text style={styles.eyebrow}>{text.eyebrow}</Text>
         <Text style={styles.title}>{text.title}</Text>
         <Text style={styles.subtitle}>{text.subtitle}</Text>
 
         <View style={styles.mapCard}>
           {locationGranted && userCoordinate ? (
-            <Map style={styles.map} mapStyle="https://tiles.openfreemap.org/styles/dark">
-              <Camera center={userCoordinate} zoom={14} />
-              <UserLocation animated accuracy heading minDisplacement={5} />
-            </Map>
+            <>
+              <Map
+                style={styles.map}
+                mapStyle="https://tiles.openfreemap.org/styles/dark"
+                dragPan
+                touchZoom
+                doubleTapZoom
+                doubleTapHoldZoom
+                touchRotate={false}
+                touchPitch={false}
+              >
+                <Camera
+                  ref={cameraRef}
+                  initialViewState={{ center: userCoordinate, zoom: 14 }}
+                />
+                <UserLocation animated accuracy heading minDisplacement={5} />
+              </Map>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={text.recenter}
+                onPress={recenterMap}
+                style={({ pressed }) => [styles.recenterButton, pressed && styles.recenterButtonPressed]}
+              >
+                <Text style={styles.recenterIcon}>◎</Text>
+              </Pressable>
+            </>
           ) : (
             <View style={styles.mapPlaceholder}>
               <View style={styles.previewHalo} />
@@ -235,6 +270,9 @@ const styles = StyleSheet.create({
   bodyCentered: { color: '#A1A1AA', maxWidth: 430, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 12, marginBottom: 8 },
   mapCard: { height: 300, borderRadius: 28, marginTop: 26, overflow: 'hidden', backgroundColor: '#111114', borderWidth: 1, borderColor: '#3C3020' },
   map: { flex: 1 },
+  recenterButton: { position: 'absolute', right: 14, bottom: 14, width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(12,12,15,0.94)', borderWidth: 1, borderColor: 'rgba(245,185,66,0.55)', shadowColor: '#000000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.32, shadowRadius: 10, elevation: 8 },
+  recenterButtonPressed: { transform: [{ scale: 0.94 }], opacity: 0.88 },
+  recenterIcon: { color: '#F5B942', fontSize: 25, fontWeight: '900', lineHeight: 28 },
   mapPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   previewHalo: { position: 'absolute', width: 240, height: 240, borderRadius: 120, backgroundColor: 'rgba(245,185,66,0.06)', borderWidth: 1, borderColor: 'rgba(245,185,66,0.12)' },
   previewPin: { fontSize: 40 },
