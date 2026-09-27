@@ -34,6 +34,7 @@ const ALLOWED_CATEGORIES = new Set<PlaceCategory>([
 const DEFAULT_RADIUS = 3000;
 const MAX_RADIUS = 5000;
 const CACHE_TTL_MS = 20 * 60 * 1000;
+const STALE_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MAX_RESULTS = 60;
 const BUCKET_STEP = 0.01;
 const BUCKET_PADDING_METERS = 900;
@@ -168,70 +169,93 @@ Deno.serve(async (req: Request) => {
     ].join(":");
 
     const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
-    const nowIso = new Date().toISOString();
+    const now = Date.now();
     const { data: cached } = await admin
       .from("places_cache")
       .select("payload,expires_at")
       .eq("cache_key", cacheKey)
-      .gt("expires_at", nowIso)
       .maybeSingle();
+
+    const cachedPayload = cached?.payload && Array.isArray(cached.payload) ? cached.payload as Place[] : null;
+    const expiresAtMs = cached?.expires_at ? new Date(cached.expires_at).getTime() : 0;
+    const cacheFresh = !!cachedPayload && expiresAtMs > now;
+    const staleCacheUsable = !!cachedPayload && expiresAtMs > now - STALE_CACHE_MAX_AGE_MS;
 
     let places: Place[];
     let fromCache = false;
+    let staleCache = false;
 
-    if (cached?.payload && Array.isArray(cached.payload)) {
-      places = cached.payload as Place[];
+    if (cacheFresh && cachedPayload) {
+      places = cachedPayload;
       fromCache = true;
     } else {
       const queryRadius = Math.min(MAX_RADIUS + BUCKET_PADDING_METERS, radiusMeters + BUCKET_PADDING_METERS);
       const query = buildOverpassQuery(bucketLatitude, bucketLongitude, queryRadius, normalizedCategories);
-      const providerResponse = await fetch(providerUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-          "User-Agent": "SipMate-Spots/1.0 (officialsipmate.com)",
-        },
-        body: new URLSearchParams({ data: query }).toString(),
-      });
 
-      if (!providerResponse.ok) {
-        console.error("nearby-places provider", providerResponse.status, await providerResponse.text().catch(() => ""));
-        return json({ ok: false, error: "provider_unavailable" }, 502);
-      }
-
-      const providerData = await providerResponse.json();
-      const seen = new Set<string>();
-      places = [];
-
-      for (const element of providerData?.elements ?? []) {
-        const category = categoryForTags(element.tags);
-        if (!category || !normalizedCategories.includes(category)) continue;
-        const lat = Number(element.lat ?? element.center?.lat);
-        const lon = Number(element.lon ?? element.center?.lon);
-        if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-        const name = String(element.tags?.name || "").trim();
-        if (!name) continue;
-        const id = `${element.type}-${element.id}`;
-        if (seen.has(id)) continue;
-        seen.add(id);
-        places.push({
-          id,
-          name,
-          category,
-          latitude: lat,
-          longitude: lon,
-          address: addressForTags(element.tags),
-          openingHours: element.tags?.opening_hours || null,
-          website: websiteForTags(element.tags),
-          source: "openstreetmap",
+      try {
+        const providerResponse = await fetch(providerUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            "User-Agent": "SipMate-Spots/1.0 (officialsipmate.com)",
+          },
+          body: new URLSearchParams({ data: query }).toString(),
         });
-      }
 
-      await admin.from("places_cache").upsert({
-        cache_key: cacheKey,
-        payload: places,
-        expires_at: new Date(Date.now() + CACHE_TTL_MS).toISOString(),
-      });
+        if (!providerResponse.ok) {
+          console.error("nearby-places provider", providerResponse.status, await providerResponse.text().catch(() => ""));
+          if (staleCacheUsable && cachedPayload) {
+            places = cachedPayload;
+            fromCache = true;
+            staleCache = true;
+          } else {
+            return json({ ok: false, error: "provider_unavailable" }, 502);
+          }
+        } else {
+          const providerData = await providerResponse.json();
+          const seen = new Set<string>();
+          places = [];
+
+          for (const element of providerData?.elements ?? []) {
+            const category = categoryForTags(element.tags);
+            if (!category || !normalizedCategories.includes(category)) continue;
+            const lat = Number(element.lat ?? element.center?.lat);
+            const lon = Number(element.lon ?? element.center?.lon);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+            const name = String(element.tags?.name || "").trim();
+            if (!name) continue;
+            const id = `${element.type}-${element.id}`;
+            if (seen.has(id)) continue;
+            seen.add(id);
+            places.push({
+              id,
+              name,
+              category,
+              latitude: lat,
+              longitude: lon,
+              address: addressForTags(element.tags),
+              openingHours: element.tags?.opening_hours || null,
+              website: websiteForTags(element.tags),
+              source: "openstreetmap",
+            });
+          }
+
+          await admin.from("places_cache").upsert({
+            cache_key: cacheKey,
+            payload: places,
+            expires_at: new Date(now + CACHE_TTL_MS).toISOString(),
+          });
+        }
+      } catch (providerError) {
+        console.error("nearby-places provider request", providerError);
+        if (staleCacheUsable && cachedPayload) {
+          places = cachedPayload;
+          fromCache = true;
+          staleCache = true;
+        } else {
+          return json({ ok: false, error: "provider_unavailable" }, 502);
+        }
+      }
     }
 
     const results = places
@@ -248,6 +272,7 @@ Deno.serve(async (req: Request) => {
       places: results,
       radiusMeters,
       fromCache,
+      staleCache,
       attribution: "© OpenStreetMap contributors",
     });
   } catch (error) {
