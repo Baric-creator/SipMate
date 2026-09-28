@@ -9,17 +9,22 @@ const ALLOWED_CATEGORIES = new Set<PlaceCategory>(["bar","pub","cafe","nightclub
 const ALL_CATEGORIES = Array.from(ALLOWED_CATEGORIES);
 const DEFAULT_RADIUS = 3000;
 const MAX_RADIUS = 5000;
-const CACHE_TTL_MS = 20 * 60 * 1000;
-const STALE_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const STALE_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_RESULTS = 60;
 const BUCKET_STEP = 0.01;
 const BUCKET_PADDING_METERS = 900;
 const DEFAULT_OVERPASS_PROVIDERS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
+  "https://overpass.openstreetmap.fr/api/interpreter",
+  "https://1.overpass.kumi.systems/api/interpreter",
+  "https://2.overpass.kumi.systems/api/interpreter",
+  "https://3.overpass.kumi.systems/api/interpreter",
+  "https://overpass.miataru.com/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
-  "https://z.overpass-api.de/api/interpreter",
   "https://lz4.overpass-api.de/api/interpreter",
+  "https://z.overpass-api.de/api/interpreter",
   "https://overpass-api.de/api/interpreter",
 ];
 const USER_AGENT = "SipMate-Spots/1.0 (+https://officialsipmate.com; contact: sipmate.app@gmail.com)";
@@ -34,17 +39,18 @@ function distanceMeters(aLat:number,aLon:number,bLat:number,bLon:number){ const 
 function categoryForTags(tags:Record<string,string>|undefined):PlaceCategory|null { const a=tags?.amenity; if(a==="bar"||a==="pub"||a==="cafe"||a==="nightclub"||a==="biergarten"||a==="restaurant") return a; if(tags?.leisure==="beer_garden") return "biergarten"; return null; }
 function addressForTags(tags:Record<string,string>|undefined){ if(!tags) return null; const street=[tags["addr:street"],tags["addr:housenumber"]].filter(Boolean).join(" "); const city=tags["addr:city"]||tags["addr:town"]||tags["addr:village"]||""; const parts=[street,tags["addr:postcode"],city].filter(Boolean); return parts.length?parts.join(", "):null; }
 function websiteForTags(tags:Record<string,string>|undefined){ return tags?.website||tags?.["contact:website"]||null; }
-function buildOverpassQuery(lat:number,lon:number,radius:number){ const parts:string[]=[]; for(const c of ALL_CATEGORIES.filter(c=>c!=="biergarten")) parts.push(`nwr["amenity"="${c}"](around:${radius},${lat},${lon});`); parts.push(`nwr["amenity"="biergarten"](around:${radius},${lat},${lon});`); parts.push(`nwr["leisure"="beer_garden"](around:${radius},${lat},${lon});`); return `[out:json][timeout:15];(${parts.join("")});out center tags;`; }
+function bboxForRadius(lat:number,lon:number,radiusMeters:number){ const latDelta=radiusMeters/111320; const lonScale=Math.max(0.2,Math.cos(toRadians(lat))); const lonDelta=radiusMeters/(111320*lonScale); return {south:lat-latDelta,west:lon-lonDelta,north:lat+latDelta,east:lon+lonDelta}; }
+function buildOverpassQuery(lat:number,lon:number,radius:number){ const b=bboxForRadius(lat,lon,radius); const box=`${b.south.toFixed(6)},${b.west.toFixed(6)},${b.north.toFixed(6)},${b.east.toFixed(6)}`; return `[out:json][timeout:10];(nwr["amenity"~"^(bar|pub|cafe|nightclub|biergarten|restaurant)$"](${box});nwr["leisure"="beer_garden"](${box}););out center tags;`; }
 
 async function requestProvider(provider:string, query:string){
   const commonHeaders={ "Accept":"application/json", "User-Agent":USER_AGENT, "From":"sipmate.app@gmail.com", "Referer":"https://officialsipmate.com/" };
-  const post=await fetch(provider,{ method:"POST", headers:{...commonHeaders,"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"}, body:new URLSearchParams({data:query}).toString(), signal:AbortSignal.timeout(8_000) });
+  const post=await fetch(provider,{ method:"POST", headers:{...commonHeaders,"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"}, body:new URLSearchParams({data:query}).toString(), signal:AbortSignal.timeout(7_000) });
   if(post.ok){ const data=await post.json(); if(Array.isArray(data?.elements)) return data; }
   const postBody=await post.text().catch(()=>"");
   console.error("nearby-places POST provider",provider,post.status,postBody.slice(0,180));
   if(post.status===406 || post.status===400 || post.status===405){
     const url=`${provider}?data=${encodeURIComponent(query)}`;
-    const get=await fetch(url,{ method:"GET", headers:commonHeaders, signal:AbortSignal.timeout(8_000) });
+    const get=await fetch(url,{ method:"GET", headers:commonHeaders, signal:AbortSignal.timeout(7_000) });
     if(get.ok){ const data=await get.json(); if(Array.isArray(data?.elements)) return data; }
     const getBody=await get.text().catch(()=>"");
     console.error("nearby-places GET provider",provider,get.status,getBody.slice(0,180));
@@ -64,14 +70,7 @@ async function fetchOverpass(query:string){
   throw lastError??new Error("provider_unavailable");
 }
 
-function mergePlaces(rows:any[]):Place[]{
-  const byId=new Map<string,Place>();
-  for(const row of rows){
-    const payload=Array.isArray(row?.payload)?row.payload:[];
-    for(const place of payload){ if(place?.id && !byId.has(place.id)) byId.set(place.id,place as Place); }
-  }
-  return Array.from(byId.values());
-}
+function mergePlaces(rows:any[]):Place[]{ const byId=new Map<string,Place>(); for(const row of rows){ const payload=Array.isArray(row?.payload)?row.payload:[]; for(const place of payload){ if(place?.id && !byId.has(place.id)) byId.set(place.id,place as Place); } } return Array.from(byId.values()); }
 
 Deno.serve(async(req:Request)=>{
   if(req.method!=="POST") return json({ok:false,error:"method_not_allowed"},405);
@@ -90,7 +89,7 @@ Deno.serve(async(req:Request)=>{
     const radiusMeters=clampRadius(body.radiusMeters); const requested=Array.isArray(body.categories)&&body.categories.length?body.categories.filter((c):c is PlaceCategory=>ALLOWED_CATEGORIES.has(c)):ALL_CATEGORIES;
     if(!requested.length) return json({ok:false,error:"invalid_categories"},400);
     const bucketLatitude=roundBucket(latitude); const bucketLongitude=roundBucket(longitude); const admin=createClient(supabaseUrl,serviceRole,{auth:{persistSession:false}}); const now=Date.now();
-    const cacheKey=`v2:${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}`;
+    const cacheKey=`v3:${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}`;
     const {data:cached}=await admin.from("places_cache").select("payload,expires_at").eq("cache_key",cacheKey).maybeSingle();
     const cachedPayload=cached?.payload&&Array.isArray(cached.payload)?cached.payload as Place[]:null; const expires=cached?.expires_at?new Date(cached.expires_at).getTime():0;
     const cacheFresh=!!cachedPayload&&expires>now; const staleCacheUsable=!!cachedPayload&&expires>now-STALE_CACHE_MAX_AGE_MS;
@@ -105,16 +104,16 @@ Deno.serve(async(req:Request)=>{
         console.error("nearby-places all providers failed",error);
         if(staleCacheUsable&&cachedPayload){ places=cachedPayload; fromCache=true; staleCache=true; }
         else {
-          const prefix=`${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}:`;
-          const {data:legacyRows}=await admin.from("places_cache").select("payload,expires_at,cache_key").like("cache_key",`${prefix}%`).order("expires_at",{ascending:false}).limit(12);
-          const usable=(legacyRows??[]).filter((r:any)=>new Date(r.expires_at).getTime()>now-STALE_CACHE_MAX_AGE_MS);
-          const merged=mergePlaces(usable);
+          const prefixes=[`v2:${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}`,`${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}:`];
+          const mergedRows:any[]=[];
+          for(const prefix of prefixes){ const {data:fallbackRows}=await admin.from("places_cache").select("payload,expires_at,cache_key").like("cache_key",`${prefix}%`).order("expires_at",{ascending:false}).limit(20); mergedRows.push(...(fallbackRows??[])); }
+          const usable=mergedRows.filter((r:any)=>new Date(r.expires_at).getTime()>now-STALE_CACHE_MAX_AGE_MS); const merged=mergePlaces(usable);
           if(merged.length){ places=merged; fromCache=true; staleCache=true; console.log("nearby-places legacy cache fallback",merged.length); }
           else return json({ok:false,error:"provider_unavailable"},502);
         }
       }
     }
     const results=places.filter(p=>requested.includes(p.category)).map(p=>({...p,distanceMeters:distanceMeters(latitude,longitude,p.latitude,p.longitude)})).filter(p=>p.distanceMeters<=radiusMeters).sort((a,b)=>a.distanceMeters-b.distanceMeters).slice(0,MAX_RESULTS);
-    console.log("nearby-places results",results.length,"fromCache",fromCache,"stale",staleCache); return json({ok:true,places:results,radiusMeters,fromCache,staleCache,attribution:"© OpenStreetMap contributors"});
+    console.log("nearby-places results",results.length,"radius",radiusMeters,"pool",places.length,"fromCache",fromCache,"stale",staleCache); return json({ok:true,places:results,radiusMeters,fromCache,staleCache,attribution:"© OpenStreetMap contributors"});
   }catch(error){ console.error("nearby-places",error); return json({ok:false,error:"server_error"},500); }
 });
