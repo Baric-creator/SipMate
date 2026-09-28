@@ -13,11 +13,11 @@ import {
   View,
 } from 'react-native';
 import { useIAP } from 'expo-iap';
+
 import { supabase } from '../lib/supabase';
 
 const PREMIUM_PRODUCT_ID = 'sipmate_premium';
 const PREMIUM_BASE_PLAN_ID = 'monthly';
-
 
 const copy = {
   en: {
@@ -30,14 +30,14 @@ const copy = {
   de: {
     title: 'SipMate Premium', subtitle: 'Premium-Kontovorteile',
     body: 'Abonniere sicher über Google Play. Premium wird mit deinem SipMate-Konto verknüpft und nach erfolgreicher Bestätigung automatisch freigeschaltet.',
-    active: '💎 PREMIUM AKTIV', activeNote: 'Premium ist auf diesem SipMate-Konto aktiv.',
+    active: '💎 PREMIUM AKTIV', activeNote: 'Premium ist auf deinem SipMate-Konto aktiv.',
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM-FUNKTION', spotsBody: 'Entdecke Bars, Cafés, Pubs, Clubs und weitere Orte für einen Drink in deiner Nähe auf einer klaren, datenschutzfreundlichen Karte.', spotsOpen: 'SPOTS ÖFFNEN →', spotsLocked: 'Mit Premium verfügbar',
     monthly: 'Monatlich', founders: 'Founders Premium', foundersBadge: 'DIE ERSTEN 100 MITGLIEDER', early: 'Early Access', standard: 'Standard jährlich', firstYear: '/ erstes Jahr', month: '/ Monat', year: '/ Jahr', foundersNote: 'Exklusiv für die ersten 100 bestätigten jährlichen Premium-Mitglieder.', earlyNote: 'Startet, sobald die ersten 100 Founder-Plätze vergeben sind.', standardNote: 'Regulärer Jahrespreis nach der Early-Access-Phase.', back: '← ZURÜCK',
   },
   hr: {
     title: 'SipMate Premium', subtitle: 'Premium pogodnosti računa',
-    body:  'Pretplati se sigurno putem Google Playa. Premium se povezuje s tvojim SipMate računom i automatski se aktivira nakon potvrde kupnje.',
-    active: '💎 PREMIUM AKTIVAN', activeNote: 'Premium je aktivan na ovom SipMate računu.',
+    body: 'Pretplati se sigurno putem Google Playa. Premium se povezuje s tvojim SipMate računom i automatski se aktivira nakon potvrde kupnje.',
+    active: '💎 PREMIUM AKTIVAN', activeNote: 'Premium je aktivan na tvom SipMate računu.',
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM FUNKCIJA', spotsBody: 'Otkrij barove, kafiće, pubove, klubove i druga mjesta za piće u blizini na čistoj karti koja čuva privatnost korisnika.', spotsOpen: 'OTVORI SPOTS →', spotsLocked: 'Dostupno uz Premium',
     monthly: 'Mjesečno', founders: 'Founders Premium', foundersBadge: 'PRVIH 100 ČLANOVA', early: 'Early Access', standard: 'Standard godišnje', firstYear: '/ prva godina', month: '/ mjesec', year: '/ godina', foundersNote: 'Ekskluzivno za prvih 100 potvrđenih godišnjih Premium članova.', earlyNote: 'Počinje nakon što se popuni prvih 100 Founder mjesta.', standardNote: 'Standardna godišnja cijena nakon Early Access razdoblja.', back: '← NATRAG',
   },
@@ -54,277 +54,250 @@ export default function PremiumAndroidScreen() {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const processingTokenRef = useRef<string | null>(null);
   const recoveredTokensRef = useRef<Set<string>>(new Set());
+
   const verifyPurchaseOnServer = async (purchaseToken: string) => {
-  const { data, error } = await supabase.functions.invoke(
-    'google-play-verify',
-    {
-      body: {
-        purchase_token: purchaseToken,
-      },
-    }
-  );
+    const { data, error } = await supabase.functions.invoke('google-play-verify', {
+      body: { purchase_token: purchaseToken },
+    });
 
-  if (error) {
-    console.warn('Premium verification failed:', error);
-    throw new Error('verification_failed');
-  }
-
-  if (!data?.ok || data?.premium !== true) {
-    console.warn('Premium verification rejected:', data);
-    throw new Error(data?.error || 'verification_rejected');
-  }
-
-  return data;
-};
-
-const {
-  connected,
-  subscriptions,
-  fetchProducts,
-  requestPurchase,
-  finishTransaction,
-  availablePurchases,
-getAvailablePurchases,
-} = useIAP({
-  onPurchaseSuccess: async (purchase) => {
-    const purchaseToken = purchase.purchaseToken;
-
-    if (!purchaseToken) {
-      console.warn('Google Play purchase has no purchase token');
-      setIsPurchasing(false);
-
-      Alert.alert(
-        'SipMate Premium',
-        'Google Play completed the purchase, but SipMate could not verify it. Please try again.'
-      );
-      return;
+    if (error) {
+      console.warn('Premium verification failed:', error);
+      throw new Error('verification_failed');
     }
 
-    if (processingTokenRef.current === purchaseToken) {
-      return;
+    if (!data?.ok || data?.premium !== true) {
+      console.warn('Premium verification rejected:', data);
+      throw new Error(data?.error || 'verification_rejected');
     }
 
-    processingTokenRef.current = purchaseToken;
-
-    try {
-      await verifyPurchaseOnServer(purchaseToken);
-
-      await finishTransaction({
-        purchase,
-        isConsumable: false,
-      });
-
-      const { data: entitlementRows, error: entitlementError } =
-        await supabase.rpc('get_my_premium_entitlement');
-
-      if (entitlementError) {
-        console.warn(
-          'Premium entitlement refresh failed:',
-          entitlementError
-        );
-      }
-
-      const entitlement = Array.isArray(entitlementRows)
-        ? entitlementRows[0]
-        : entitlementRows;
-
-      setIsPremium(entitlement?.is_premium === true);
-
-      Alert.alert(
-        'SipMate Premium',
-        'Premium activated successfully. 🍻'
-      );
-    } catch (error) {
-      console.warn('Google Play verification failed:', error);
-
-      Alert.alert(
-        'SipMate Premium',
-        'Your purchase could not be verified yet. You will not need to buy it again. Please try again shortly.'
-      );
-    } finally {
-      processingTokenRef.current = null;
-      setIsPurchasing(false);
-    }
-  },
-
-  onPurchaseError: (error) => {
-    console.warn('Google Play purchase error:', error);
-    processingTokenRef.current = null;
-    setIsPurchasing(false);
-
-    const code = String(error?.code ?? '').toLowerCase();
-
-    if (
-      code.includes('cancel') ||
-      code.includes('user-cancelled') ||
-      code.includes('user_cancelled')
-    ) {
-      return;
-    }
-
-    Alert.alert(
-      'SipMate Premium',
-      'The purchase could not be completed. Please try again.'
-    );
-  },
-});
-useEffect(() => {
-  if (!connected) return;
-  getAvailablePurchases().catch((error) => {
-  console.warn('Failed to load existing Google Play purchases:', error);
-});
-useEffect(() => {
-  const recoverPremiumPurchase = async () => {
-    const purchase = availablePurchases.find(
-      (item) =>
-        item.productId === PREMIUM_PRODUCT_ID &&
-        Boolean(item.purchaseToken)
-    );
-
-    if (!purchase?.purchaseToken) return;
-
-    const purchaseToken = purchase.purchaseToken;
-
-    if (recoveredTokensRef.current.has(purchaseToken)) return;
-    if (processingTokenRef.current === purchaseToken) return;
-
-    recoveredTokensRef.current.add(purchaseToken);
-    processingTokenRef.current = purchaseToken;
-
-    try {
-      await verifyPurchaseOnServer(purchaseToken);
-      await finishTransaction({
-  purchase,
-  isConsumable: false,
-});
-const { data: entitlementRows, error: entitlementError } =
-  await supabase.rpc('get_my_premium_entitlement');
-
-if (entitlementError) {
-  console.warn(
-    'Recovered Premium entitlement refresh failed:',
-    entitlementError
-  );
-} else {
-  const entitlement = Array.isArray(entitlementRows)
-    ? entitlementRows[0]
-    : entitlementRows;
-
-  setIsPremium(entitlement?.is_premium === true);
-}
-
-      console.log('Existing Google Play Premium purchase recovered.');
-    } catch (error) {
-      recoveredTokensRef.current.delete(purchaseToken);
-      console.warn(
-        'Existing Google Play purchase recovery failed:',
-        error
-      );
-    } finally {
-      processingTokenRef.current = null;
-    }
+    return data;
   };
 
-  void recoverPremiumPurchase();
-}, [availablePurchases]);
+  const {
+    connected,
+    subscriptions,
+    fetchProducts,
+    requestPurchase,
+    finishTransaction,
+    availablePurchases,
+    getAvailablePurchases,
+  } = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      const purchaseToken = purchase.purchaseToken;
 
-  fetchProducts({
-    skus: [PREMIUM_PRODUCT_ID],
-    type: 'subs',
-  }).catch((error) => {
-    console.warn('Failed to load Google Play subscription:', error);
+      if (!purchaseToken) {
+        setIsPurchasing(false);
+        Alert.alert(
+          'SipMate Premium',
+          'Google Play completed the purchase, but SipMate could not verify it. Please try again.'
+        );
+        return;
+      }
+
+      if (processingTokenRef.current === purchaseToken) return;
+      processingTokenRef.current = purchaseToken;
+
+      try {
+        await verifyPurchaseOnServer(purchaseToken);
+        await finishTransaction({ purchase, isConsumable: false });
+
+        const { data: entitlementRows, error: entitlementError } =
+          await supabase.rpc('get_my_premium_entitlement');
+
+        if (entitlementError) {
+          console.warn('Premium entitlement refresh failed:', entitlementError);
+        }
+
+        const entitlement = Array.isArray(entitlementRows)
+          ? entitlementRows[0]
+          : entitlementRows;
+
+        setIsPremium(entitlement?.is_premium === true);
+        Alert.alert('SipMate Premium', 'Premium activated successfully. 🍻');
+      } catch (error) {
+        console.warn('Google Play verification failed:', error);
+        Alert.alert(
+          'SipMate Premium',
+          'Your purchase could not be verified yet. You will not need to buy it again. Please try again shortly.'
+        );
+      } finally {
+        processingTokenRef.current = null;
+        setIsPurchasing(false);
+      }
+    },
+
+    onPurchaseError: (error) => {
+      console.warn('Google Play purchase error:', error);
+      processingTokenRef.current = null;
+      setIsPurchasing(false);
+
+      const code = String(error?.code ?? '').toLowerCase();
+      if (
+        code.includes('cancel') ||
+        code.includes('user-cancelled') ||
+        code.includes('user_cancelled')
+      ) {
+        return;
+      }
+
+      Alert.alert(
+        'SipMate Premium',
+        'The purchase could not be completed. Please try again.'
+      );
+    },
   });
-}, [connected, fetchProducts]);
-useEffect(() => {
-  const product = subscriptions.find(
-    (item) => item.id === PREMIUM_PRODUCT_ID
-  );
-
-  if (!product || product.platform !== 'android') return;
-
-  const monthlyOffer = product.subscriptionOffers.find(
-    (offer) => offer.basePlanIdAndroid === PREMIUM_BASE_PLAN_ID
-  );
-
-  if (monthlyOffer?.displayPrice) {
-    setGooglePlayPrice(monthlyOffer.displayPrice);
-  } else if (product.displayPrice) {
-    setGooglePlayPrice(product.displayPrice);
-  }
-}, [subscriptions]);
 
   useEffect(() => {
-    const loop = Animated.loop(Animated.timing(shine, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }));
+    if (!connected) return;
+
+    getAvailablePurchases().catch((error) => {
+      console.warn('Failed to load existing Google Play purchases:', error);
+    });
+
+    fetchProducts({
+      skus: [PREMIUM_PRODUCT_ID],
+      type: 'subs',
+    }).catch((error) => {
+      console.warn('Failed to load Google Play subscription:', error);
+    });
+  }, [connected, fetchProducts, getAvailablePurchases]);
+
+  useEffect(() => {
+    const recoverPremiumPurchase = async () => {
+      const purchase = availablePurchases.find(
+        (item) =>
+          item.productId === PREMIUM_PRODUCT_ID && Boolean(item.purchaseToken)
+      );
+
+      if (!purchase?.purchaseToken) return;
+
+      const purchaseToken = purchase.purchaseToken;
+      if (recoveredTokensRef.current.has(purchaseToken)) return;
+      if (processingTokenRef.current === purchaseToken) return;
+
+      recoveredTokensRef.current.add(purchaseToken);
+      processingTokenRef.current = purchaseToken;
+
+      try {
+        await verifyPurchaseOnServer(purchaseToken);
+        await finishTransaction({ purchase, isConsumable: false });
+
+        const { data: entitlementRows, error: entitlementError } =
+          await supabase.rpc('get_my_premium_entitlement');
+
+        if (entitlementError) {
+          console.warn('Recovered Premium entitlement refresh failed:', entitlementError);
+        } else {
+          const entitlement = Array.isArray(entitlementRows)
+            ? entitlementRows[0]
+            : entitlementRows;
+          setIsPremium(entitlement?.is_premium === true);
+        }
+      } catch (error) {
+        recoveredTokensRef.current.delete(purchaseToken);
+        console.warn('Existing Google Play purchase recovery failed:', error);
+      } finally {
+        processingTokenRef.current = null;
+      }
+    };
+
+    void recoverPremiumPurchase();
+  }, [availablePurchases, finishTransaction]);
+
+  useEffect(() => {
+    const product = subscriptions.find((item) => item.id === PREMIUM_PRODUCT_ID);
+    if (!product || product.platform !== 'android') return;
+
+    const monthlyOffer = product.subscriptionOffers.find(
+      (offer) => offer.basePlanIdAndroid === PREMIUM_BASE_PLAN_ID
+    );
+
+    if (monthlyOffer?.displayPrice) {
+      setGooglePlayPrice(monthlyOffer.displayPrice);
+    } else if (product.displayPrice) {
+      setGooglePlayPrice(product.displayPrice);
+    }
+  }, [subscriptions]);
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(shine, {
+        toValue: 1,
+        duration: 3200,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+      })
+    );
     loop.start();
     return () => loop.stop();
   }, [shine]);
 
   useEffect(() => {
     let mounted = true;
+
     supabase.auth.getUser().then(async ({ data }) => {
       if (!mounted || !data.user) return;
       const { data: entitlementRows } = await supabase.rpc('get_my_premium_entitlement');
-      const entitlement = Array.isArray(entitlementRows) ? entitlementRows[0] : entitlementRows;
-      const active = entitlement?.is_premium === true;
-      if (mounted) setIsPremium(active);
+      const entitlement = Array.isArray(entitlementRows)
+        ? entitlementRows[0]
+        : entitlementRows;
+      if (mounted) setIsPremium(entitlement?.is_premium === true);
     });
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleSubscribe = async () => {
-      if (isPurchasing) return;
-      setIsPurchasing(true);
-  try {
-    const product = subscriptions.find(
-      (item) => item.id === PREMIUM_PRODUCT_ID
-    );
+    if (isPurchasing) return;
+    setIsPurchasing(true);
 
-    if (!product || product.platform !== 'android') {
-      setIsPurchasing(false);
-      Alert.alert(
-        'SipMate Premium',
-        'Google Play subscription is not available yet. Please try again.'
+    try {
+      const product = subscriptions.find((item) => item.id === PREMIUM_PRODUCT_ID);
+
+      if (!product || product.platform !== 'android') {
+        setIsPurchasing(false);
+        Alert.alert(
+          'SipMate Premium',
+          'Google Play subscription is not available yet. Please try again.'
+        );
+        return;
+      }
+
+      const monthlyOffer = product.subscriptionOffers.find(
+        (offer) => offer.basePlanIdAndroid === PREMIUM_BASE_PLAN_ID
       );
-      return;
-    }
 
-    const monthlyOffer = product.subscriptionOffers.find(
-      (offer) => offer.basePlanIdAndroid === PREMIUM_BASE_PLAN_ID
-    );
+      if (!monthlyOffer?.offerTokenAndroid) {
+        setIsPurchasing(false);
+        Alert.alert('SipMate Premium', 'Monthly Google Play plan is not available.');
+        return;
+      }
 
-    if (!monthlyOffer?.offerTokenAndroid) {
-      setIsPurchasing(false);
-      Alert.alert(
-        'SipMate Premium',
-        'Monthly Google Play plan is not available.'
-      );
-      return;
-    }
-
-await requestPurchase({
-  request: {
-    google: {
-      skus: [PREMIUM_PRODUCT_ID],
-      subscriptionOffers: [
-        {
-          sku: PREMIUM_PRODUCT_ID,
-          offerToken: monthlyOffer.offerTokenAndroid,
+      await requestPurchase({
+        request: {
+          google: {
+            skus: [PREMIUM_PRODUCT_ID],
+            subscriptionOffers: [
+              {
+                sku: PREMIUM_PRODUCT_ID,
+                offerToken: monthlyOffer.offerTokenAndroid,
+              },
+            ],
+          },
         },
-      ],
-    },
-  },
-  type: 'subs',
-});
-  } catch (error) {
-    console.warn('Google Play purchase failed:', error);
-    setIsPurchasing(false);
-
-    Alert.alert(
-      'SipMate Premium',
-      'The purchase could not be started. Please try again.'
-    );
-  }
-};
+        type: 'subs',
+      });
+    } catch (error) {
+      console.warn('Google Play purchase failed:', error);
+      setIsPurchasing(false);
+      Alert.alert(
+        'SipMate Premium',
+        'The purchase could not be started. Please try again.'
+      );
+    }
+  };
 
   const translateX = shine.interpolate({ inputRange: [0, 1], outputRange: [-170, 700] });
   const tiers = [
@@ -340,50 +313,81 @@ await requestPurchase({
         <Text style={styles.logo}>SipMate 🍻</Text>
         <Text style={styles.title}>{text.title}</Text>
         <Text style={styles.subtitle}>{text.subtitle}</Text>
-        {isPremium && <View style={styles.activeCard}><Text style={styles.activeTitle}>{text.active}</Text><Text style={styles.activeText}>{text.activeNote}</Text></View>}
+        {isPremium && (
+          <View style={styles.activeCard}>
+            <Text style={styles.activeTitle}>{text.active}</Text>
+            <Text style={styles.activeText}>{text.activeNote}</Text>
+          </View>
+        )}
         <Text style={styles.body}>{text.body}</Text>
+
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ disabled: !isPremium }}
           disabled={!isPremium}
           onPress={() => router.push('/spots' as never)}
-          style={({ pressed }) => [styles.spotsCard, pressed && isPremium && styles.spotsPressed, !isPremium && styles.spotsLocked]}
+          style={({ pressed }) => [
+            styles.spotsCard,
+            pressed && isPremium && styles.spotsPressed,
+            !isPremium && styles.spotsLocked,
+          ]}
         >
-          <View style={styles.spotsTopRow}><Text style={styles.spotsBadge}>{text.spotsBadge}</Text><Text style={styles.spotsIcon}>🗺️</Text></View>
+          <View style={styles.spotsTopRow}>
+            <Text style={styles.spotsBadge}>{text.spotsBadge}</Text>
+            <Text style={styles.spotsIcon}>🗺️</Text>
+          </View>
           <Text style={styles.spotsTitle}>{text.spotsTitle}</Text>
           <Text style={styles.spotsBody}>{text.spotsBody}</Text>
           <View style={styles.spotsDivider} />
-          <Text style={[styles.spotsAction, !isPremium && styles.spotsActionLocked]}>{isPremium ? text.spotsOpen : `🔒 ${text.spotsLocked}`}</Text>
+          <Text style={[styles.spotsAction, !isPremium && styles.spotsActionLocked]}>
+            {isPremium ? text.spotsOpen : `🔒 ${text.spotsLocked}`}
+          </Text>
         </Pressable>
+
         <View style={styles.tierList}>
           {tiers.map((tier) => (
             <Pressable
-  key={tier.key}
-  disabled={
-  tier.key !== 'monthly' ||
-  !googlePlayPrice ||
-  isPremium ||
-  isPurchasing
-}
-  onPress={tier.key === 'monthly' ? handleSubscribe : undefined}
-  style={({ pressed }) => [
-    styles.tierCard,
-    {
-      borderColor: tier.border,
-      backgroundColor: tier.bg,
-      opacity: pressed ? 0.82 : 1,
-    },
-  ]}
->
-              <Animated.View pointerEvents="none" style={[styles.shine, { backgroundColor: tier.glow, transform: [{ translateX }, { rotate: '18deg' }] }]} />
+              key={tier.key}
+              disabled={
+                tier.key !== 'monthly' ||
+                !googlePlayPrice ||
+                isPremium ||
+                isPurchasing
+              }
+              onPress={tier.key === 'monthly' ? handleSubscribe : undefined}
+              style={({ pressed }) => [
+                styles.tierCard,
+                {
+                  borderColor: tier.border,
+                  backgroundColor: tier.bg,
+                  opacity: pressed ? 0.82 : 1,
+                },
+              ]}
+            >
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.shine,
+                  {
+                    backgroundColor: tier.glow,
+                    transform: [{ translateX }, { rotate: '18deg' }],
+                  },
+                ]}
+              />
               <Text style={[styles.tierBadge, { color: tier.border }]}>{tier.badge}</Text>
               <Text style={styles.tierTitle}>{tier.title}</Text>
-              <View style={styles.priceRow}><Text style={styles.price}>{tier.price}</Text><Text style={styles.period}>{tier.period}</Text></View>
+              <View style={styles.priceRow}>
+                <Text style={styles.price}>{tier.price}</Text>
+                <Text style={styles.period}>{tier.period}</Text>
+              </View>
               {!!tier.note && <Text style={styles.tierNote}>{tier.note}</Text>}
             </Pressable>
           ))}
         </View>
-        <Pressable style={styles.backButton} onPress={() => router.back()}><Text style={styles.backText}>{text.back}</Text></Pressable>
+
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backText}>{text.back}</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
