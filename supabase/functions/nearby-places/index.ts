@@ -5,7 +5,7 @@ type PlaceCategory = "bar" | "pub" | "cafe" | "nightclub" | "biergarten" | "rest
 type RequestBody = { latitude?: number; longitude?: number; radiusMeters?: number; categories?: PlaceCategory[] };
 type Place = { id: string; name: string; category: PlaceCategory; latitude: number; longitude: number; address: string | null; openingHours: string | null; website: string | null; source: "openstreetmap" };
 
-const ALLOWED_CATEGORIES = new Set<PlaceCategory>(["bar","pub","cafe","nightclub","biergarten","restaurant"]);
+const ALLOWED_CATEGORIES = new Set<PlaceCategory>(["bar", "pub", "cafe", "nightclub", "biergarten", "restaurant"]);
 const ALL_CATEGORIES = Array.from(ALLOWED_CATEGORIES);
 const DEFAULT_RADIUS = 3000;
 const MAX_RADIUS = 5000;
@@ -17,10 +17,6 @@ const BUCKET_PADDING_METERS = 900;
 const DEFAULT_OVERPASS_PROVIDERS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
-  "https://overpass.openstreetmap.fr/api/interpreter",
-  "https://1.overpass.kumi.systems/api/interpreter",
-  "https://2.overpass.kumi.systems/api/interpreter",
-  "https://3.overpass.kumi.systems/api/interpreter",
   "https://overpass.miataru.com/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
   "https://lz4.overpass-api.de/api/interpreter",
@@ -32,88 +28,230 @@ const USER_AGENT = "SipMate-Spots/1.0 (+https://officialsipmate.com; contact: si
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 }
-function clampRadius(value?: number) { const n = Number.isFinite(value) ? Number(value) : DEFAULT_RADIUS; return Math.max(500, Math.min(MAX_RADIUS, Math.round(n))); }
+
+function clampRadius(value?: number) {
+  const n = Number.isFinite(value) ? Number(value) : DEFAULT_RADIUS;
+  return Math.max(500, Math.min(MAX_RADIUS, Math.round(n)));
+}
+
 function roundBucket(value: number) { return Math.round(value / BUCKET_STEP) * BUCKET_STEP; }
 function toRadians(value: number) { return value * Math.PI / 180; }
-function distanceMeters(aLat:number,aLon:number,bLat:number,bLon:number){ const r=6371000; const dLat=toRadians(bLat-aLat); const dLon=toRadians(bLon-aLon); const l1=toRadians(aLat); const l2=toRadians(bLat); const s1=Math.sin(dLat/2); const s2=Math.sin(dLon/2); const v=s1*s1+Math.cos(l1)*Math.cos(l2)*s2*s2; return Math.round(r*2*Math.atan2(Math.sqrt(v),Math.sqrt(1-v))); }
-function categoryForTags(tags:Record<string,string>|undefined):PlaceCategory|null { const a=tags?.amenity; if(a==="bar"||a==="pub"||a==="cafe"||a==="nightclub"||a==="biergarten"||a==="restaurant") return a; if(tags?.leisure==="beer_garden") return "biergarten"; return null; }
-function addressForTags(tags:Record<string,string>|undefined){ if(!tags) return null; const street=[tags["addr:street"],tags["addr:housenumber"]].filter(Boolean).join(" "); const city=tags["addr:city"]||tags["addr:town"]||tags["addr:village"]||""; const parts=[street,tags["addr:postcode"],city].filter(Boolean); return parts.length?parts.join(", "):null; }
-function websiteForTags(tags:Record<string,string>|undefined){ return tags?.website||tags?.["contact:website"]||null; }
-function bboxForRadius(lat:number,lon:number,radiusMeters:number){ const latDelta=radiusMeters/111320; const lonScale=Math.max(0.2,Math.cos(toRadians(lat))); const lonDelta=radiusMeters/(111320*lonScale); return {south:lat-latDelta,west:lon-lonDelta,north:lat+latDelta,east:lon+lonDelta}; }
-function buildOverpassQuery(lat:number,lon:number,radius:number){ const b=bboxForRadius(lat,lon,radius); const box=`${b.south.toFixed(6)},${b.west.toFixed(6)},${b.north.toFixed(6)},${b.east.toFixed(6)}`; return `[out:json][timeout:10];(nwr["amenity"~"^(bar|pub|cafe|nightclub|biergarten|restaurant)$"](${box});nwr["leisure"="beer_garden"](${box}););out center tags;`; }
+function distanceMeters(aLat: number, aLon: number, bLat: number, bLon: number) {
+  const r = 6371000;
+  const dLat = toRadians(bLat - aLat);
+  const dLon = toRadians(bLon - aLon);
+  const l1 = toRadians(aLat);
+  const l2 = toRadians(bLat);
+  const s1 = Math.sin(dLat / 2);
+  const s2 = Math.sin(dLon / 2);
+  const v = s1 * s1 + Math.cos(l1) * Math.cos(l2) * s2 * s2;
+  return Math.round(r * 2 * Math.atan2(Math.sqrt(v), Math.sqrt(1 - v)));
+}
 
-async function requestProvider(provider:string, query:string){
-  const commonHeaders={ "Accept":"application/json", "User-Agent":USER_AGENT, "From":"sipmate.app@gmail.com", "Referer":"https://officialsipmate.com/" };
-  const post=await fetch(provider,{ method:"POST", headers:{...commonHeaders,"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"}, body:new URLSearchParams({data:query}).toString(), signal:AbortSignal.timeout(7_000) });
-  if(post.ok){ const data=await post.json(); if(Array.isArray(data?.elements)) return data; }
-  const postBody=await post.text().catch(()=>"");
-  console.error("nearby-places POST provider",provider,post.status,postBody.slice(0,180));
-  if(post.status===406 || post.status===400 || post.status===405){
-    const url=`${provider}?data=${encodeURIComponent(query)}`;
-    const get=await fetch(url,{ method:"GET", headers:commonHeaders, signal:AbortSignal.timeout(7_000) });
-    if(get.ok){ const data=await get.json(); if(Array.isArray(data?.elements)) return data; }
-    const getBody=await get.text().catch(()=>"");
-    console.error("nearby-places GET provider",provider,get.status,getBody.slice(0,180));
+function categoryForTags(tags: Record<string, string> | undefined): PlaceCategory | null {
+  const amenity = tags?.amenity;
+  if (amenity === "bar" || amenity === "pub" || amenity === "cafe" || amenity === "nightclub" || amenity === "biergarten" || amenity === "restaurant") return amenity;
+  if (tags?.leisure === "beer_garden") return "biergarten";
+  return null;
+}
+
+function addressForTags(tags: Record<string, string> | undefined) {
+  if (!tags) return null;
+  const street = [tags["addr:street"], tags["addr:housenumber"]].filter(Boolean).join(" ");
+  const city = tags["addr:city"] || tags["addr:town"] || tags["addr:village"] || "";
+  const parts = [street, tags["addr:postcode"], city].filter(Boolean);
+  return parts.length ? parts.join(", ") : null;
+}
+
+function websiteForTags(tags: Record<string, string> | undefined) {
+  return tags?.website || tags?.["contact:website"] || null;
+}
+
+function bboxForRadius(lat: number, lon: number, radiusMeters: number) {
+  const latDelta = radiusMeters / 111320;
+  const lonScale = Math.max(0.2, Math.cos(toRadians(lat)));
+  const lonDelta = radiusMeters / (111320 * lonScale);
+  return { south: lat - latDelta, west: lon - lonDelta, north: lat + latDelta, east: lon + lonDelta };
+}
+
+function buildOverpassQuery(lat: number, lon: number, radius: number) {
+  const b = bboxForRadius(lat, lon, radius);
+  const box = `${b.south.toFixed(6)},${b.west.toFixed(6)},${b.north.toFixed(6)},${b.east.toFixed(6)}`;
+  return `[out:json][timeout:10];(nwr["amenity"~"^(bar|pub|cafe|nightclub|biergarten|restaurant)$"](${box});nwr["leisure"="beer_garden"](${box}););out center tags;`;
+}
+
+function elementLooksUsable(element: any) {
+  const category = categoryForTags(element?.tags);
+  const lat = Number(element?.lat ?? element?.center?.lat);
+  const lon = Number(element?.lon ?? element?.center?.lon);
+  const name = String(element?.tags?.name || "").trim();
+  return Boolean(category && name && Number.isFinite(lat) && Number.isFinite(lon));
+}
+
+async function requestProvider(provider: string, query: string) {
+  const commonHeaders = { "Accept": "application/json", "User-Agent": USER_AGENT, "From": "sipmate.app@gmail.com", "Referer": "https://officialsipmate.com/" };
+  const post = await fetch(provider, {
+    method: "POST",
+    headers: { ...commonHeaders, "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: new URLSearchParams({ data: query }).toString(),
+    signal: AbortSignal.timeout(7000),
+  });
+  if (post.ok) {
+    const data = await post.json();
+    if (Array.isArray(data?.elements)) return data;
+  }
+  const postBody = await post.text().catch(() => "");
+  console.error("nearby-places POST provider", provider, post.status, postBody.slice(0, 180));
+  if (post.status === 406 || post.status === 400 || post.status === 405) {
+    const url = `${provider}?data=${encodeURIComponent(query)}`;
+    const get = await fetch(url, { method: "GET", headers: commonHeaders, signal: AbortSignal.timeout(7000) });
+    if (get.ok) {
+      const data = await get.json();
+      if (Array.isArray(data?.elements)) return data;
+    }
+    const getBody = await get.text().catch(() => "");
+    console.error("nearby-places GET provider", provider, get.status, getBody.slice(0, 180));
     throw new Error(`provider_${get.status}`);
   }
   throw new Error(`provider_${post.status}`);
 }
 
-async function fetchOverpass(query:string){
-  const configured=Deno.env.get("PLACES_OVERPASS_URL")?.trim();
-  const providers=configured?[configured,...DEFAULT_OVERPASS_PROVIDERS.filter(u=>u!==configured)]:DEFAULT_OVERPASS_PROVIDERS;
-  let lastError:unknown=null;
-  for(const provider of providers){
-    try{ const data=await requestProvider(provider,query); console.log("nearby-places provider ok",provider,"elements",data.elements.length); return data; }
-    catch(error){ console.error("nearby-places provider request",provider,error); lastError=error; }
+async function fetchOverpass(query: string) {
+  const configured = Deno.env.get("PLACES_OVERPASS_URL")?.trim();
+  const providers = configured ? [configured, ...DEFAULT_OVERPASS_PROVIDERS.filter((u) => u !== configured)] : DEFAULT_OVERPASS_PROVIDERS;
+  let lastError: unknown = null;
+  for (const provider of providers) {
+    try {
+      const data = await requestProvider(provider, query);
+      const usableCount = (data.elements ?? []).filter(elementLooksUsable).length;
+      if (usableCount === 0) {
+        console.error("nearby-places provider rejected: no usable venues", provider, "elements", data.elements?.length ?? 0);
+        lastError = new Error("provider_no_usable_venues");
+        continue;
+      }
+      console.log("nearby-places provider ok", provider, "elements", data.elements.length, "usable", usableCount);
+      return data;
+    } catch (error) {
+      console.error("nearby-places provider request", provider, error);
+      lastError = error;
+    }
   }
-  throw lastError??new Error("provider_unavailable");
+  throw lastError ?? new Error("provider_unavailable");
 }
 
-function mergePlaces(rows:any[]):Place[]{ const byId=new Map<string,Place>(); for(const row of rows){ const payload=Array.isArray(row?.payload)?row.payload:[]; for(const place of payload){ if(place?.id && !byId.has(place.id)) byId.set(place.id,place as Place); } } return Array.from(byId.values()); }
+function mergePlaces(rows: any[]): Place[] {
+  const byId = new Map<string, Place>();
+  for (const row of rows) {
+    const payload = Array.isArray(row?.payload) ? row.payload : [];
+    for (const place of payload) if (place?.id && !byId.has(place.id)) byId.set(place.id, place as Place);
+  }
+  return Array.from(byId.values());
+}
 
-Deno.serve(async(req:Request)=>{
-  if(req.method!=="POST") return json({ok:false,error:"method_not_allowed"},405);
-  try{
-    const supabaseUrl=Deno.env.get("SUPABASE_URL"); const anonKey=Deno.env.get("SUPABASE_ANON_KEY"); const serviceRole=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"); const authHeader=req.headers.get("Authorization");
-    if(!supabaseUrl||!anonKey||!serviceRole) return json({ok:false,error:"missing_config"},500);
-    if(!authHeader) return json({ok:false,error:"unauthorized"},401);
-    const token=authHeader.replace(/^Bearer\s+/i,""); const auth=createClient(supabaseUrl,anonKey,{auth:{persistSession:false}}); const {data:userData,error:userError}=await auth.auth.getUser(token);
-    if(userError||!userData.user) return json({ok:false,error:"unauthorized"},401);
-    const userClient=createClient(supabaseUrl,anonKey,{global:{headers:{Authorization:authHeader}},auth:{persistSession:false}}); const {data:rows,error:entitlementError}=await userClient.rpc("get_my_premium_entitlement");
-    if(entitlementError) return json({ok:false,error:"premium_check_failed"},500);
-    const entitlement:any=Array.isArray(rows)?rows[0]:rows; const premiumActive=entitlement?.is_premium===true&&(!entitlement?.premium_until||new Date(entitlement.premium_until).getTime()>Date.now());
-    if(!premiumActive) return json({ok:false,error:"premium_required"},403);
-    const body:RequestBody=await req.json().catch(()=>({})); const latitude=Number(body.latitude); const longitude=Number(body.longitude);
-    if(!Number.isFinite(latitude)||latitude<-90||latitude>90||!Number.isFinite(longitude)||longitude<-180||longitude>180) return json({ok:false,error:"invalid_coordinates"},400);
-    const radiusMeters=clampRadius(body.radiusMeters); const requested=Array.isArray(body.categories)&&body.categories.length?body.categories.filter((c):c is PlaceCategory=>ALLOWED_CATEGORIES.has(c)):ALL_CATEGORIES;
-    if(!requested.length) return json({ok:false,error:"invalid_categories"},400);
-    const bucketLatitude=roundBucket(latitude); const bucketLongitude=roundBucket(longitude); const admin=createClient(supabaseUrl,serviceRole,{auth:{persistSession:false}}); const now=Date.now();
-    const cacheKey=`v3:${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}`;
-    const {data:cached}=await admin.from("places_cache").select("payload,expires_at").eq("cache_key",cacheKey).maybeSingle();
-    const cachedPayload=cached?.payload&&Array.isArray(cached.payload)?cached.payload as Place[]:null; const expires=cached?.expires_at?new Date(cached.expires_at).getTime():0;
-    const cacheFresh=!!cachedPayload&&expires>now; const staleCacheUsable=!!cachedPayload&&expires>now-STALE_CACHE_MAX_AGE_MS;
-    let places:Place[]=[]; let fromCache=false; let staleCache=false;
-    if(cacheFresh&&cachedPayload){ places=cachedPayload; fromCache=true; }
-    else{
-      try{
-        const data=await fetchOverpass(buildOverpassQuery(bucketLatitude,bucketLongitude,MAX_RADIUS+BUCKET_PADDING_METERS)); const seen=new Set<string>();
-        for(const e of data.elements??[]){ const category=categoryForTags(e.tags); if(!category) continue; const lat=Number(e.lat??e.center?.lat); const lon=Number(e.lon??e.center?.lon); const name=String(e.tags?.name||"").trim(); if(!Number.isFinite(lat)||!Number.isFinite(lon)||!name) continue; const id=`${e.type}-${e.id}`; if(seen.has(id)) continue; seen.add(id); places.push({id,name,category,latitude:lat,longitude:lon,address:addressForTags(e.tags),openingHours:e.tags?.opening_hours||null,website:websiteForTags(e.tags),source:"openstreetmap"}); }
-        console.log("nearby-places parsed",places.length,"for",bucketLatitude,bucketLongitude); await admin.from("places_cache").upsert({cache_key:cacheKey,payload:places,expires_at:new Date(now+CACHE_TTL_MS).toISOString()});
-      }catch(error){
-        console.error("nearby-places all providers failed",error);
-        if(staleCacheUsable&&cachedPayload){ places=cachedPayload; fromCache=true; staleCache=true; }
-        else {
-          const prefixes=[`v2:${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}`,`${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}:`];
-          const mergedRows:any[]=[];
-          for(const prefix of prefixes){ const {data:fallbackRows}=await admin.from("places_cache").select("payload,expires_at,cache_key").like("cache_key",`${prefix}%`).order("expires_at",{ascending:false}).limit(20); mergedRows.push(...(fallbackRows??[])); }
-          const usable=mergedRows.filter((r:any)=>new Date(r.expires_at).getTime()>now-STALE_CACHE_MAX_AGE_MS); const merged=mergePlaces(usable);
-          if(merged.length){ places=merged; fromCache=true; staleCache=true; console.log("nearby-places legacy cache fallback",merged.length); }
-          else return json({ok:false,error:"provider_unavailable"},502);
+Deno.serve(async (req: Request) => {
+  if (req.method !== "POST") return json({ ok: false, error: "method_not_allowed" }, 405);
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const authHeader = req.headers.get("Authorization");
+    if (!supabaseUrl || !anonKey || !serviceRole) return json({ ok: false, error: "missing_config" }, 500);
+    if (!authHeader) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const auth = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
+    const { data: userData, error: userError } = await auth.auth.getUser(token);
+    if (userError || !userData.user) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } });
+    const { data: rows, error: entitlementError } = await userClient.rpc("get_my_premium_entitlement");
+    if (entitlementError) return json({ ok: false, error: "premium_check_failed" }, 500);
+    const entitlement: any = Array.isArray(rows) ? rows[0] : rows;
+    const premiumActive = entitlement?.is_premium === true && (!entitlement?.premium_until || new Date(entitlement.premium_until).getTime() > Date.now());
+    if (!premiumActive) return json({ ok: false, error: "premium_required" }, 403);
+
+    const body: RequestBody = await req.json().catch(() => ({}));
+    const latitude = Number(body.latitude);
+    const longitude = Number(body.longitude);
+    if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) return json({ ok: false, error: "invalid_coordinates" }, 400);
+
+    const radiusMeters = clampRadius(body.radiusMeters);
+    const requested = Array.isArray(body.categories) && body.categories.length ? body.categories.filter((c): c is PlaceCategory => ALLOWED_CATEGORIES.has(c)) : ALL_CATEGORIES;
+    if (!requested.length) return json({ ok: false, error: "invalid_categories" }, 400);
+
+    const bucketLatitude = roundBucket(latitude);
+    const bucketLongitude = roundBucket(longitude);
+    const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
+    const now = Date.now();
+    const cacheKey = `v3:${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}`;
+    const { data: cached } = await admin.from("places_cache").select("payload,expires_at").eq("cache_key", cacheKey).maybeSingle();
+    const cachedPayload = cached?.payload && Array.isArray(cached.payload) ? cached.payload as Place[] : null;
+    const expires = cached?.expires_at ? new Date(cached.expires_at).getTime() : 0;
+    const cacheFresh = !!cachedPayload?.length && expires > now;
+    const staleCacheUsable = !!cachedPayload?.length && expires > now - STALE_CACHE_MAX_AGE_MS;
+
+    let places: Place[] = [];
+    let fromCache = false;
+    let staleCache = false;
+
+    if (cacheFresh && cachedPayload) {
+      places = cachedPayload;
+      fromCache = true;
+    } else {
+      try {
+        const data = await fetchOverpass(buildOverpassQuery(bucketLatitude, bucketLongitude, MAX_RADIUS + BUCKET_PADDING_METERS));
+        const seen = new Set<string>();
+        for (const e of data.elements ?? []) {
+          const category = categoryForTags(e.tags);
+          if (!category) continue;
+          const lat = Number(e.lat ?? e.center?.lat);
+          const lon = Number(e.lon ?? e.center?.lon);
+          const name = String(e.tags?.name || "").trim();
+          if (!Number.isFinite(lat) || !Number.isFinite(lon) || !name) continue;
+          const id = `${e.type}-${e.id}`;
+          if (seen.has(id)) continue;
+          seen.add(id);
+          places.push({ id, name, category, latitude: lat, longitude: lon, address: addressForTags(e.tags), openingHours: e.tags?.opening_hours || null, website: websiteForTags(e.tags), source: "openstreetmap" });
+        }
+        if (!places.length) throw new Error("provider_no_usable_venues");
+        console.log("nearby-places parsed", places.length, "for", bucketLatitude, bucketLongitude);
+        await admin.from("places_cache").upsert({ cache_key: cacheKey, payload: places, expires_at: new Date(now + CACHE_TTL_MS).toISOString() });
+      } catch (error) {
+        console.error("nearby-places all providers failed", error);
+        if (staleCacheUsable && cachedPayload) {
+          places = cachedPayload;
+          fromCache = true;
+          staleCache = true;
+        } else {
+          const prefixes = [`v2:${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}`, `${bucketLatitude.toFixed(2)}:${bucketLongitude.toFixed(2)}:`];
+          const mergedRows: any[] = [];
+          for (const prefix of prefixes) {
+            const { data: fallbackRows } = await admin.from("places_cache").select("payload,expires_at,cache_key").like("cache_key", `${prefix}%`).order("expires_at", { ascending: false }).limit(20);
+            mergedRows.push(...(fallbackRows ?? []));
+          }
+          const usable = mergedRows.filter((r: any) => new Date(r.expires_at).getTime() > now - STALE_CACHE_MAX_AGE_MS);
+          const merged = mergePlaces(usable);
+          if (merged.length) {
+            places = merged;
+            fromCache = true;
+            staleCache = true;
+            console.log("nearby-places legacy cache fallback", merged.length);
+          } else return json({ ok: false, error: "provider_unavailable" }, 502);
         }
       }
     }
-    const results=places.filter(p=>requested.includes(p.category)).map(p=>({...p,distanceMeters:distanceMeters(latitude,longitude,p.latitude,p.longitude)})).filter(p=>p.distanceMeters<=radiusMeters).sort((a,b)=>a.distanceMeters-b.distanceMeters).slice(0,MAX_RESULTS);
-    console.log("nearby-places results",results.length,"radius",radiusMeters,"pool",places.length,"fromCache",fromCache,"stale",staleCache); return json({ok:true,places:results,radiusMeters,fromCache,staleCache,attribution:"© OpenStreetMap contributors"});
-  }catch(error){ console.error("nearby-places",error); return json({ok:false,error:"server_error"},500); }
+
+    const results = places
+      .filter((p) => requested.includes(p.category))
+      .map((p) => ({ ...p, distanceMeters: distanceMeters(latitude, longitude, p.latitude, p.longitude) }))
+      .filter((p) => p.distanceMeters <= radiusMeters)
+      .sort((a, b) => a.distanceMeters - b.distanceMeters)
+      .slice(0, MAX_RESULTS);
+
+    console.log("nearby-places results", results.length, "radius", radiusMeters, "pool", places.length, "fromCache", fromCache, "stale", staleCache);
+    return json({ ok: true, places: results, radiusMeters, fromCache, staleCache, attribution: "© OpenStreetMap contributors" });
+  } catch (error) {
+    console.error("nearby-places", error);
+    return json({ ok: false, error: "server_error" }, 500);
+  }
 });
