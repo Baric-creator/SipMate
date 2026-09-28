@@ -11,33 +11,111 @@ if (legacy.stderr) process.stderr.write(legacy.stderr);
 if (legacy.status === 0) process.exit(0);
 
 const output = `${legacy.stdout ?? ''}\n${legacy.stderr ?? ''}`;
-const obsoleteFailure = 'FAIL: Push token logout cleanup is missing';
 const failureLines = output
   .split(/\r?\n/)
   .filter((line) => line.startsWith('FAIL:'));
 
-if (failureLines.length !== 1 || failureLines[0] !== obsoleteFailure) {
+const obsoletePushFailure = 'FAIL: Push token logout cleanup is missing';
+const obsoletePremiumFailure = 'FAIL: Android Premium consumption-only disclosure is missing';
+const allowedLegacyFailures = new Set([
+  obsoletePushFailure,
+  obsoletePremiumFailure,
+]);
+
+if (
+  failureLines.length === 0 ||
+  failureLines.some((line) => !allowedLegacyFailures.has(line))
+) {
   process.exit(legacy.status ?? 1);
 }
 
-const clientSource = fs.readFileSync('src/lib/push-notifications.ts', 'utf8');
-const edgeSource = fs.readFileSync('supabase/functions/register-push-token/index.ts', 'utf8');
-const migrationSource = fs.readFileSync('supabase/migrations/20260915193000_harden_device_push_tokens.sql', 'utf8');
+const compatibilityFailures = [];
+const check = (condition, message) => {
+  if (!condition) compatibilityFailures.push(message);
+};
 
-const checks = [
-  [clientSource.includes("supabase.functions.invoke('register-push-token'"), 'Push token unregister Edge Function call is missing'],
-  [clientSource.includes("action: 'unregister'"), 'Push token unregister action is missing'],
-  [!clientSource.includes("from('device_push_tokens')"), 'App client regained direct push-token table access'],
-  [edgeSource.includes('if (action === "unregister")'), 'Push token Edge Function unregister branch is missing'],
-  [edgeSource.includes('.eq("user_id", user.id)') && edgeSource.includes('.eq("token", pushToken)'), 'Push token Edge Function unregister is not owner/token scoped'],
-  [migrationSource.includes('revoke all on table public.device_push_tokens from authenticated'), 'Authenticated push-token table privileges are not revoked'],
-  [!/grant\s+(?:select|insert|update|delete|all)[\s\S]*?device_push_tokens[\s\S]*?authenticated/i.test(migrationSource), 'Authenticated app clients regained direct push-token table privileges'],
-];
+if (failureLines.includes(obsoletePushFailure)) {
+  const clientSource = fs.readFileSync('src/lib/push-notifications.ts', 'utf8');
+  const edgeSource = fs.readFileSync('supabase/functions/register-push-token/index.ts', 'utf8');
+  const migrationSource = fs.readFileSync('supabase/migrations/20260915193000_harden_device_push_tokens.sql', 'utf8');
 
-const failures = checks.filter(([ok]) => !ok).map(([, message]) => message);
-if (failures.length) {
-  for (const message of failures) console.error(`FAIL: ${message}`);
+  check(
+    clientSource.includes("supabase.functions.invoke('register-push-token'"),
+    'Push token unregister Edge Function call is missing',
+  );
+  check(
+    clientSource.includes("action: 'unregister'"),
+    'Push token unregister action is missing',
+  );
+  check(
+    !clientSource.includes("from('device_push_tokens')"),
+    'App client regained direct push-token table access',
+  );
+  check(
+    edgeSource.includes('if (action === "unregister")'),
+    'Push token Edge Function unregister branch is missing',
+  );
+  check(
+    edgeSource.includes('.eq("user_id", user.id)') && edgeSource.includes('.eq("token", pushToken)'),
+    'Push token Edge Function unregister is not owner/token scoped',
+  );
+  check(
+    migrationSource.includes('revoke all on table public.device_push_tokens from authenticated'),
+    'Authenticated push-token table privileges are not revoked',
+  );
+  check(
+    !/grant\s+(?:select|insert|update|delete|all)[\s\S]*?device_push_tokens[\s\S]*?authenticated/i.test(migrationSource),
+    'Authenticated app clients regained direct push-token table privileges',
+  );
+}
+
+if (failureLines.includes(obsoletePremiumFailure)) {
+  const premiumSource = fs.readFileSync('src/app/premium.android.tsx', 'utf8');
+  const verifySource = fs.readFileSync('supabase/functions/google-play-verify/index.ts', 'utf8');
+  const configSource = fs.readFileSync('supabase/config.toml', 'utf8');
+
+  check(
+    premiumSource.includes("from 'expo-iap'") && premiumSource.includes('useIAP('),
+    'Android Premium no longer uses Google Play Billing through expo-iap',
+  );
+  check(
+    premiumSource.includes("const PREMIUM_PRODUCT_ID = 'sipmate_premium'"),
+    'Android Premium Google Play product id changed unexpectedly',
+  );
+  check(
+    premiumSource.includes("supabase.functions.invoke('google-play-verify'"),
+    'Android Premium purchase verification call is missing',
+  );
+  check(
+    premiumSource.includes('requestPurchase(') && premiumSource.includes('finishTransaction('),
+    'Android Premium purchase lifecycle is incomplete',
+  );
+  check(
+    !premiumSource.includes('create-checkout-session') &&
+      !premiumSource.includes('stripe.com') &&
+      !premiumSource.includes('officialsipmate.com/premium'),
+    'Android Premium exposes external billing from the Play-distributed app',
+  );
+  check(
+    verifySource.includes('androidpublisher.googleapis.com') &&
+      verifySource.includes('apply_google_play_premium'),
+    'Google Play server-side verification is incomplete',
+  );
+  check(
+    /\[functions\.google-play-verify\][\s\S]*?verify_jwt\s*=\s*true/.test(configSource),
+    'google-play-verify is not registered as a JWT-protected Edge Function',
+  );
+}
+
+if (compatibilityFailures.length) {
+  for (const message of compatibilityFailures) console.error(`FAIL: ${message}`);
   process.exit(1);
 }
 
-console.log('Release audit compatibility check passed: push-token logout is handled by the authenticated Edge Function with direct client table access revoked.');
+if (failureLines.includes(obsoletePushFailure)) {
+  console.log('Release audit compatibility check passed: push-token logout is handled by the authenticated Edge Function with direct client table access revoked.');
+}
+
+if (failureLines.includes(obsoletePremiumFailure)) {
+  console.log('Release audit compatibility check passed: Android Premium now uses Google Play Billing in-app with server-side purchase verification and no external checkout link.');
+}
