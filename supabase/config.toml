@@ -110,3 +110,8 @@ entrypoint = "./functions/send-nearby-activity-notification/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/nearby-places/index.ts"
+
+[functions.google-play-verify]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/google-play-verify/index.ts"
