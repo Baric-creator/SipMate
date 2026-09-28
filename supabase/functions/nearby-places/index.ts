@@ -81,9 +81,12 @@ Deno.serve(async(req:Request)=>{
     const cacheKey=[bucketLatitude.toFixed(2),bucketLongitude.toFixed(2),radiusMeters,normalized.join(",")].join(":");
     const admin=createClient(supabaseUrl,serviceRole,{auth:{persistSession:false}}); const now=Date.now();
     const {data:cached}=await admin.from("places_cache").select("payload,expires_at").eq("cache_key",cacheKey).maybeSingle();
-    const cachedPayload=cached?.payload&&Array.isArray(cached.payload)?cached.payload as Place[]:null; const expires=cached?.expires_at?new Date(cached.expires_at).getTime():0;
+    const cachedPayload=cached?.payload&&Array.isArray(cached.payload)?cached.payload as Place[]:null;
+    const expires=cached?.expires_at?new Date(cached.expires_at).getTime():0;
+    const cacheFresh=!!cachedPayload&&expires>now;
+    const staleCacheUsable=!!cachedPayload&&expires>now-STALE_CACHE_MAX_AGE_MS;
     let places:Place[]=[]; let fromCache=false; let staleCache=false;
-    if(cachedPayload&&expires>now){ places=cachedPayload; fromCache=true; }
+    if(cacheFresh&&cachedPayload){ places=cachedPayload; fromCache=true; }
     else{
       try{
         const data=await fetchOverpass(buildOverpassQuery(bucketLatitude,bucketLongitude,Math.min(MAX_RADIUS+BUCKET_PADDING_METERS,radiusMeters+BUCKET_PADDING_METERS),normalized));
@@ -91,7 +94,7 @@ Deno.serve(async(req:Request)=>{
         for(const e of data.elements??[]){ const category=categoryForTags(e.tags); if(!category||!normalized.includes(category)) continue; const lat=Number(e.lat??e.center?.lat); const lon=Number(e.lon??e.center?.lon); const name=String(e.tags?.name||"").trim(); if(!Number.isFinite(lat)||!Number.isFinite(lon)||!name) continue; const id=`${e.type}-${e.id}`; if(seen.has(id)) continue; seen.add(id); places.push({id,name,category,latitude:lat,longitude:lon,address:addressForTags(e.tags),openingHours:e.tags?.opening_hours||null,website:websiteForTags(e.tags),source:"openstreetmap"}); }
         console.log("nearby-places parsed",places.length,"for",bucketLatitude,bucketLongitude,"radius",radiusMeters);
         await admin.from("places_cache").upsert({cache_key:cacheKey,payload:places,expires_at:new Date(now+CACHE_TTL_MS).toISOString()});
-      }catch(error){ console.error("nearby-places all providers failed",error); if(cachedPayload&&expires>now-STALE_CACHE_MAX_AGE_MS){ places=cachedPayload; fromCache=true; staleCache=true; } else return json({ok:false,error:"provider_unavailable"},502); }
+      }catch(error){ console.error("nearby-places all providers failed",error); if(staleCacheUsable&&cachedPayload){ places=cachedPayload; fromCache=true; staleCache=true; } else return json({ok:false,error:"provider_unavailable"},502); }
     }
     const results=places.map(p=>({...p,distanceMeters:distanceMeters(latitude,longitude,p.latitude,p.longitude)})).filter(p=>p.distanceMeters<=radiusMeters).sort((a,b)=>a.distanceMeters-b.distanceMeters).slice(0,MAX_RESULTS);
     console.log("nearby-places results",results.length,"fromCache",fromCache,"stale",staleCache);
