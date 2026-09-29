@@ -1,3 +1,4 @@
+import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -63,8 +64,9 @@ export default function ForgotPasswordScreen() {
 
     try {
       setLoading(true);
+      const redirectTo = Linking.createURL('/reset-password');
       const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-        redirectTo: 'sipmate://reset-password',
+        redirectTo,
       });
 
       if (error) {
