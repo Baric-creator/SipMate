@@ -12,6 +12,19 @@ test('reset email flow blocks duplicate submissions synchronously', () => {
   assert.match(forgot, /resetInFlightRef\.current = false/);
 });
 
+test('password reset email uses an Expo Router deep link instead of a hand-built host URL', () => {
+  assert.match(forgot, /Linking\.createURL\('\/reset-password'\)/);
+  assert.doesNotMatch(forgot, /redirectTo:\s*'sipmate:\/\/reset-password'/);
+});
+
+test('password reset screen supports both implicit recovery tokens and PKCE auth codes', () => {
+  assert.match(reset, /access_token/);
+  assert.match(reset, /refresh_token/);
+  assert.match(reset, /get\('code'\)/);
+  assert.match(reset, /exchangeCodeForSession\(code\)/);
+  assert.match(reset, /setSession\(/);
+});
+
 test('password reset screen only becomes ready from a recovery flow', () => {
   assert.match(reset, /if \(event === 'PASSWORD_RECOVERY'\)/);
   assert.doesNotMatch(reset, /event === 'PASSWORD_RECOVERY' \|\| event === 'SIGNED_IN'/);
