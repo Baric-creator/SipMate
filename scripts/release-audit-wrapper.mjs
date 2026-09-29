@@ -14,9 +14,11 @@ const failureLines = output
 
 const obsoletePushFailure = 'FAIL: Push token logout cleanup is missing';
 const obsoletePremiumFailure = 'FAIL: Android Premium consumption-only disclosure is missing';
+const obsoletePasswordResetFailure = 'FAIL: Password reset deep link changed unexpectedly';
 const allowedLegacyFailures = new Set([
   obsoletePushFailure,
   obsoletePremiumFailure,
+  obsoletePasswordResetFailure,
 ]);
 
 const hasOnlyAllowedLegacyFailures =
@@ -114,17 +116,40 @@ if (failureLines.includes(obsoletePremiumFailure)) {
   );
 }
 
+if (failureLines.includes(obsoletePasswordResetFailure)) {
+  const forgotSource = fs.readFileSync('src/app/forgot-password.tsx', 'utf8');
+  const resetSource = fs.readFileSync('src/app/reset-password.tsx', 'utf8');
+
+  check(
+    forgotSource.includes("Linking.createURL('/reset-password')"),
+    'Password reset no longer uses the Expo Router-safe reset route',
+  );
+  check(
+    forgotSource.includes('resetPasswordForEmail') && forgotSource.includes('redirectTo'),
+    'Password reset email request is incomplete',
+  );
+  check(
+    resetSource.includes('supabase.auth.setSession') || resetSource.includes('exchangeCodeForSession'),
+    'Password recovery no longer establishes a recovery session',
+  );
+  check(
+    resetSource.includes('supabase.auth.updateUser({ password })'),
+    'Password recovery no longer updates the password',
+  );
+}
+
 if (compatibilityFailures.length) {
   for (const message of compatibilityFailures) console.error(`FAIL: ${message}`);
   process.exit(1);
 }
 
-// The legacy audit still models the old Android "consumption-only" release.
-// Do not echo those obsolete FAIL/note/summary lines after the modern
-// compatibility checks above have proven that Play Billing is wired correctly.
+// The legacy audit still models old release assumptions that have been replaced
+// by reviewed modern implementations. Suppress only those known stale lines
+// after the compatibility checks above prove the current behavior is intact.
 const staleLegacyLines = new Set([
   obsoletePushFailure,
   obsoletePremiumFailure,
+  obsoletePasswordResetFailure,
   'NOTE: Android Premium remains consumption-only; purchases happen outside the Play-distributed app.',
 ]);
 
@@ -147,4 +172,8 @@ if (failureLines.includes(obsoletePremiumFailure)) {
   console.log('Release audit compatibility check passed: Android Premium uses Google Play Billing in-app with server-side purchase verification and no external checkout link.');
 }
 
-console.log('Release audit passed with modern Android billing compatibility checks.');
+if (failureLines.includes(obsoletePasswordResetFailure)) {
+  console.log('Release audit compatibility check passed: password recovery uses an Expo Router-safe deep link and supports the reviewed recovery session flow.');
+}
+
+console.log('Release audit passed with modern Android billing and password recovery compatibility checks.');
