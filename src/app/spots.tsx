@@ -25,6 +25,7 @@ const copy = {
     navigate: 'NAVIGATE', website: 'WEBSITE', distance: 'away', source: 'Map & venue data © OpenStreetMap contributors', back: '← BACK',
     providerUnavailable: 'Nearby places are temporarily unavailable. Please try again in a moment.',
     genericError: 'Could not load nearby spots. Please try again.', searchArea: 'SEARCH THIS AREA',
+    openNow: 'OPEN NOW', closedNow: 'CLOSED', hours: 'HOURS', topPick: 'NEARBY PICK',
   },
   de: {
     eyebrow: 'PREMIUM-FUNKTION', title: 'SipMate Spots 🍻', subtitle: 'Finde einen guten Ort für den nächsten Drink in deiner Nähe.',
@@ -41,6 +42,7 @@ const copy = {
     navigate: 'NAVIGIEREN', website: 'WEBSITE', distance: 'entfernt', source: 'Karte & Ortsdaten © OpenStreetMap-Mitwirkende', back: '← ZURÜCK',
     providerUnavailable: 'Orte in der Nähe sind vorübergehend nicht verfügbar. Versuch es gleich noch einmal.',
     genericError: 'Spots konnten nicht geladen werden. Bitte versuche es erneut.', searchArea: 'DIESEN BEREICH SUCHEN',
+    openNow: 'JETZT OFFEN', closedNow: 'GESCHLOSSEN', hours: 'ÖFFNUNGSZEITEN', topPick: 'IN DER NÄHE',
   },
   hr: {
     eyebrow: 'PREMIUM FUNKCIJA', title: 'SipMate Spots 🍻', subtitle: 'Pronađi dobro mjesto za sljedeće piće u blizini.',
@@ -57,6 +59,7 @@ const copy = {
     navigate: 'NAVIGACIJA', website: 'WEB', distance: 'udaljeno', source: 'Mapa i podaci o lokalima © OpenStreetMap contributors', back: '← NATRAG',
     providerUnavailable: 'Lokali u blizini trenutačno nisu dostupni. Pokušaj ponovno za trenutak.',
     genericError: 'Nije moguće učitati lokale u blizini. Pokušaj ponovno.', searchArea: 'PRETRAŽI OVO PODRUČJE',
+    openNow: 'OTVORENO', closedNow: 'ZATVORENO', hours: 'RADNO VRIJEME', topPick: 'U BLIZINI',
   },
 } as const;
 
@@ -79,10 +82,13 @@ type Spot = {
   website?: string | null;
 };
 
+type OpenState = 'open' | 'closed' | 'unknown';
+
 const categoryEmoji: Record<PlaceCategory, string> = {
   bar: '🍸', pub: '🍺', cafe: '☕', nightclub: '🎵', biergarten: '🍻', restaurant: '🍽️',
 };
 const radiusOptions = [1000, 3000, 5000] as const;
+const osmDayIndex: Record<string, number> = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
 
 function formatDistance(meters: number) {
   return meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1)} km`;
@@ -97,6 +103,50 @@ function coordinateDistanceMeters(a: Coordinate, b: Coordinate) {
   const lat2 = toRad(b[1]);
   const x = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
   return r * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
+function minutes(value: string) {
+  const match = value.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function ruleIncludesDay(dayRule: string, day: number) {
+  return dayRule.split(',').some((part) => {
+    const trimmed = part.trim();
+    if (/^(Mo|Tu|We|Th|Fr|Sa|Su)$/.test(trimmed)) return osmDayIndex[trimmed] === day;
+    const range = trimmed.match(/^(Mo|Tu|We|Th|Fr|Sa|Su)-(Mo|Tu|We|Th|Fr|Sa|Su)$/);
+    if (!range) return false;
+    const start = osmDayIndex[range[1]];
+    const end = osmDayIndex[range[2]];
+    return start <= end ? day >= start && day <= end : day >= start || day <= end;
+  });
+}
+
+function openingState(openingHours?: string | null, now = new Date()): OpenState {
+  if (!openingHours) return 'unknown';
+  const raw = openingHours.trim();
+  if (raw === '24/7') return 'open';
+  const day = now.getDay();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  let matchedToday = false;
+
+  for (const rule of raw.split(';')) {
+    const normalized = rule.trim();
+    const match = normalized.match(/^((?:(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?(?:,(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?)*?)\s+(.+)$/);
+    if (!match || !ruleIncludesDay(match[1], day)) continue;
+    matchedToday = true;
+    if (/\boff\b/i.test(match[2])) return 'closed';
+    for (const timeRange of match[2].split(',')) {
+      const timeMatch = timeRange.trim().match(/^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/);
+      if (!timeMatch) continue;
+      const start = minutes(timeMatch[1]);
+      const end = minutes(timeMatch[2]);
+      if (start === null || end === null) continue;
+      if (end >= start ? nowMinutes >= start && nowMinutes < end : nowMinutes >= start || nowMinutes < end) return 'open';
+    }
+  }
+  return matchedToday ? 'closed' : 'unknown';
 }
 
 export default function SpotsScreen() {
@@ -207,10 +257,7 @@ export default function SpotsScreen() {
     if (center) void loadPlaces(center, selectedCategories, nextRadius);
   };
 
-  const navigateToPlace = (place: Spot) => {
-    void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`);
-  };
-
+  const navigateToPlace = (place: Spot) => void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`);
   const openWebsite = (place: Spot) => {
     if (!place.website) return;
     void Linking.openURL(/^https?:\/\//i.test(place.website) ? place.website : `https://${place.website}`);
@@ -277,6 +324,7 @@ export default function SpotsScreen() {
   }
 
   const currentCenter = placesCenter ?? userCoordinate;
+  const selectedOpenState = openingState(selectedPlace?.openingHours);
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -296,9 +344,13 @@ export default function SpotsScreen() {
         </View>
 
         {selectedPlace && <View style={styles.placeCard}>
-          <View style={styles.placeTitleRow}><Text style={styles.placeEmoji}>{categoryEmoji[selectedPlace.category]}</Text><View style={styles.placeTitleCopy}><Text style={styles.placeName}>{selectedPlace.name}</Text><Text style={styles.placeMeta}>{formatDistance(selectedPlace.distanceMeters)} {text.distance}</Text></View></View>
-          {!!selectedPlace.address && <Text style={styles.placeAddress}>{selectedPlace.address}</Text>}
-          {!!selectedPlace.openingHours && <Text style={styles.placeHours}>{selectedPlace.openingHours}</Text>}
+          <View style={styles.premiumTag}><Text style={styles.premiumTagText}>✦ {text.topPick}</Text></View>
+          <View style={styles.placeTitleRow}><View style={styles.placeEmojiWrap}><Text style={styles.placeEmoji}>{categoryEmoji[selectedPlace.category]}</Text></View><View style={styles.placeTitleCopy}><Text style={styles.placeName}>{selectedPlace.name}</Text><Text style={styles.placeMeta}>{labels[selectedPlace.category]} · {formatDistance(selectedPlace.distanceMeters)} {text.distance}</Text></View></View>
+          <View style={styles.detailRow}>
+            {selectedOpenState !== 'unknown' && <View style={[styles.openBadge, selectedOpenState === 'closed' && styles.closedBadge]}><Text style={[styles.openBadgeText, selectedOpenState === 'closed' && styles.closedBadgeText]}>{selectedOpenState === 'open' ? text.openNow : text.closedNow}</Text></View>}
+            {!!selectedPlace.openingHours && <Text style={styles.hoursCompact}>{text.hours}: {selectedPlace.openingHours}</Text>}
+          </View>
+          {!!selectedPlace.address && <Text style={styles.placeAddress}>📍 {selectedPlace.address}</Text>}
           <View style={styles.placeActions}>{!!selectedPlace.website && <Pressable style={styles.secondaryActionButton} onPress={() => openWebsite(selectedPlace)}><Text style={styles.secondaryActionText}>{text.website}</Text></Pressable>}<Pressable style={styles.navigateButton} onPress={() => navigateToPlace(selectedPlace)}><Text style={styles.navigateButtonText}>{text.navigate}</Text></Pressable></View>
         </View>}
 
@@ -315,7 +367,12 @@ export default function SpotsScreen() {
           {currentCenter && <Pressable disabled={placesLoading} onPress={() => void loadPlaces(currentCenter, selectedCategories, radiusMeters)} style={[styles.refreshButton, placesLoading && styles.buttonDisabled]}><Text style={styles.refreshButtonText}>{text.refresh}</Text></Pressable>}
         </View>
 
-        {!!places.length && <><Text style={styles.sectionLabel}>{text.nearbyList}</Text><View style={styles.nearbyList}>{places.slice(0, 8).map((place) => <Pressable key={place.id} onPress={() => selectPlace(place)} style={({ pressed }) => [styles.nearbyRow, selectedPlace?.id === place.id && styles.nearbyRowActive, pressed && styles.nearbyRowPressed]}><Text style={styles.nearbyEmoji}>{categoryEmoji[place.category]}</Text><View style={styles.nearbyCopy}><Text numberOfLines={1} style={styles.nearbyName}>{place.name}</Text><Text numberOfLines={1} style={styles.nearbyMeta}>{formatDistance(place.distanceMeters)}{place.address ? ` · ${place.address}` : ''}</Text></View><Text style={styles.nearbyArrow}>›</Text></Pressable>)}</View></>}
+        {!!places.length && <><Text style={styles.sectionLabel}>{text.nearbyList}</Text><View style={styles.nearbyList}>{places.slice(0, 8).map((place, index) => {
+          const state = openingState(place.openingHours);
+          return <Pressable key={place.id} onPress={() => selectPlace(place)} style={({ pressed }) => [styles.nearbyRow, selectedPlace?.id === place.id && styles.nearbyRowActive, pressed && styles.nearbyRowPressed]}>
+            <View style={styles.rankBubble}><Text style={styles.rankText}>{index + 1}</Text></View><View style={styles.nearbyEmojiWrap}><Text style={styles.nearbyEmoji}>{categoryEmoji[place.category]}</Text></View><View style={styles.nearbyCopy}><View style={styles.nearbyTitleLine}><Text numberOfLines={1} style={styles.nearbyName}>{place.name}</Text>{state !== 'unknown' && <View style={[styles.miniStatus, state === 'closed' && styles.miniStatusClosed]}><Text style={[styles.miniStatusText, state === 'closed' && styles.miniStatusTextClosed]}>{state === 'open' ? text.openNow : text.closedNow}</Text></View>}</View><Text numberOfLines={1} style={styles.nearbyMeta}>{labels[place.category]} · {formatDistance(place.distanceMeters)}{place.address ? ` · ${place.address}` : ''}</Text></View><Text style={styles.nearbyArrow}>›</Text>
+          </Pressable>;
+        })}</View></>}
 
         <View style={styles.privacyCard}><Text style={styles.privacyIcon}>🛡️</Text><Text style={styles.privacyText}>{text.privacy}</Text></View>
         <Text style={styles.attribution}>{text.source}</Text>
@@ -335,12 +392,12 @@ const styles = StyleSheet.create({
   searchAreaButton: { position: 'absolute', top: 14, left: 68, right: 68, minHeight: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, backgroundColor: 'rgba(220,38,38,0.96)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)', shadowColor: '#000000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 7 }, searchAreaText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900', letterSpacing: 0.35 },
   recenterButton: { position: 'absolute', right: 14, bottom: 14, width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(12,12,15,0.94)', borderWidth: 1, borderColor: 'rgba(245,185,66,0.55)', shadowColor: '#000000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.32, shadowRadius: 10, elevation: 8 }, recenterButtonPressed: { transform: [{ scale: 0.94 }], opacity: 0.88 }, recenterIcon: { color: '#F5B942', fontSize: 25, fontWeight: '900', lineHeight: 28 },
   mapPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 }, previewHalo: { position: 'absolute', width: 240, height: 240, borderRadius: 120, backgroundColor: 'rgba(245,185,66,0.06)', borderWidth: 1, borderColor: 'rgba(245,185,66,0.12)' }, previewPin: { fontSize: 40 }, previewLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', marginTop: 8 }, previewSmall: { color: '#71717A', fontSize: 10, fontWeight: '800', marginTop: 4, textAlign: 'center' },
-  placeCard: { marginTop: 14, borderRadius: 22, padding: 17, backgroundColor: '#171310', borderWidth: 1, borderColor: '#5A4725' }, placeTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 }, placeEmoji: { fontSize: 28 }, placeTitleCopy: { flex: 1 }, placeName: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' }, placeMeta: { color: '#F5B942', fontSize: 11, fontWeight: '800', marginTop: 3 }, placeAddress: { color: '#D4D4D8', fontSize: 12, marginTop: 10 }, placeHours: { color: '#A1A1AA', fontSize: 11, marginTop: 5 },
-  placeActions: { flexDirection: 'row', gap: 10, marginTop: 14 }, navigateButton: { flex: 1, minHeight: 44, borderRadius: 14, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' }, navigateButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' }, secondaryActionButton: { flex: 1, minHeight: 44, borderRadius: 14, borderWidth: 1, borderColor: '#5A4725', backgroundColor: '#211B12', alignItems: 'center', justifyContent: 'center' }, secondaryActionText: { color: '#F5D58A', fontSize: 12, fontWeight: '900' },
+  placeCard: { marginTop: 14, borderRadius: 24, padding: 18, backgroundColor: '#17130D', borderWidth: 1, borderColor: '#755A26', shadowColor: '#000000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.26, shadowRadius: 16, elevation: 7 }, premiumTag: { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: '#2B2113', borderWidth: 1, borderColor: '#7A5B24', marginBottom: 13 }, premiumTagText: { color: '#F5D58A', fontSize: 9, fontWeight: '900', letterSpacing: 0.9 }, placeTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 }, placeEmojiWrap: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: '#211B12', borderWidth: 1, borderColor: '#5A4725' }, placeEmoji: { fontSize: 26 }, placeTitleCopy: { flex: 1 }, placeName: { color: '#FFFFFF', fontSize: 19, fontWeight: '900' }, placeMeta: { color: '#F5B942', fontSize: 11, fontWeight: '800', marginTop: 4 }, placeAddress: { color: '#D4D4D8', fontSize: 12, lineHeight: 18, marginTop: 12 }, detailRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 13 }, openBadge: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999, backgroundColor: '#0D2818', borderWidth: 1, borderColor: '#28643D' }, closedBadge: { backgroundColor: '#2A1113', borderColor: '#6E2B30' }, openBadgeText: { color: '#86EFAC', fontSize: 9, fontWeight: '900', letterSpacing: 0.45 }, closedBadgeText: { color: '#FCA5A5' }, hoursCompact: { flexShrink: 1, color: '#A1A1AA', fontSize: 10, lineHeight: 15, fontWeight: '700' },
+  placeActions: { flexDirection: 'row', gap: 10, marginTop: 15 }, navigateButton: { flex: 1, minHeight: 46, borderRadius: 15, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' }, navigateButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' }, secondaryActionButton: { flex: 1, minHeight: 46, borderRadius: 15, borderWidth: 1, borderColor: '#5A4725', backgroundColor: '#211B12', alignItems: 'center', justifyContent: 'center' }, secondaryActionText: { color: '#F5D58A', fontSize: 12, fontWeight: '900' },
   permissionCard: { marginTop: 16, borderRadius: 22, padding: 18, backgroundColor: '#121214', borderWidth: 1, borderColor: '#27272A' }, cardTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' }, cardBody: { color: '#A1A1AA', fontSize: 13, lineHeight: 20, marginTop: 7 }, primaryButton: { minHeight: 46, borderRadius: 16, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, marginTop: 16, alignSelf: 'stretch' }, primaryButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', letterSpacing: 0.5 }, buttonDisabled: { opacity: 0.55 }, warning: { color: '#FCA5A5', fontSize: 12, lineHeight: 18, marginTop: 10, textAlign: 'center' },
   sectionLabel: { color: '#71717A', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginTop: 24, marginBottom: 10 }, chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, chip: { borderRadius: 999, backgroundColor: '#151518', borderWidth: 1, borderColor: '#2C2C31', paddingHorizontal: 12, paddingVertical: 9 }, chipActive: { backgroundColor: '#2B2113', borderColor: '#7A5B24' }, chipText: { color: '#8F8F97', fontSize: 11, fontWeight: '800' }, chipTextActive: { color: '#F5D58A' },
   placesStatus: { marginTop: 14, alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 8 }, statusText: { color: '#A1A1AA', fontSize: 12, textAlign: 'center' }, refreshButton: { minHeight: 42, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1, borderColor: '#3F3F46', alignItems: 'center', justifyContent: 'center' }, refreshButtonText: { color: '#E4E4E7', fontSize: 11, fontWeight: '900' },
-  nearbyList: { gap: 8 }, nearbyRow: { minHeight: 62, borderRadius: 16, borderWidth: 1, borderColor: '#27272A', backgroundColor: '#121214', paddingHorizontal: 13, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 11 }, nearbyRowActive: { borderColor: '#7A5B24', backgroundColor: '#1D180F' }, nearbyRowPressed: { opacity: 0.82 }, nearbyEmoji: { fontSize: 22 }, nearbyCopy: { flex: 1 }, nearbyName: { color: '#F4F4F5', fontSize: 13, fontWeight: '900' }, nearbyMeta: { color: '#8F8F97', fontSize: 10, marginTop: 4 }, nearbyArrow: { color: '#F5B942', fontSize: 24, fontWeight: '700' },
+  nearbyList: { gap: 9 }, nearbyRow: { minHeight: 72, borderRadius: 18, borderWidth: 1, borderColor: '#2A2926', backgroundColor: '#121214', paddingHorizontal: 12, paddingVertical: 11, flexDirection: 'row', alignItems: 'center', gap: 10 }, nearbyRowActive: { borderColor: '#8A682A', backgroundColor: '#1D180F' }, nearbyRowPressed: { opacity: 0.82 }, rankBubble: { width: 25, height: 25, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#211B12', borderWidth: 1, borderColor: '#4A3B21' }, rankText: { color: '#D6B765', fontSize: 10, fontWeight: '900' }, nearbyEmojiWrap: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#19191C' }, nearbyEmoji: { fontSize: 20 }, nearbyCopy: { flex: 1, minWidth: 0 }, nearbyTitleLine: { flexDirection: 'row', alignItems: 'center', gap: 7 }, nearbyName: { flexShrink: 1, color: '#F4F4F5', fontSize: 13, fontWeight: '900' }, nearbyMeta: { color: '#8F8F97', fontSize: 10, marginTop: 5 }, nearbyArrow: { color: '#F5B942', fontSize: 24, fontWeight: '700' }, miniStatus: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999, backgroundColor: '#10251A' }, miniStatusClosed: { backgroundColor: '#2A1113' }, miniStatusText: { color: '#86EFAC', fontSize: 7, fontWeight: '900' }, miniStatusTextClosed: { color: '#FCA5A5' },
   privacyCard: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', marginTop: 20, padding: 16, borderRadius: 18, backgroundColor: '#0D1812', borderWidth: 1, borderColor: '#234632' }, privacyIcon: { fontSize: 20 }, privacyText: { flex: 1, color: '#A7D7B9', fontSize: 12, lineHeight: 18 }, attribution: { color: '#71717A', fontSize: 9, textAlign: 'center', marginTop: 12 },
   backButton: { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 14, marginTop: 20 }, backText: { color: '#EF4444', fontSize: 12, fontWeight: '900' },
 });
