@@ -58,15 +58,18 @@ const copy = {
   },
 } as const;
 
-function readTokens(url: string) {
+function readRecoveryParams(url: string) {
   const hash = url.split('#')[1] ?? '';
   const query = url.includes('?') ? url.split('?')[1]?.split('#')[0] ?? '' : '';
-  const params = new URLSearchParams(hash || query);
+  const hashParams = new URLSearchParams(hash);
+  const queryParams = new URLSearchParams(query);
+  const get = (key: string) => hashParams.get(key) ?? queryParams.get(key);
 
   return {
-    accessToken: params.get('access_token'),
-    refreshToken: params.get('refresh_token'),
-    type: params.get('type'),
+    accessToken: get('access_token'),
+    refreshToken: get('refresh_token'),
+    code: get('code'),
+    type: get('type'),
   };
 }
 
@@ -89,18 +92,34 @@ export default function ResetPasswordScreen() {
     async function applyRecoveryUrl(url: string | null) {
       if (!url || !active) return;
 
-      const { accessToken, refreshToken, type } = readTokens(url);
-      if (!accessToken || !refreshToken || (type && type !== 'recovery')) {
+      const { accessToken, refreshToken, code, type } = readRecoveryParams(url);
+      if (type && type !== 'recovery') {
         recoveryReadyRef.current = false;
         setReady(false);
         setLinkError(true);
         return;
       }
 
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
+      let error: { message?: string } | null = null;
+
+      if (code) {
+        const result = await supabase.auth.exchangeCodeForSession(code);
+        error = result.error;
+      } else if (accessToken && refreshToken) {
+        const result = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        error = result.error;
+      } else {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session?.user) {
+          recoveryReadyRef.current = false;
+          setReady(false);
+          setLinkError(true);
+          return;
+        }
+      }
 
       if (!active) return;
 
