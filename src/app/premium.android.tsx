@@ -12,6 +12,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIAP } from 'expo-iap';
 
 import { supabase } from '../lib/supabase';
@@ -26,6 +27,7 @@ const copy = {
     active: '💎 PREMIUM ACTIVE', activeNote: 'Premium is active on this SipMate account.',
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM FEATURE', spotsBody: 'Discover bars, cafés, pubs, clubs and other places for a drink around you on a clean, privacy-first map.', spotsOpen: 'OPEN SPOTS →', spotsLocked: 'Available with Premium',
     monthly: 'Monthly', founders: 'Founders Premium', foundersBadge: 'FIRST 100 MEMBERS', early: 'Early Access', standard: 'Standard Yearly', firstYear: '/ first year', month: '/ month', year: '/ year', foundersNote: 'Exclusive for the first 100 confirmed yearly Premium members.', earlyNote: 'Starts after the first 100 Founder spots are taken.', standardNote: 'Standard yearly price after the Early Access period.', back: '← BACK',
+    purchaseVerified: 'Premium activated successfully. 🍻', verificationMissing: 'Google Play completed the purchase, but SipMate could not verify it. Please try again.', verificationPending: 'Your purchase could not be verified yet. You will not need to buy it again. Please try again shortly.', purchaseFailed: 'The purchase could not be completed. Please try again.', subscriptionUnavailable: 'Google Play subscription is not available yet. Please try again.', monthlyUnavailable: 'Monthly Google Play plan is not available.', purchaseStartFailed: 'The purchase could not be started. Please try again.',
   },
   de: {
     title: 'SipMate Premium', subtitle: 'Premium-Kontovorteile',
@@ -33,6 +35,7 @@ const copy = {
     active: '💎 PREMIUM AKTIV', activeNote: 'Premium ist auf deinem SipMate-Konto aktiv.',
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM-FUNKTION', spotsBody: 'Entdecke Bars, Cafés, Pubs, Clubs und weitere Orte für einen Drink in deiner Nähe auf einer klaren, datenschutzfreundlichen Karte.', spotsOpen: 'SPOTS ÖFFNEN →', spotsLocked: 'Mit Premium verfügbar',
     monthly: 'Monatlich', founders: 'Founders Premium', foundersBadge: 'DIE ERSTEN 100 MITGLIEDER', early: 'Early Access', standard: 'Standard jährlich', firstYear: '/ erstes Jahr', month: '/ Monat', year: '/ Jahr', foundersNote: 'Exklusiv für die ersten 100 bestätigten jährlichen Premium-Mitglieder.', earlyNote: 'Startet, sobald die ersten 100 Founder-Plätze vergeben sind.', standardNote: 'Regulärer Jahrespreis nach der Early-Access-Phase.', back: '← ZURÜCK',
+    purchaseVerified: 'Premium wurde erfolgreich aktiviert. 🍻', verificationMissing: 'Google Play hat den Kauf abgeschlossen, aber SipMate konnte ihn noch nicht bestätigen. Bitte versuche es erneut.', verificationPending: 'Dein Kauf konnte noch nicht bestätigt werden. Du musst ihn nicht erneut kaufen. Bitte versuche es in Kürze erneut.', purchaseFailed: 'Der Kauf konnte nicht abgeschlossen werden. Bitte versuche es erneut.', subscriptionUnavailable: 'Das Google-Play-Abo ist derzeit nicht verfügbar. Bitte versuche es erneut.', monthlyUnavailable: 'Der monatliche Google-Play-Tarif ist nicht verfügbar.', purchaseStartFailed: 'Der Kauf konnte nicht gestartet werden. Bitte versuche es erneut.',
   },
   hr: {
     title: 'SipMate Premium', subtitle: 'Premium pogodnosti računa',
@@ -40,11 +43,13 @@ const copy = {
     active: '💎 PREMIUM AKTIVAN', activeNote: 'Premium je aktivan na tvom SipMate računu.',
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM FUNKCIJA', spotsBody: 'Otkrij barove, kafiće, pubove, klubove i druga mjesta za piće u blizini na čistoj karti koja čuva privatnost korisnika.', spotsOpen: 'OTVORI SPOTS →', spotsLocked: 'Dostupno uz Premium',
     monthly: 'Mjesečno', founders: 'Founders Premium', foundersBadge: 'PRVIH 100 ČLANOVA', early: 'Early Access', standard: 'Standard godišnje', firstYear: '/ prva godina', month: '/ mjesec', year: '/ godina', foundersNote: 'Ekskluzivno za prvih 100 potvrđenih godišnjih Premium članova.', earlyNote: 'Počinje nakon što se popuni prvih 100 Founder mjesta.', standardNote: 'Standardna godišnja cijena nakon Early Access razdoblja.', back: '← NATRAG',
+    purchaseVerified: 'Premium je uspješno aktiviran. 🍻', verificationMissing: 'Google Play je završio kupnju, ali SipMate je još nije uspio potvrditi. Pokušaj ponovno.', verificationPending: 'Kupnja još nije potvrđena. Ne moraš je kupovati ponovno. Pokušaj ponovno za koji trenutak.', purchaseFailed: 'Kupnju nije bilo moguće dovršiti. Pokušaj ponovno.', subscriptionUnavailable: 'Google Play pretplata trenutačno nije dostupna. Pokušaj ponovno.', monthlyUnavailable: 'Mjesečni Google Play paket trenutačno nije dostupan.', purchaseStartFailed: 'Kupnju nije bilo moguće pokrenuti. Pokušaj ponovno.',
   },
 } as const;
 
 export default function PremiumAndroidScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { i18n } = useTranslation();
   const language = i18n.language?.split('-')[0] as keyof typeof copy;
   const text = copy[language] ?? copy.en;
@@ -87,10 +92,7 @@ export default function PremiumAndroidScreen() {
 
       if (!purchaseToken) {
         setIsPurchasing(false);
-        Alert.alert(
-          'SipMate Premium',
-          'Google Play completed the purchase, but SipMate could not verify it. Please try again.'
-        );
+        Alert.alert('SipMate Premium', text.verificationMissing);
         return;
       }
 
@@ -113,13 +115,10 @@ export default function PremiumAndroidScreen() {
           : entitlementRows;
 
         setIsPremium(entitlement?.is_premium === true);
-        Alert.alert('SipMate Premium', 'Premium activated successfully. 🍻');
+        Alert.alert('SipMate Premium', text.purchaseVerified);
       } catch (error) {
         console.warn('Google Play verification failed:', error);
-        Alert.alert(
-          'SipMate Premium',
-          'Your purchase could not be verified yet. You will not need to buy it again. Please try again shortly.'
-        );
+        Alert.alert('SipMate Premium', text.verificationPending);
       } finally {
         processingTokenRef.current = null;
         setIsPurchasing(false);
@@ -140,10 +139,7 @@ export default function PremiumAndroidScreen() {
         return;
       }
 
-      Alert.alert(
-        'SipMate Premium',
-        'The purchase could not be completed. Please try again.'
-      );
+      Alert.alert('SipMate Premium', text.purchaseFailed);
     },
   });
 
@@ -258,10 +254,7 @@ export default function PremiumAndroidScreen() {
 
       if (!product || product.platform !== 'android') {
         setIsPurchasing(false);
-        Alert.alert(
-          'SipMate Premium',
-          'Google Play subscription is not available yet. Please try again.'
-        );
+        Alert.alert('SipMate Premium', text.subscriptionUnavailable);
         return;
       }
 
@@ -271,7 +264,7 @@ export default function PremiumAndroidScreen() {
 
       if (!monthlyOffer?.offerTokenAndroid) {
         setIsPurchasing(false);
-        Alert.alert('SipMate Premium', 'Monthly Google Play plan is not available.');
+        Alert.alert('SipMate Premium', text.monthlyUnavailable);
         return;
       }
 
@@ -292,10 +285,7 @@ export default function PremiumAndroidScreen() {
     } catch (error) {
       console.warn('Google Play purchase failed:', error);
       setIsPurchasing(false);
-      Alert.alert(
-        'SipMate Premium',
-        'The purchase could not be started. Please try again.'
-      );
+      Alert.alert('SipMate Premium', text.purchaseStartFailed);
     }
   };
 
@@ -309,7 +299,7 @@ export default function PremiumAndroidScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 36 + insets.bottom }]}>
         <Text style={styles.logo}>SipMate 🍻</Text>
         <Text style={styles.title}>{text.title}</Text>
         <Text style={styles.subtitle}>{text.subtitle}</Text>
@@ -345,44 +335,44 @@ export default function PremiumAndroidScreen() {
         </Pressable>
 
         <View style={styles.tierList}>
-          {tiers.map((tier) => (
-            <Pressable
-              key={tier.key}
-              disabled={
-                tier.key !== 'monthly' ||
-                !googlePlayPrice ||
-                isPremium ||
-                isPurchasing
-              }
-              onPress={tier.key === 'monthly' ? handleSubscribe : undefined}
-              style={({ pressed }) => [
-                styles.tierCard,
-                {
-                  borderColor: tier.border,
-                  backgroundColor: tier.bg,
-                  opacity: pressed ? 0.82 : 1,
-                },
-              ]}
-            >
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  styles.shine,
+          {tiers.map((tier) => {
+            const disabled = tier.key !== 'monthly' || !googlePlayPrice || isPremium || isPurchasing;
+            return (
+              <Pressable
+                key={tier.key}
+                accessibilityRole={tier.key === 'monthly' ? 'button' : undefined}
+                accessibilityState={{ disabled }}
+                disabled={disabled}
+                onPress={tier.key === 'monthly' ? handleSubscribe : undefined}
+                style={({ pressed }) => [
+                  styles.tierCard,
                   {
-                    backgroundColor: tier.glow,
-                    transform: [{ translateX }, { rotate: '18deg' }],
+                    borderColor: tier.border,
+                    backgroundColor: tier.bg,
+                    opacity: disabled && tier.key === 'monthly' ? 0.68 : pressed ? 0.82 : 1,
                   },
                 ]}
-              />
-              <Text style={[styles.tierBadge, { color: tier.border }]}>{tier.badge}</Text>
-              <Text style={styles.tierTitle}>{tier.title}</Text>
-              <View style={styles.priceRow}>
-                <Text style={styles.price}>{tier.price}</Text>
-                <Text style={styles.period}>{tier.period}</Text>
-              </View>
-              {!!tier.note && <Text style={styles.tierNote}>{tier.note}</Text>}
-            </Pressable>
-          ))}
+              >
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.shine,
+                    {
+                      backgroundColor: tier.glow,
+                      transform: [{ translateX }, { rotate: '18deg' }],
+                    },
+                  ]}
+                />
+                <Text style={[styles.tierBadge, { color: tier.border }]}>{tier.badge}</Text>
+                <Text style={styles.tierTitle}>{tier.title}</Text>
+                <View style={styles.priceRow}>
+                  <Text style={styles.price}>{tier.price}</Text>
+                  <Text style={styles.period}>{tier.period}</Text>
+                </View>
+                {!!tier.note && <Text style={styles.tierNote}>{tier.note}</Text>}
+              </Pressable>
+            );
+          })}
         </View>
 
         <Pressable style={styles.backButton} onPress={() => router.back()}>
@@ -395,7 +385,7 @@ export default function PremiumAndroidScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#09090B' },
-  content: { flexGrow: 1, width: '100%', maxWidth: 620, alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 36 },
+  content: { flexGrow: 1, width: '100%', maxWidth: 620, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 36 },
   logo: { color: '#EF4444', fontSize: 17, fontWeight: '900', textAlign: 'center', marginBottom: 14 },
   title: { color: '#FFFFFF', fontSize: 31, fontWeight: '900', textAlign: 'center' },
   subtitle: { color: '#A1A1AA', fontSize: 12, fontWeight: '900', letterSpacing: 1.1, textAlign: 'center', marginTop: 8 },
