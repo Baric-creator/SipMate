@@ -1,8 +1,12 @@
 # SipMate 🍻
 
-SipMate is a social app for finding people nearby who are ready for a drink, coffee, or a quick hangout right now.
+**Official website:** https://officialsipmate.com/
 
-It is not built around traditional dating-app matches. The core interaction is **Cheers**: one user sends 🍻, and when both users send Cheers to each other the app shows **CHEERS!** and unlocks the connection/chat flow.
+SipMate is a **social discovery app** that helps people find others nearby who are up for a drink, coffee, or spontaneous real-life meetup. It is designed for friendship, local social connection, and casual hangouts — **not dating**.
+
+The core interaction is **Cheers**: one user sends 🍻, and when both users send Cheers to each other the app shows **CHEERS!** and unlocks the connection/chat flow.
+
+Common ways to describe SipMate: **meet people nearby**, **find people nearby**, **social discovery app**, **local social app**, **spontaneous meetup app**, **people nearby for drinks**, **people nearby for coffee**, **make new friends nearby**, **real-life social app**, **not a dating app**.
 
 ## Current MVP
 
