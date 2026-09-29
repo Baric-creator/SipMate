@@ -89,6 +89,7 @@ const categoryEmoji: Record<PlaceCategory, string> = {
 };
 const radiusOptions = [1000, 3000, 5000] as const;
 const osmDayIndex: Record<string, number> = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
+const osmDayRulePattern = /^(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?(?:,(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?)*$/;
 
 function formatDistance(meters: number) {
   return meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(1)} km`;
@@ -108,7 +109,10 @@ function coordinateDistanceMeters(a: Coordinate, b: Coordinate) {
 function minutes(value: string) {
   const match = value.match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return null;
-  return Number(match[1]) * 60 + Number(match[2]);
+  const hours = Number(match[1]);
+  const mins = Number(match[2]);
+  if (hours > 24 || mins > 59 || (hours === 24 && mins !== 0)) return null;
+  return hours * 60 + mins;
 }
 
 function ruleIncludesDay(dayRule: string, day: number) {
@@ -133,11 +137,14 @@ function openingState(openingHours?: string | null, now = new Date()): OpenState
 
   for (const rule of raw.split(';')) {
     const normalized = rule.trim();
-    const match = normalized.match(/^((?:(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?(?:,(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?)*?)\s+(.+)$/);
-    if (!match || !ruleIncludesDay(match[1], day)) continue;
+    const splitAt = normalized.indexOf(' ');
+    if (splitAt <= 0) continue;
+    const dayRule = normalized.slice(0, splitAt).trim();
+    const timeRule = normalized.slice(splitAt + 1).trim();
+    if (!osmDayRulePattern.test(dayRule) || !ruleIncludesDay(dayRule, day)) continue;
     matchedToday = true;
-    if (/\boff\b/i.test(match[2])) return 'closed';
-    for (const timeRange of match[2].split(',')) {
+    if (/\boff\b/i.test(timeRule)) return 'closed';
+    for (const timeRange of timeRule.split(',')) {
       const timeMatch = timeRange.trim().match(/^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/);
       if (!timeMatch) continue;
       const start = minutes(timeMatch[1]);
@@ -159,6 +166,7 @@ export default function SpotsScreen() {
   const labels = categoryLabels[language];
   const cameraRef = useRef<any>(null);
   const suppressRegionUntilRef = useRef(Date.now() + 1400);
+  const placesRequestRef = useRef(0);
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [locationGranted, setLocationGranted] = useState(false);
@@ -183,7 +191,10 @@ export default function SpotsScreen() {
   const friendlyPlacesError = (code?: string) => code === 'provider_unavailable' ? text.providerUnavailable : text.genericError;
 
   const loadPlaces = async (coordinate: Coordinate, categories = selectedCategories, radius = radiusMeters) => {
+    const requestId = ++placesRequestRef.current;
     if (!categories.length) {
+      setPlacesLoading(false);
+      setPlacesError('');
       setPlaces([]);
       setSelectedPlace(null);
       return;
@@ -192,11 +203,13 @@ export default function SpotsScreen() {
     setPlacesError('');
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
+      if (requestId !== placesRequestRef.current) return;
+      if (!session?.access_token) throw new Error('unauthorized');
       const { data, error } = await supabase.functions.invoke('nearby-places', {
         headers: { Authorization: `Bearer ${session.access_token}` },
         body: { latitude: coordinate[1], longitude: coordinate[0], radiusMeters: radius, categories },
       });
+      if (requestId !== placesRequestRef.current) return;
       if (error || !data?.ok) throw new Error(data?.error ?? error?.message ?? 'places_failed');
       setPlaces((data.places ?? []) as Spot[]);
       setPlacesCenter(coordinate);
@@ -204,10 +217,11 @@ export default function SpotsScreen() {
       setSearchAreaVisible(false);
       setSelectedPlace((current) => current && (data.places ?? []).some((place: Spot) => place.id === current.id) ? current : null);
     } catch (error: any) {
+      if (requestId !== placesRequestRef.current) return;
       console.log('SPOTS LOAD ERROR:', error?.message ?? error);
       setPlacesError(friendlyPlacesError(error?.message));
     } finally {
-      setPlacesLoading(false);
+      if (requestId === placesRequestRef.current) setPlacesLoading(false);
     }
   };
 
@@ -294,7 +308,7 @@ export default function SpotsScreen() {
       if (mounted) setLoading(false);
     };
     void load();
-    return () => { mounted = false; };
+    return () => { mounted = false; placesRequestRef.current += 1; };
   }, [router]);
 
   const requestLocation = async () => {
