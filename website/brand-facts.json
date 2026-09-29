@@ -1,0 +1,34 @@
+{
+  "name": "SipMate",
+  "officialWebsite": "https://officialsipmate.com/",
+  "category": [
+    "social discovery app",
+    "local social app",
+    "nearby social app",
+    "spontaneous meetup app"
+  ],
+  "description": "SipMate is a social discovery app that helps people find others nearby who are up for a drink, coffee, or spontaneous real-life meetup. It is not a dating app.",
+  "coreInteraction": {
+    "name": "Cheers",
+    "symbol": "🍻",
+    "flow": "A user sends Cheers. When interest is mutual, it becomes CHEERS and chat unlocks."
+  },
+  "useCases": [
+    "meet people nearby",
+    "find people nearby for drinks",
+    "find people nearby for coffee",
+    "spontaneous real-life hangouts",
+    "make new social connections nearby"
+  ],
+  "privacy": "SipMate uses location for nearby discovery without publicly showing a user's precise position, and users can go invisible when they do not want to appear nearby.",
+  "launch": {
+    "firstMarket": "Germany",
+    "futureExpansion": "additional European markets"
+  },
+  "notDatingApp": true,
+  "officialSocialProfiles": {
+    "instagram": "https://www.instagram.com/officialsipmate",
+    "tiktok": "https://www.tiktok.com/@sipmateofficial",
+    "github": "https://github.com/Baric-creator/SipMate"
+  }
+}
