@@ -105,7 +105,7 @@ editProfileScreen: {
   uploadError: 'UPLOAD ERROR',
   profileError: 'PROFILE ERROR',
   galleryLimit:
-    'Premium allows up to 6 gallery photos.',
+    'Premium allows up to 10 gallery photos.',
   galleryUploadError: 'Could not upload photo.',
   gallerySaveError: 'Could not save photo.',
   galleryAddError: 'Could not add photo.',
@@ -378,7 +378,7 @@ cheersScreen: {
   uploadError: 'UPLOAD-FEHLER',
   profileError: 'PROFIL-FEHLER',
   galleryLimit:
-    'Premium erlaubt bis zu 6 Galeriefotos.',
+    'Premium erlaubt bis zu 10 Galeriefotos.',
   galleryUploadError:
     'Foto konnte nicht hochgeladen werden.',
   gallerySaveError:
@@ -670,7 +670,7 @@ editProfileScreen: {
   uploadError: 'GREŠKA PRI UČITAVANJU',
   profileError: 'GREŠKA PROFILA',
   galleryLimit:
-    'Premium omogućuje najviše 6 fotografija u galeriji.',
+    'Premium omogućuje najviše 10 fotografija u galeriji.',
   galleryUploadError:
     'Fotografiju nije moguće učitati.',
   gallerySaveError:
