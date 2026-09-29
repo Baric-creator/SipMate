@@ -43,7 +43,7 @@ for (const file of htmlFiles) {
 
 const criticalPages = {
   'index.html': ['premium.html', 'privacy.html', 'terms.html', 'contact.html'],
-  'premium.html': ['forgot-password.html', 'download.html', 'terms.html', 'privacy.html', 'contact.html'],
+  'premium.html': ['terms.html', 'privacy.html', 'contact.html'],
   'download.html': ['privacy.html', 'terms.html'],
   'delete-account.html': ['privacy.html'],
 };
