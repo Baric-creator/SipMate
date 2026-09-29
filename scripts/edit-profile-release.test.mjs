@@ -28,14 +28,18 @@ test('Premium gallery keeps the app limit aligned at 10 and blocks duplicate upl
   assert.doesNotMatch(source, /profilePhotos\.length >= 6/);
 });
 
-test('Premium gallery finalizes atomically and chooses sort order from max instead of count', () => {
+test('Premium gallery finalizes atomically, idempotently and chooses sort order from max instead of count', () => {
   const fn = fs.readFileSync('supabase/functions/profile-photo-upload-url/index.ts', 'utf8');
-  const migration = fs.readFileSync('supabase/migrations/20260929183000_finalize_profile_photo_atomic.sql', 'utf8');
+  const atomicMigration = fs.readFileSync('supabase/migrations/20260929183000_finalize_profile_photo_atomic.sql', 'utf8');
+  const idempotentMigration = fs.readFileSync('supabase/migrations/20260929184500_idempotent_finalize_profile_photo.sql', 'utf8');
   assert.match(fn, /finalize_profile_photo_atomic/);
   assert.match(fn, /p_limit:\s*GALLERY_LIMIT/);
-  assert.match(migration, /pg_advisory_xact_lock/);
-  assert.match(migration, /coalesce\(max\(pp\.sort_order\),\s*-1\)\s*\+\s*1/);
-  assert.match(migration, /v_count\s*>=\s*p_limit/);
+  assert.match(atomicMigration, /pg_advisory_xact_lock/);
+  assert.match(idempotentMigration, /pg_advisory_xact_lock/);
+  assert.match(idempotentMigration, /pp\.photo_url\s*=\s*p_photo_url/);
+  assert.match(idempotentMigration, /if found then/);
+  assert.match(idempotentMigration, /coalesce\(max\(pp\.sort_order\),\s*-1\)\s*\+\s*1/);
+  assert.match(idempotentMigration, /v_count\s*>=\s*p_limit/);
   assert.doesNotMatch(fn, /sort_order:\s*count\s*\?\?\s*0/);
 });
 
