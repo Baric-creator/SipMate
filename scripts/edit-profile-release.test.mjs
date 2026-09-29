@@ -18,6 +18,16 @@ test('Premium gallery rechecks entitlement and uploads binary data reliably', ()
   assert.match(source, /GALLERY SAVE ERROR/);
 });
 
+test('Premium gallery keeps the app limit aligned at 10 and blocks duplicate uploads', () => {
+  const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
+  assert.match(source, /const GALLERY_LIMIT = 10/);
+  assert.match(source, /profilePhotos\.length >= GALLERY_LIMIT/);
+  assert.match(source, /uploadingGallery/);
+  assert.match(source, /setUploadingGallery\(true\)/);
+  assert.match(source, /setUploadingGallery\(false\)/);
+  assert.doesNotMatch(source, /profilePhotos\.length >= 6/);
+});
+
 
 test('manual city remains authoritative instead of being overwritten by GPS city', () => {
   const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
@@ -68,7 +78,7 @@ test('new profiles can save without a usable location', () => {
   const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
   assert.doesNotMatch(source, /locationUnavailableCityFallback\)\);\s*return/);
   assert.doesNotMatch(source, /locationPermissionRequired\)\);\s*return/);
-  assert.match(source, /Profile edits must not be blocked just because this device\/account/);
+  assert.match(source, /typedCity/);
 });
 
 
