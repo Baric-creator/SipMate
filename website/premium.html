@@ -11,73 +11,76 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% 10%,rgba(127,29,29,.22),transparent 30%),#09090b;color:#fff;font-family:Inter,Arial,sans-serif}.shell{width:min(820px,calc(100% - 32px));margin:auto;padding:28px 0 70px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:34px}.brand{font-size:24px;font-weight:900;color:#fff;text-decoration:none}.brand span{color:#ef4444}.back{color:#a1a1aa;text-decoration:none;font-size:13px;font-weight:800}.hero{text-align:center;margin-bottom:24px}.hero h1{font-size:clamp(36px,8vw,60px);line-height:1;margin:10px 0}.hero p{color:#a1a1aa;line-height:1.6}.card{background:linear-gradient(145deg,#151518,#0f0f12);border:1px solid #2b2b31;border-radius:24px;padding:22px;margin-bottom:14px}.login{max-width:520px;margin:0 auto}.field{display:grid;gap:7px;margin-bottom:12px}.field label{font-size:12px;color:#a1a1aa;font-weight:700}.field input{height:50px;border:1px solid #34343a;border-radius:13px;background:#0b0b0d;color:#fff;padding:0 14px;font:500 14px Inter;outline:none}.btn{width:100%;min-height:49px;border:0;border-radius:13px;background:#ef4444;color:#fff;font:900 13px Inter;cursor:pointer}.btn.secondary{background:#17171b;border:1px solid #35353c;color:#e4e4e7}.btn:disabled{opacity:.55;cursor:not-allowed}.msg{min-height:20px;margin-top:10px;color:#a1a1aa;font-size:12px;font-weight:700}.msg.ok{color:#4ade80}.msg.err{color:#f87171}.hidden{display:none!important}.userbar{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:16px;color:#a1a1aa;font-size:12px}.plans{display:grid;grid-template-columns:1fr 1fr;gap:14px}.plan{position:relative;overflow:hidden}.plan.featured{border-color:#b7791f;background:linear-gradient(145deg,#1e1910,#111113)}.badge{font-size:10px;font-weight:900;letter-spacing:1px;color:#fbbf24}.plan h2{margin:8px 0 4px;font-size:21px}.price{font-size:38px;font-weight:900;margin:16px 0 3px}.period{color:#a1a1aa;font-size:12px}.desc{color:#a1a1aa;font-size:12px;line-height:1.55;min-height:56px}.spots{display:inline-flex;margin:10px 0;padding:7px 10px;border-radius:999px;background:#3f1515;border:1px solid #7f1d1d;color:#fca5a5;font-size:11px;font-weight:900}.features{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}.feature{background:#111114;border:1px solid #29292e;border-radius:12px;padding:11px;color:#d4d4d8;font-size:12px}.active{border-color:#285a3b;background:#0d1812}.active h2{color:#67dc98}.notice{border:1px solid #49331c;background:#17130d;color:#cdb38b;border-radius:14px;padding:13px;font-size:12px;line-height:1.55;margin-bottom:14px}.status-grid{display:grid;gap:8px}.status-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #29292e;padding:9px 0;font-size:12px}.status-row span{color:#a1a1aa}.footer{text-align:center;color:#71717a;font-size:11px;margin-top:26px}.links{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:12px}.links a{color:#a1a1aa;font-size:11px}@media(max-width:680px){.plans,.features{grid-template-columns:1fr}.userbar{align-items:flex-start;flex-direction:column}.desc{min-height:0}}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% 10%,rgba(127,29,29,.22),transparent 30%),#09090b;color:#fff;font-family:Inter,Arial,sans-serif}.shell{width:min(860px,calc(100% - 32px));margin:auto;padding:28px 0 70px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:34px}.top-right{display:flex;align-items:center;gap:12px}.brand{font-size:24px;font-weight:900;color:#fff;text-decoration:none}.brand span{color:#ef4444}.back{color:#a1a1aa;text-decoration:none;font-size:13px;font-weight:800}.language{display:flex;gap:5px;padding:4px;border-radius:999px;background:#111114;border:1px solid #29292e}.language button{border:0;background:transparent;color:#71717a;font:800 10px Inter;padding:7px 9px;border-radius:999px;cursor:pointer}.language button.active{background:#27272a;color:#fff}.hero{text-align:center;margin-bottom:24px}.hero h1{font-size:clamp(36px,8vw,60px);line-height:1;margin:10px 0}.hero p{color:#a1a1aa;line-height:1.6}.card{background:linear-gradient(145deg,#151518,#0f0f12);border:1px solid #2b2b31;border-radius:24px;padding:22px;margin-bottom:14px}.login{max-width:520px;margin:0 auto}.field{display:grid;gap:7px;margin-bottom:12px}.field label{font-size:12px;color:#a1a1aa;font-weight:700}.field input{height:50px;border:1px solid #34343a;border-radius:13px;background:#0b0b0d;color:#fff;padding:0 14px;font:500 14px Inter;outline:none}.btn{width:100%;min-height:49px;border:0;border-radius:13px;background:#ef4444;color:#fff;font:900 13px Inter;cursor:pointer}.btn.secondary{background:#17171b;border:1px solid #35353c;color:#e4e4e7}.btn:disabled{opacity:.55;cursor:not-allowed}.msg{min-height:20px;margin-top:10px;color:#a1a1aa;font-size:12px;font-weight:700}.msg.ok{color:#4ade80}.msg.err{color:#f87171}.hidden{display:none!important}.userbar{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:16px;color:#a1a1aa;font-size:12px}.plans{display:grid;grid-template-columns:1fr 1fr;gap:14px}.plan{position:relative;overflow:hidden}.plan.featured{border-color:#b7791f;background:linear-gradient(145deg,#1e1910,#111113)}.badge{font-size:10px;font-weight:900;letter-spacing:1px;color:#fbbf24}.plan h2{margin:8px 0 4px;font-size:21px}.price{font-size:38px;font-weight:900;margin:16px 0 3px}.period{color:#a1a1aa;font-size:12px}.desc{color:#a1a1aa;font-size:12px;line-height:1.55;min-height:56px}.spots{display:inline-flex;margin:10px 0;padding:7px 10px;border-radius:999px;background:#3f1515;border:1px solid #7f1d1d;color:#fca5a5;font-size:11px;font-weight:900}.features{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}.feature{background:#111114;border:1px solid #29292e;border-radius:12px;padding:11px;color:#d4d4d8;font-size:12px}.feature.new{border-color:#5a3b17;background:#15120d;color:#f5d28b}.active{border-color:#285a3b;background:#0d1812}.active h2{color:#67dc98}.notice{border:1px solid #49331c;background:#17130d;color:#cdb38b;border-radius:14px;padding:13px;font-size:12px;line-height:1.55;margin-bottom:14px}.status-grid{display:grid;gap:8px}.status-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #29292e;padding:9px 0;font-size:12px}.status-row span{color:#a1a1aa}.footer{text-align:center;color:#71717a;font-size:11px;margin-top:26px}.links{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:12px}.links a{color:#a1a1aa;font-size:11px}@media(max-width:680px){.plans,.features{grid-template-columns:1fr}.userbar{align-items:flex-start;flex-direction:column}.desc{min-height:0}.top{align-items:flex-start}.top-right{flex-direction:column;align-items:flex-end}}
   </style>
 </head>
 <body>
   <main class="shell">
-    <div class="top"><a class="brand" href="./index.html"><span>Sip</span>Mate 🍻</a><a class="back" href="./index.html#premium">← Back</a></div>
-    <section class="hero"><div class="badge">SIPMATE PREMIUM</div><h1>More freedom. More Cheers.</h1><p>Premium purchased here is linked to the same SipMate account you use in the Android app.</p></section>
+    <div class="top">
+      <a class="brand" href="./index.html"><span>Sip</span>Mate 🍻</a>
+      <div class="top-right"><div class="language"><button data-lang="en">EN</button><button data-lang="de">DE</button><button data-lang="hr">HR</button></div><a class="back" href="./index.html#premium" data-t="back">← Back</a></div>
+    </div>
+    <section class="hero"><div class="badge">SIPMATE PREMIUM</div><h1 data-t="heroTitle">More freedom. More Cheers.</h1><p data-t="heroCopy">Premium purchased here is linked to the same SipMate account you use in the Android app.</p></section>
 
     <div id="checkoutNotice" class="notice hidden"></div>
 
     <section id="loginView" class="card login">
-      <h2 style="margin-top:0">Sign in to continue</h2>
-      <p style="color:#a1a1aa;font-size:12px;line-height:1.55">Use your existing SipMate account. Your Premium subscription activates on that account after payment is confirmed.</p>
+      <h2 style="margin-top:0" data-t="signInTitle">Sign in to continue</h2>
+      <p style="color:#a1a1aa;font-size:12px;line-height:1.55" data-t="signInCopy">Use your existing SipMate account. Your Premium subscription activates on that account after payment is confirmed.</p>
       <form id="loginForm">
         <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required></div>
-        <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
-        <button class="btn" type="submit">SIGN IN</button>
+        <div class="field"><label for="password" data-t="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+        <button class="btn" type="submit" data-t="signIn">SIGN IN</button>
       </form>
       <div id="loginMsg" class="msg"></div>
-      <div class="links"><a href="./forgot-password.html">Forgot password?</a><a href="./download.html">Get the SipMate app</a></div>
+      <div class="links"><a href="./forgot-password.html" data-t="forgot">Forgot password?</a><a href="./download.html" data-t="getApp">Get the SipMate app</a></div>
     </section>
 
     <section id="accountView" class="hidden">
-      <div class="userbar"><span id="signedInAs"></span><button id="signOut" class="btn secondary" style="width:auto;padding:0 16px">Sign out</button></div>
+      <div class="userbar"><span id="signedInAs"></span><button id="signOut" class="btn secondary" style="width:auto;padding:0 16px" data-t="signOut">Sign out</button></div>
 
       <div id="premiumActive" class="card active hidden">
-        <h2>💎 Premium active</h2>
+        <h2 data-t="activeTitle">💎 Premium active</h2>
         <div class="status-grid">
-          <div class="status-row"><span>Plan</span><strong id="activePlan">—</strong></div>
-          <div class="status-row"><span>Current period ends</span><strong id="activeUntil">—</strong></div>
-          <div class="status-row"><span>Renewal</span><strong id="activeRenewal">—</strong></div>
+          <div class="status-row"><span data-t="plan">Plan</span><strong id="activePlan">—</strong></div>
+          <div class="status-row"><span data-t="periodEnds">Current period ends</span><strong id="activeUntil">—</strong></div>
+          <div class="status-row"><span data-t="renewal">Renewal</span><strong id="activeRenewal">—</strong></div>
         </div>
-        <button id="manageSubscription" class="btn secondary" style="margin-top:16px">MANAGE SUBSCRIPTION</button>
+        <button id="manageSubscription" class="btn secondary" style="margin-top:16px" data-t="manage">MANAGE SUBSCRIPTION</button>
         <div id="manageMsg" class="msg"></div>
       </div>
 
       <div id="purchaseView">
         <div class="plans">
           <article class="card plan">
-            <div class="badge" style="color:#ef4444">FLEXIBLE</div>
-            <h2>Premium Monthly</h2>
-            <div class="price">1,99 €</div><div class="period">per month</div>
-            <p class="desc">Full Premium access with monthly flexibility. Cancel anytime.</p>
-            <button class="btn buy" data-plan="monthly">GET MONTHLY PREMIUM</button>
+            <div class="badge" style="color:#ef4444" data-t="flexible">FLEXIBLE</div>
+            <h2 data-t="monthly">Premium Monthly</h2>
+            <div class="price">1,99 €</div><div class="period" data-t="perMonth">per month</div>
+            <p class="desc" data-t="monthlyDesc">Full Premium access with monthly flexibility. Cancel anytime.</p>
+            <button class="btn buy" data-plan="monthly" data-t="buyMonthly">GET MONTHLY PREMIUM</button>
           </article>
           <article class="card plan featured">
             <div class="badge" id="yearlyBadge">FOUNDERS OFFER</div>
             <h2 id="yearlyName">Founders Premium</h2>
-            <div class="price" id="yearlyPrice">14,99 €</div><div class="period">first year</div>
+            <div class="price" id="yearlyPrice">14,99 €</div><div class="period" data-t="firstYear">first year</div>
             <p class="desc" id="yearlyDesc">Exclusive launch price for the first 100 yearly Premium members.</p>
             <div id="yearlySpots" class="spots">Loading Founder spots…</div>
-            <button class="btn buy" data-plan="yearly">GET YEARLY PREMIUM</button>
+            <button class="btn buy" data-plan="yearly" data-t="buyYearly">GET YEARLY PREMIUM</button>
           </article>
         </div>
 
         <div class="features">
-          <div class="feature">✓ Direct messaging</div><div class="feature">✓ See who sent Cheers</div>
-          <div class="feature">✓ Advanced filters</div><div class="feature">✓ Change location</div>
-          <div class="feature">✓ Revisit skipped profiles</div><div class="feature">✓ More profile photos</div>
-          <div class="feature">✓ Verified photo sharing in Premium chats</div>
+          <div class="feature new" data-t="featureSpots">✓ SipMate Spots — nearby bars, cafés, pubs & restaurants</div><div class="feature" data-t="featureCheers">✓ See who sent Cheers</div>
+          <div class="feature" data-t="featureFilters">✓ Advanced filters</div><div class="feature" data-t="featureLocation">✓ Change location</div>
+          <div class="feature" data-t="featureRewind">✓ Revisit skipped profiles</div><div class="feature new" data-t="featurePhotos">✓ Up to 10 profile photos</div>
+          <div class="feature" data-t="featureMessages">✓ Direct messaging features</div><div class="feature" data-t="featureChatPhotos">✓ Verified photo sharing in Premium chats</div>
         </div>
         <div id="purchaseMsg" class="msg"></div>
       </div>
     </section>
 
-    <div class="notice"><strong>Android note:</strong> The Google Play version can use Premium activated on your account, but does not link to this payment page from inside the app. Subscription billing and management on this website are handled securely by Stripe.</div>
-    <div class="footer">SipMate Premium · <a href="./terms.html" style="color:#a1a1aa">Terms</a> · <a href="./privacy.html" style="color:#a1a1aa">Privacy</a> · <a href="./contact.html" style="color:#a1a1aa">Support</a></div>
+    <div class="notice" id="androidNote"><strong data-t="androidNoteTitle">Android note:</strong> <span data-t="androidNote">The Google Play version can use Premium activated on your account, but does not link to this payment page from inside the app. Subscription billing and management on this website are handled securely by Stripe.</span></div>
+    <div class="footer">SipMate Premium · <a href="./terms.html" style="color:#a1a1aa" data-t="terms">Terms</a> · <a href="./privacy.html" style="color:#a1a1aa" data-t="privacy">Privacy</a> · <a href="./contact.html" style="color:#a1a1aa" data-t="support">Support</a></div>
   </main>
 
 <script type="module">
@@ -85,59 +88,56 @@
   const SUPABASE_URL='https://poatmbsfglhrcdbosinb.supabase.co';
   const SUPABASE_KEY='sb_publishable_VooWOnzPl1SCUA44rZDTow_Ee5XrMd3';
   const supabase=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  const copy={
+    en:{back:'← Back',heroTitle:'More freedom. More Cheers.',heroCopy:'Premium purchased here is linked to the same SipMate account you use in the Android app.',signInTitle:'Sign in to continue',signInCopy:'Use your existing SipMate account. Your Premium subscription activates on that account after payment is confirmed.',password:'Password',signIn:'SIGN IN',forgot:'Forgot password?',getApp:'Get the SipMate app',signOut:'Sign out',activeTitle:'💎 Premium active',plan:'Plan',periodEnds:'Current period ends',renewal:'Renewal',manage:'MANAGE SUBSCRIPTION',flexible:'FLEXIBLE',monthly:'Premium Monthly',perMonth:'per month',monthlyDesc:'Full Premium access with monthly flexibility. Cancel anytime.',buyMonthly:'GET MONTHLY PREMIUM',firstYear:'first year',buyYearly:'GET YEARLY PREMIUM',featureSpots:'✓ SipMate Spots — nearby bars, cafés, pubs & restaurants',featureCheers:'✓ See who sent Cheers',featureFilters:'✓ Advanced filters',featureLocation:'✓ Change location',featureRewind:'✓ Revisit skipped profiles',featurePhotos:'✓ Up to 10 profile photos',featureMessages:'✓ Direct messaging features',featureChatPhotos:'✓ Verified photo sharing in Premium chats',androidNoteTitle:'Android note:',androidNote:'The Google Play version can use Premium activated on your account, but does not link to this payment page from inside the app. Subscription billing and management on this website are handled securely by Stripe.',terms:'Terms',privacy:'Privacy',support:'Support',signedIn:'Signed in as',opening:'Opening secure checkout…',checkoutUnavailable:'Website checkout is temporarily unavailable while live billing is being prepared. No charge was made.',signinAgain:'Please sign in again.',checkoutFailed:'Checkout could not be started.',offerLoad:'Could not load Premium offers.',yearlyUnavailable:'Yearly offer temporarily unavailable',founderBadge:'🔥 FIRST 100 MEMBERS',founderDesc:'Exclusive launch price for the first 100 confirmed yearly Premium members.',founderLeft:'Founder spots left',earlyBadge:'⚡ EARLY ACCESS',earlyDesc:'Introductory yearly Premium price for the Early Access stage.',earlyActive:'Early Access pricing active',standardBadge:'STANDARD',standardDesc:'Standard yearly SipMate Premium plan.',standardPricing:'Standard yearly pricing',statusFail:'Could not verify Premium status.',noEnd:'No fixed end date',cancelScheduled:'Cancellation scheduled',autoRenew:'Auto-renewing',manageOpening:'Opening subscription management…',manageFail:'Could not open subscription management.',paymentReceived:'🎉 Payment received. Premium is syncing to your SipMate account. This usually takes only a few seconds.',paymentCancelled:'Payment cancelled. Nothing was charged.'},
+    de:{back:'← Zurück',heroTitle:'Mehr Freiheit. Mehr Cheers.',heroCopy:'Premium, das du hier kaufst, wird mit demselben SipMate-Konto verknüpft, das du in der Android-App nutzt.',signInTitle:'Anmelden, um fortzufahren',signInCopy:'Nutze dein bestehendes SipMate-Konto. Premium wird nach bestätigter Zahlung auf diesem Konto aktiviert.',password:'Passwort',signIn:'ANMELDEN',forgot:'Passwort vergessen?',getApp:'SipMate App holen',signOut:'Abmelden',activeTitle:'💎 Premium aktiv',plan:'Plan',periodEnds:'Aktueller Zeitraum endet',renewal:'Verlängerung',manage:'ABO VERWALTEN',flexible:'FLEXIBEL',monthly:'Premium monatlich',perMonth:'pro Monat',monthlyDesc:'Voller Premium-Zugang mit monatlicher Flexibilität. Jederzeit kündbar.',buyMonthly:'MONATLICHES PREMIUM HOLEN',firstYear:'erstes Jahr',buyYearly:'JÄHRLICHES PREMIUM HOLEN',featureSpots:'✓ SipMate Spots — Bars, Cafés, Pubs & Restaurants in deiner Nähe',featureCheers:'✓ Sieh, wer dir Cheers gesendet hat',featureFilters:'✓ Erweiterte Filter',featureLocation:'✓ Standort ändern',featureRewind:'✓ Übersprungene Profile erneut ansehen',featurePhotos:'✓ Bis zu 10 Profilfotos',featureMessages:'✓ Direkte Nachrichtenfunktionen',featureChatPhotos:'✓ Verifizierte Fotos in Premium-Chats senden',androidNoteTitle:'Android-Hinweis:',androidNote:'Die Google-Play-Version kann auf deinem Konto aktiviertes Premium nutzen, verlinkt innerhalb der App aber nicht auf diese Zahlungsseite. Abrechnung und Verwaltung auf der Website laufen sicher über Stripe.',terms:'Nutzungsbedingungen',privacy:'Datenschutz',support:'Support',signedIn:'Angemeldet als',opening:'Sicherer Checkout wird geöffnet…',checkoutUnavailable:'Der Website-Checkout ist vorübergehend nicht verfügbar, während die Live-Abrechnung vorbereitet wird. Es wurde nichts berechnet.',signinAgain:'Bitte melde dich erneut an.',checkoutFailed:'Checkout konnte nicht gestartet werden.',offerLoad:'Premium-Angebote konnten nicht geladen werden.',yearlyUnavailable:'Jahresangebot vorübergehend nicht verfügbar',founderBadge:'🔥 DIE ERSTEN 100 MITGLIEDER',founderDesc:'Exklusiver Launch-Preis für die ersten 100 bestätigten jährlichen Premium-Mitglieder.',founderLeft:'Founder-Plätze übrig',earlyBadge:'⚡ EARLY ACCESS',earlyDesc:'Einführungspreis für jährliches Premium während der Early-Access-Phase.',earlyActive:'Early-Access-Preis aktiv',standardBadge:'STANDARD',standardDesc:'Regulärer jährlicher SipMate Premium-Plan.',standardPricing:'Standard-Jahrespreis',statusFail:'Premium-Status konnte nicht geprüft werden.',noEnd:'Kein festes Enddatum',cancelScheduled:'Kündigung vorgemerkt',autoRenew:'Automatische Verlängerung',manageOpening:'Aboverwaltung wird geöffnet…',manageFail:'Aboverwaltung konnte nicht geöffnet werden.',paymentReceived:'🎉 Zahlung erhalten. Premium wird mit deinem SipMate-Konto synchronisiert.',paymentCancelled:'Zahlung abgebrochen. Es wurde nichts berechnet.'},
+    hr:{back:'← Natrag',heroTitle:'Više slobode. Više Cheers.',heroCopy:'Premium kupljen ovdje povezuje se s istim SipMate računom koji koristiš u Android aplikaciji.',signInTitle:'Prijavi se za nastavak',signInCopy:'Koristi svoj postojeći SipMate račun. Premium se aktivira na tom računu nakon potvrde plaćanja.',password:'Lozinka',signIn:'PRIJAVA',forgot:'Zaboravljena lozinka?',getApp:'Preuzmi SipMate aplikaciju',signOut:'Odjava',activeTitle:'💎 Premium aktivan',plan:'Plan',periodEnds:'Trenutno razdoblje završava',renewal:'Obnova',manage:'UPRAVLJAJ PRETPLATOM',flexible:'FLEKSIBILNO',monthly:'Premium mjesečno',perMonth:'mjesečno',monthlyDesc:'Puni Premium pristup uz mjesečnu fleksibilnost. Otkaži kad želiš.',buyMonthly:'UZMI MJESEČNI PREMIUM',firstYear:'prva godina',buyYearly:'UZMI GODIŠNJI PREMIUM',featureSpots:'✓ SipMate Spots — barovi, kafići, pubovi i restorani u blizini',featureCheers:'✓ Vidi tko ti je poslao Cheers',featureFilters:'✓ Napredni filtri',featureLocation:'✓ Promijeni lokaciju',featureRewind:'✓ Vrati preskočene profile',featurePhotos:'✓ Do 10 profilnih fotografija',featureMessages:'✓ Direktne poruke',featureChatPhotos:'✓ Slanje verificiranih fotografija u Premium chatu',androidNoteTitle:'Android napomena:',androidNote:'Google Play verzija može koristiti Premium aktiviran na tvom računu, ali iz aplikacije ne vodi na ovu stranicu za plaćanje. Pretplata i upravljanje na webu sigurno se obrađuju preko Stripea.',terms:'Uvjeti',privacy:'Privatnost',support:'Podrška',signedIn:'Prijavljen kao',opening:'Otvaram sigurno plaćanje…',checkoutUnavailable:'Web plaćanje je privremeno nedostupno dok pripremamo live naplatu. Ništa nije naplaćeno.',signinAgain:'Prijavi se ponovno.',checkoutFailed:'Plaćanje se nije moglo pokrenuti.',offerLoad:'Premium ponude se nisu mogle učitati.',yearlyUnavailable:'Godišnja ponuda privremeno nije dostupna',founderBadge:'🔥 PRVIH 100 ČLANOVA',founderDesc:'Ekskluzivna launch cijena za prvih 100 potvrđenih godišnjih Premium članova.',founderLeft:'Founder mjesta preostalo',earlyBadge:'⚡ EARLY ACCESS',earlyDesc:'Uvodna godišnja Premium cijena za Early Access fazu.',earlyActive:'Early Access cijena aktivna',standardBadge:'STANDARD',standardDesc:'Standardni godišnji SipMate Premium plan.',standardPricing:'Standardna godišnja cijena',statusFail:'Premium status se nije mogao provjeriti.',noEnd:'Nema fiksnog datuma završetka',cancelScheduled:'Otkazivanje zakazano',autoRenew:'Automatska obnova',manageOpening:'Otvaram upravljanje pretplatom…',manageFail:'Upravljanje pretplatom se nije moglo otvoriti.',paymentReceived:'🎉 Plaćanje primljeno. Premium se sinkronizira s tvojim SipMate računom.',paymentCancelled:'Plaćanje otkazano. Ništa nije naplaćeno.'}
+  };
+  let locale='en';try{const saved=localStorage.getItem('sipmate-locale');const browser=(navigator.language||'en').split('-')[0];locale=copy[saved]?saved:(copy[browser]?browser:'en')}catch{}
+  const tr=k=>copy[locale]?.[k]??copy.en[k]??k;
+  function applyLocale(lang){locale=copy[lang]?lang:'en';document.documentElement.lang=locale;try{localStorage.setItem('sipmate-locale',locale)}catch{}document.querySelectorAll('[data-t]').forEach(el=>{const value=tr(el.dataset.t);if(value)el.textContent=value});document.querySelectorAll('[data-lang]').forEach(btn=>btn.classList.toggle('active',btn.dataset.lang===locale));refreshDynamicCopy()}
+  document.querySelectorAll('[data-lang]').forEach(btn=>btn.addEventListener('click',()=>applyLocale(btn.dataset.lang)));
+
   const loginView=document.getElementById('loginView'),accountView=document.getElementById('accountView'),loginForm=document.getElementById('loginForm'),loginMsg=document.getElementById('loginMsg'),purchaseMsg=document.getElementById('purchaseMsg'),premiumActive=document.getElementById('premiumActive'),purchaseView=document.getElementById('purchaseView');
   const setMsg=(el,text,kind='')=>{el.textContent=text||'';el.className=`msg ${kind}`};
   const euro=cents=>`${(Number(cents||0)/100).toFixed(2).replace('.',',')} €`;
-  const planLabel=code=>code==='founders_yearly'?'Founders Premium':code==='early_yearly'?'Early Access Premium':code==='standard_yearly'?'Premium Yearly':code==='monthly'?'Premium Monthly':'SipMate Premium';
+  let currentYearly=null,currentSubscription=null,currentEmail='';
+  const planLabel=code=>code==='founders_yearly'?'Founders Premium':code==='early_yearly'?'Early Access Premium':code==='standard_yearly'?(locale==='de'?'Premium jährlich':locale==='hr'?'Premium godišnje':'Premium Yearly'):code==='monthly'?tr('monthly'):'SipMate Premium';
+  function refreshDynamicCopy(){if(currentEmail)document.getElementById('signedInAs').textContent=`${tr('signedIn')} ${currentEmail}`;if(currentYearly)renderYearly(currentYearly);if(currentSubscription)renderSubscription(currentSubscription)}
 
   async function refreshAccount(){
     const {data:{session}}=await supabase.auth.getSession();
-    if(!session){loginView.classList.remove('hidden');accountView.classList.add('hidden');return}
-    loginView.classList.add('hidden');accountView.classList.remove('hidden');document.getElementById('signedInAs').textContent=`Signed in as ${session.user.email||'SipMate user'}`;
+    if(!session){currentEmail='';loginView.classList.remove('hidden');accountView.classList.add('hidden');return}
+    currentEmail=session.user.email||'SipMate user';loginView.classList.add('hidden');accountView.classList.remove('hidden');document.getElementById('signedInAs').textContent=`${tr('signedIn')} ${currentEmail}`;
     await Promise.all([loadOffers(),loadSubscription()]);
   }
 
-  async function loadOffers(){
-    const {data,error}=await supabase.from('premium_offers').select('code,name,price_cents,billing_period,max_subscribers,subscriber_count,is_active,sort_order').eq('is_active',true).order('sort_order',{ascending:true});
-    if(error){setMsg(purchaseMsg,'Could not load Premium offers.','err');return}
-    const yearly=(data||[]).find(x=>x.billing_period==='yearly');
-    if(!yearly){document.querySelector('[data-plan="yearly"]').disabled=true;document.getElementById('yearlySpots').textContent='Yearly offer temporarily unavailable';return}
-    document.getElementById('yearlyName').textContent=planLabel(yearly.code);document.getElementById('yearlyPrice').textContent=euro(yearly.price_cents);
-    if(yearly.code==='founders_yearly'){
-      document.getElementById('yearlyBadge').textContent='🔥 FIRST 100 MEMBERS';document.getElementById('yearlyDesc').textContent='Exclusive launch price for the first 100 confirmed yearly Premium members.';
-      const left=Math.max(Number(yearly.max_subscribers||100)-Number(yearly.subscriber_count||0),0);document.getElementById('yearlySpots').textContent=`🔥 ${left} Founder spots left`;
-    }else if(yearly.code==='early_yearly'){
-      document.getElementById('yearlyBadge').textContent='⚡ EARLY ACCESS';document.getElementById('yearlyDesc').textContent='Introductory yearly Premium price for the Early Access stage.';document.getElementById('yearlySpots').textContent='Early Access pricing active';
-    }else{
-      document.getElementById('yearlyBadge').textContent='STANDARD';document.getElementById('yearlyDesc').textContent='Standard yearly SipMate Premium plan.';document.getElementById('yearlySpots').textContent='Standard yearly pricing';
-    }
+  function renderYearly(yearly){
+    currentYearly=yearly;document.getElementById('yearlyName').textContent=planLabel(yearly.code);document.getElementById('yearlyPrice').textContent=euro(yearly.price_cents);
+    if(yearly.code==='founders_yearly'){document.getElementById('yearlyBadge').textContent=tr('founderBadge');document.getElementById('yearlyDesc').textContent=tr('founderDesc');const left=Math.max(Number(yearly.max_subscribers||100)-Number(yearly.subscriber_count||0),0);document.getElementById('yearlySpots').textContent=`🔥 ${left} ${tr('founderLeft')}`}
+    else if(yearly.code==='early_yearly'){document.getElementById('yearlyBadge').textContent=tr('earlyBadge');document.getElementById('yearlyDesc').textContent=tr('earlyDesc');document.getElementById('yearlySpots').textContent=tr('earlyActive')}
+    else{document.getElementById('yearlyBadge').textContent=tr('standardBadge');document.getElementById('yearlyDesc').textContent=tr('standardDesc');document.getElementById('yearlySpots').textContent=tr('standardPricing')}
   }
+  async function loadOffers(){const {data,error}=await supabase.from('premium_offers').select('code,name,price_cents,billing_period,max_subscribers,subscriber_count,is_active,sort_order').eq('is_active',true).order('sort_order',{ascending:true});if(error){setMsg(purchaseMsg,tr('offerLoad'),'err');return}const yearly=(data||[]).find(x=>x.billing_period==='yearly');if(!yearly){document.querySelector('[data-plan="yearly"]').disabled=true;document.getElementById('yearlySpots').textContent=tr('yearlyUnavailable');return}renderYearly(yearly)}
 
-  async function loadSubscription(){
-    const {data:{user}}=await supabase.auth.getUser();if(!user)return;
-    const {data,error}=await supabase.from('premium_subscriptions').select('offer_code,status,expires_at,stripe_customer_id,cancel_at_period_end').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(1).maybeSingle();
-    if(error){setMsg(purchaseMsg,'Could not verify Premium status.','err');return}
-    if(!data){premiumActive.classList.add('hidden');purchaseView.classList.remove('hidden');return}
-    premiumActive.classList.remove('hidden');purchaseView.classList.add('hidden');document.getElementById('activePlan').textContent=planLabel(data.offer_code);document.getElementById('activeUntil').textContent=data.expires_at?new Date(data.expires_at).toLocaleDateString():'No fixed end date';document.getElementById('activeRenewal').textContent=data.cancel_at_period_end?'Cancellation scheduled':'Auto-renewing';document.getElementById('manageSubscription').disabled=!data.stripe_customer_id;
-  }
+  function renderSubscription(data){currentSubscription=data;premiumActive.classList.remove('hidden');purchaseView.classList.add('hidden');document.getElementById('activePlan').textContent=planLabel(data.offer_code);document.getElementById('activeUntil').textContent=data.expires_at?new Date(data.expires_at).toLocaleDateString(locale):tr('noEnd');document.getElementById('activeRenewal').textContent=data.cancel_at_period_end?tr('cancelScheduled'):tr('autoRenew');document.getElementById('manageSubscription').disabled=!data.stripe_customer_id}
+  async function loadSubscription(){const {data:{user}}=await supabase.auth.getUser();if(!user)return;const {data,error}=await supabase.from('premium_subscriptions').select('offer_code,status,expires_at,stripe_customer_id,cancel_at_period_end').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(1).maybeSingle();if(error){setMsg(purchaseMsg,tr('statusFail'),'err');return}if(!data){currentSubscription=null;premiumActive.classList.add('hidden');purchaseView.classList.remove('hidden');return}renderSubscription(data)}
 
+  async function extractFunctionError(error){try{if(error?.context?.json){const body=await error.context.json();if(body?.error)return String(body.error)}}catch{}return error?.message||''}
   async function startCheckout(plan,button){
-    setMsg(purchaseMsg,'Opening secure checkout…');button.disabled=true;
-    try{
-      const {data:{session}}=await supabase.auth.getSession();if(!session)throw new Error('Please sign in again.');
-      const {data,error}=await supabase.functions.invoke('create-checkout-session',{headers:{Authorization:`Bearer ${session.access_token}`},body:{plan}});
-      if(error)throw new Error(error.message||'Checkout could not be started.');if(!data?.url)throw new Error(data?.error||'Checkout URL missing.');window.location.assign(data.url);
-    }catch(e){setMsg(purchaseMsg,e.message||'Checkout could not be started.','err');button.disabled=false}
+    setMsg(purchaseMsg,tr('opening'));button.disabled=true;
+    try{const {data:{session}}=await supabase.auth.getSession();if(!session)throw new Error(tr('signinAgain'));const {data,error}=await supabase.functions.invoke('create-checkout-session',{headers:{Authorization:`Bearer ${session.access_token}`},body:{plan}});if(error){const reason=await extractFunctionError(error);if(/live billing|temporarily unavailable|test mode|sandbox/i.test(reason))throw new Error(tr('checkoutUnavailable'));throw new Error(reason||tr('checkoutFailed'))}if(!data?.url)throw new Error(data?.error||tr('checkoutFailed'));window.location.assign(data.url)}catch(e){setMsg(purchaseMsg,e.message||tr('checkoutFailed'),'err');button.disabled=false}
   }
 
-  loginForm.addEventListener('submit',async e=>{e.preventDefault();setMsg(loginMsg,'Signing in…');const {data,error}=await supabase.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});if(error){setMsg(loginMsg,error.message,'err');return}document.getElementById('password').value='';setMsg(loginMsg,'Signed in.','ok');await refreshAccount()});
+  loginForm.addEventListener('submit',async e=>{e.preventDefault();setMsg(loginMsg,'…');const {error}=await supabase.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});if(error){setMsg(loginMsg,error.message,'err');return}document.getElementById('password').value='';setMsg(loginMsg,'✓','ok');await refreshAccount()});
   document.querySelectorAll('.buy').forEach(btn=>btn.addEventListener('click',()=>startCheckout(btn.dataset.plan,btn)));
   document.getElementById('signOut').addEventListener('click',async()=>{await supabase.auth.signOut();await refreshAccount()});
-  document.getElementById('manageSubscription').addEventListener('click',async()=>{const el=document.getElementById('manageMsg');setMsg(el,'Opening subscription management…');try{const {data:{session}}=await supabase.auth.getSession();if(!session)throw new Error('Please sign in again.');const {data,error}=await supabase.functions.invoke('create-customer-portal',{headers:{Authorization:`Bearer ${session.access_token}`}});if(error)throw new Error(error.message||'Could not open subscription management.');if(!data?.url)throw new Error('Portal URL missing.');window.location.assign(data.url)}catch(e){setMsg(el,e.message||'Could not open subscription management.','err')}});
+  document.getElementById('manageSubscription').addEventListener('click',async()=>{const el=document.getElementById('manageMsg');setMsg(el,tr('manageOpening'));try{const {data:{session}}=await supabase.auth.getSession();if(!session)throw new Error(tr('signinAgain'));const {data,error}=await supabase.functions.invoke('create-customer-portal',{headers:{Authorization:`Bearer ${session.access_token}`}});if(error)throw new Error(await extractFunctionError(error)||tr('manageFail'));if(!data?.url)throw new Error(tr('manageFail'));window.location.assign(data.url)}catch(e){setMsg(el,e.message||tr('manageFail'),'err')}});
 
+  applyLocale(locale);
   const checkout=new URLSearchParams(location.search).get('checkout');
-  if(checkout==='success'){const n=document.getElementById('checkoutNotice');n.textContent='🎉 Payment received. Premium is syncing to your SipMate account. This usually takes only a few seconds.';n.classList.remove('hidden');setTimeout(refreshAccount,1800);setTimeout(refreshAccount,4500);setTimeout(refreshAccount,8000)}
-  if(checkout==='cancelled'){const n=document.getElementById('checkoutNotice');n.textContent='Payment cancelled. Nothing was charged.';n.classList.remove('hidden')}
+  if(checkout==='success'){const n=document.getElementById('checkoutNotice');n.textContent=tr('paymentReceived');n.classList.remove('hidden');setTimeout(refreshAccount,1800);setTimeout(refreshAccount,4500);setTimeout(refreshAccount,8000)}
+  if(checkout==='cancelled'){const n=document.getElementById('checkoutNotice');n.textContent=tr('paymentCancelled');n.classList.remove('hidden')}
   await refreshAccount();
 </script>
 </body>
