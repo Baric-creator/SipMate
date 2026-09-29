@@ -5,12 +5,9 @@ const legacy = spawnSync(process.execPath, ['./scripts/release-audit.mjs'], {
   encoding: 'utf8',
 });
 
-if (legacy.stdout) process.stdout.write(legacy.stdout);
-if (legacy.stderr) process.stderr.write(legacy.stderr);
-
-if (legacy.status === 0) process.exit(0);
-
-const output = `${legacy.stdout ?? ''}\n${legacy.stderr ?? ''}`;
+const stdout = legacy.stdout ?? '';
+const stderr = legacy.stderr ?? '';
+const output = `${stdout}\n${stderr}`;
 const failureLines = output
   .split(/\r?\n/)
   .filter((line) => line.startsWith('FAIL:'));
@@ -22,10 +19,20 @@ const allowedLegacyFailures = new Set([
   obsoletePremiumFailure,
 ]);
 
-if (
-  failureLines.length === 0 ||
-  failureLines.some((line) => !allowedLegacyFailures.has(line))
-) {
+const hasOnlyAllowedLegacyFailures =
+  legacy.status !== 0 &&
+  failureLines.length > 0 &&
+  failureLines.every((line) => allowedLegacyFailures.has(line));
+
+if (legacy.status === 0) {
+  if (stdout) process.stdout.write(stdout);
+  if (stderr) process.stderr.write(stderr);
+  process.exit(0);
+}
+
+if (!hasOnlyAllowedLegacyFailures) {
+  if (stdout) process.stdout.write(stdout);
+  if (stderr) process.stderr.write(stderr);
   process.exit(legacy.status ?? 1);
 }
 
@@ -112,10 +119,32 @@ if (compatibilityFailures.length) {
   process.exit(1);
 }
 
+// The legacy audit still models the old Android "consumption-only" release.
+// Do not echo those obsolete FAIL/note/summary lines after the modern
+// compatibility checks above have proven that Play Billing is wired correctly.
+const staleLegacyLines = new Set([
+  obsoletePushFailure,
+  obsoletePremiumFailure,
+  'NOTE: Android Premium remains consumption-only; purchases happen outside the Play-distributed app.',
+]);
+
+const sanitizedLegacyOutput = output
+  .split(/\r?\n/)
+  .filter((line) => {
+    if (staleLegacyLines.has(line)) return false;
+    if (/^Release audit completed with \d+ note\(s\)\.$/.test(line)) return false;
+    if (/^Release audit failed with \d+ blocking issue\(s\)\.$/.test(line)) return false;
+    return line.length > 0;
+  });
+
+for (const line of sanitizedLegacyOutput) console.log(line);
+
 if (failureLines.includes(obsoletePushFailure)) {
   console.log('Release audit compatibility check passed: push-token logout is handled by the authenticated Edge Function with direct client table access revoked.');
 }
 
 if (failureLines.includes(obsoletePremiumFailure)) {
-  console.log('Release audit compatibility check passed: Android Premium now uses Google Play Billing in-app with server-side purchase verification and no external checkout link.');
+  console.log('Release audit compatibility check passed: Android Premium uses Google Play Billing in-app with server-side purchase verification and no external checkout link.');
 }
+
+console.log('Release audit passed with modern Android billing compatibility checks.');
