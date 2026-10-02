@@ -28,6 +28,7 @@ const copy = {
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM FEATURE', spotsBody: 'Discover bars, cafés, pubs, clubs and other places for a drink around you on a clean, privacy-first map.', spotsOpen: 'OPEN SPOTS →', spotsLocked: 'Available with Premium',
     monthly: 'Monthly', founders: 'Founders Premium', foundersBadge: 'FIRST 100 MEMBERS', early: 'Early Access', standard: 'Standard Yearly', firstYear: '/ first year', month: '/ month', year: '/ year', foundersNote: 'Exclusive for the first 100 confirmed yearly Premium members.', earlyNote: 'Starts after the first 100 Founder spots are taken.', standardNote: 'Standard yearly price after the Early Access period.', back: '← BACK',
     purchaseVerified: 'Premium activated successfully. 🍻', verificationMissing: 'Google Play completed the purchase, but SipMate could not verify it. Please try again.', verificationPending: 'Your purchase could not be verified yet. You will not need to buy it again. Please try again shortly.', purchaseFailed: 'The purchase could not be completed. Please try again.', subscriptionUnavailable: 'Google Play subscription is not available yet. Please try again.', monthlyUnavailable: 'Monthly Google Play plan is not available.', purchaseStartFailed: 'The purchase could not be started. Please try again.',
+    restorePurchase: 'RESTORE GOOGLE PLAY PURCHASE', restoringPurchase: 'RESTORING PURCHASE…', restoreMissing: 'No SipMate Premium purchase was found on this Google Play account.', restoreSuccess: 'Google Play purchase restored and Premium synchronized. 🍻', restoreFailed: 'The Google Play purchase could not be restored yet. Please try again shortly.',
   },
   de: {
     title: 'SipMate Premium', subtitle: 'Premium-Kontovorteile',
@@ -36,6 +37,7 @@ const copy = {
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM-FUNKTION', spotsBody: 'Entdecke Bars, Cafés, Pubs, Clubs und weitere Orte für einen Drink in deiner Nähe auf einer klaren, datenschutzfreundlichen Karte.', spotsOpen: 'SPOTS ÖFFNEN →', spotsLocked: 'Mit Premium verfügbar',
     monthly: 'Monatlich', founders: 'Founders Premium', foundersBadge: 'DIE ERSTEN 100 MITGLIEDER', early: 'Early Access', standard: 'Standard jährlich', firstYear: '/ erstes Jahr', month: '/ Monat', year: '/ Jahr', foundersNote: 'Exklusiv für die ersten 100 bestätigten jährlichen Premium-Mitglieder.', earlyNote: 'Startet, sobald die ersten 100 Founder-Plätze vergeben sind.', standardNote: 'Regulärer Jahrespreis nach der Early-Access-Phase.', back: '← ZURÜCK',
     purchaseVerified: 'Premium wurde erfolgreich aktiviert. 🍻', verificationMissing: 'Google Play hat den Kauf abgeschlossen, aber SipMate konnte ihn noch nicht bestätigen. Bitte versuche es erneut.', verificationPending: 'Dein Kauf konnte noch nicht bestätigt werden. Du musst ihn nicht erneut kaufen. Bitte versuche es in Kürze erneut.', purchaseFailed: 'Der Kauf konnte nicht abgeschlossen werden. Bitte versuche es erneut.', subscriptionUnavailable: 'Das Google-Play-Abo ist derzeit nicht verfügbar. Bitte versuche es erneut.', monthlyUnavailable: 'Der monatliche Google-Play-Tarif ist nicht verfügbar.', purchaseStartFailed: 'Der Kauf konnte nicht gestartet werden. Bitte versuche es erneut.',
+    restorePurchase: 'GOOGLE-PLAY-KAUF WIEDERHERSTELLEN', restoringPurchase: 'KAUF WIRD WIEDERHERGESTELLT…', restoreMissing: 'Für dieses Google-Play-Konto wurde kein SipMate-Premium-Kauf gefunden.', restoreSuccess: 'Google-Play-Kauf wiederhergestellt und Premium synchronisiert. 🍻', restoreFailed: 'Der Google-Play-Kauf konnte noch nicht wiederhergestellt werden. Bitte versuche es gleich noch einmal.',
   },
   hr: {
     title: 'SipMate Premium', subtitle: 'Premium pogodnosti računa',
@@ -44,6 +46,7 @@ const copy = {
     spotsTitle: 'SipMate Spots 🍻', spotsBadge: 'PREMIUM FUNKCIJA', spotsBody: 'Otkrij barove, kafiće, pubove, klubove i druga mjesta za piće u blizini na čistoj karti koja čuva privatnost korisnika.', spotsOpen: 'OTVORI SPOTS →', spotsLocked: 'Dostupno uz Premium',
     monthly: 'Mjesečno', founders: 'Founders Premium', foundersBadge: 'PRVIH 100 ČLANOVA', early: 'Early Access', standard: 'Standard godišnje', firstYear: '/ prva godina', month: '/ mjesec', year: '/ godina', foundersNote: 'Ekskluzivno za prvih 100 potvrđenih godišnjih Premium članova.', earlyNote: 'Počinje nakon što se popuni prvih 100 Founder mjesta.', standardNote: 'Standardna godišnja cijena nakon Early Access razdoblja.', back: '← NATRAG',
     purchaseVerified: 'Premium je uspješno aktiviran. 🍻', verificationMissing: 'Google Play je završio kupnju, ali SipMate je još nije uspio potvrditi. Pokušaj ponovno.', verificationPending: 'Kupnja još nije potvrđena. Ne moraš je kupovati ponovno. Pokušaj ponovno za koji trenutak.', purchaseFailed: 'Kupnju nije bilo moguće dovršiti. Pokušaj ponovno.', subscriptionUnavailable: 'Google Play pretplata trenutačno nije dostupna. Pokušaj ponovno.', monthlyUnavailable: 'Mjesečni Google Play paket trenutačno nije dostupan.', purchaseStartFailed: 'Kupnju nije bilo moguće pokrenuti. Pokušaj ponovno.',
+    restorePurchase: 'VRATI GOOGLE PLAY KUPNJU', restoringPurchase: 'VRAĆAM KUPNJU…', restoreMissing: 'Na ovom Google Play računu nije pronađena SipMate Premium kupnja.', restoreSuccess: 'Google Play kupnja je vraćena i Premium sinkroniziran. 🍻', restoreFailed: 'Google Play kupnju još nije moguće vratiti. Pokušaj ponovno za koji trenutak.',
   },
 } as const;
 
@@ -57,6 +60,7 @@ export default function PremiumAndroidScreen() {
   const [isPremium, setIsPremium] = useState(false);
   const [googlePlayPrice, setGooglePlayPrice] = useState<string | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const processingTokenRef = useRef<string | null>(null);
   const recoveredTokensRef = useRef<Set<string>>(new Set());
 
@@ -76,6 +80,23 @@ export default function PremiumAndroidScreen() {
     }
 
     return data;
+  };
+
+  const refreshPremiumEntitlement = async () => {
+    const { data: entitlementRows, error: entitlementError } =
+      await supabase.rpc('get_my_premium_entitlement');
+
+    if (entitlementError) {
+      console.warn('Premium entitlement refresh failed:', entitlementError);
+      return false;
+    }
+
+    const entitlement = Array.isArray(entitlementRows)
+      ? entitlementRows[0]
+      : entitlementRows;
+    const active = entitlement?.is_premium === true;
+    setIsPremium(active);
+    return active;
   };
 
   const {
@@ -102,19 +123,7 @@ export default function PremiumAndroidScreen() {
       try {
         await verifyPurchaseOnServer(purchaseToken);
         await finishTransaction({ purchase, isConsumable: false });
-
-        const { data: entitlementRows, error: entitlementError } =
-          await supabase.rpc('get_my_premium_entitlement');
-
-        if (entitlementError) {
-          console.warn('Premium entitlement refresh failed:', entitlementError);
-        }
-
-        const entitlement = Array.isArray(entitlementRows)
-          ? entitlementRows[0]
-          : entitlementRows;
-
-        setIsPremium(entitlement?.is_premium === true);
+        await refreshPremiumEntitlement();
         Alert.alert('SipMate Premium', text.purchaseVerified);
       } catch (error) {
         console.warn('Google Play verification failed:', error);
@@ -177,18 +186,7 @@ export default function PremiumAndroidScreen() {
       try {
         await verifyPurchaseOnServer(purchaseToken);
         await finishTransaction({ purchase, isConsumable: false });
-
-        const { data: entitlementRows, error: entitlementError } =
-          await supabase.rpc('get_my_premium_entitlement');
-
-        if (entitlementError) {
-          console.warn('Recovered Premium entitlement refresh failed:', entitlementError);
-        } else {
-          const entitlement = Array.isArray(entitlementRows)
-            ? entitlementRows[0]
-            : entitlementRows;
-          setIsPremium(entitlement?.is_premium === true);
-        }
+        await refreshPremiumEntitlement();
       } catch (error) {
         recoveredTokensRef.current.delete(purchaseToken);
         console.warn('Existing Google Play purchase recovery failed:', error);
@@ -246,7 +244,7 @@ export default function PremiumAndroidScreen() {
   }, []);
 
   const handleSubscribe = async () => {
-    if (isPurchasing) return;
+    if (isPurchasing || isRestoring) return;
     setIsPurchasing(true);
 
     try {
@@ -289,6 +287,48 @@ export default function PremiumAndroidScreen() {
     }
   };
 
+  const handleRestorePurchase = async () => {
+    if (!connected || isRestoring || isPurchasing) return;
+    setIsRestoring(true);
+
+    try {
+      const refreshedPurchases = await getAvailablePurchases();
+      const purchasePool = Array.isArray(refreshedPurchases)
+        ? refreshedPurchases
+        : availablePurchases;
+      const purchase = purchasePool.find(
+        (item) =>
+          item.productId === PREMIUM_PRODUCT_ID && Boolean(item.purchaseToken)
+      );
+
+      if (!purchase?.purchaseToken) {
+        Alert.alert('SipMate Premium', text.restoreMissing);
+        return;
+      }
+
+      const purchaseToken = purchase.purchaseToken;
+      recoveredTokensRef.current.delete(purchaseToken);
+      processingTokenRef.current = purchaseToken;
+
+      await verifyPurchaseOnServer(purchaseToken);
+      await finishTransaction({ purchase, isConsumable: false });
+      const active = await refreshPremiumEntitlement();
+
+      if (!active) {
+        throw new Error('premium_entitlement_not_active');
+      }
+
+      recoveredTokensRef.current.add(purchaseToken);
+      Alert.alert('SipMate Premium', text.restoreSuccess);
+    } catch (error) {
+      console.warn('Manual Google Play purchase restore failed:', error);
+      Alert.alert('SipMate Premium', text.restoreFailed);
+    } finally {
+      processingTokenRef.current = null;
+      setIsRestoring(false);
+    }
+  };
+
   const translateX = shine.interpolate({ inputRange: [0, 1], outputRange: [-170, 700] });
   const tiers = [
     { key: 'monthly', title: text.monthly, badge: 'FLEXIBLE', price: googlePlayPrice ?? '—', period: text.month, border: '#EF4444', glow: 'rgba(239,68,68,0.30)', bg: '#1D1214', note: '' },
@@ -310,6 +350,22 @@ export default function PremiumAndroidScreen() {
           </View>
         )}
         <Text style={styles.body}>{text.body}</Text>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !connected || isRestoring || isPurchasing }}
+          disabled={!connected || isRestoring || isPurchasing}
+          onPress={handleRestorePurchase}
+          style={({ pressed }) => [
+            styles.restoreButton,
+            pressed && styles.restoreButtonPressed,
+            (!connected || isRestoring || isPurchasing) && styles.restoreButtonDisabled,
+          ]}
+        >
+          <Text style={styles.restoreText}>
+            {isRestoring ? text.restoringPurchase : text.restorePurchase}
+          </Text>
+        </Pressable>
 
         <Pressable
           accessibilityRole="button"
@@ -336,7 +392,7 @@ export default function PremiumAndroidScreen() {
 
         <View style={styles.tierList}>
           {tiers.map((tier) => {
-            const disabled = tier.key !== 'monthly' || !googlePlayPrice || isPremium || isPurchasing;
+            const disabled = tier.key !== 'monthly' || !googlePlayPrice || isPremium || isPurchasing || isRestoring;
             return (
               <Pressable
                 key={tier.key}
@@ -393,6 +449,10 @@ const styles = StyleSheet.create({
   activeTitle: { color: '#67DC98', fontSize: 14, fontWeight: '900', textAlign: 'center' },
   activeText: { color: '#A7D7B9', fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 5 },
   body: { color: '#A1A1AA', fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 14, marginBottom: 18 },
+  restoreButton: { borderWidth: 1, borderColor: '#3F3F46', backgroundColor: '#18181B', borderRadius: 16, paddingHorizontal: 18, paddingVertical: 14, marginBottom: 16 },
+  restoreButtonPressed: { opacity: 0.82 },
+  restoreButtonDisabled: { opacity: 0.5 },
+  restoreText: { color: '#F4F4F5', fontSize: 11, fontWeight: '900', letterSpacing: 0.6, textAlign: 'center' },
   spotsCard: { borderWidth: 1, borderColor: '#5A3B17', backgroundColor: '#15120D', borderRadius: 22, padding: 18, marginBottom: 22, shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 18, elevation: 3 },
   spotsPressed: { opacity: 0.88, transform: [{ scale: 0.99 }] },
   spotsLocked: { opacity: 0.72 },
