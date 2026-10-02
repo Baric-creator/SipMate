@@ -2,15 +2,15 @@ import { execFileSync } from 'node:child_process';
 
 const allowedModerateAdvisories = new Set([
   'https://github.com/advisories/GHSA-vcc3-ghjq-m6fr',
-  'https://github.com/advisories/GHSA-w5hq-g745-h8pq',
 ]);
 
 const allowedHighAdvisories = new Set([
-  // Reviewed upstream Expo SDK 57 toolchain advisory. Expo 57.0.26 and
-  // @expo/cli 57.0.27 are the latest SDK-57 releases, while node-forge
-  // 1.4.0 is currently the newest published version. Keep this exception
-  // pinned to the exact advisory; every other HIGH/CRITICAL still fails CI.
+  // Reviewed upstream Expo SDK 57 toolchain advisories. Keep exceptions
+  // pinned to exact advisories; every other HIGH/CRITICAL still fails CI.
   'https://github.com/advisories/GHSA-86w9-cpqp-85rv',
+  // npm propagates this reviewed uuid advisory as HIGH through @expo/cli
+  // and expo even though the root advisory is MODERATE.
+  'https://github.com/advisories/GHSA-w5hq-g745-h8pq',
 ]);
 
 let stdout = '';
@@ -114,7 +114,7 @@ for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
   }
 
   for (const advisory of leafAdvisories) {
-    if (!allowedModerateAdvisories.has(advisory)) {
+    if (!allowedModerateAdvisories.has(advisory) && !allowedHighAdvisories.has(advisory)) {
       unexpectedModerate.push(`${name}: ${advisory}`);
     }
   }
