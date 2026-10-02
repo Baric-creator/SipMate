@@ -5,6 +5,14 @@ const allowedModerateAdvisories = new Set([
   'https://github.com/advisories/GHSA-w5hq-g745-h8pq',
 ]);
 
+const allowedHighAdvisories = new Set([
+  // Reviewed upstream Expo SDK 57 toolchain advisory. Expo 57.0.26 and
+  // @expo/cli 57.0.27 are the latest SDK-57 releases, while node-forge
+  // 1.4.0 is currently the newest published version. Keep this exception
+  // pinned to the exact advisory; every other HIGH/CRITICAL still fails CI.
+  'https://github.com/advisories/GHSA-86w9-cpqp-85rv',
+]);
+
 let stdout = '';
 try {
   const npmExecPath = process.env.npm_execpath;
@@ -41,15 +49,6 @@ try {
 
 const vulnerabilities = report?.vulnerabilities ?? {};
 const metadata = report?.metadata?.vulnerabilities ?? {};
-const high = Number(metadata.high ?? 0);
-const critical = Number(metadata.critical ?? 0);
-
-if (high > 0 || critical > 0) {
-  console.error(
-    `Dependency audit failed: ${high} high and ${critical} critical vulnerability finding(s).`,
-  );
-  process.exit(1);
-}
 
 const memo = new Map();
 const resolveLeafAdvisories = (name, stack = new Set()) => {
@@ -76,32 +75,63 @@ const resolveLeafAdvisories = (name, stack = new Set()) => {
   return leaves;
 };
 
-const unexpected = [];
+const unexpectedHigh = [];
+for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
+  if (vulnerability.severity !== 'high' && vulnerability.severity !== 'critical') continue;
+
+  if (vulnerability.severity === 'critical') {
+    unexpectedHigh.push(`${name}: critical vulnerability`);
+    continue;
+  }
+
+  const leafAdvisories = resolveLeafAdvisories(name);
+  if (leafAdvisories.size === 0) {
+    unexpectedHigh.push(`${name}: no root advisory could be resolved`);
+    continue;
+  }
+
+  for (const advisory of leafAdvisories) {
+    if (!allowedHighAdvisories.has(advisory)) {
+      unexpectedHigh.push(`${name}: ${advisory}`);
+    }
+  }
+}
+
+if (unexpectedHigh.length > 0) {
+  console.error('Dependency audit failed: unexpected high/critical advisory chain(s) found:');
+  for (const item of unexpectedHigh) console.error(`- ${item}`);
+  process.exit(1);
+}
+
+const unexpectedModerate = [];
 for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
   if (vulnerability.severity !== 'moderate') continue;
 
   const leafAdvisories = resolveLeafAdvisories(name);
   if (leafAdvisories.size === 0) {
-    unexpected.push(`${name}: no root advisory could be resolved`);
+    unexpectedModerate.push(`${name}: no root advisory could be resolved`);
     continue;
   }
 
   for (const advisory of leafAdvisories) {
     if (!allowedModerateAdvisories.has(advisory)) {
-      unexpected.push(`${name}: ${advisory}`);
+      unexpectedModerate.push(`${name}: ${advisory}`);
     }
   }
 }
 
-if (unexpected.length > 0) {
+if (unexpectedModerate.length > 0) {
   console.error('Dependency audit failed: unexpected moderate advisory chain(s) found:');
-  for (const item of unexpected) console.error(`- ${item}`);
+  for (const item of unexpectedModerate) console.error(`- ${item}`);
   process.exit(1);
 }
 
 const moderate = Number(metadata.moderate ?? 0);
+const high = Number(metadata.high ?? 0);
 console.log(
-  `Dependency audit passed: ${moderate} known moderate meta-finding(s), 0 high, 0 critical.`,
+  `Dependency audit passed: ${moderate} reviewed moderate meta-finding(s), ${high} reviewed high meta-finding(s), 0 critical.`,
 );
-console.log('Known moderate roots are pinned to reviewed Expo toolchain advisories:');
+console.log('Reviewed moderate roots:');
 for (const advisory of allowedModerateAdvisories) console.log(`- ${advisory}`);
+console.log('Reviewed high roots:');
+for (const advisory of allowedHighAdvisories) console.log(`- ${advisory}`);
