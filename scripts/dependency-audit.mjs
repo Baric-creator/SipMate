@@ -44,10 +44,37 @@ const metadata = report?.metadata?.vulnerabilities ?? {};
 const high = Number(metadata.high ?? 0);
 const critical = Number(metadata.critical ?? 0);
 
+const formatVia = (via) => {
+  if (typeof via === 'string') return via;
+  const parts = [];
+  if (via?.title) parts.push(via.title);
+  if (via?.url) parts.push(via.url);
+  if (via?.range) parts.push(`range ${via.range}`);
+  return parts.join(' | ') || 'unknown advisory';
+};
+
 if (high > 0 || critical > 0) {
   console.error(
     `Dependency audit failed: ${high} high and ${critical} critical vulnerability finding(s).`,
   );
+  console.error('High/critical dependency findings:');
+
+  for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
+    if (!['high', 'critical'].includes(vulnerability?.severity)) continue;
+    const vias = (vulnerability?.via ?? []).map(formatVia).join('; ') || 'no advisory details';
+    const fix = vulnerability?.fixAvailable;
+    const fixText =
+      fix === true
+        ? 'fix available'
+        : fix && typeof fix === 'object'
+          ? `fix: ${fix.name ?? name}@${fix.version ?? 'unknown'}${fix.isSemVerMajor ? ' (major)' : ''}`
+          : 'no automatic fix';
+
+    console.error(
+      `- ${name} | severity=${vulnerability?.severity ?? 'unknown'} | range=${vulnerability?.range ?? 'unknown'} | via=${vias} | ${fixText}`,
+    );
+  }
+
   process.exit(1);
 }
 
