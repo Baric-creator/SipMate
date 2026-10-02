@@ -54,11 +54,12 @@ test('Spots provides venue detail actions and nearest-place list', () => {
   assert.match(source, /cameraRef\.current\?\.easeTo/);
 });
 
-test('venue provider falls back to bounded stale cache when upstream is unavailable', () => {
-  assert.match(providerSource, /STALE_CACHE_MAX_AGE_MS\s*=\s*24\s*\*\s*60\s*\*\s*60\s*\*\s*1000/);
-  assert.match(providerSource, /staleCacheUsable/);
-  assert.match(providerSource, /staleCache\s*=\s*true/);
+test('venue provider keeps last-known-good places available when upstream is unavailable', () => {
+  assert.match(providerSource, /if\(cp\?\.length\)\{places=cp;fromCache=true;staleCache=true;lastKnownGood=true\}/);
+  assert.match(providerSource, /mergePlaces\(legacy\)/);
+  assert.match(providerSource, /lastKnownGood=true/);
   assert.match(providerSource, /provider_unavailable/);
+  assert.doesNotMatch(providerSource, /STALE_CACHE_MAX_AGE_MS/);
 });
 
 test('Spots explains privacy and shows OpenStreetMap attribution', () => {
