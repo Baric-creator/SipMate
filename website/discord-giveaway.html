@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#080808">
+  <meta name="theme-color" content="#12090a">
   <meta name="description" content="SipMate 25 Crew Challenge: bring 25 verified Discord members and unlock 12 months of SipMate Premium.">
   <meta name="robots" content="index,follow">
   <meta property="og:type" content="website">
@@ -19,7 +19,65 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
   <style>
-    body{background:radial-gradient(circle at 50% -10%,#37120f 0,#0b0b0d 40%,#080808 75%);min-height:100vh}.challenge-nav{min-height:78px;display:flex;align-items:center;justify-content:space-between}.challenge-back{color:#aaa;text-decoration:none;font-weight:700;font-size:13px}.challenge-hero{padding:58px 0 34px;text-align:center}.challenge-chip{display:inline-flex;padding:9px 14px;border:1px solid #71322d;background:#221210;border-radius:999px;color:#ffb6af;font-size:11px;font-weight:900;letter-spacing:1.2px}.challenge-hero h1{font-size:clamp(58px,9vw,112px);line-height:.88;letter-spacing:-5px;margin:24px auto 22px;max-width:980px}.challenge-hero h1 span{color:#ff3b30}.challenge-lead{max-width:760px;margin:auto;color:#c1c1c8;font-size:clamp(17px,2.4vw,22px);line-height:1.55}.challenge-prize{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:28px 0}.challenge-prize div{padding:13px 17px;border:1px solid #3b3033;background:#111115;border-radius:16px;font-weight:800}.challenge-prize strong{color:#ff554b}.challenge-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;padding:32px 0 86px}.challenge-card{border:1px solid #29292f;background:linear-gradient(145deg,#121216,#0b0b0d);border-radius:26px;padding:30px}.challenge-card h2{font-size:30px;letter-spacing:-1.3px;margin:4px 0 18px}.challenge-steps{display:grid;gap:13px}.challenge-step{display:grid;grid-template-columns:42px 1fr;gap:14px;padding:16px;border:1px solid #25252c;background:#0e0e11;border-radius:18px}.challenge-step b{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#2a1513;color:#ff6d64}.challenge-step strong{display:block;margin:2px 0 6px}.challenge-step p{margin:0;color:#90909a;line-height:1.55;font-size:13px}.reward-box{border:1px solid #63302c;background:linear-gradient(145deg,#28120f,#100d0d);border-radius:22px;padding:24px;text-align:center}.reward-box .trophy{font-size:54px}.reward-box h3{font-size:32px;margin:8px 0 4px;color:#ff554b}.reward-box p{color:#a7a7af;line-height:1.55}.challenge-actions{display:grid;gap:10px;margin-top:20px}.challenge-actions a{text-align:center}.rules{margin-top:18px;padding-top:18px;border-top:1px solid #29292f}.rules ul{padding-left:18px;color:#96969f;line-height:1.7;font-size:13px}.fine{color:#696972;font-size:11px;line-height:1.55}.challenge-footer{border-top:1px solid #202024;padding:28px 0 42px;color:#707078;font-size:12px}@media(max-width:820px){.challenge-grid{grid-template-columns:1fr}.challenge-hero h1{letter-spacing:-3px}}@media(max-width:520px){.challenge-hero h1{font-size:55px;letter-spacing:-2.5px}.challenge-card{padding:20px}}
+    :root{
+      --red:#ff443b;--red2:#ff6b62;--amber:#f5a623;--gold:#ffc568;--ink:#080709;--panel:rgba(17,12,14,.80);--line:rgba(255,92,82,.24);--muted:#b6b1b5;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;color:#fff;font-family:Inter,Arial,sans-serif;background:
+      linear-gradient(rgba(7,5,7,.52),rgba(7,5,7,.80)),
+      radial-gradient(circle at 14% 18%,rgba(255,68,59,.30),transparent 26%),
+      radial-gradient(circle at 84% 16%,rgba(245,166,35,.18),transparent 24%),
+      radial-gradient(circle at 56% 72%,rgba(135,21,35,.20),transparent 34%),
+      url('./og-sipmate.jpg') center/cover fixed no-repeat,
+      #080709;
+      overflow-x:hidden;
+    }
+    body:before,body:after{content:"";position:fixed;inset:auto;pointer-events:none;z-index:0;filter:blur(18px);opacity:.85}
+    body:before{width:340px;height:340px;border-radius:50%;left:-120px;bottom:8%;background:radial-gradient(circle,rgba(255,48,54,.28),transparent 68%)}
+    body:after{width:420px;height:420px;border-radius:50%;right:-160px;top:14%;background:radial-gradient(circle,rgba(255,170,54,.20),transparent 68%)}
+    .challenge-nav,.challenge-hero,.challenge-grid,.challenge-footer{position:relative;z-index:1}
+    .challenge-nav{min-height:84px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .challenge-back{color:#d8d0d3;text-decoration:none;font-weight:800;font-size:13px;padding:10px 14px;border:1px solid rgba(255,255,255,.10);border-radius:999px;background:rgba(15,13,16,.55);backdrop-filter:blur(12px);transition:.2s ease}
+    .challenge-back:hover{border-color:rgba(255,98,88,.42);color:#fff;box-shadow:0 0 24px rgba(255,68,59,.16)}
+    .challenge-hero{padding:70px 0 42px;text-align:center}
+    .challenge-chip{display:inline-flex;padding:10px 15px;border:1px solid rgba(255,90,78,.38);background:linear-gradient(180deg,rgba(89,24,20,.52),rgba(28,11,12,.70));border-radius:999px;color:#ffd1cc;font-size:11px;font-weight:900;letter-spacing:1.3px;box-shadow:0 0 28px rgba(255,59,48,.14),inset 0 1px rgba(255,255,255,.04);backdrop-filter:blur(12px)}
+    .challenge-hero h1{font-size:clamp(58px,9vw,116px);line-height:.87;letter-spacing:-5px;margin:26px auto 22px;max-width:1000px;text-shadow:0 6px 40px rgba(0,0,0,.55)}
+    .challenge-hero h1 span{background:linear-gradient(180deg,#fff 0%,#ffbbb5 24%,#ff493f 68%,#d91f2f 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 18px rgba(255,62,54,.28))}
+    .challenge-lead{max-width:760px;margin:auto;color:#d0c9cc;font-size:clamp(17px,2.4vw,22px);line-height:1.6;text-shadow:0 2px 20px rgba(0,0,0,.38)}
+    .challenge-prize{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:30px 0 0}
+    .challenge-prize div{padding:13px 18px;border:1px solid rgba(255,255,255,.10);background:linear-gradient(180deg,rgba(24,20,23,.82),rgba(12,10,12,.75));border-radius:16px;font-weight:800;box-shadow:0 12px 34px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.035);backdrop-filter:blur(12px)}
+    .challenge-prize strong{color:var(--gold);text-shadow:0 0 16px rgba(255,197,104,.24)}
+    .challenge-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px;padding:38px 0 92px}
+    .challenge-card{position:relative;overflow:hidden;border:1px solid var(--line);background:linear-gradient(145deg,rgba(28,18,22,.90),rgba(11,9,11,.86));border-radius:28px;padding:31px;box-shadow:0 24px 70px rgba(0,0,0,.38),0 0 44px rgba(255,45,52,.07),inset 0 1px rgba(255,255,255,.04);backdrop-filter:blur(16px)}
+    .challenge-card:before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(120deg,rgba(255,101,91,.42),transparent 28%,transparent 72%,rgba(255,188,94,.22));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+    .challenge-card:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;top:-110px;background:radial-gradient(circle,rgba(255,88,71,.12),transparent 70%);pointer-events:none}
+    .challenge-card h2{font-size:31px;letter-spacing:-1.3px;margin:4px 0 18px}
+    .eyebrow{color:#ff837a!important;letter-spacing:1.4px!important;font-weight:900!important}
+    .challenge-steps{display:grid;gap:13px}
+    .challenge-step{display:grid;grid-template-columns:46px 1fr;gap:14px;padding:16px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(22,17,20,.82),rgba(13,11,13,.80));border-radius:18px;transition:.22s ease;box-shadow:inset 0 1px rgba(255,255,255,.025)}
+    .challenge-step:hover{transform:translateY(-2px);border-color:rgba(255,95,83,.30);box-shadow:0 12px 26px rgba(0,0,0,.22),0 0 22px rgba(255,68,59,.08)}
+    .challenge-step b{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(145deg,#391815,#1b0d0f);border:1px solid rgba(255,94,81,.28);color:#ff756b;box-shadow:0 0 18px rgba(255,68,59,.12)}
+    .challenge-step strong{display:block;margin:2px 0 6px;color:#fff}
+    .challenge-step p{margin:0;color:#a9a4a8;line-height:1.58;font-size:13px}
+    .reward-box{position:relative;border:1px solid rgba(255,184,77,.48);background:linear-gradient(145deg,rgba(66,29,18,.86),rgba(22,12,13,.88));border-radius:24px;padding:26px;text-align:center;box-shadow:0 0 40px rgba(246,167,35,.10),inset 0 1px rgba(255,255,255,.05)}
+    .reward-box:before{content:"";position:absolute;inset:-1px;border-radius:inherit;box-shadow:0 0 28px rgba(255,167,47,.14);pointer-events:none}
+    .reward-box .trophy{font-size:58px;filter:drop-shadow(0 0 16px rgba(255,181,64,.24))}
+    .reward-box h3{font-size:34px;margin:8px 0 4px;color:#ffd18a;text-shadow:0 0 18px rgba(255,177,67,.18)}
+    .reward-box p{color:#bcb5b7;line-height:1.58}
+    .challenge-actions{display:grid;gap:10px;margin-top:20px}
+    .challenge-actions a{text-align:center;min-height:50px;display:flex;align-items:center;justify-content:center;border-radius:15px;transition:.22s ease}
+    .challenge-actions .button.primary{background:linear-gradient(180deg,#ff4b44,#e82936);border:1px solid rgba(255,160,152,.30);box-shadow:0 0 26px rgba(255,55,52,.22),0 12px 26px rgba(146,20,32,.22)}
+    .challenge-actions .button.primary:hover{transform:translateY(-2px);box-shadow:0 0 38px rgba(255,55,52,.32),0 16px 34px rgba(146,20,32,.28)}
+    .challenge-actions .button.ghost{background:rgba(16,13,15,.68);border:1px solid rgba(255,255,255,.10)}
+    .challenge-actions .button.ghost:hover{border-color:rgba(255,177,80,.30);box-shadow:0 0 24px rgba(255,177,80,.10)}
+    .rules{margin-top:20px;padding-top:19px;border-top:1px solid rgba(255,255,255,.08)}
+    .rules h3{margin-bottom:10px}
+    .rules ul{padding-left:18px;color:#aaa4a8;line-height:1.72;font-size:13px}
+    .rules li::marker{color:#ff6b61}
+    .fine{color:#777179;font-size:11px;line-height:1.6}
+    .challenge-footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 0 44px;color:#817a80;font-size:12px;background:linear-gradient(180deg,transparent,rgba(5,4,5,.30))}
+    @media(max-width:820px){body{background-attachment:scroll}.challenge-grid{grid-template-columns:1fr}.challenge-hero h1{letter-spacing:-3px}.challenge-card{padding:24px}}
+    @media(max-width:520px){.challenge-nav{min-height:72px}.challenge-hero{padding-top:46px}.challenge-hero h1{font-size:55px;letter-spacing:-2.5px}.challenge-card{padding:20px}.challenge-prize div{width:100%}.challenge-step{grid-template-columns:42px 1fr}.challenge-step b{width:42px;height:42px}}
   </style>
 </head>
 <body>

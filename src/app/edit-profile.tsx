@@ -429,7 +429,7 @@ export default function EditProfileScreen() {
     setProfile((current) => current
       ? { ...current, is_premium: true, premium_until: entitlement?.premium_until ?? null }
       : current);
-    if (profilePhotos.length >= 6) {
+    if (profilePhotos.length >= 10) {
       showAlert(t('editProfileScreen.galleryLimit'));
       return;
     }
