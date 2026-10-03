@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const profileWrites = fs.readFileSync('supabase/migrations/20260915201000_restrict_profile_write_columns.sql', 'utf8');
 const photoWrites = fs.readFileSync('supabase/migrations/20260915202000_restrict_profile_photo_writes.sql', 'utf8');
+const galleryReads = fs.readFileSync('supabase/migrations/20260929203000_gate_profile_gallery_reads_by_premium.sql', 'utf8');
 const activeSessionWrites = fs.readFileSync('supabase/migrations/20260915205000_enforce_active_session_window.sql', 'utf8');
 const activeSessionSafety = fs.readFileSync('supabase/migrations/20260915205100_safe_active_session_insert_trigger.sql', 'utf8');
 const profileBounds = fs.readFileSync('supabase/migrations/20260915205200_bound_profile_text_fields.sql', 'utf8');
@@ -28,6 +29,13 @@ test('profile photo writes are insert/delete only and owner delete is trigger-en
   assert.match(photoWrites, /grant delete on table public\.profile_photos to authenticated/);
   assert.match(photoWrites, /old\.user_id <> auth\.uid\(\)/);
   assert.match(photoWrites, /before delete on public\.profile_photos/);
+});
+
+test('other users profile gallery is readable only by active Premium viewers', () => {
+  assert.match(galleryReads, /user_id = auth\.uid\(\)/);
+  assert.match(galleryReads, /me\.is_premium = true/);
+  assert.match(galleryReads, /me\.premium_until is null or me\.premium_until > now\(\)/);
+  assert.match(galleryReads, /not public\.is_blocked_between\(auth\.uid\(\), user_id\)/);
 });
 
 test('authenticated clients cannot extend an existing Active session beyond its server window', () => {

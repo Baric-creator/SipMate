@@ -77,6 +77,14 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: 'Premium checkout is temporarily unavailable.' }, 503)
     }
 
+    const origin = getCheckoutOrigin(req)
+    const productionCheckout = origin === PROD_ORIGIN || origin === 'https://www.officialsipmate.com'
+    const obviousTestKey = stripeSecretKey.startsWith('sk_test_') || stripeSecretKey.startsWith('rk_test_')
+    if (productionCheckout && obviousTestKey) {
+      console.error('CHECKOUT BLOCKED: production website is configured with a Stripe test key')
+      return jsonResponse(req, { error: 'Live Premium billing is being configured. Please try again later.' }, 503)
+    }
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
@@ -130,7 +138,6 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { error: 'Invalid Premium plan' }, 400)
     }
 
-    const origin = getCheckoutOrigin(req)
     const formData = new URLSearchParams()
     formData.append('mode', 'subscription')
     formData.append('line_items[0][price]', priceId)
@@ -155,6 +162,10 @@ Deno.serve(async (req) => {
     if (!stripeResponse.ok) {
       console.error('STRIPE CHECKOUT ERROR', stripeResponse.status)
       throw new Error('Stripe Checkout failed')
+    }
+    if (productionCheckout && stripeData?.livemode !== true) {
+      console.error('CHECKOUT BLOCKED: Stripe returned a sandbox session for production')
+      return jsonResponse(req, { error: 'Live Premium billing is being configured. Please try again later.' }, 503)
     }
     if (typeof stripeData?.url !== 'string') throw new Error('Stripe Checkout returned no URL')
 

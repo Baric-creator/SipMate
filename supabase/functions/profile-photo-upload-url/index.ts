@@ -75,15 +75,6 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false },
     });
 
-    const { count, error: countError } = await admin
-      .from("profile_photos")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id);
-    if (countError) throw countError;
-    if ((count ?? 0) >= GALLERY_LIMIT) {
-      return response({ ok: false, error: "gallery_limit" }, 409);
-    }
-
     if (action === "finalize") {
       const path = String(body.path || "");
       if (!OWN_PATH_PATTERN.test(path) || !path.startsWith(user.id + "/")) {
@@ -103,18 +94,39 @@ Deno.serve(async (req: Request) => {
         data: { publicUrl },
       } = admin.storage.from("avatars").getPublicUrl(path);
 
-      const { data: inserted, error: insertError } = await admin
-        .from("profile_photos")
-        .insert({
-          user_id: user.id,
-          photo_url: publicUrl,
-          sort_order: count ?? 0,
-        })
-        .select("id,photo_url,sort_order")
-        .single();
-      if (insertError) throw insertError;
+      const { data: finalizedRows, error: finalizeError } = await admin.rpc(
+        "finalize_profile_photo_atomic",
+        {
+          p_user_id: user.id,
+          p_photo_url: publicUrl,
+          p_limit: GALLERY_LIMIT,
+        },
+      );
+
+      if (finalizeError) {
+        const message = String(finalizeError.message || "");
+        if (message.includes("gallery_limit")) {
+          return response({ ok: false, error: "gallery_limit" }, 409);
+        }
+        console.error("GALLERY FINALIZE RPC ERROR", finalizeError);
+        return response({ ok: false, error: "gallery_finalize_failed" }, 500);
+      }
+
+      const inserted = Array.isArray(finalizedRows) ? finalizedRows[0] : finalizedRows;
+      if (!inserted?.id || !inserted?.photo_url) {
+        return response({ ok: false, error: "gallery_finalize_failed" }, 500);
+      }
 
       return response({ ok: true, photo: inserted });
+    }
+
+    const { count, error: countError } = await admin
+      .from("profile_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+    if (countError) throw countError;
+    if ((count ?? 0) >= GALLERY_LIMIT) {
+      return response({ ok: false, error: "gallery_limit" }, 409);
     }
 
     const extension = String(body.extension || "").toLowerCase();

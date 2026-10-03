@@ -18,6 +18,30 @@ test('Premium gallery rechecks entitlement and uploads binary data reliably', ()
   assert.match(source, /GALLERY SAVE ERROR/);
 });
 
+test('Premium gallery keeps the app limit aligned at 10 and blocks duplicate uploads', () => {
+  const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
+  assert.match(source, /const GALLERY_LIMIT = 10/);
+  assert.match(source, /profilePhotos\.length >= GALLERY_LIMIT/);
+  assert.match(source, /uploadingGallery/);
+  assert.match(source, /setUploadingGallery\(true\)/);
+  assert.match(source, /setUploadingGallery\(false\)/);
+  assert.doesNotMatch(source, /profilePhotos\.length >= 6/);
+});
+
+test('Premium gallery finalizes atomically, idempotently and chooses sort order from max instead of count', () => {
+  const fn = fs.readFileSync('supabase/functions/profile-photo-upload-url/index.ts', 'utf8');
+  const atomicMigration = fs.readFileSync('supabase/migrations/20260929183000_finalize_profile_photo_atomic.sql', 'utf8');
+  const idempotentMigration = fs.readFileSync('supabase/migrations/20260929184500_idempotent_finalize_profile_photo.sql', 'utf8');
+  assert.match(fn, /finalize_profile_photo_atomic/);
+  assert.match(fn, /p_limit:\s*GALLERY_LIMIT/);
+  assert.match(atomicMigration, /pg_advisory_xact_lock/);
+  assert.match(idempotentMigration, /pg_advisory_xact_lock/);
+  assert.match(idempotentMigration, /pp\.photo_url\s*=\s*p_photo_url/);
+  assert.match(idempotentMigration, /if found then/);
+  assert.match(idempotentMigration, /coalesce\(max\(pp\.sort_order\),\s*-1\)\s*\+\s*1/);
+  assert.match(idempotentMigration, /v_count\s*>=\s*p_limit/);
+  assert.doesNotMatch(fn, /sort_order:\s*count\s*\?\?\s*0/);
+});
 
 test('manual city remains authoritative instead of being overwritten by GPS city', () => {
   const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
@@ -39,7 +63,6 @@ test('Premium Nearby filters persist custom location and expose Save Changes', (
   assert.match(source, /ÄNDERUNGEN SPEICHERN/);
 });
 
-
 test('profile photo uploads normalize mime and reject unsupported formats clearly', () => {
   const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
   assert.match(source, /function normalizedImageUpload/);
@@ -49,7 +72,6 @@ test('profile photo uploads normalize mime and reject unsupported formats clearl
   assert.match(source, /UIImagePickerPreferredAssetRepresentationMode\.Compatible/);
   assert.match(source, /arrayBuffer\.byteLength > 10 \* 1024 \* 1024/);
 });
-
 
 test('Premium Nearby can use live GPS and clear persisted custom origin', () => {
   const source = fs.readFileSync('src/app/nearby.tsx', 'utf8');
@@ -63,14 +85,12 @@ test('Premium Nearby can use live GPS and clear persisted custom origin', () => 
   assert.match(source, /customLongitude: null/);
 });
 
-
 test('new profiles can save without a usable location', () => {
   const source = fs.readFileSync('src/app/edit-profile.tsx', 'utf8');
   assert.doesNotMatch(source, /locationUnavailableCityFallback\)\);\s*return/);
   assert.doesNotMatch(source, /locationPermissionRequired\)\);\s*return/);
-  assert.match(source, /Profile edits must not be blocked just because this device\/account/);
+  assert.match(source, /typedCity/);
 });
-
 
 test('Nearby shows an immediate mutual Cheers callout while browsing', () => {
   const source = fs.readFileSync('src/app/nearby.tsx', 'utf8');

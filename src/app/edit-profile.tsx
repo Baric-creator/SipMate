@@ -44,6 +44,8 @@ type GalleryPhoto = {
   sort_order: number | null;
 };
 
+const GALLERY_LIMIT = 10;
+
 function normalizedImageUpload(asset: ImagePicker.ImagePickerAsset) {
   const fileExtension = asset.fileName?.split('.').pop()?.toLowerCase() ?? '';
   const uriExtension = asset.uri.split('?')[0].split('.').pop()?.toLowerCase() ?? '';
@@ -78,6 +80,7 @@ export default function EditProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [profilePhotos, setProfilePhotos] = useState<GalleryPhoto[]>([]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const [shareCheersDiscord, setShareCheersDiscord] = useState(false);
 
   const drinks = [
@@ -189,9 +192,6 @@ export default function EditProfileScreen() {
       const typedCity = city.trim();
       let detectedCity = typedCity || null;
 
-      // If the user explicitly typed a city, that city is authoritative.
-      // Resolve coordinates from the typed city instead of silently replacing it
-      // with the device/GPS city.
       if (typedCity) {
         try {
           const searchResponse = await fetch(
@@ -250,9 +250,6 @@ export default function EditProfileScreen() {
         }
       }
 
-      // Profile edits must not be blocked just because this device/account
-      // does not have a usable location yet. New accounts can save name, age,
-      // bio, drink, etc. with null coordinates and set location later.
       if (
         typedCity &&
         (latitude == null || longitude == null) &&
@@ -406,7 +403,7 @@ export default function EditProfileScreen() {
   }
 
   async function handleAddGalleryPhoto() {
-    if (!profile?.id) return;
+    if (!profile?.id || uploadingGallery) return;
 
     const { data: entitlementRows, error: entitlementError } = await supabase.rpc('get_my_premium_entitlement');
     const entitlement = Array.isArray(entitlementRows) ? entitlementRows[0] : entitlementRows;
@@ -429,11 +426,12 @@ export default function EditProfileScreen() {
     setProfile((current) => current
       ? { ...current, is_premium: true, premium_until: entitlement?.premium_until ?? null }
       : current);
-    if (profilePhotos.length >= 10) {
+    if (profilePhotos.length >= GALLERY_LIMIT) {
       showAlert(t('editProfileScreen.galleryLimit'));
       return;
     }
 
+    setUploadingGallery(true);
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
@@ -516,6 +514,8 @@ export default function EditProfileScreen() {
     } catch (error) {
       console.log('ADD GALLERY PHOTO ERROR:', error);
       showAlert(t('editProfileScreen.galleryAddError'));
+    } finally {
+      setUploadingGallery(false);
     }
   }
 
@@ -545,6 +545,9 @@ export default function EditProfileScreen() {
     return <View style={styles.loadingScreen}><Text style={styles.loadingText}>{t('editProfileScreen.loadingProfile')}</Text></View>;
   }
 
+  const premiumActive = profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date());
+  const galleryFull = profilePhotos.length >= GALLERY_LIMIT;
+
   return (
     <View style={styles.screen}>
       <View pointerEvents="none" style={[styles.ambientOrb, styles.ambientOrbTop]} />
@@ -555,7 +558,7 @@ export default function EditProfileScreen() {
           <Text style={styles.logo}>SipMate 🍻</Text>
           <Text style={styles.title}>{t('editProfileScreen.title')}</Text>
           <Text style={styles.subtitle}>{t('editProfileScreen.subtitle')}</Text>
-          {profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date()) && (
+          {premiumActive && (
             <View style={styles.premiumStateBadge}>
               <Text style={styles.premiumStateText}>💎 PREMIUM ACTIVE</Text>
             </View>
@@ -570,7 +573,7 @@ export default function EditProfileScreen() {
           </View>
 
           <View style={styles.gallerySection}>
-            <Text style={styles.galleryTitle}>📸 {t('editProfileScreen.profileGallery')}</Text>
+            <Text style={styles.galleryTitle}>📸 {t('editProfileScreen.profileGallery')} · {profilePhotos.length}/{GALLERY_LIMIT}</Text>
             {profilePhotos.length > 0 && (
               <View style={styles.galleryGrid}>
                 {profilePhotos.map((photo) => (
@@ -584,16 +587,22 @@ export default function EditProfileScreen() {
               </View>
             )}
             <TouchableOpacity
+              disabled={uploadingGallery || (premiumActive && galleryFull)}
               style={[
                 styles.addPhotoButton,
-                !(profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date())) && styles.addPhotoButtonLocked,
+                !premiumActive && styles.addPhotoButtonLocked,
+                (uploadingGallery || galleryFull) && styles.addPhotoButtonDisabled,
               ]}
               onPress={handleAddGalleryPhoto}
             >
               <Text style={styles.addPhotoButtonText}>
-                {profile?.is_premium === true && (!profile.premium_until || new Date(profile.premium_until) > new Date())
-                  ? `＋ ${t('editProfileScreen.addPhoto')}`
-                  : `🔒 ${t('editProfileScreen.addMorePhotos')}`}
+                {uploadingGallery
+                  ? t('editProfileScreen.uploading')
+                  : premiumActive
+                    ? galleryFull
+                      ? `${profilePhotos.length}/${GALLERY_LIMIT}`
+                      : `＋ ${t('editProfileScreen.addPhoto')}`
+                    : `🔒 ${t('editProfileScreen.addMorePhotos')}`}
               </Text>
             </TouchableOpacity>
           </View>
@@ -734,6 +743,7 @@ const styles = StyleSheet.create({
   galleryTitle: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', marginBottom: 10 },
   addPhotoButton: { backgroundColor: '#F59E0B', borderRadius: 18, paddingVertical: 13, alignItems: 'center' },
   addPhotoButtonLocked: { backgroundColor: '#1B1B1F', borderWidth: 1, borderColor: '#F59E0B' },
+  addPhotoButtonDisabled: { opacity: 0.55 },
   addPhotoButtonText: { color: '#09090B', fontSize: 11, fontWeight: '900' },
   galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
   galleryImage: { width: '100%', height: '100%', borderRadius: 14, backgroundColor: '#1B1B1F' },
@@ -741,4 +751,3 @@ const styles = StyleSheet.create({
   deletePhotoButton: { position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: 12, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' },
   deletePhotoText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
 });
-

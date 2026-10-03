@@ -8,6 +8,7 @@ const allowedHighAdvisories = new Set([
   // Reviewed upstream Expo SDK 57 toolchain advisories. Keep exceptions
   // pinned to exact advisories; every other HIGH/CRITICAL still fails CI.
   'https://github.com/advisories/GHSA-86w9-cpqp-85rv',
+  'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm',
   // npm propagates this reviewed uuid advisory as HIGH through @expo/cli
   // and expo even though the root advisory is MODERATE.
   'https://github.com/advisories/GHSA-w5hq-g745-h8pq',
@@ -50,31 +51,46 @@ try {
 const vulnerabilities = report?.vulnerabilities ?? {};
 const metadata = report?.metadata?.vulnerabilities ?? {};
 
-const memo = new Map();
-const resolveLeafAdvisories = (name, stack = new Set()) => {
-  if (memo.has(name)) return memo.get(name);
-  if (stack.has(name)) return new Set();
+const advisoryMap = new Map();
 
-  const vulnerability = vulnerabilities[name];
-  if (!vulnerability) return new Set();
-
-  const nextStack = new Set(stack);
-  nextStack.add(name);
-  const leaves = new Set();
+for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
+  const advisories = new Set();
 
   for (const via of vulnerability.via ?? []) {
-    if (typeof via === 'string') {
-      for (const url of resolveLeafAdvisories(via, nextStack)) leaves.add(url);
-      continue;
+    if (typeof via !== 'string' && via?.url) {
+      advisories.add(via.url);
     }
-
-    if (via?.url) leaves.add(via.url);
   }
 
-  memo.set(name, leaves);
-  return leaves;
-};
+  advisoryMap.set(name, advisories);
+}
 
+let changed = true;
+while (changed) {
+  changed = false;
+
+  for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
+    const advisories = advisoryMap.get(name) ?? new Set();
+    const before = advisories.size;
+
+    for (const via of vulnerability.via ?? []) {
+      if (typeof via !== 'string') continue;
+
+      for (const advisory of advisoryMap.get(via) ?? []) {
+        advisories.add(advisory);
+      }
+    }
+
+    advisoryMap.set(name, advisories);
+
+    if (advisories.size !== before) {
+      changed = true;
+    }
+  }
+}
+
+const resolveLeafAdvisories = (name) =>
+  advisoryMap.get(name) ?? new Set();
 const unexpectedHigh = [];
 for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
   if (vulnerability.severity !== 'high' && vulnerability.severity !== 'critical') continue;

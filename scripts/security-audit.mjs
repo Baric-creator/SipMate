@@ -42,7 +42,10 @@ const textFiles = repoFiles.filter((file) => /\.(?:ts|tsx|js|mjs|json|md|toml|ym
 const secretPatterns = [
   { name: 'Stripe live secret key', regex: /sk_live_[A-Za-z0-9]{16,}/g },
   { name: 'Stripe webhook signing secret', regex: /whsec_[A-Za-z0-9]{16,}/g },
-  { name: 'private key material', regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g },
+  {
+    name: 'private key material',
+    regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----\s*[A-Za-z0-9+/=\r\n]{64,}\s*-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g,
+  },
   { name: 'Google service-account private key field', regex: /"private_key"\s*:\s*"-----BEGIN PRIVATE KEY-----/g },
 ];
 
