@@ -3,6 +3,17 @@ name: Discord SipMate News
 on:
   release:
     types: [published]
+  push:
+    branches: [master]
+    paths:
+      - "src/**"
+      - "supabase/**"
+      - "website/**"
+      - "assets/**"
+      - "app.json"
+      - "eas.json"
+      - "package.json"
+      - "package-lock.json"
   workflow_dispatch:
     inputs:
       title:
@@ -16,6 +27,7 @@ on:
 
 jobs:
   notify-discord:
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Send release announcement
@@ -51,6 +63,63 @@ jobs:
                       {"name": "Status", "value": "✅ Released", "inline": True}
                   ],
                   "footer": {"text": "SipMate • Find someone. Grab a drink. CHEERS!"}
+              }]
+          }
+
+          req = urllib.request.Request(
+              os.environ["DISCORD_WEBHOOK_URL"],
+              data=json.dumps(payload).encode(),
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "SipMate-GitHub-Action/1.0 (+https://github.com/Baric-creator/SipMate)"
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req) as response:
+              if response.status not in (200, 204):
+                  raise SystemExit(f"Discord webhook failed: {response.status}")
+          PY
+
+      - name: Send master update announcement
+        if: github.event_name == 'push'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_NEWS_WEBHOOK }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
+          PUSHER: ${{ github.actor }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_NEWS_WEBHOOK secret is missing."
+            exit 1
+          fi
+
+          python - <<'PY'
+          import json, os, urllib.request
+
+          message = (os.getenv("COMMIT_MESSAGE") or "SipMate update").strip()
+          lines = [line.strip() for line in message.splitlines() if line.strip()]
+          title = lines[0] if lines else "SipMate update"
+          details = "\n".join(lines[1:]).strip()
+
+          if len(title) > 240:
+              title = title[:237] + "..."
+          if len(details) > 2800:
+              details = details[:2797] + "..."
+
+          description = details or "New changes have been added to SipMate. 🍻"
+
+          payload = {
+              "username": "SipMate News",
+              "embeds": [{
+                  "title": f"🛠️ {title}",
+                  "description": description,
+                  "url": os.getenv("COMMIT_URL"),
+                  "fields": [
+                      {"name": "Branch", "value": "master", "inline": True},
+                      {"name": "Status", "value": "✅ Updated", "inline": True}
+                  ],
+                  "footer": {"text": "SipMate • Development Update"}
               }]
           }
 
