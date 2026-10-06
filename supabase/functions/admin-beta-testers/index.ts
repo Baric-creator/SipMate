@@ -6,9 +6,9 @@ const allowedStatuses=new Set(["pending_add","added","opted_in","declined"]);
 function cors(origin:string|null){const allow=origin&&allowedOrigins.has(origin)?origin:"https://officialsipmate.com";return {"Access-Control-Allow-Origin":allow,"Access-Control-Allow-Headers":"authorization, apikey, content-type","Access-Control-Allow-Methods":"GET, PATCH, OPTIONS","Vary":"Origin"}}
 function esc(s:string){return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;")}
 const accessCopy={
- en:{subject:"Your SipMate Beta access is ready 🍻",title:"You're on the tester list.",body:"Your Google Play email has been added to the SipMate Closed Test tester list. Open SipMate on Google Play to continue with the test.",cta:"Open SipMate on Google Play"},
- de:{subject:"Dein SipMate Beta-Zugang ist bereit 🍻",title:"Du bist auf der Testerliste.",body:"Deine Google-Play-E-Mail wurde zur SipMate Closed-Test-Testerliste hinzugefügt. Öffne SipMate bei Google Play, um mit dem Test fortzufahren.",cta:"SipMate bei Google Play öffnen"},
- hr:{subject:"Tvoj SipMate Beta pristup je spreman 🍻",title:"Dodan/a si na listu testera.",body:"Tvoj Google Play e-mail dodan je na SipMate Closed Test listu testera. Otvori SipMate na Google Playu i nastavi s testiranjem.",cta:"Otvori SipMate na Google Playu"}
+ en:{subject:"Your SipMate Beta access is ready 🍻",title:"You're on the tester list.",body:"Your Google Play email has been added to the SipMate Closed Test tester list. Please install SipMate and register your account within 48 hours. If no SipMate account is registered within that time, your beta access will expire so the place can be offered to another tester. Open SipMate on Google Play to continue.",cta:"Open SipMate on Google Play"},
+ de:{subject:"Dein SipMate Beta-Zugang ist bereit 🍻",title:"Du bist auf der Testerliste.",body:"Deine Google-Play-E-Mail wurde zur SipMate Closed-Test-Testerliste hinzugefügt. Bitte installiere SipMate und registriere dein Konto innerhalb von 48 Stunden. Wenn in dieser Zeit kein SipMate-Konto registriert wird, läuft dein Beta-Zugang ab, damit der Platz einem anderen Tester angeboten werden kann. Öffne SipMate bei Google Play, um fortzufahren.",cta:"SipMate bei Google Play öffnen"},
+ hr:{subject:"Tvoj SipMate Beta pristup je spreman 🍻",title:"Dodan/a si na listu testera.",body:"Tvoj Google Play e-mail dodan je na SipMate Closed Test listu testera. Instaliraj SipMate i registriraj račun unutar 48 sati. Ako se u tom roku ne registrira SipMate račun, tvoj beta pristup će isteći kako bismo mjesto mogli ponuditi drugom testeru. Otvori SipMate na Google Playu i nastavi s testiranjem.",cta:"Otvori SipMate na Google Playu"}
 } as const;
 async function sendAccessEmail(row:any,admin:any){
  if(row.beta_access_sent_at)return;
@@ -29,10 +29,10 @@ Deno.serve(async(req)=>{
   if(req.method==="PATCH"){
    const body=await req.json().catch(()=>({})),email=String(body.email||"").trim().toLowerCase(),status=String(body.status||"");if(!email||!allowedStatuses.has(status))return new Response(JSON.stringify({error:"invalid_request"}),{status:400,headers});
    const {data:before,error:be}=await admin.from("waitlist").select("email,name,locale,play_test_status,beta_access_sent_at").eq("email",email).not("beta_opt_in_at","is",null).maybeSingle();if(be||!before)return new Response(JSON.stringify({error:"tester_not_found"}),{status:404,headers});
-   const {error}=await admin.from("waitlist").update({play_test_status:status}).eq("email",email).not("beta_opt_in_at","is",null);if(error)throw error;
-   if(status==="added"&&before.play_test_status!=="added"&&!before.beta_access_sent_at)await sendAccessEmail(before,admin);
+   const now=new Date(),statusPatch:any={play_test_status:status};if(status==="added"&&before.play_test_status!=="added"){statusPatch.beta_added_at=now.toISOString();statusPatch.beta_access_expires_at=new Date(now.getTime()+48*60*60*1000).toISOString();statusPatch.beta_expired_at=null}const {error}=await admin.from("waitlist").update(statusPatch).eq("email",email).not("beta_opt_in_at","is",null);if(error)throw error;
+   if(status==="added"&&!before.beta_access_sent_at)await sendAccessEmail(before,admin);
   }
-  const {data,error}=await admin.from("waitlist").select("email,name,locale,source,beta_opt_in_at,play_test_status,beta_welcome_sent_at,beta_access_sent_at").not("beta_opt_in_at","is",null).order("beta_opt_in_at",{ascending:false}).limit(500);if(error)throw error;
+  const {data,error}=await admin.from("waitlist").select("email,name,locale,source,beta_opt_in_at,play_test_status,beta_welcome_sent_at,beta_access_sent_at,beta_added_at,beta_access_expires_at,beta_expired_at,app_registered_at,app_user_id").not("beta_opt_in_at","is",null).order("beta_opt_in_at",{ascending:false}).limit(500);if(error)throw error;
   const testers=data||[],counts={total:testers.length,pending_add:0,added:0,opted_in:0,declined:0};for(const t of testers){if(t.play_test_status in counts)(counts as any)[t.play_test_status]++}
   return new Response(JSON.stringify({ok:true,counts,testers}),{status:200,headers});
  }catch(e){console.error("ADMIN BETA TESTERS ERROR",e);return new Response(JSON.stringify({error:"server_error"}),{status:500,headers})}
