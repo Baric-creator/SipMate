@@ -33,7 +33,7 @@
 
   <div id="dashboardView" class="hidden">
     <div class="topbar"><div class="shell tabs">
-      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab active" data-tab="overview">Overview</button><button class="tab" data-tab="activity">🔔 Activity <span id="activityBadge" class="badge hidden">0</span></button>
       <button class="tab" data-tab="marketing">Marketing</button>
       <button class="tab" data-tab="waitlist">Waitlist</button><button class="tab" data-tab="beta">Beta Testers</button>
       <button class="tab" data-tab="premium">Premium</button>
@@ -47,6 +47,8 @@
         <div><p class="eyebrow">SIPMATE FOUNDER CONTROL ROOM</p><h1>Launch pulse.</h1><p class="muted" id="signedInAs">Signed in</p></div>
         <div class="hero-actions"><button id="enablePush" class="btn small">🔔 Enable push</button><button id="refreshAll" class="btn secondary small">↻ Refresh all</button><button id="logoutBtn" class="btn secondary small">Log out</button></div>
       </div>
+
+      <section class="section" data-section="activity"><article class="card"><div class="report-top"><h2>Founder Activity</h2><button id="markActivityRead" class="btn secondary small">Mark all read</button></div><p class="muted">Registrations, beta activity, problem reports and moderation alerts.</p><div id="activityFeed" class="list"><div class="empty">Loading activity…</div></div></article></section>
 
       <section class="section active" data-section="overview">
         <div class="stat-grid">
@@ -155,6 +157,7 @@
   const LAUNCH_ENDPOINT=`${SUPABASE_URL}/functions/v1/admin-launch-config`;
   const MODERATION_ENDPOINT=`${SUPABASE_URL}/functions/v1/admin-moderation`;
   const BETA_ENDPOINT=`${SUPABASE_URL}/functions/v1/admin-beta-testers`;
+  const ACTIVITY_ENDPOINT='https://poatmbsfglhrcdbosinb.supabase.co/functions/v1/founder-activity';
   const PUSH_ENDPOINT=`${SUPABASE_URL}/functions/v1/founder-push-subscriptions`;
   const supabase=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const safe=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
@@ -217,12 +220,14 @@
   function betaStatusTag(s){const cls=s==='opted_in'||s==='added'?'ok':s==='pending_add'?'warn':'';return `<span class="tag ${cls}">${esc(String(s||'pending_add').replaceAll('_',' ').toUpperCase())}</span>`}
   function renderBeta(d){const n=d.counts||{};setText('bTotal',safe(n.total));setText('bPending',safe(n.pending_add));setText('bAdded',safe(n.added));setText('bOpted',safe(n.opted_in));const rows=d.testers||[];setText('bExpired',rows.filter(x=>x.beta_expired_at).length);$('betaBody').innerHTML=rows.length?rows.map(x=>`<tr><td>${esc(x.name||'—')}</td><td><b>${esc(x.email)}</b></td><td>${esc((x.locale||'—').toUpperCase())}</td><td>${x.beta_opt_in_at?new Date(x.beta_opt_in_at).toLocaleString():'—'}</td><td>${x.beta_expired_at?'<span class="tag" style="color:#ff756d;border-color:#7a2924;background:#1d0d0c">🔴 EXPIRED · REMOVE FROM GOOGLE PLAY</span>':betaStatusTag(x.play_test_status)}</td><td><select class="beta-status" data-email="${esc(x.email)}" style="background:#101012;color:#fff;border:1px solid #34343a;border-radius:9px;padding:7px"><option value="pending_add" ${x.play_test_status==='pending_add'?'selected':''}>Pending add</option><option value="added" ${x.play_test_status==='added'?'selected':''}>Added</option><option value="opted_in" ${x.play_test_status==='opted_in'?'selected':''}>Opted in</option><option value="declined" ${x.play_test_status==='declined'?'selected':''}>Declined</option></select></td></tr>`).join(''):'<tr><td colspan="6">No beta opt-ins yet.</td></tr>'}
   let betaTesterRows=[];async function loadBeta(){try{const h=await authHeaders();const r=await fetch(BETA_ENDPOINT,{headers:h,cache:'no-store'});const d=await r.json();if(!r.ok||!d?.ok)throw new Error(d?.error||'request_failed');betaTesterRows=d.testers||[];renderBeta(d);setMsg($('betaMsg'),'')}catch(e){setMsg($('betaMsg'),`Beta tester error: ${e.message}`,'err')}}
+  $('markActivityRead').addEventListener('click',async()=>{const s=await getSession();if(!s)return;await fetch(ACTIVITY_ENDPOINT,{method:'PATCH',headers:{Authorization:'Bearer '+s.access_token,apikey:SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({all:true})});await loadActivity()});
   $('copyPendingBeta').addEventListener('click',async()=>{const emails=betaTesterRows.filter(x=>x.play_test_status==='pending_add').map(x=>x.email).filter(Boolean);if(!emails.length){setMsg($('betaMsg'),'No pending tester emails to copy.');return}try{await navigator.clipboard.writeText(emails.join('\n'));setMsg($('betaMsg'),`Copied ${emails.length} pending email${emails.length===1?'':'s'}.`,'ok')}catch{setMsg($('betaMsg'),'Could not access clipboard.','err')}});
   $('copyExpiredBeta').addEventListener('click',async()=>{const emails=betaTesterRows.filter(x=>x.beta_expired_at).map(x=>x.email).filter(Boolean);if(!emails.length){setMsg($('betaMsg'),'No expired tester emails.','ok');return}try{await navigator.clipboard.writeText(emails.join('\n'));setMsg($('betaMsg'),`Copied ${emails.length} expired email${emails.length===1?'':'s'} — remove these from Google Play.`, 'ok')}catch{setMsg($('betaMsg'),'Could not access clipboard.','err')}});
 
   $('betaBody').addEventListener('change',async e=>{const s=e.target.closest('.beta-status');if(!s)return;s.disabled=true;setMsg($('betaMsg'),'Saving…');try{const h=await authHeaders();const r=await fetch(BETA_ENDPOINT,{method:'PATCH',headers:h,body:JSON.stringify({email:s.dataset.email,status:s.value})});const d=await r.json();if(!r.ok||!d?.ok)throw new Error(d?.error||'request_failed');renderBeta(d);setMsg($('betaMsg'),'Tester status saved.','ok')}catch(err){setMsg($('betaMsg'),`Save failed: ${err.message}`,'err');await loadBeta()}finally{s.disabled=false}});
 
-  async function loadAll(){setText('sysRefresh','Refreshing…');await Promise.all([loadCore(),loadAnalytics(),loadLaunch(),loadModeration(),loadBeta()]);setText('sysRefresh',new Date().toLocaleTimeString())}
+  async function loadActivity(){try{const s=await getSession();if(!s)return;const r=await fetch(ACTIVITY_ENDPOINT,{headers:{Authorization:'Bearer '+s.access_token,apikey:SUPABASE_ANON_KEY}});if(!r.ok)throw new Error('activity');const d=await r.json(),items=d.items||[],badge=$('activityBadge');badge.textContent=d.unread||0;badge.classList.toggle('hidden',!d.unread);$('activityFeed').innerHTML=items.length?items.map(x=>`<div class="row" style="${x.read_at?'opacity:.62':''}"><div><b>${esc(x.title)}</b><small>${esc(x.body||'')} · ${new Date(x.created_at).toLocaleString()}</small></div><span class="tag ${x.severity==='critical'?'warn':x.severity==='success'?'ok':'info'}">${x.read_at?'READ':'NEW'}</span></div>`).join(''):'<div class="empty">No activity yet.</div>'}catch(e){console.warn('Activity feed',e)}}
+  async function loadAll(){loadActivity();setText('sysRefresh','Refreshing…');await Promise.all([loadCore(),loadAnalytics(),loadLaunch(),loadModeration(),loadBeta()]);setText('sysRefresh',new Date().toLocaleTimeString())}
   $('refreshAll').addEventListener('click',loadAll);
 
   await ensureServiceWorker().catch(()=>{});
