@@ -1,4 +1,4 @@
-const CACHE="sipmate-site-v2";
+const CACHE="sipmate-site-v3";
 const CORE=[
   "/",
   "/index.html",
@@ -68,4 +68,27 @@ self.addEventListener("fetch",event=>{
       return cached||network;
     })
   );
+});
+
+
+self.addEventListener("push",event=>{
+  let data={title:"SipMate Founder",body:"New SipMate activity.",url:"/admin.html"};
+  try{if(event.data)data={...data,...event.data.json()}}catch{}
+  event.waitUntil(self.registration.showNotification(data.title,{
+    body:data.body,
+    icon:"/favicon.svg",
+    badge:"/favicon.svg",
+    tag:"sipmate-founder-beta",
+    renotify:true,
+    data:{url:data.url||"/admin.html"}
+  }));
+});
+
+self.addEventListener("notificationclick",event=>{
+  event.notification.close();
+  const target=new URL(event.notification.data?.url||"/admin.html",self.location.origin).href;
+  event.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(list=>{
+    for(const client of list){if("focus" in client){client.navigate(target);return client.focus()}}
+    return clients.openWindow(target);
+  }));
 });
