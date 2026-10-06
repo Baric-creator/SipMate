@@ -1,4 +1,4 @@
-const CACHE="sipmate-site-v3";
+const CACHE="sipmate-site-v4";
 const CORE=[
   "/",
   "/index.html",
@@ -78,8 +78,9 @@ self.addEventListener("push",event=>{
     body:data.body,
     icon:"/favicon.svg",
     badge:"/favicon.svg",
-    tag:"sipmate-founder-beta",
+    tag:data.tag||"sipmate-founder",
     renotify:true,
+    requireInteraction:data.priority==="high",
     data:{url:data.url||"/admin.html"}
   }));
 });
