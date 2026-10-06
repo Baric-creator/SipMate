@@ -100,9 +100,11 @@ Deno.serve(async (req) => {
           .eq("email", email);
         if (updateError) throw updateError;
       }
-      if(betaOptIn) await sendBetaWelcome(supabase,email,name,locale);\n      return new Response(JSON.stringify({ ok: true, already: true, beta_opt_in: betaOptIn }), { status: 200, headers });
+      if(betaOptIn) await sendBetaWelcome(supabase,email,name,locale);
+      return new Response(JSON.stringify({ ok: true, already: true, beta_opt_in: betaOptIn }), { status: 200, headers });
     }
     if (error) throw error;
+    if(betaOptIn) await sendBetaWelcome(supabase,email,name,locale);
 
     return new Response(JSON.stringify({ ok: true }), { status: 201, headers });
   } catch (error) {
