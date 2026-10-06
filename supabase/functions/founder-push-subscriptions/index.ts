@@ -12,9 +12,8 @@ Deno.serve(async(req)=>{
   const {data:{user},error}=await client.auth.getUser();
   if(error||!user||user.email?.toLowerCase()!=="sipmate.app@gmail.com")return new Response(JSON.stringify({error:"forbidden"}),{status:403,headers});
   const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
-  const {data:keyRow,error:keyErr}=await admin.schema("vault").from("decrypted_secrets").select("decrypted_secret").eq("name","FOUNDER_VAPID_PUBLIC_KEY").maybeSingle();
-  if(keyErr||!keyRow?.decrypted_secret)throw keyErr||new Error("push_key_missing");
-  if(req.method==="GET")return new Response(JSON.stringify({ok:true,public_key:keyRow.decrypted_secret}),{headers});
+  const publicKey="BDbHX9DzFahJzGGV8n3MUvD78ONVXped35gYCFW-bcfB5waWMUBISNU1aETAMYalubnzsAcaT2he_rTXY_eo2Hk";
+  if(req.method==="GET")return new Response(JSON.stringify({ok:true,public_key:publicKey}),{headers});
   const body=await req.json().catch(()=>({})),endpoint=String(body?.endpoint||"");
   if(!endpoint.startsWith("https://"))return new Response(JSON.stringify({error:"invalid_subscription"}),{status:400,headers});
   if(req.method==="DELETE"){await admin.from("founder_push_subscriptions").delete().eq("endpoint",endpoint);return new Response(JSON.stringify({ok:true}),{headers});}
