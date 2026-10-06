@@ -57,13 +57,13 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    if (!supabaseUrl || !anonKey) {
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !serviceRoleKey) {
       console.error("WAITLIST FUNCTION CONFIGURATION ERROR");
       return new Response(JSON.stringify({ error: "temporarily_unavailable" }), { status: 503, headers });
     }
 
-    const supabase = createClient(supabaseUrl, anonKey);
+    const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
     const { error } = await supabase
       .from("waitlist")
