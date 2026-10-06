@@ -1726,3 +1726,9 @@ img{
   transform:translateZ(0);
   backface-visibility:hidden;
 }
+
+/* Above-the-fold beta recruitment */
+.hero-beta-banner{display:inline-flex;align-items:center;gap:10px;max-width:100%;padding:9px 13px;margin-bottom:8px;border:1px solid rgba(255,59,48,.48);border-radius:999px;background:rgba(255,59,48,.08);color:#fff;text-decoration:none;font-size:11px;letter-spacing:.55px;box-shadow:0 0 30px rgba(255,59,48,.08);transition:.2s transform,.2s background,.2s border-color}
+.hero-beta-banner:hover{transform:translateY(-2px);background:rgba(255,59,48,.14);border-color:#ff3b30}.hero-beta-banner strong{color:#ff6259}.hero-beta-banner>span:last-child{color:#d4d4d8;font-weight:800}.hero-beta-live{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#37d67a;box-shadow:0 0 0 5px rgba(55,214,122,.1),0 0 14px rgba(55,214,122,.6)}
+.beta-primary{background:linear-gradient(135deg,#ff3b30,#d91f16);box-shadow:0 12px 32px rgba(255,59,48,.22)}
+@media(max-width:560px){.hero{padding-top:26px}.hero-beta-banner{display:flex;width:max-content;max-width:100%;font-size:9.5px;gap:7px;padding:8px 10px}.hero-actions .button{width:100%;text-align:center}.beta-primary{order:-2}}
