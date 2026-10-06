@@ -50,6 +50,7 @@ Deno.serve(async (req) => {
     const referredByCode = /^[A-Z0-9_-]{3,32}$/.test(refRaw) ? refRaw : null;
     const sourceRaw = String(body?.source ?? "").trim().toLowerCase();
     const source = /^[a-z0-9._-]{1,80}$/.test(sourceRaw) ? sourceRaw : "officialsipmate.com";
+    const betaOptIn = body?.beta_opt_in === true;
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
       return new Response(JSON.stringify({ error: "invalid_email" }), { status: 400, headers });
@@ -66,10 +67,25 @@ Deno.serve(async (req) => {
 
     const { error } = await supabase
       .from("waitlist")
-      .insert({ email, name, city, locale, source, referred_by_code: referredByCode });
+      .insert({
+        email, name, city, locale, source, referred_by_code: referredByCode,
+        beta_opt_in_at: betaOptIn ? new Date().toISOString() : null,
+        play_test_status: betaOptIn ? "pending_add" : "not_requested",
+      });
 
     if (error?.code === "23505") {
-      return new Response(JSON.stringify({ ok: true, already: true }), { status: 200, headers });
+      if (betaOptIn) {
+        const { error: updateError } = await supabase
+          .from("waitlist")
+          .update({
+            beta_opt_in_at: new Date().toISOString(),
+            play_test_status: "pending_add",
+            source,
+          })
+          .eq("email", email);
+        if (updateError) throw updateError;
+      }
+      return new Response(JSON.stringify({ ok: true, already: true, beta_opt_in: betaOptIn }), { status: 200, headers });
     }
     if (error) throw error;
 
