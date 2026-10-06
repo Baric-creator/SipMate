@@ -7,6 +7,21 @@ const allowedOrigins = new Set([
 ]);
 const MAX_BODY_BYTES = 8_192;
 
+const betaWelcomeCopy={
+ en:{subject:"Welcome to the SipMate Beta 🍻",title:"You're in.",body:"Thanks for joining the SipMate Google Play Closed Test. Your email is saved for beta access. We'll send you another email when your Google Play access is ready."},
+ de:{subject:"Willkommen bei der SipMate Beta 🍻",title:"Du bist dabei.",body:"Danke, dass du am SipMate Google Play Closed Test teilnimmst. Deine E-Mail ist für den Beta-Zugang gespeichert. Wir senden dir eine weitere E-Mail, sobald dein Google-Play-Zugang bereit ist."},
+ hr:{subject:"Dobrodošao/la u SipMate Betu 🍻",title:"Unutra si.",body:"Hvala što sudjeluješ u SipMate Google Play Closed Testu. Tvoj e-mail je spremljen za beta pristup. Poslat ćemo ti još jedan e-mail čim tvoj Google Play pristup bude spreman."}
+} as const;
+function escapeHtml(s:string){return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;")}
+async function sendBetaWelcome(supabase:any,email:string,name:string|null,locale:string){
+ const {data:row}=await supabase.from("waitlist").select("beta_welcome_sent_at").eq("email",email).maybeSingle();if(row?.beta_welcome_sent_at)return;
+ const key=Deno.env.get("RESEND_API_KEY"),from=Deno.env.get("RESEND_FROM_EMAIL");if(!key||!from){console.error("BETA WELCOME EMAIL CONFIGURATION ERROR");return}
+ const lang=(["en","de","hr"].includes(locale)?locale:"en") as keyof typeof betaWelcomeCopy,t=betaWelcomeCopy[lang],safeName=name?escapeHtml(name):"";
+ const html=`<!doctype html><html><body style="margin:0;background:#080808;color:#f5f5f4;font-family:Arial,sans-serif;padding:28px"><div style="max-width:580px;margin:auto;background:#141416;border:1px solid #29292e;border-radius:22px;padding:30px"><div style="color:#ff3b30;font-weight:900">SIPMATE BETA 🍻</div><h1>${escapeHtml(t.title)}${safeName?" "+safeName:""}</h1><p style="line-height:1.65;color:#d4d4d8">${escapeHtml(t.body)}</p><p style="color:#8d8d95;font-size:12px">SipMate · Social, not dating.</p></div></body></html>`;
+ try{const rr=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify({from,to:[email],subject:t.subject,html}),signal:AbortSignal.timeout(8000)});if(!rr.ok){console.error("BETA WELCOME EMAIL ERROR",rr.status,await rr.text().catch(()=>""));return}await supabase.from("waitlist").update({beta_welcome_sent_at:new Date().toISOString()}).eq("email",email).is("beta_welcome_sent_at",null)}catch(e){console.error("BETA WELCOME EMAIL ERROR",e)}
+}
+
+
 function cors(origin: string | null) {
   const allow = origin && allowedOrigins.has(origin) ? origin : "https://officialsipmate.com";
   return {
@@ -85,7 +100,7 @@ Deno.serve(async (req) => {
           .eq("email", email);
         if (updateError) throw updateError;
       }
-      return new Response(JSON.stringify({ ok: true, already: true, beta_opt_in: betaOptIn }), { status: 200, headers });
+      if(betaOptIn) await sendBetaWelcome(supabase,email,name,locale);\n      return new Response(JSON.stringify({ ok: true, already: true, beta_opt_in: betaOptIn }), { status: 200, headers });
     }
     if (error) throw error;
 
