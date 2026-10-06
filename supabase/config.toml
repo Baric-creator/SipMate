@@ -115,3 +115,8 @@ entrypoint = "./functions/nearby-places/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/google-play-verify/index.ts"
+
+[functions.admin-beta-testers]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/admin-beta-testers/index.ts"
